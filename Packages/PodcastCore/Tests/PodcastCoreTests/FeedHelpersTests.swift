@@ -268,3 +268,47 @@ final class AudioProcessingTests: XCTestCase {
         XCTAssertEqual(SilenceDetector.trimRate(forSpeed: 2), 4)
     }
 }
+
+final class ChartTests: XCTestCase {
+
+    func testTopChart() throws {
+        let json = """
+        {"feed": {"title": "Top Shows", "results": [
+          {"artistName": "Harbour Audio", "id": "123", "name": "Tidewater Weekly", "kind": "podcasts",
+           "artworkUrl100": "https://is1.mzstatic.com/image/thumb/a/b/100x100bb.png",
+           "genres": [{"genreId": "1324", "name": "Society & Culture"}]},
+          {"id": "456", "name": "No Extras"}
+        ]}}
+        """
+        let items = try Directory.decodeTopChart(Data(json.utf8))
+        XCTAssertEqual(items.map(\.title), ["Tidewater Weekly", "No Extras"])
+        XCTAssertEqual(items[0].appleID, "123")
+        XCTAssertEqual(items[0].genre, "Society & Culture")
+        XCTAssertEqual(items[0].artworkURL?.absoluteString, "https://is1.mzstatic.com/image/thumb/a/b/600x600bb.png")
+        XCTAssertNil(items[0].feedURL)
+    }
+
+    func testGenreChartListAndSingleEntry() throws {
+        let list = """
+        {"feed": {"entry": [
+          {"im:name": {"label": "Small Machines"}, "im:artist": {"label": "Chip Co"},
+           "im:image": [{"label": "https://x/55x55bb.png"}, {"label": "https://x/170x170bb.png"}],
+           "id": {"label": "https://podcasts.apple.com/gb/podcast/id789", "attributes": {"im:id": "789"}},
+           "category": {"attributes": {"im:id": "1318", "term": "Technology", "label": "Technology"}}}
+        ]}}
+        """
+        let items = try Directory.decodeGenreChart(Data(list.utf8))
+        XCTAssertEqual(items, [DirectoryItem(appleID: "789", title: "Small Machines", artist: "Chip Co",
+                                             artworkURL: URL(string: "https://x/600x600bb.png"), genre: "Technology")])
+        let single = list
+            .replacingOccurrences(of: "\"entry\": [", with: "\"entry\": ")
+            .replacingOccurrences(of: "}}}\n]}}", with: "}}}\n}}")
+        XCTAssertEqual(try Directory.decodeGenreChart(Data(single.utf8)).map(\.appleID), ["789"])
+    }
+
+    func testLookupURLAndGenres() {
+        XCTAssertTrue(Directory.lookupURL(appleID: "123").absoluteString.contains("id=123"))
+        XCTAssertEqual(PodcastGenre.named("technology")?.id, "1318")
+        XCTAssertNil(PodcastGenre.named("Knitting"))
+    }
+}

@@ -59,7 +59,7 @@ struct RootView: View {
             LibraryView()
                 .miniPlayer($showingPlayer)
                 .tabItem { Label("Library", systemImage: "square.grid.2x2") }
-            PlaceholderView(title: "Discover", note: "Search and charts for new shows are coming. For now, add shows from Library.")
+            DiscoverView()
                 .miniPlayer($showingPlayer)
                 .tabItem { Label("Discover", systemImage: "safari") }
             SearchView()

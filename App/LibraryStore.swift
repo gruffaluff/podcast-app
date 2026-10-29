@@ -378,6 +378,23 @@ enum FeedClient {
         try Directory.decodeSearch(try await get(Directory.searchURL(term: term)))
     }
 
+    static func lookup(appleID: String) async throws -> DirectoryShow? {
+        try Directory.decodeSearch(try await get(Directory.lookupURL(appleID: appleID))).first
+    }
+
+    static func topChart() async throws -> [DirectoryItem] {
+        try Directory.decodeTopChart(try await get(Directory.topChartURL()))
+    }
+
+    /// Top shows in a category; falls back to a directory search for the
+    /// category name if Apple's older chart feed isn't answering.
+    static func genreChart(_ genre: PodcastGenre) async throws -> [DirectoryItem] {
+        if let items = try? Directory.decodeGenreChart(try await get(Directory.genreChartURL(genreID: genre.id))), !items.isEmpty {
+            return items
+        }
+        return try await searchDirectory(genre.name).map(DirectoryItem.init)
+    }
+
     private static func get(_ url: URL) async throws -> Data {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.setValue("Podcasts/0.1 (personal iOS app)", forHTTPHeaderField: "User-Agent")

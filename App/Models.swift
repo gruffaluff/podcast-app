@@ -21,6 +21,8 @@ final class Podcast {
     /// Names Paul gave the speakers in this show's transcripts
     /// (label in the transcript → name), stored as JSON.
     var speakerNamesData: Data?
+    /// Apple's category for the show (e.g. "History"), for Discover suggestions.
+    var genre: String?
     var followedAt: Date = Date()
     var lastChecked: Date?
     @Relationship(deleteRule: .cascade, inverse: \PodcastEpisode.podcast)
