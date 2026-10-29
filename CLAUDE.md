@@ -237,7 +237,23 @@ terracotta accent).
   titled by Apple's on-device language model (Foundation Models) when the
   iPhone supports it, word-based titles otherwise; Chapters screen switch
   From the show / Auto-generated. CI prints failing test lines at the end.
-- Next: step 7 (notifications, background checks, Discover, clip sharing).
+- Done (step 7): background feed checks (BGAppRefreshTask, Hourly / Every
+  3 hours (default) / Every 6 hours on the Shows screen); per-show bell with
+  local alerts saying where the episode went ("Added to the top of Up
+  Next", "…at number 3", "…to the end"); Shows screen "All shows" list
+  (bell + Off/Top/Bottom per show); Discover (directory search, category
+  chips with category charts, "Because you listen to …", UK top charts,
+  Follow buttons that open the show settings sheet); Share a clip from any
+  transcript line (quote card in the artwork colour, 5–30s with −5/+5 and a
+  waveform, include audio cut on the iPhone, link to the moment via the
+  episode/show web page, video card as mp4; shared clips saved to My clips).
+- All seven build steps are in place and the cloud build is green. Nothing
+  has run on a real iPhone yet: first TestFlight build needs Paul's Apple
+  Developer membership (then add signing + upload, docs/SETUP.md).
+- To check on the phone first: Trim silences / Boost voices strength, ad
+  detection accuracy (rule-based; tune phrases), auto-chapter quality,
+  Apple chart feeds (could not be reached from the build machine; Discover
+  falls back to directory search).
 
 ## Open questions for Paul
 
