@@ -90,6 +90,18 @@ final class TranscriptLayoutTests: XCTestCase {
         XCTAssertEqual(blocks[3].rows, [.music(MusicSpan(start: 40, end: 54))])
     }
 
+    func testAdBreakFoldsIntoOneBand() {
+        let transcript = Transcript(source: .onDevice, segments: [
+            seg(0, 5, "Hello.", "A"), seg(6, 10, "Brought to you by Sailco.", "B"), seg(10.5, 14, "Use code TIDE.", "B"), seg(15, 18, "Back to it.", "A")
+        ])
+        let adBreak = AdBreak(start: 6, end: 14.5, score: 6)
+        let blocks = TranscriptLayout.blocks(for: transcript, ads: [adBreak])
+        XCTAssertEqual(blocks.map(\.start), [0, 6, 15])
+        guard case .ad(let band, let hidden) = blocks[1].rows[0] else { return XCTFail("expected an ad band") }
+        XCTAssertEqual(band, adBreak)
+        XCTAssertEqual(hidden.map(\.text), ["Brought to you by Sailco. Use code TIDE."])
+    }
+
     func testMusicSpansJoinAndDropShortStings() {
         let windows = [
             MusicDetection.Window(start: 0, duration: 3, confidence: 0.9),

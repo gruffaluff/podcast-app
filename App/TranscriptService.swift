@@ -7,6 +7,11 @@ import Speech
 import UIKit
 import PodcastCore
 
+extension Notification.Name {
+    /// An episode's ad breaks or auto chapters changed (object: episode ID).
+    static let episodeAnalysisUpdated = Notification.Name("episodeAnalysisUpdated")
+}
+
 /// Where transcripts live: Application Support/Transcripts, one JSON file
 /// per episode. They're small, kept after an episode is played (for search
 /// and bookmarks), and deleted when a show is unfollowed.
@@ -148,14 +153,18 @@ final class TranscriptService {
     /// Makes sure this episode gets a transcript. `urgent` puts it first in
     /// line (e.g. Paul opened its transcript).
     func prepare(_ episode: PodcastEpisode, urgent: Bool = false) {
-        guard episode.transcriptState != .ready || episode.transcriptFile.flatMap(TranscriptFiles.load) == nil else { return }
         let id = episode.episodeID
+        let hasTranscript = episode.transcriptState == .ready && episode.transcriptFile.flatMap(TranscriptFiles.load) != nil
+        let downloaded = store.localAudioURL(for: episode) != nil
+        // Done, unless the show's own transcript is in hand but ads haven't
+        // been looked for in Paul's download yet (ads differ per download).
+        if hasTranscript && (episode.adsChecked || !downloaded) { return }
 
-        if let url = episode.transcriptURL, episode.transcriptState != .failed {
+        if !hasTranscript, let url = episode.transcriptURL, episode.transcriptState != .failed {
             Task { await fetchPublisherTranscript(id: id, url: url) }
             return
         }
-        guard store.localAudioURL(for: episode) != nil else {
+        guard downloaded else {
             episode.transcriptState = .waiting
             return
         }
@@ -165,7 +174,7 @@ final class TranscriptService {
         } else if !pending.contains(id), current != id {
             pending.append(id)
         }
-        if episode.transcriptState != .transcribing { episode.transcriptState = .waiting }
+        if !hasTranscript, episode.transcriptState != .transcribing { episode.transcriptState = .waiting }
         startWorker()
     }
 
@@ -210,14 +219,16 @@ final class TranscriptService {
                 let id = pending.remove(at: index)
                 guard let episode = store.episode(id), let audio = store.localAudioURL(for: episode) else { continue }
                 current = id
-                episode.transcriptState = .transcribing
+                let hadTranscript = episode.transcriptState == .ready
+                if !hadTranscript { episode.transcriptState = .transcribing }
                 do {
                     let transcript = try await OnDeviceTranscriber.transcribe(audio)
                     if let episode = store.episode(id) { finish(episode, with: transcript) }
                 } catch {
                     if let episode = store.episode(id) {
                         // Cancelled (e.g. background time ran out): try again later.
-                        episode.transcriptState = Task.isCancelled ? .waiting : .failed
+                        if !hadTranscript { episode.transcriptState = Task.isCancelled ? .waiting : .failed }
+                        if !Task.isCancelled { episode.adsChecked = true }
                         if Task.isCancelled { pending.insert(id, at: 0) }
                     }
                 }
@@ -237,15 +248,60 @@ final class TranscriptService {
     }
 
     private func finish(_ episode: PodcastEpisode, with transcript: Transcript) {
+        var saved = transcript
+        if transcript.source == .onDevice, let existing = self.transcript(for: episode), existing.source == .publisher {
+            // Keep the show's transcript for reading; ours supplies the music
+            // and the timings of Paul's own download.
+            saved = existing
+            saved.music = transcript.music
+        }
         let name = TranscriptFiles.name(for: episode.episodeID)
         do {
-            try TranscriptFiles.save(transcript, as: name)
+            try TranscriptFiles.save(saved, as: name)
             episode.transcriptFile = name
             episode.transcriptState = .ready
         } catch {
             episode.transcriptState = .failed
         }
+        analyse(episode, timing: transcript)
         store.save()
+    }
+
+    /// Finds ad breaks (only from an on-device transcript of the download)
+    /// and makes chapters when the show supplies none.
+    private func analyse(_ episode: PodcastEpisode, timing transcript: Transcript) {
+        let id = episode.episodeID
+        let lines = TranscriptLayout.lines(from: transcript.segments)
+        if transcript.source == .onDevice {
+            let dismissed = episode.dismissedAds
+            episode.adBreaks = AdDetection.breaks(in: lines, music: transcript.music)
+                .filter { ad in !dismissed.contains { abs($0 - ad.start) < 5 } }
+            episode.adsChecked = true
+        }
+        if episode.chaptersURL == nil {
+            let duration = episode.duration ?? lines.last?.end ?? 0
+            let chapters = ChapterMaker.chapters(lines: lines, music: transcript.music, ads: episode.adBreaks, duration: duration)
+            episode.autoChapters = chapters
+            // Nicer titles from Apple's on-device language model, when the phone has it.
+            Task {
+                let titled = await ChapterTitler.retitle(chapters, lines: lines)
+                guard titled != chapters, let episode = store.episode(id) else { return }
+                episode.autoChapters = titled
+                store.save()
+                NotificationCenter.default.post(name: .episodeAnalysisUpdated, object: id)
+            }
+        }
+        NotificationCenter.default.post(name: .episodeAnalysisUpdated, object: id)
+    }
+
+    /// "Not an ad": forget this break, and don't find it again.
+    func notAnAd(_ adBreak: AdBreak, in episodeID: String) {
+        guard let episode = store.episode(episodeID) else { return }
+        episode.adBreaks.removeAll { $0 == adBreak }
+        episode.dismissedAds.append(adBreak.start)
+        episode.autoChapters = episode.autoChapters.filter { !($0.isAd && abs($0.start - adBreak.start) < 1) }
+        store.save()
+        NotificationCenter.default.post(name: .episodeAnalysisUpdated, object: episodeID)
     }
 
     // MARK: Background (overnight while charging)

@@ -44,7 +44,26 @@ final class PlayerModel {
     private(set) var boostVoices = false
 
     /// Chapters from the show (feed JSON or embedded in the audio), if any.
-    private(set) var chapters: [Chapter] = []
+    private(set) var showChapters: [Chapter] = []
+    /// Made from the transcript when the show supplies none.
+    private(set) var autoChapters: [Chapter] = []
+
+    enum ChapterSource { case show, auto }
+    /// "From the show" or "Auto-generated" (Chapters screen).
+    var chapterSource: ChapterSource = .show
+
+    var chapters: [Chapter] {
+        chapterSource == .show && !showChapters.isEmpty ? showChapters : autoChapters
+    }
+
+    // MARK: Ads
+
+    /// Ad breaks found in this download.
+    private(set) var adBreaks: [AdBreak] = []
+    /// The break just skipped, for the "Ad skipped" note with Play ad / Not an ad.
+    private(set) var lastSkippedAd: AdBreak?
+    /// Skip ad breaks automatically (default on).
+    private(set) var skipAds = true
 
     var currentChapterIndex: Int? { Chapters.index(at: currentTime, in: chapters) }
     var currentChapter: Chapter? { currentChapterIndex.map { chapters[$0] } }
@@ -63,6 +82,9 @@ final class PlayerModel {
     @ObservationIgnored private let tapState = AudioTapState()
     @ObservationIgnored private var trimTimer: Timer?
     @ObservationIgnored private var hurrying = false
+    /// Breaks Paul chose to hear (Play ad) this time.
+    @ObservationIgnored private var allowedAds: Set<TimeInterval> = []
+    @ObservationIgnored private var skippedNoteTask: Task<Void, Never>?
 
     init(store: LibraryStore) {
         self.store = store
@@ -71,6 +93,7 @@ final class PlayerModel {
         skipForwardSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipForward") as? Int ?? PlayerOptions.defaultSkip)
         speed = min(2, max(1, defaults.object(forKey: "speed") as? Double ?? 1))
         player.defaultRate = Float(speed)
+        skipAds = defaults.object(forKey: "skipAds") as? Bool ?? true
         trimSilences = defaults.bool(forKey: "trimSilences")
         boostVoices = defaults.bool(forKey: "boostVoices")
         tapState.trimSilences = trimSilences
@@ -116,7 +139,9 @@ final class PlayerModel {
         }
         resume()
         loadArtwork(episode.artwork)
-        chapters = []
+        showChapters = []
+        chapterSource = .show
+        loadAnalysis(for: episode)
         loadChapters(episodeID: episode.episodeID, chaptersURL: episode.chaptersURL, audio: source)
     }
 
@@ -259,6 +284,7 @@ final class PlayerModel {
         let seconds = time.seconds
         guard seconds.isFinite else { return }
         currentTime = seconds
+        skipAdIfNeeded(at: seconds)
         if let itemDuration = player.currentItem?.duration.seconds, itemDuration.isFinite, itemDuration > 0,
            abs(itemDuration - duration) > 1 {
             duration = itemDuration
@@ -324,6 +350,14 @@ final class PlayerModel {
             MainActor.assumeIsolated {
                 guard let self, let finishedItem, finishedItem === self.player.currentItem else { return }
                 self.didFinish()
+            }
+        })
+        notificationTokens.append(center.addObserver(forName: .episodeAnalysisUpdated, object: nil, queue: .main) { [weak self] note in
+            let id = note.object as? String
+            MainActor.assumeIsolated {
+                guard let self, let id, id == self.nowPlaying?.episodeID, let episode = self.store.episode(id) else { return }
+                self.adBreaks = episode.adBreaks
+                self.autoChapters = episode.autoChapters
             }
         })
         notificationTokens.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
@@ -402,6 +436,50 @@ final class PlayerModel {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
+    /// Ad breaks and auto chapters, which arrive once the transcript is analysed.
+    private func loadAnalysis(for episode: PodcastEpisode) {
+        adBreaks = episode.adBreaks
+        autoChapters = episode.autoChapters
+        allowedAds = []
+        lastSkippedAd = nil
+    }
+
+    private func skipAdIfNeeded(at time: TimeInterval) {
+        guard skipAds, player.timeControlStatus != .paused,
+              let adBreak = adBreaks.first(where: { $0.contains(time) && !allowedAds.contains($0.start) }) else { return }
+        seek(to: adBreak.end)
+        lastSkippedAd = adBreak
+        skippedNoteTask?.cancel()
+        skippedNoteTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(20))
+            guard !Task.isCancelled else { return }
+            self?.lastSkippedAd = nil
+        }
+    }
+
+    func setSkipAds(_ on: Bool) {
+        skipAds = on
+        UserDefaults.standard.set(on, forKey: "skipAds")
+    }
+
+    /// "Play ad": goes back and plays this break once.
+    func playAd(_ adBreak: AdBreak) {
+        allowedAds.insert(adBreak.start)
+        lastSkippedAd = nil
+        seek(to: adBreak.start)
+    }
+
+    /// "Not an ad": it's never skipped again, and playback goes back to it.
+    func notAnAd(_ adBreak: AdBreak, transcripts: TranscriptService) {
+        guard let id = nowPlaying?.episodeID else { return }
+        transcripts.notAnAd(adBreak, in: id)
+        adBreaks.removeAll { $0 == adBreak }
+        if lastSkippedAd == adBreak {
+            lastSkippedAd = nil
+            seek(to: adBreak.start)
+        }
+    }
+
     private func loadChapters(episodeID: String, chaptersURL: URL?, audio: URL) {
         Task {
             var found: [Chapter] = []
@@ -412,7 +490,7 @@ final class PlayerModel {
                 found = await Self.embeddedChapters(in: audio)
             }
             guard nowPlaying?.episodeID == episodeID else { return }
-            chapters = Chapters.tidy(found, duration: duration > 0 ? duration : nil)
+            showChapters = Chapters.tidy(found, duration: duration > 0 ? duration : nil)
         }
     }
 

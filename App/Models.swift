@@ -62,6 +62,14 @@ final class PodcastEpisode {
     var transcriptStateRaw: String = TranscriptState.none.rawValue
     /// File name in `TranscriptFiles.directory` once there is a transcript.
     var transcriptFile: String?
+    /// Ad breaks found in Paul's own download (JSON `[AdBreak]`).
+    var adBreaksData: Data?
+    /// Starts of breaks Paul marked "Not an ad", so they aren't found again.
+    var dismissedAdsData: Data?
+    /// True once ads were looked for in an on-device transcript of the download.
+    var adsChecked: Bool = false
+    /// Chapters made from the transcript (JSON `[Chapter]`).
+    var autoChaptersData: Data?
     var chaptersURL: URL?
     /// Where playback stopped, in seconds.
     var position: TimeInterval = 0
@@ -90,6 +98,21 @@ final class PodcastEpisode {
     }
 
     var artwork: URL? { artworkURL ?? podcast?.artworkURL }
+
+    var adBreaks: [AdBreak] {
+        get { adBreaksData.flatMap { try? JSONDecoder().decode([AdBreak].self, from: $0) } ?? [] }
+        set { adBreaksData = try? JSONEncoder().encode(newValue) }
+    }
+
+    var dismissedAds: [TimeInterval] {
+        get { dismissedAdsData.flatMap { try? JSONDecoder().decode([TimeInterval].self, from: $0) } ?? [] }
+        set { dismissedAdsData = try? JSONEncoder().encode(newValue) }
+    }
+
+    var autoChapters: [Chapter] {
+        get { autoChaptersData.flatMap { try? JSONDecoder().decode([Chapter].self, from: $0) } ?? [] }
+        set { autoChaptersData = try? JSONEncoder().encode(newValue) }
+    }
 
     var transcriptState: TranscriptState {
         get { TranscriptState(rawValue: transcriptStateRaw) ?? .none }

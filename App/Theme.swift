@@ -11,6 +11,7 @@ enum Theme {
     static let accentFill = Color(hex: 0xAD5230)
     static let accentText = Color(hex: 0xA4512F)
     static let highlight = Color(hex: 0xF3E3C6)
+    static let adMarker = Color(hex: 0xD9A441)
 
     /// Muted tones for artwork placeholders.
     static let placeholders: [Color] = ([0x4A5D73, 0x4F6B5A, 0x7A5368, 0x8A6A3F, 0x5B5750, 0x6A5E86] as [UInt32]).map { Color(hex: $0) }

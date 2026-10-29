@@ -19,6 +19,8 @@ struct TranscriptView: View {
     @State private var follow = true
     @State private var namingSpeakers = false
     @State private var bookmarked: String?
+    /// Ad bands Paul expanded with Show.
+    @State private var shownAds: Set<TimeInterval> = []
 
     private var isThisEpisodePlaying: Bool { player.nowPlaying?.episodeID == episode.episodeID }
 
@@ -58,6 +60,7 @@ struct TranscriptView: View {
             }
         }
         .task(id: episode.transcriptStateRaw) { load() }
+        .onChange(of: episode.adBreaksData) { load() }
     }
 
     private var subtitle: String {
@@ -69,7 +72,8 @@ struct TranscriptView: View {
 
     private func load() {
         transcript = transcripts.transcript(for: episode)
-        blocks = transcript.map(TranscriptLayout.blocks(for:)) ?? []
+        let ads = episode.adBreaks
+        blocks = transcript.map { TranscriptLayout.blocks(for: $0, ads: ads) } ?? []
         // Publisher transcripts are just fetched; on-device ones follow the
         // schedule unless Paul taps Transcribe now.
         if transcript == nil { transcripts.prepare(episode) }
@@ -95,6 +99,8 @@ struct TranscriptView: View {
                                 case .line(let line):
                                     lineView(line, speakers: speakers, names: names, current: current)
                                         .id(line.start)
+                                case .ad(let adBreak, let adLines):
+                                    adBand(adBreak, lines: adLines, speakers: speakers, names: names, current: current)
                                 case .music(let span):
                                     Label("Music · \(TimeFormat.stamp(span.length))", systemImage: "music.note")
                                         .font(.subheadline)
@@ -157,6 +163,39 @@ struct TranscriptView: View {
                 Button("Bookmark", systemImage: "bookmark") { bookmark(line, quote: quote) }
             }
             .accessibilityHint("Plays from \(TimeFormat.clock(line.start))")
+    }
+
+    /// An ad break as a dashed band; Show reveals its lines.
+    private func adBand(_ adBreak: AdBreak, lines adLines: [TranscriptLayout.Line], speakers: [String], names: [String: String], current: TimeInterval?) -> some View {
+        let shown = shownAds.contains(adBreak.start)
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Text("Ad break · \(TimeFormat.stamp(adBreak.length))" + (player.skipAds ? " · skipped" : ""))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.muted)
+                Spacer()
+                Button(shown ? "Hide" : "Show") {
+                    if shown { shownAds.remove(adBreak.start) } else { shownAds.insert(adBreak.start) }
+                }
+                Button("Not an ad?") {
+                    transcripts.notAnAd(adBreak, in: episode.episodeID)
+                }
+            }
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(Theme.accentText)
+            .buttonStyle(.plain)
+            if shown {
+                ForEach(adLines, id: \.start) { line in
+                    lineView(line, speakers: speakers, names: names, current: current)
+                        .opacity(0.7)
+                }
+            }
+        }
+        .padding(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Theme.adMarker, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+        )
     }
 
     /// Start of the line playing now (only when this episode is playing).

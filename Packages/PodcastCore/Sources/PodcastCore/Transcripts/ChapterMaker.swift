@@ -30,10 +30,10 @@ public enum ChapterMaker {
         let wanted = max(1, min(12, Int((duration / targetLength).rounded()))) - 1
         var cuts: [TimeInterval] = []
         for candidate in candidates.sorted(by: { $0.score > $1.score }) where cuts.count < wanted {
-            let tooClose = cuts.contains { abs($0 - candidate.time) < minimumLength }
-                || candidate.time - first.start < minimumLength
-                || duration - candidate.time < minimumLength
-            if !tooClose { cuts.append(candidate.time) }
+            let nearOtherCut = cuts.contains { abs($0 - candidate.time) < minimumLength }
+            let nearStart = candidate.time - first.start < minimumLength
+            let nearEnd = duration - candidate.time < minimumLength
+            if !nearOtherCut && !nearStart && !nearEnd { cuts.append(candidate.time) }
         }
         let starts = ([0] + cuts.sorted())
 
@@ -81,12 +81,13 @@ public enum ChapterMaker {
     static func title(for text: [String], among all: [String], index: Int) -> String {
         let here = words(text)
         let everywhere = words(all)
-        let ranked = here
-            .filter { $0.value >= 2 && $0.key.count >= 4 }
-            .map { (word: $0.key, score: Double($0.value) / Double(everywhere[$0.key] ?? 1).squareRoot()) }
-            .sorted { $0.score != $1.score ? $0.score > $1.score : $0.word < $1.word }
-            .prefix(3)
-            .map(\.word)
+        var scored: [(word: String, score: Double)] = []
+        for (word, count) in here where count >= 2 && word.count >= 4 {
+            let overall = Double(everywhere[word] ?? 1)
+            scored.append((word, Double(count) / overall.squareRoot()))
+        }
+        scored.sort { a, b in a.score != b.score ? a.score > b.score : a.word < b.word }
+        let ranked: [String] = scored.prefix(3).map { $0.word }
         guard !ranked.isEmpty else { return index == 0 ? "Introduction" : "Part \(index + 1)" }
         var list = ranked
         list[0] = list[0].prefix(1).uppercased() + list[0].dropFirst()

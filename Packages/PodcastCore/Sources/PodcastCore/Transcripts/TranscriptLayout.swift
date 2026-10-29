@@ -13,11 +13,22 @@ public enum TranscriptLayout {
     public enum Row: Equatable, Hashable, Sendable {
         case line(Line)
         case music(MusicSpan)
+        /// An ad break, shown as one band; its lines are hidden until Paul taps Show.
+        case ad(AdBreak, [Line])
 
         public var start: TimeInterval {
             switch self {
             case .line(let line): return line.start
             case .music(let span): return span.start
+            case .ad(let adBreak, _): return adBreak.start
+            }
+        }
+
+        var end: TimeInterval {
+            switch self {
+            case .line(let line): return line.end
+            case .music(let span): return span.end
+            case .ad(let adBreak, _): return adBreak.end
             }
         }
     }
@@ -52,22 +63,32 @@ public enum TranscriptLayout {
         return lines
     }
 
-    public static func blocks(for transcript: Transcript) -> [Block] {
-        let rows = (lines(from: transcript.segments).map(Row.line) + transcript.music.map(Row.music))
-            .sorted { $0.start < $1.start }
+    /// - Parameter ads: ad breaks; lines and music inside them fold into one
+    ///   `.ad` row, which always gets a block of its own.
+    public static func blocks(for transcript: Transcript, ads: [AdBreak] = []) -> [Block] {
+        let allLines = lines(from: transcript.segments)
+        let inAd = { (time: TimeInterval) in ads.contains { $0.contains(time) } }
+        var rows = allLines.filter { !inAd($0.start) }.map(Row.line)
+            + transcript.music.filter { !inAd($0.start) }.map(Row.music)
+        for adBreak in ads {
+            rows.append(.ad(adBreak, allLines.filter { adBreak.contains($0.start) }))
+        }
+        rows.sort { $0.start < $1.start }
+
         var blocks: [Block] = []
         var previousEnd: TimeInterval = -.infinity
+        var previousWasAd = false
         for row in rows {
             let gap = row.start - previousEnd
-            if let current = blocks.last, row.start - current.start < blockLength, gap < pause {
+            let isAd: Bool
+            if case .ad = row { isAd = true } else { isAd = false }
+            if let current = blocks.last, !isAd, !previousWasAd, row.start - current.start < blockLength, gap < pause {
                 blocks[blocks.count - 1].rows.append(row)
             } else {
                 blocks.append(Block(start: row.start, rows: [row]))
             }
-            switch row {
-            case .line(let line): previousEnd = max(previousEnd, line.end)
-            case .music(let span): previousEnd = max(previousEnd, span.end)
-            }
+            previousEnd = max(previousEnd, row.end)
+            previousWasAd = isAd
         }
         return blocks
     }

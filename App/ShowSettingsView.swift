@@ -154,6 +154,16 @@ struct TopPriorityView: View {
             .listRowBackground(Theme.background)
 
             Section {
+                Toggle("Skip ads automatically", isOn: Binding(get: { player.skipAds }, set: { player.setSkipAds($0) }))
+                    .tint(Theme.accentFill)
+            } header: {
+                Text("Ads")
+            } footer: {
+                Text("Ad breaks are found in each downloaded episode's transcript on your iPhone. Skipped breaks are marked on the scrubber; tap Play ad or Not an ad to correct one.")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
                 Toggle("Keep each show in order", isOn: $store.keepShowOrder)
                     .tint(Theme.accentFill)
             } footer: {

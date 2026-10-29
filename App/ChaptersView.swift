@@ -10,6 +10,21 @@ struct ChaptersView: View {
     var body: some View {
         NavigationStack {
             List {
+                if !player.showChapters.isEmpty && !player.autoChapters.isEmpty {
+                    Picker("Chapters", selection: Binding(get: { player.chapterSource }, set: { player.chapterSource = $0 })) {
+                        Text("From the show").tag(PlayerModel.ChapterSource.show)
+                        Text("Auto-generated").tag(PlayerModel.ChapterSource.auto)
+                    }
+                    .pickerStyle(.segmented)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
+                } else if player.showChapters.isEmpty && !player.autoChapters.isEmpty {
+                    Text("Made on your iPhone from the transcript.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.muted)
+                        .listRowBackground(Theme.background)
+                        .listRowSeparator(.hidden)
+                }
                 let current = player.currentChapterIndex
                 ForEach(Array(player.chapters.enumerated()), id: \.offset) { index, chapter in
                     Button {
@@ -28,7 +43,7 @@ struct ChaptersView: View {
             .background(Theme.background)
             .overlay {
                 if player.chapters.isEmpty {
-                    ContentUnavailableView("No chapters", systemImage: "list.bullet.rectangle", description: Text("This episode doesn't come with chapters."))
+                    ContentUnavailableView("No chapters", systemImage: "list.bullet.rectangle", description: Text("This episode doesn't come with chapters. They're made automatically once it has a transcript."))
                         .foregroundStyle(Theme.muted)
                 }
             }
@@ -55,7 +70,7 @@ private struct ChapterRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(chapter.title)
                     .font(.body.weight(isCurrent ? .semibold : .regular))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(chapter.isAd ? Theme.muted : Theme.ink)
                     .lineLimit(2)
                 Text(meta)
                     .font(.caption)
@@ -71,6 +86,7 @@ private struct ChapterRow: View {
     private var meta: String {
         var parts = [TimeFormat.clock(chapter.start)]
         if let length = chapter.length, length > 0 { parts.append(TimeFormat.length(length)) }
+        if chapter.isAd { parts.append("Skipped") }
         if isCurrent { parts.append("Playing") }
         return parts.joined(separator: " · ")
     }
