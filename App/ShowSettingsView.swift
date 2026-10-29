@@ -136,6 +136,7 @@ struct TopPriorityView: View {
     @Query(sort: \Podcast.title) private var allShows: [Podcast]
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
+    @State private var labelSpeakers = SpeakerSeparation.isEnabled
 
     var body: some View {
         @Bindable var store = store
@@ -233,12 +234,14 @@ struct TopPriorityView: View {
                     ForEach(TranscriptService.Schedule.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.menu)
+                Toggle("Label speakers", isOn: $labelSpeakers)
+                    .onChange(of: labelSpeakers) { _, on in SpeakerSeparation.isEnabled = on }
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
             } header: {
                 Text("Transcripts")
             } footer: {
-                Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now.")
+                Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now. Label speakers works out who is talking (Speaker 1, Speaker 2…); it downloads a small model once.")
             }
             .listRowBackground(Theme.background)
             .tint(Theme.accentFill)

@@ -341,7 +341,10 @@ enum OnDeviceTranscriber {
 
     static func transcribe(_ audio: URL) async throws -> Transcript {
         async let music = MusicDetector.spans(in: audio)
-        let segments = try await speech(in: audio)
+        let words = try await speech(in: audio)
+        // Then who spoke when (one job at a time keeps the phone cool).
+        let turns = await SpeakerSeparation.turns(in: audio)
+        let segments = SpeakerLabels.assign(turns, to: words)
         return Transcript(source: .onDevice, segments: segments, music: await music)
     }
 
@@ -350,7 +353,8 @@ enum OnDeviceTranscriber {
         if locale == nil { locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "en-GB")) }
         guard let locale else { throw Failure.languageNotSupported }
 
-        let transcriber = SpeechTranscriber(locale: locale, preset: .transcription)
+        // Word timings, so each word can be matched to its speaker.
+        let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [], attributeOptions: [.audioTimeRange])
         // The speech model is downloaded by iOS the first time.
         if let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
             try await request.downloadAndInstall()
@@ -361,6 +365,12 @@ enum OnDeviceTranscriber {
         let collector = Task { () -> [TranscriptSegment] in
             var segments: [TranscriptSegment] = []
             for try await result in transcriber.results where result.isFinal {
+                let words = wordSegments(of: result)
+                if !words.isEmpty {
+                    segments += words
+                    continue
+                }
+                // No word timings: keep the phrase as one piece.
                 let text = String(result.text.characters).trimmingCharacters(in: .whitespacesAndNewlines)
                 let start = result.range.start.seconds
                 let end = result.range.end.seconds
@@ -381,6 +391,25 @@ enum OnDeviceTranscriber {
             throw error
         }
         return try await collector.value
+    }
+}
+
+extension OnDeviceTranscriber {
+    /// One segment per timed word; text without a time (e.g. punctuation)
+    /// joins the word before it.
+    static func wordSegments(of result: SpeechTranscriber.Result) -> [TranscriptSegment] {
+        var words: [TranscriptSegment] = []
+        for run in result.text.runs {
+            let text = String(result.text[run.range].characters).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { continue }
+            if let range = run[AttributeScopes.SpeechAttributes.TimeRangeAttribute.self], range.start.seconds.isFinite {
+                let end = range.end.seconds
+                words.append(TranscriptSegment(start: range.start.seconds, end: end.isFinite ? end : range.start.seconds, text: text))
+            } else if !words.isEmpty {
+                words[words.count - 1].text += text
+            }
+        }
+        return words
     }
 }
 
