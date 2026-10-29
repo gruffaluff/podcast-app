@@ -25,7 +25,9 @@ terracotta accent).
   green, and tell him when a new TestFlight build is ready to try.
 - **After committing any change, ask Paul whether to update CLAUDE.md**
   (e.g. Progress, decisions, open questions), and say what you'd change.
-  Don't skip this, even for small changes.
+  Don't skip this, even for small changes. Exception: when Paul says to
+  keep going through the steps, keep CLAUDE.md up to date yourself and
+  give him one summary (including what changed here) when the work is done.
 
 ## Features (decided)
 
@@ -99,7 +101,13 @@ terracotta accent).
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
   (`<podcast:transcript>`), otherwise **transcribe on the iPhone**.
-- Transcription runs in the background, preferring charging + Wi-Fi.
+- Transcription follows a schedule Paul picks (Shows screen → Transcripts):
+  **As soon as downloaded** (default), **While charging** (incl. overnight
+  via a background task), or **Only when I ask**. **Transcribe now** (in
+  the transcript screen, episode menus, Up Next menu; "Transcribe Up Next
+  now" in settings) skips the schedule and downloads the episode first if
+  needed. Transcripts are made only from downloaded audio and kept after
+  the episode is played (for search and bookmarks).
 - **Speakers**: identify who is speaking (on-device speaker separation, e.g. an
   open-source Core ML diarization model) and label each line "Speaker 1",
   "Speaker 2"… Use real names when the publisher's transcript has them; Paul
@@ -209,10 +217,21 @@ terracotta accent).
   through pauses over 0.3s) and Boost voices (compressor + limiter) via an
   audio tap. Trim/Boost strengths are first guesses: tune once Paul has
   listened. Ad breaks on the scrubber come with step 6.
-- Next: step 5 (publisher transcripts, on-device transcription, transcript
-  view, search).
+- Done (step 5): publisher transcripts (best of JSON/VTT/SRT, with speaker
+  names), on-device transcription with Apple's SpeechAnalyzer /
+  SpeechTranscriber (checked against Apple's docs; iOS 26+ API), music
+  rows via SoundAnalysis, transcript screen (timestamp groups, follows
+  playback, tap to play, copy/share/bookmark, Name speakers per show),
+  transcript status on Up Next rows, schedule + Transcribe now, Search tab
+  (transcripts with highlighted quotes, shows/episodes, My clips =
+  bookmarks for now). Not yet: speaker separation for on-device
+  transcripts (see open questions); clip cards (step 7).
+- Next: step 6 (ad detection and skipping, auto-generated chapters), then
+  step 7 (notifications, background checks, Discover, clip sharing).
 
 ## Open questions for Paul
 
+- Speaker separation for on-device transcripts: needs a bundled open-source
+  diarization model (roughly 30–100 MB). Now, later, or never?
 - App name and icon.
 - Importing existing subscriptions (OPML export from his current app).
