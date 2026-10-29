@@ -26,8 +26,17 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks | grep -i iphone || true
 
-      - name: Run queue rule tests
-        run: swift test --package-path Packages/PodcastCore
+      - name: Run PodcastCore tests
+        run: |
+          set -o pipefail
+          swift test --package-path Packages/PodcastCore 2>&1 | tee test.log || {
+            echo "::group::Failures"
+            grep -E "error:|failed \(" test.log || true
+            echo "::endgroup::"
+            echo "---- FAILURES ----"
+            grep -E "error:|failed \(" test.log || true
+            exit 1
+          }
 
       - name: Generate Xcode project
         run: |
