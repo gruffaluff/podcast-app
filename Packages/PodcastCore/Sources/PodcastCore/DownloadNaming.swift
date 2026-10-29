@@ -12,7 +12,7 @@ public enum DownloadNaming {
     }
 
     /// 64-bit FNV-1a as 16 hex digits. Stable across launches, unlike `hashValue`.
-    static func stableHash(_ string: String) -> String {
+    public static func stableHash(_ string: String) -> String {
         var hash: UInt64 = 0xcbf2_9ce4_8422_2325
         for byte in string.utf8 {
             hash ^= UInt64(byte)

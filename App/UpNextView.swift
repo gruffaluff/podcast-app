@@ -150,6 +150,12 @@ private struct QueueRow: View {
         }
         parts.append(sourceLabel)
         if let download = downloads.status(for: episode) { parts.append(download) }
+        switch episode.transcriptState {
+        case .ready: parts.append("Transcript ready")
+        case .transcribing: parts.append("Transcribing")
+        case .waiting: parts.append("Transcript waiting")
+        case .none, .failed: break
+        }
         return parts.joined(separator: " · ")
     }
 

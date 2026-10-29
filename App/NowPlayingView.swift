@@ -7,10 +7,12 @@ import PodcastCore
 /// chapters join the controls row later in step 4.
 struct NowPlayingView: View {
     @Environment(PlayerModel.self) private var player
+    @Environment(LibraryStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     /// While dragging the scrubber, where the thumb is.
     @State private var scrubTime: TimeInterval?
     @State private var showingChapters = false
+    @State private var transcriptEpisode: PodcastEpisode?
 
     private let text = Color.white
     private let secondary = Color.white.opacity(ColorContrast.secondaryAlpha)
@@ -56,6 +58,7 @@ struct NowPlayingView: View {
         }
         .animation(.easeInOut(duration: 0.4), value: player.nowPlaying?.artworkURL)
         .sheet(isPresented: $showingChapters) { ChaptersView() }
+        .sheet(item: $transcriptEpisode) { TranscriptView(episode: $0) }
     }
 
     /// Current chapter; tap for the list.
@@ -224,9 +227,19 @@ struct NowPlayingView: View {
             .frame(maxWidth: .infinity, minHeight: 44)
     }
 
-    /// AirPlay / Bluetooth picker, and where the sound is going.
+    /// Transcript, AirPlay / Bluetooth picker, and where the sound is going.
     private var routeRow: some View {
         HStack(spacing: 8) {
+            Button {
+                transcriptEpisode = player.nowPlaying.flatMap { store.episode($0.episodeID) }
+            } label: {
+                Label("Transcript", systemImage: "text.quote")
+                    .font(.footnote.weight(.medium))
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(text)
+            Spacer()
             RoutePicker(tint: .white)
                 .frame(width: 44, height: 44)
                 .accessibilityLabel("Play on another device")

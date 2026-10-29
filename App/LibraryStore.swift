@@ -37,6 +37,8 @@ final class LibraryStore {
 
     /// Set by `DownloadManager` so new episodes can be auto-downloaded.
     @ObservationIgnored weak var downloads: DownloadManager?
+    /// Set by `TranscriptService` so new and downloaded episodes get transcripts.
+    @ObservationIgnored weak var transcripts: TranscriptService?
 
     init(context: ModelContext) {
         self.context = context
@@ -110,6 +112,7 @@ final class LibraryStore {
         let feedURL = show.feedURL
         for episode in show.episodes {
             removeDownloadFile(of: episode)
+            if let name = episode.transcriptFile { TranscriptFiles.delete(name) }
         }
         commit(queue.filter { $0.episode.showID != feedURL })
         context.delete(show)
@@ -182,6 +185,7 @@ final class LibraryStore {
         let freshEpisodes = episodes(fresh.map(\.id))
         downloads?.autoDownload(fresh.compactMap { freshEpisodes[$0.id] })
         cleanUpPlayedDownloads()
+        transcripts?.prepareUpNext()
     }
 
     /// Saves episodes not seen before; returns the fresh releases among them.
@@ -203,7 +207,9 @@ final class LibraryStore {
             )
             episode.duration = parsed.duration
             episode.artworkURL = parsed.artworkURL
-            episode.transcriptURL = parsed.transcripts.first?.url
+            let transcript = TranscriptParser.preferred(parsed.transcripts)
+            episode.transcriptURL = transcript?.url
+            episode.transcriptType = transcript?.type
             episode.chaptersURL = parsed.chaptersURL
             context.insert(episode)
             episode.podcast = show
@@ -308,6 +314,7 @@ final class LibraryStore {
         }
         episode.downloadFile = fileName
         save()
+        transcripts?.prepare(episode)
     }
 
     /// Deletes an episode's download (or stops it downloading).

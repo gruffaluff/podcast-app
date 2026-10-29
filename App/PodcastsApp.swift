@@ -7,6 +7,7 @@ struct PodcastsApp: App {
     @State private var store: LibraryStore
     @State private var player: PlayerModel
     @State private var downloads: DownloadManager
+    @State private var transcripts: TranscriptService
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
@@ -16,6 +17,9 @@ struct PodcastsApp: App {
         _store = State(initialValue: store)
         _player = State(initialValue: PlayerModel(store: store))
         _downloads = State(initialValue: DownloadManager(store: store))
+        let transcripts = TranscriptService(store: store)
+        transcripts.registerBackgroundTask()
+        _transcripts = State(initialValue: transcripts)
     }
 
     var body: some Scene {
@@ -24,12 +28,13 @@ struct PodcastsApp: App {
                 .environment(store)
                 .environment(player)
                 .environment(downloads)
+                .environment(transcripts)
         }
         .modelContainer(container)
     }
 
     private static func makeContainer() -> ModelContainer {
-        let types: [any PersistentModel.Type] = [Podcast.self, PodcastEpisode.self, UpNextEntry.self]
+        let types: [any PersistentModel.Type] = [Podcast.self, PodcastEpisode.self, UpNextEntry.self, Bookmark.self]
         if let container = try? ModelContainer(for: Schema(types), configurations: ModelConfiguration()) {
             return container
         }
@@ -41,6 +46,7 @@ struct PodcastsApp: App {
 
 struct RootView: View {
     @Environment(LibraryStore.self) private var store
+    @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingPlayer = false
 
@@ -65,9 +71,13 @@ struct RootView: View {
                 .presentationDragIndicator(.visible)
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .background {
+                transcripts.scheduleBackgroundWork()
+            }
             // Check feeds when the app opens, at most once an hour.
             guard phase == .active else { return }
             store.cleanUpPlayedDownloads()
+            transcripts.prepareUpNext()
             if store.lastChecked.map({ Date().timeIntervalSince($0) > 3600 }) ?? true {
                 Task { await store.refreshAll() }
             }

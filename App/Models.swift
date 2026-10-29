@@ -18,6 +18,9 @@ final class Podcast {
     var autoDownload: Bool = true
     /// Alert when a new episode arrives (takes effect with notifications, step 7).
     var notify: Bool = false
+    /// Names Paul gave the speakers in this show's transcripts
+    /// (label in the transcript → name), stored as JSON.
+    var speakerNamesData: Data?
     var followedAt: Date = Date()
     var lastChecked: Date?
     @Relationship(deleteRule: .cascade, inverse: \PodcastEpisode.podcast)
@@ -34,6 +37,11 @@ final class Podcast {
     var autoAdd: AutoAddMode {
         AutoAddMode(rawValue: autoAddRaw) ?? .off
     }
+
+    var speakerNames: [String: String] {
+        get { speakerNamesData.flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:] }
+        set { speakerNamesData = try? JSONEncoder().encode(newValue) }
+    }
 }
 
 @Model
@@ -48,6 +56,12 @@ final class PodcastEpisode {
     var duration: TimeInterval?
     var artworkURL: URL?
     var transcriptURL: URL?
+    /// MIME type of `transcriptURL`, from the feed.
+    var transcriptType: String?
+    /// See `TranscriptState`.
+    var transcriptStateRaw: String = TranscriptState.none.rawValue
+    /// File name in `TranscriptFiles.directory` once there is a transcript.
+    var transcriptFile: String?
     var chaptersURL: URL?
     /// Where playback stopped, in seconds.
     var position: TimeInterval = 0
@@ -77,9 +91,39 @@ final class PodcastEpisode {
 
     var artwork: URL? { artworkURL ?? podcast?.artworkURL }
 
+    var transcriptState: TranscriptState {
+        get { TranscriptState(rawValue: transcriptStateRaw) ?? .none }
+        set { transcriptStateRaw = newValue.rawValue }
+    }
+
     var timeLeft: TimeInterval? {
         guard let duration else { return nil }
         return max(0, duration - position)
+    }
+}
+
+enum TranscriptState: String {
+    /// Nothing done yet.
+    case none
+    /// Waiting for the audio to download (or for its turn).
+    case waiting
+    case transcribing
+    case ready
+    case failed
+}
+
+/// A moment Paul bookmarked from a transcript line.
+@Model
+final class Bookmark {
+    var episodeID: String
+    var time: TimeInterval
+    var text: String
+    var created: Date = Date()
+
+    init(episodeID: String, time: TimeInterval, text: String) {
+        self.episodeID = episodeID
+        self.time = time
+        self.text = text
     }
 }
 
