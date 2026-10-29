@@ -40,6 +40,13 @@ terracotta accent).
   - **Play next / Play last** follow the same rule when the setting
     "Keep each show in order" is on (default on).
   - Adding several episodes at once inserts them oldest first.
+- **Auto-download**: new episodes from auto-add shows download automatically
+  (respecting the Wi-Fi-only setting) so they are ready to play and transcribe.
+- **Removal on completion**: when an episode finishes it is marked played,
+  removed from Up Next, and its download is deleted to save space.
+  Proposed defaults (confirm with Paul): delete straight away, with a setting
+  to keep played downloads for 24 hours; episodes with bookmarks or clips keep
+  their transcript but not the audio.
 - "Keep playing new episodes" toggle: when the queue runs out, continue with new
   episodes from auto-add shows.
 - Queue rows show transcript status (ready / transcribing / waiting) and source
