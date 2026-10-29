@@ -4,6 +4,7 @@ import PodcastCore
 struct UpNextView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
+    @State private var showingPriority = false
 
     var body: some View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
@@ -53,7 +54,23 @@ struct UpNextView: View {
             .refreshable { await store.refreshAll() }
             .navigationTitle("Up Next")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingPriority = true } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                    .accessibilityLabel("Top show priority")
+                }
                 ToolbarItem(placement: .topBarTrailing) { EditButton() }
+            }
+            .sheet(isPresented: $showingPriority) {
+                NavigationStack {
+                    TopPriorityView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { showingPriority = false }
+                            }
+                        }
+                }
             }
         }
     }

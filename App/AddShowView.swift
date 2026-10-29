@@ -10,6 +10,8 @@ struct AddShowView: View {
     @State private var searching = false
     @State private var following: Set<String> = []
     @State private var message: String?
+    /// A show just followed, whose settings sheet is open.
+    @State private var justFollowed: Podcast?
 
     var body: some View {
         NavigationStack {
@@ -52,6 +54,9 @@ struct AddShowView: View {
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Shows, people, topics or a feed link")
             .textInputAutocapitalization(.never)
             .onSubmit(of: .search) { search() }
+            .sheet(item: $justFollowed) { show in
+                ShowSettingsView(show: show, justFollowed: true)
+            }
             .navigationTitle("Add a show")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -106,8 +111,10 @@ struct AddShowView: View {
         Task {
             defer { following.remove(key) }
             do {
+                let isNew = store.podcast(feedURL: key) == nil
                 let show = try await store.follow(feedURL: url)
                 message = "Following \(show.title)."
+                if isNew { justFollowed = show }
             } catch {
                 message = "Couldn't read that show's feed. (\(error.localizedDescription))"
             }

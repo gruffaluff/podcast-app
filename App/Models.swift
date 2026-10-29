@@ -14,6 +14,10 @@ final class Podcast {
     var autoAddRaw: String = AutoAddMode.off.rawValue
     /// Position among Top shows; lower is higher priority.
     var topRank: Int = 0
+    /// Download new episodes automatically (takes effect once downloads are built).
+    var autoDownload: Bool = true
+    /// Alert when a new episode arrives (takes effect with notifications, step 7).
+    var notify: Bool = false
     var followedAt: Date = Date()
     var lastChecked: Date?
     @Relationship(deleteRule: .cascade, inverse: \PodcastEpisode.podcast)

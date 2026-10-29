@@ -32,6 +32,12 @@ terracotta accent).
 ### Up Next queue
 - Manual queue with drag to reorder, plus "Play next" and "Play last" on any episode.
 - **Auto-add per show**: each subscribed show is set to **Off**, **Top** or **Bottom**.
+  Newly followed shows default to **Bottom** (Paul's call).
+- **Right after following a show, a settings sheet opens**: auto-add
+  (Off/Top/Bottom), auto-download, notifications; the **last** item links to
+  the separate "Top show priority" screen (ranking lives there, not in the
+  sheet). The same sheet opens from the show page, and the priority screen
+  from the sliders icon on Up Next.
 - **Each show always stays in chronological order (oldest first).** This is the core rule.
   - **Top shows are ranked by priority** (Paul drags them into order on the
     Shows screen). The top of Up Next holds Top-show episodes in that rank order.
@@ -159,16 +165,35 @@ terracotta accent).
 
 ## Progress
 
-- Done: Up Next ordering rules in `Packages/PodcastCore` (`QueueEngine`) with
-  unit tests; SwiftUI app skeleton (`App/`, project generated from
-  `project.yml` by XcodeGen) with tabs and an Up Next list driven by the real
-  rules using sample data; GitHub Actions `Build` workflow (tests + unsigned
-  simulator build) passing.
+- Done (step 1, minus TestFlight): Up Next ordering rules in
+  `Packages/PodcastCore` (`QueueEngine`) with unit tests; SwiftUI app
+  (`App/`, project generated from `project.yml` by XcodeGen); GitHub Actions
+  `Build` workflow (tests + unsigned simulator build). It runs on pushes to
+  `main` and PRs; for other branches, start it by hand ("Run workflow").
+- Done (step 2): feed reader (RSS + iTunes + Podcasting 2.0 transcript and
+  chapter links), new-episode detection that never floods Up Next with
+  back-filled episodes, Apple directory search, all unit-tested in
+  PodcastCore. App: SwiftData library (shows, episodes, saved Up Next);
+  "Add a show" (search by name or paste a feed link) followed by the show
+  settings sheet; Library (New Episodes cards + Your shows grid); show page
+  with episode list, Play next / Play last / mark played; refresh on launch
+  (at most hourly) and pull to refresh, feeding Up Next by the rules; Top
+  show priority screen (drag to re-rank, re-sorts Up Next; "Keep each show
+  in order" toggle); streaming playback with mini player, basic full player,
+  lock screen / headphone controls, resume position, mark played and
+  auto-advance on finish, AirPlay device picker.
+- Not built yet from step 2/3 features: downloads (episodes stream for now;
+  auto-download and notification toggles are saved but do nothing yet),
+  removal of downloads on completion, "Keep playing new episodes".
 - Waiting on Paul: Apple Developer Program membership (name correction with
   Apple support in progress). Then add signing + the TestFlight upload job
   (see `docs/SETUP.md`) to finish step 1.
-- Next without Apple: step 2 (subscriptions, feed parsing, episode list,
-  basic playback).
+- Waiting on GitHub: the macOS build machines only have Xcode 26.6 (iOS
+  26.5 SDK) while the app targets iOS 27. It compiles (with a warning), but
+  TestFlight uploads will need the iOS 27 SDK once GitHub adds it.
+- Next: downloads (auto-download, Wi-Fi only, delete on completion), then
+  step 4 (speed, Trim silences, Boost voices, sleep timer, artwork-themed
+  player, skip-length settings, chapters from feeds).
 
 ## Open questions for Paul
 

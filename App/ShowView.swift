@@ -8,6 +8,7 @@ struct ShowView: View {
     @Environment(\.dismiss) private var dismiss
     let show: Podcast
     @State private var confirmingUnfollow = false
+    @State private var showingSettings = false
 
     var body: some View {
         let episodes = show.episodes.sorted { $0.published > $1.published }
@@ -48,6 +49,7 @@ struct ShowView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
                     Button("Unfollow", systemImage: "minus.circle", role: .destructive) { confirmingUnfollow = true }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -55,6 +57,7 @@ struct ShowView: View {
                 .accessibilityLabel("More")
             }
         }
+        .sheet(isPresented: $showingSettings) { ShowSettingsView(show: show) }
         .confirmationDialog("Unfollow \(show.title)?", isPresented: $confirmingUnfollow, titleVisibility: .visible) {
             Button("Unfollow", role: .destructive) {
                 player.stopIfPlaying(showFeedURL: show.feedURL)

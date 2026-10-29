@@ -55,10 +55,7 @@ final class LibraryStore {
         let shows = allPodcasts
         var modes: [String: AutoAddMode] = [:]
         for show in shows { modes[show.feedURL] = show.autoAdd }
-        let topRank = shows
-            .filter { $0.autoAdd == .top }
-            .sorted { ($0.topRank, $0.title) < ($1.topRank, $1.title) }
-            .map(\.feedURL)
+        let topRank = topShows.map(\.feedURL)
         return QueueSettings(modes: modes, topRank: topRank, keepShowOrder: keepShowOrder)
     }
 
@@ -83,6 +80,8 @@ final class LibraryStore {
             summary: PlainText.fromHTML(feed.summary ?? ""),
             artworkURL: feed.artworkURL
         )
+        // New shows start on Bottom; Paul picks settings right after following.
+        show.autoAddRaw = AutoAddMode.bottom.rawValue
         context.insert(show)
         _ = apply(feed, to: show)
         save()
@@ -106,6 +105,23 @@ final class LibraryStore {
         }
         show.autoAddRaw = mode.rawValue
         save()
+    }
+
+    /// Top shows in priority order, favourite first.
+    var topShows: [Podcast] {
+        allPodcasts
+            .filter { $0.autoAdd == .top }
+            .sorted { ($0.topRank, $0.title) < ($1.topRank, $1.title) }
+    }
+
+    /// Saves a new Top priority order and re-sorts the Top block of Up Next
+    /// (each show still oldest first; manually added episodes stay put).
+    func setTopOrder(_ shows: [Podcast]) {
+        for (index, show) in shows.enumerated() {
+            show.topRank = index
+        }
+        save()
+        commit(QueueEngine.applyRanking(to: queue, settings: queueSettings))
     }
 
     // MARK: Checking for new episodes
@@ -242,7 +258,7 @@ final class LibraryStore {
         }
     }
 
-    private func save() {
+    func save() {
         try? context.save()
     }
 }
