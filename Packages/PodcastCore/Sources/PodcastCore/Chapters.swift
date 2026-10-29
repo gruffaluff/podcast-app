@@ -1,20 +1,23 @@
 import Foundation
 
 /// A chapter of an episode.
-public struct Chapter: Equatable, Hashable, Sendable {
+public struct Chapter: Codable, Equatable, Hashable, Sendable {
     public var start: TimeInterval
     /// Filled in from the next chapter (or the episode length) when missing.
     public var end: TimeInterval?
     public var title: String
     public var imageURL: URL?
     public var link: URL?
+    /// An ad break shown as a chapter (auto-generated chapters only).
+    public var isAd: Bool
 
-    public init(start: TimeInterval, end: TimeInterval? = nil, title: String, imageURL: URL? = nil, link: URL? = nil) {
+    public init(start: TimeInterval, end: TimeInterval? = nil, title: String, imageURL: URL? = nil, link: URL? = nil, isAd: Bool = false) {
         self.start = start
         self.end = end
         self.title = title
         self.imageURL = imageURL
         self.link = link
+        self.isAd = isAd
     }
 
     public var length: TimeInterval? { end.map { $0 - start } }

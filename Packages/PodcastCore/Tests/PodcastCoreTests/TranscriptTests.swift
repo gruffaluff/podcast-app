@@ -139,3 +139,71 @@ final class TranscriptSearchTests: XCTestCase {
         XCTAssertEqual(TimeFormat.stamp(3725), "1h 2m 5s")
     }
 }
+
+final class AdDetectionTests: XCTestCase {
+
+    func line(_ start: Double, _ end: Double, _ text: String) -> TranscriptLayout.Line {
+        TranscriptLayout.Line(start: start, end: end, speaker: nil, text: text)
+    }
+
+    var episode: [TranscriptLayout.Line] {
+        [
+            line(0, 10, "Welcome to the show, today we talk tides."),
+            line(10, 60, "We visit the harbour where the boats come in."),
+            line(115, 119.5, "Quick break."),
+            line(120, 125, "This episode is brought to you by Sailco."),
+            line(125, 140, "Go to sailco.com/tide and use code TIDE for 20% off."),
+            line(140, 150, "Terms apply."),
+            line(150, 170, "Anyway, back to the show and the tides."),
+            line(170, 230, "The tide tables are older than you'd think.")
+        ]
+    }
+
+    func testFindsASponsorRead() {
+        XCTAssertEqual(AdDetection.breaks(in: episode), [AdBreak(start: 115, end: 170, score: 15)])
+    }
+
+    func testOrdinaryMentionsAreNotAds() {
+        XCTAssertEqual(AdDetection.breaks(in: [line(0, 10, "We visit the harbour."), line(10, 20, "Go to the end of the pier.")]), [])
+    }
+
+    func testMusicWidensTheBreak() {
+        let breaks = AdDetection.breaks(in: episode, music: [MusicSpan(start: 108, end: 116), MusicSpan(start: 169, end: 175)])
+        XCTAssertEqual(breaks.first?.start, 108)
+        XCTAssertEqual(breaks.first?.end, 175)
+    }
+}
+
+final class ChapterMakerTests: XCTestCase {
+
+    /// 25 minutes: harbours, then baking, then football, a line every 10s.
+    var lines: [TranscriptLayout.Line] {
+        (0..<150).map { i in
+            let start = Double(i * 10)
+            let text: String
+            switch start {
+            case ..<500: text = "The harbour tides and boats in the harbour."
+            case ..<1000: text = "Baking bread needs flour and a hot oven for bread."
+            default: text = "The football match had goals and more football."
+            }
+            return TranscriptLayout.Line(start: start, end: start + 9, speaker: nil, text: text)
+        }
+    }
+
+    func testCutsWhereTheTopicChanges() {
+        let chapters = ChapterMaker.chapters(lines: lines, duration: 1500)
+        XCTAssertEqual(chapters.map(\.start), [0, 500, 1000])
+        XCTAssertEqual(chapters.last?.end, 1500)
+        XCTAssertTrue(chapters[0].title.hasPrefix("Harbour"), chapters[0].title)
+        XCTAssertTrue(chapters[1].title.hasPrefix("Bread"), chapters[1].title)
+        XCTAssertTrue(chapters[2].title.hasPrefix("Football"), chapters[2].title)
+    }
+
+    func testAdBreaksBecomeChaptersAndTheTopicCarriesOn() {
+        let chapters = ChapterMaker.chapters(lines: lines, ads: [AdBreak(start: 700, end: 760, score: 9)], duration: 1500)
+        XCTAssertEqual(chapters.map(\.start), [0, 500, 700, 760, 1000])
+        XCTAssertEqual(chapters.map(\.isAd), [false, false, true, false, false])
+        XCTAssertEqual(chapters[1].end, 700)
+        XCTAssertEqual(chapters[3].title, chapters[1].title)
+    }
+}
