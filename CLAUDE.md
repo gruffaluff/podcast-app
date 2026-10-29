@@ -101,7 +101,8 @@ terracotta accent).
 - Chapter titles and ad detection: rule-based on the transcript first; consider
   Apple's on-device language model framework if available on Paul's iPhone.
 - Background refresh with BGTaskScheduler; local notifications only.
-- Minimum iOS version: decide once Paul confirms his iPhone model.
+- Target device: Paul's iPhone 17 Pro. Minimum iOS: iOS 26 (it ships with it),
+  so the latest on-device speech and Apple Intelligence APIs are available.
 
 ## Build order (suggested)
 
@@ -115,6 +116,5 @@ terracotta accent).
 
 ## Open questions for Paul
 
-- Which iPhone model and iOS version?
 - App name and icon.
 - Importing existing subscriptions (OPML export from his current app).
