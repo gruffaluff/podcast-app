@@ -36,8 +36,9 @@ terracotta accent).
 - **Right after following a show, a settings sheet opens**: auto-add
   (Off/Top/Bottom), auto-download, notifications; the **last** item links to
   the separate "Top show priority" screen (ranking lives there, not in the
-  sheet). The same sheet opens from the show page, and the priority screen
-  from the sliders icon on Up Next.
+  sheet). The same sheet opens from the show page. The sliders icon on
+  Up Next opens the "Shows" screen: Top show priority, "Keep each show in
+  order", and download settings (Wi-Fi only, keep played downloads 24 hours).
 - **Each show always stays in chronological order (oldest first).** This is the core rule.
   - **Top shows are ranked by priority** (Paul drags them into order on the
     Shows screen). The top of Up Next holds Top-show episodes in that rank order.
@@ -58,11 +59,12 @@ terracotta accent).
   (respecting the Wi-Fi-only setting) so they are ready to play and transcribe.
 - **Removal on completion**: when an episode finishes it is marked played,
   removed from Up Next, and its download is deleted to save space.
-  Proposed defaults (confirm with Paul): delete straight away, with a setting
-  to keep played downloads for 24 hours; episodes with bookmarks or clips keep
-  their transcript but not the audio.
-- "Keep playing new episodes" toggle: when the queue runs out, continue with new
-  episodes from auto-add shows.
+  Decided: delete straight away by default, with a setting "Keep played
+  downloads for 24 hours" (off by default). Still proposed: episodes with
+  bookmarks or clips keep their transcript but not the audio.
+- "Keep playing new episodes" toggle (default on, at the bottom of Up Next):
+  when the queue runs out, continue with the last week's unplayed episodes
+  from auto-add shows, in the order the queue rules would put them.
 - Queue rows show transcript status (ready / transcribing / waiting) and source
   (Auto · Top, Auto · Bottom, Added by you).
 
@@ -182,18 +184,22 @@ terracotta accent).
   in order" toggle); streaming playback with mini player, basic full player,
   lock screen / headphone controls, resume position, mark played and
   auto-advance on finish, AirPlay device picker.
-- Not built yet from step 2/3 features: downloads (episodes stream for now;
-  auto-download and notification toggles are saved but do nothing yet),
-  removal of downloads on completion, "Keep playing new episodes".
+- Done (downloads and the rest of step 3): background downloads that carry
+  on while the app is closed; auto-download of new episodes from auto-add
+  shows (per-show toggle, Wi-Fi only setting, manual downloads go straight
+  away); plays the downloaded copy when there is one; download deleted when
+  played (or after 24 hours if that setting is on) and on unfollow;
+  download buttons/status in Library, Up Next and show pages; "Keep playing
+  new episodes". The per-show notification toggle is saved but does
+  nothing until step 7.
 - Waiting on Paul: Apple Developer Program membership (name correction with
   Apple support in progress). Then add signing + the TestFlight upload job
   (see `docs/SETUP.md`) to finish step 1.
 - Waiting on GitHub: the macOS build machines only have Xcode 26.6 (iOS
   26.5 SDK) while the app targets iOS 27. It compiles (with a warning), but
   TestFlight uploads will need the iOS 27 SDK once GitHub adds it.
-- Next: downloads (auto-download, Wi-Fi only, delete on completion), then
-  step 4 (speed, Trim silences, Boost voices, sleep timer, artwork-themed
-  player, skip-length settings, chapters from feeds).
+- Next: step 4 (speed, Trim silences, Boost voices, sleep timer,
+  artwork-themed player, skip-length settings, chapters from feeds).
 
 ## Open questions for Paul
 
