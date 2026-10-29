@@ -312,3 +312,32 @@ final class ChartTests: XCTestCase {
         XCTAssertNil(PodcastGenre.named("Knitting"))
     }
 }
+
+final class ClipsTests: XCTestCase {
+
+    func testDefaultLengthRoundsUpWithinLimits() {
+        XCTAssertEqual(Clips.defaultLength(lineStart: 10, lineEnd: 21), 15)
+        XCTAssertEqual(Clips.defaultLength(lineStart: 10, lineEnd: 11), 5)
+        XCTAssertEqual(Clips.defaultLength(lineStart: 0, lineEnd: 90), 30)
+    }
+
+    func testRangeStaysInsideTheEpisode() {
+        XCTAssertEqual(Clips.range(start: 100, length: 15, duration: 600), 100...115)
+        XCTAssertEqual(Clips.range(start: 595, length: 15, duration: 600), 585...600)
+        XCTAssertEqual(Clips.range(start: 10, length: 99, duration: nil), 10...40)
+    }
+
+    func testShareText() {
+        let text = Clips.shareText(quote: "Hello there", show: "Tidewater Weekly", episode: "Harbour lights", at: 1111, link: URL(string: "https://example.com/ep"))
+        XCTAssertEqual(text, "“Hello there”\n— Tidewater Weekly, Harbour lights (18:31)\nListen from 18:31: https://example.com/ep")
+    }
+
+    func testWaveform() {
+        let samples: [Float] = [0, 0, 0.5, -0.5, 1, -1]
+        let bars = Clips.waveform(samples, count: 3)
+        XCTAssertEqual(bars.count, 3)
+        XCTAssertEqual(bars[2], 1, accuracy: 0.0001)
+        XCTAssertEqual(bars[1], 0.5, accuracy: 0.0001)
+        XCTAssertEqual(bars[0], 0.08, accuracy: 0.0001)
+    }
+}

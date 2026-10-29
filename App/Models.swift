@@ -23,6 +23,8 @@ final class Podcast {
     var speakerNamesData: Data?
     /// Apple's category for the show (e.g. "History"), for Discover suggestions.
     var genre: String?
+    /// The show's website, from its feed.
+    var website: URL?
     var followedAt: Date = Date()
     var lastChecked: Date?
     @Relationship(deleteRule: .cascade, inverse: \PodcastEpisode.podcast)
@@ -57,6 +59,8 @@ final class PodcastEpisode {
     var audioURL: URL
     var duration: TimeInterval?
     var artworkURL: URL?
+    /// The episode's web page, from its feed (used for "link to the moment").
+    var webLink: URL?
     var transcriptURL: URL?
     /// MIME type of `transcriptURL`, from the feed.
     var transcriptType: String?
@@ -144,6 +148,8 @@ final class Bookmark {
     var time: TimeInterval
     var text: String
     var created: Date = Date()
+    /// Set when it was saved by sharing a clip of this length.
+    var length: TimeInterval?
 
     init(episodeID: String, time: TimeInterval, text: String) {
         self.episodeID = episodeID

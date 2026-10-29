@@ -102,6 +102,7 @@ final class LibraryStore {
         )
         // New shows start on Bottom; Paul picks settings right after following.
         show.autoAddRaw = AutoAddMode.bottom.rawValue
+        show.website = feed.link
         context.insert(show)
         _ = apply(feed, to: show)
         save()
@@ -176,6 +177,7 @@ final class LibraryStore {
             show.title = feed.title
             show.author = feed.author ?? show.author
             show.artworkURL = feed.artworkURL ?? show.artworkURL
+            show.website = feed.link ?? show.website
             fresh += apply(feed, to: show)
         }
         save()
@@ -213,6 +215,7 @@ final class LibraryStore {
             episode.transcriptURL = transcript?.url
             episode.transcriptType = transcript?.type
             episode.chaptersURL = parsed.chaptersURL
+            episode.webLink = parsed.link
             context.insert(episode)
             episode.podcast = show
             if freshGUIDs.contains(parsed.guid) {

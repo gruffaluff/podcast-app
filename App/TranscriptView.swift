@@ -19,6 +19,8 @@ struct TranscriptView: View {
     @State private var follow = true
     @State private var namingSpeakers = false
     @State private var bookmarked: String?
+    /// The line being shared as a clip.
+    @State private var clipLine: ClipRequest?
     /// Ad bands Paul expanded with Show.
     @State private var shownAds: Set<TimeInterval> = []
 
@@ -53,6 +55,9 @@ struct TranscriptView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) { footer }
+            .sheet(item: $clipLine) { request in
+                ClipView(episode: episode, line: request.line, quote: request.quote)
+            }
             .sheet(isPresented: $namingSpeakers) {
                 if let show = episode.podcast, let transcript {
                     NameSpeakersView(show: show, speakers: transcript.speakers)
@@ -156,6 +161,7 @@ struct TranscriptView: View {
             .onTapGesture { playFrom(line.start) }
             .contextMenu {
                 Button("Play from here", systemImage: "play") { playFrom(line.start) }
+                Button("Share clip", systemImage: "waveform") { clipLine = ClipRequest(line: line, quote: quote) }
                 Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = quote }
                 ShareLink(item: shareText(quote, at: line.start)) {
                     Label("Share quote", systemImage: "square.and.arrow.up")
@@ -355,4 +361,10 @@ struct NameSpeakersView: View {
             .onAppear { names = show.speakerNames }
         }
     }
+}
+
+struct ClipRequest: Identifiable {
+    let line: TranscriptLayout.Line
+    let quote: String
+    var id: TimeInterval { line.start }
 }
