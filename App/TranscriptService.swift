@@ -62,7 +62,7 @@ final class TranscriptService {
         var label: String {
             switch self {
             case .whenDownloaded: return "As soon as downloaded"
-            case .whileCharging: return "While charging"
+            case .whileCharging: return "Automatically while charging"
             case .onRequest: return "Only when I ask"
             }
         }
@@ -71,12 +71,12 @@ final class TranscriptService {
             switch self {
             case .whenDownloaded: return "Up Next episodes are transcribed as soon as they download."
             case .whileCharging: return "Transcribes while your iPhone is plugged in, including overnight."
-            case .onRequest: return "Nothing is transcribed until you tap Transcribe now."
+            case .onRequest: return "Nothing is transcribed until you tap Transcribe now on an episode."
             }
         }
     }
 
-    var schedule: Schedule = .whileCharging {
+    var schedule: Schedule = .onRequest {
         didSet {
             UserDefaults.standard.set(schedule.rawValue, forKey: "transcriptSchedule")
             startWorker()
@@ -95,7 +95,7 @@ final class TranscriptService {
 
     init(store: LibraryStore) {
         self.store = store
-        self.schedule = UserDefaults.standard.string(forKey: "transcriptSchedule").flatMap(Schedule.init(rawValue:)) ?? .whileCharging
+        self.schedule = UserDefaults.standard.string(forKey: "transcriptSchedule").flatMap(Schedule.init(rawValue:)) ?? .onRequest
         store.transcripts = self
 
         // Start (or resume) when the phone is plugged in.
@@ -348,17 +348,89 @@ enum OnDeviceTranscriber {
         return Transcript(source: .onDevice, segments: segments, music: await music)
     }
 
-    private static func speech(in audio: URL) async throws -> [TranscriptSegment] {
+    /// A transcriber with word timings (so words can be matched to speakers),
+    /// its speech model installed (iOS downloads it the first time).
+    static func makeTranscriber() async throws -> SpeechTranscriber {
         var locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale.current)
         if locale == nil { locale = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: "en-GB")) }
         guard let locale else { throw Failure.languageNotSupported }
-
-        // Word timings, so each word can be matched to its speaker.
         let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [], attributeOptions: [.audioTimeRange])
-        // The speech model is downloaded by iOS the first time.
         if let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
             try await request.downloadAndInstall()
         }
+        return transcriber
+    }
+
+    /// Words in one slice of the audio (for finding ads while listening).
+    /// Times are from the start of the episode.
+    static func words(in audio: URL, slice: ClosedRange<TimeInterval>) async throws -> [TranscriptSegment] {
+        let transcriber = try await makeTranscriber()
+        guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else { throw Failure.languageNotSupported }
+
+        // Read the slice and convert it to the format the analyzer wants.
+        let file = try AVAudioFile(forReading: audio)
+        let source = file.processingFormat
+        let startFrame = AVAudioFramePosition(slice.lowerBound * source.sampleRate)
+        guard startFrame < file.length else { return [] }
+        file.framePosition = startFrame
+        let frames = AVAudioFrameCount(min(Double(file.length - startFrame), (slice.upperBound - slice.lowerBound) * source.sampleRate))
+        guard let input = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: frames) else { return [] }
+        try file.read(into: input, frameCount: frames)
+        let converted = try convert(input, to: format)
+
+        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        let (stream, continuation) = AsyncStream.makeStream(of: AnalyzerInput.self)
+        let collector = Task { () -> [TranscriptSegment] in
+            var words: [TranscriptSegment] = []
+            for try await result in transcriber.results where result.isFinal {
+                words += wordSegments(of: result)
+            }
+            return words
+        }
+        continuation.yield(AnalyzerInput(buffer: converted))
+        continuation.finish()
+        do {
+            if let lastSample = try await analyzer.analyzeSequence(stream) {
+                try await analyzer.finalizeAndFinish(through: lastSample)
+            } else {
+                await analyzer.cancelAndFinishNow()
+            }
+        } catch {
+            await analyzer.cancelAndFinishNow()
+            collector.cancel()
+            throw error
+        }
+        return try await collector.value.map { word in
+            var shifted = word
+            shifted.start += slice.lowerBound
+            shifted.end += slice.lowerBound
+            return shifted
+        }
+    }
+
+    private static func convert(_ buffer: AVAudioPCMBuffer, to format: AVAudioFormat) throws -> AVAudioPCMBuffer {
+        if buffer.format == format { return buffer }
+        guard let converter = AVAudioConverter(from: buffer.format, to: format) else { throw Failure.languageNotSupported }
+        converter.primeMethod = .none  // keeps timings exact
+        let capacity = AVAudioFrameCount(Double(buffer.frameLength) * format.sampleRate / buffer.format.sampleRate) + 4096
+        guard let output = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else { throw Failure.languageNotSupported }
+        var supplied = false
+        var conversionError: NSError?
+        converter.convert(to: output, error: &conversionError) { _, status in
+            if supplied {
+                status.pointee = .endOfStream
+                return nil
+            }
+            supplied = true
+            status.pointee = .haveData
+            return buffer
+        }
+        if let conversionError { throw conversionError }
+        return output
+    }
+
+    private static func speech(in audio: URL) async throws -> [TranscriptSegment] {
+        let transcriber = try await makeTranscriber()
         let analyzer = SpeechAnalyzer(modules: [transcriber])
         let file = try AVAudioFile(forReading: audio)
 

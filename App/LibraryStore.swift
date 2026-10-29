@@ -105,11 +105,9 @@ final class LibraryStore {
         show.website = feed.link
         context.insert(show)
         _ = apply(feed, to: show)
-        // Start fresh: older episodes count as played, and only the newest
-        // one downloads (following the Wi-Fi only setting).
-        let latest = latestEpisode(of: show)
-        markPlayed(show.episodes.filter { $0.episodeID != latest?.episodeID })
-        if let latest { downloads?.download(latest, automatic: true) }
+        // Only the newest episode downloads (following the Wi-Fi only setting).
+        // Older ones stay unplayed; Paul can select them and mark them played.
+        if let latest = latestEpisode(of: show) { downloads?.download(latest, automatic: true) }
         save()
         return show
     }
@@ -335,6 +333,21 @@ final class LibraryStore {
         }
         guard let next = QueueEngine.continuation(from: recent.map(\.queueEpisode), settings: queueSettings) else { return nil }
         return recent.first { $0.episodeID == next.id }
+    }
+
+    // MARK: Ads
+
+    /// Saves ad breaks found while listening (merged with any already known,
+    /// minus ones Paul said aren't ads) and the slice that was checked.
+    @discardableResult
+    func addAdBreaks(_ found: [AdBreak], scanned slice: ClosedRange<TimeInterval>, to episodeID: String) -> [AdBreak] {
+        guard let episode = self.episode(episodeID) else { return [] }
+        let dismissed = episode.dismissedAds
+        let fresh = found.filter { ad in !dismissed.contains { abs($0 - ad.start) < 5 } }
+        episode.adBreaks = AdDetection.merge(episode.adBreaks, fresh)
+        episode.adScanned = AdScanPlan.adding(slice, to: episode.adScanned)
+        save()
+        return episode.adBreaks
     }
 
     // MARK: Downloads

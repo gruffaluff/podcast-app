@@ -63,9 +63,27 @@ struct NowPlayingView: View {
         .sheet(item: $transcriptEpisode) { TranscriptView(episode: $0) }
     }
 
-    /// "Ad skipped at 12:30 · Play ad · Not an ad", for a little while after a skip.
+    /// While an ad plays: a Skip ad button (like Spotify). After a skip:
+    /// "Ad skipped at 12:30 · Play ad · Not an ad" for a little while.
     @ViewBuilder private var adNote: some View {
-        if let adBreak = player.lastSkippedAd {
+        if let adBreak = player.currentAd {
+            HStack(spacing: 14) {
+                Button { player.skipCurrentAd() } label: {
+                    Label("Skip ad · \(TimeFormat.clock(max(0, adBreak.end - player.currentTime)))", systemImage: "forward.end.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 18)
+                        .frame(minHeight: 44)
+                        .foregroundStyle(background)
+                        .background(text, in: Capsule())
+                }
+                .accessibilityLabel("Skip ad")
+                Spacer()
+                Button("Not an ad") { player.notAnAd(adBreak, transcripts: transcripts) }
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(text)
+            }
+            .buttonStyle(.plain)
+        } else if let adBreak = player.lastSkippedAd {
             HStack(spacing: 14) {
                 Text("Ad skipped at \(TimeFormat.clock(adBreak.start))")
                     .foregroundStyle(secondary)

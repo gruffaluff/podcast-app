@@ -63,7 +63,10 @@ final class PlayerModel {
     /// The break just skipped, for the "Ad skipped" note with Play ad / Not an ad.
     private(set) var lastSkippedAd: AdBreak?
     /// Skip ad breaks automatically (default on).
-    private(set) var skipAds = true
+    /// Skip ad breaks automatically (default off: a Skip ad button shows instead).
+    private(set) var skipAds = false
+    /// The ad break playing right now, for the Skip ad button.
+    private(set) var currentAd: AdBreak?
 
     var currentChapterIndex: Int? { Chapters.index(at: currentTime, in: chapters) }
     var currentChapter: Chapter? { currentChapterIndex.map { chapters[$0] } }
@@ -85,15 +88,17 @@ final class PlayerModel {
     /// Breaks Paul chose to hear (Play ad) this time.
     @ObservationIgnored private var allowedAds: Set<TimeInterval> = []
     @ObservationIgnored private var skippedNoteTask: Task<Void, Never>?
+    @ObservationIgnored private let adScanner: AdScanner
 
     init(store: LibraryStore) {
         self.store = store
+        self.adScanner = AdScanner(store: store)
         let defaults = UserDefaults.standard
         skipBackSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipBack") as? Int ?? PlayerOptions.defaultSkip)
         skipForwardSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipForward") as? Int ?? PlayerOptions.defaultSkip)
         speed = min(2, max(1, defaults.object(forKey: "speed") as? Double ?? 1))
         player.defaultRate = Float(speed)
-        skipAds = defaults.object(forKey: "skipAds") as? Bool ?? true
+        skipAds = defaults.bool(forKey: "skipAds")
         trimSilences = defaults.bool(forKey: "trimSilences")
         boostVoices = defaults.bool(forKey: "boostVoices")
         tapState.trimSilences = trimSilences
@@ -102,6 +107,10 @@ final class PlayerModel {
         observePlayer()
         setUpRemoteCommands()
         updateRoute()
+        adScanner.onUpdate = { [weak self] id, breaks in
+            guard let self, id == self.nowPlaying?.episodeID else { return }
+            self.adBreaks = breaks
+        }
     }
 
     // MARK: Controls
@@ -142,6 +151,7 @@ final class PlayerModel {
         showChapters = []
         chapterSource = .show
         loadAnalysis(for: episode)
+        adScanner.begin(episode, audio: store.localAudioURL(for: episode))
         loadChapters(episodeID: episode.episodeID, chaptersURL: episode.chaptersURL, audio: source)
     }
 
@@ -265,6 +275,8 @@ final class PlayerModel {
     func stop() {
         saveProgress()
         player.replaceCurrentItem(with: nil)
+        adScanner.stop()
+        currentAd = nil
         nowPlaying = nil
         currentTime = 0
         duration = 0
@@ -285,6 +297,9 @@ final class PlayerModel {
         guard seconds.isFinite else { return }
         currentTime = seconds
         skipAdIfNeeded(at: seconds)
+        if player.timeControlStatus == .playing {
+            adScanner.playhead(seconds, duration: duration)
+        }
         if let itemDuration = player.currentItem?.duration.seconds, itemDuration.isFinite, itemDuration > 0,
            abs(itemDuration - duration) > 1 {
             duration = itemDuration
@@ -445,9 +460,20 @@ final class PlayerModel {
     }
 
     private func skipAdIfNeeded(at time: TimeInterval) {
-        guard skipAds, player.timeControlStatus != .paused,
-              let adBreak = adBreaks.first(where: { $0.contains(time) && !allowedAds.contains($0.start) }) else { return }
+        let adBreak = adBreaks.first { $0.contains(time) && !allowedAds.contains($0.start) }
+        if currentAd != adBreak { currentAd = adBreak }
+        guard skipAds, player.timeControlStatus != .paused, let adBreak else { return }
+        skip(adBreak)
+    }
+
+    /// The Skip ad button: jumps to where the show resumes.
+    func skipCurrentAd() {
+        if let currentAd { skip(currentAd) }
+    }
+
+    private func skip(_ adBreak: AdBreak) {
         seek(to: adBreak.end)
+        currentAd = nil
         lastSkippedAd = adBreak
         skippedNoteTask?.cancel()
         skippedNoteTask = Task { [weak self] in

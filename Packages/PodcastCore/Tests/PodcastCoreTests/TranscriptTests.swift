@@ -250,3 +250,36 @@ final class SpeakerLabelsTests: XCTestCase {
         XCTAssertEqual(lines.map(\.speaker), ["Speaker 1", "Speaker 2"])
     }
 }
+
+final class AdScanPlanTests: XCTestCase {
+
+    func testFirstSliceStartsAtThePlayhead() {
+        XCTAssertEqual(AdScanPlan.nextSlice(playhead: 60, scanned: [], duration: 3600), 60...210)
+    }
+
+    func testNextSliceOverlapsTheLastOne() {
+        XCTAssertEqual(AdScanPlan.nextSlice(playhead: 100, scanned: [60...210], duration: 3600), 190...340)
+    }
+
+    func testNothingToDoWhenFarEnoughAhead() {
+        XCTAssertNil(AdScanPlan.nextSlice(playhead: 100, scanned: [60...400], duration: 3600))
+    }
+
+    func testStopsAtTheEnd() {
+        XCTAssertEqual(AdScanPlan.nextSlice(playhead: 3500, scanned: [], duration: 3600), 3500...3600)
+        XCTAssertNil(AdScanPlan.nextSlice(playhead: 3590, scanned: [3500...3600], duration: 3600))
+    }
+
+    func testJumpingAheadStartsANewRegion() {
+        XCTAssertEqual(AdScanPlan.nextSlice(playhead: 2000, scanned: [0...400], duration: 3600), 2000...2150)
+    }
+
+    func testAddingJoinsTouchingSlices() {
+        XCTAssertEqual(AdScanPlan.adding(190...340, to: [60...210, 2000...2150]), [60...340, 2000...2150])
+    }
+
+    func testMergingBreaksFromOverlappingSlices() {
+        let merged = AdDetection.merge([AdBreak(start: 100, end: 180, score: 8)], [AdBreak(start: 170, end: 230, score: 6), AdBreak(start: 900, end: 960, score: 5)])
+        XCTAssertEqual(merged, [AdBreak(start: 100, end: 230, score: 8), AdBreak(start: 900, end: 960, score: 5)])
+    }
+}

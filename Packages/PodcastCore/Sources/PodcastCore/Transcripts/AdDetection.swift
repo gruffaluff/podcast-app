@@ -69,6 +69,22 @@ public enum AdDetection {
             .filter { $0.length >= 10 && $0.length <= 240 }
     }
 
+    /// Combines breaks found separately (e.g. in overlapping slices of audio),
+    /// joining ones that overlap or sit within `joinGap` of each other.
+    public static func merge(_ existing: [AdBreak], _ found: [AdBreak]) -> [AdBreak] {
+        var result: [AdBreak] = []
+        for adBreak in (existing + found).sorted(by: { $0.start < $1.start }) {
+            if var last = result.last, adBreak.start <= last.end + joinGap / 4 {
+                last.end = max(last.end, adBreak.end)
+                last.score = max(last.score, adBreak.score)
+                result[result.count - 1] = last
+            } else {
+                result.append(adBreak)
+            }
+        }
+        return result
+    }
+
     /// Starts the break at the line before the first cue if that line is
     /// part of the read ("This episode..."), and stretches to adjoining music.
     static func widen(_ adBreak: AdBreak, lines: [TranscriptLayout.Line], music: [MusicSpan]) -> AdBreak {
