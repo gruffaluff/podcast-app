@@ -25,6 +25,8 @@ targets:
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
+        # Extra keys (background audio, http feeds) merged with the generated ones.
+        INFOPLIST_FILE: Config/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Podcasts
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait

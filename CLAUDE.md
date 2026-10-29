@@ -23,6 +23,9 @@ terracotta accent).
   Nothing calls Claude or any paid API at runtime.
 - Paul is not a developer. Explain changes in plain English, keep the build
   green, and tell him when a new TestFlight build is ready to try.
+- **After committing any change, ask Paul whether to update CLAUDE.md**
+  (e.g. Progress, decisions, open questions), and say what you'd change.
+  Don't skip this, even for small changes.
 
 ## Features (decided)
 
