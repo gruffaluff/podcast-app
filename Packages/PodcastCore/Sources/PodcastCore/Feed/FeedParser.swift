@@ -48,7 +48,7 @@ private final class FeedReader: NSObject, XMLParserDelegate {
 
     private var title: String?
     private var author: String?
-    private var description: String?
+    private var channelDescription: String?
     private var itunesSummary: String?
     private var itunesImage: URL?
     private var rssImage: URL?
@@ -61,7 +61,7 @@ private final class FeedReader: NSObject, XMLParserDelegate {
         return ParsedFeed(
             title: title ?? "Untitled show",
             author: author,
-            summary: description ?? itunesSummary,
+            summary: channelDescription ?? itunesSummary,
             artworkURL: itunesImage ?? rssImage,
             link: link,
             episodes: episodes
@@ -158,7 +158,7 @@ private final class FeedReader: NSObject, XMLParserDelegate {
         switch (key, stack.last) {
         case ("title", "channel"): title = nonEmpty
         case ("itunes:author", "channel"): author = nonEmpty
-        case ("description", "channel"): description = nonEmpty
+        case ("description", "channel"): channelDescription = nonEmpty
         case ("itunes:summary", "channel"): itunesSummary = nonEmpty
         case ("link", "channel"): link = Self.url(value) ?? link
         case ("url", "image"):
