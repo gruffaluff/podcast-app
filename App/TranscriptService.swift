@@ -76,7 +76,7 @@ final class TranscriptService {
         }
     }
 
-    var schedule: Schedule = .whenDownloaded {
+    var schedule: Schedule = .whileCharging {
         didSet {
             UserDefaults.standard.set(schedule.rawValue, forKey: "transcriptSchedule")
             startWorker()
@@ -95,7 +95,7 @@ final class TranscriptService {
 
     init(store: LibraryStore) {
         self.store = store
-        self.schedule = UserDefaults.standard.string(forKey: "transcriptSchedule").flatMap(Schedule.init(rawValue:)) ?? .whenDownloaded
+        self.schedule = UserDefaults.standard.string(forKey: "transcriptSchedule").flatMap(Schedule.init(rawValue:)) ?? .whileCharging
         store.transcripts = self
 
         // Start (or resume) when the phone is plugged in.

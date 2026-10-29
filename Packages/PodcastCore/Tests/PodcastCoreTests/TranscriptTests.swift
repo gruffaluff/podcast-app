@@ -219,3 +219,34 @@ final class ChapterMakerTests: XCTestCase {
         XCTAssertEqual(chapters[3].title, chapters[1].title)
     }
 }
+
+final class SpeakerLabelsTests: XCTestCase {
+
+    func word(_ start: Double, _ end: Double, _ text: String) -> TranscriptSegment {
+        TranscriptSegment(start: start, end: end, text: text)
+    }
+
+    func testWordsTakeTheSpeakerTheyOverlapAndAreNumberedInOrder() {
+        let turns = [
+            SpeakerLabels.Turn(speaker: "S7", start: 0, end: 2.0),
+            SpeakerLabels.Turn(speaker: "S2", start: 2.0, end: 4.0),
+            SpeakerLabels.Turn(speaker: "S7", start: 4.0, end: 6.0)
+        ]
+        let words = [word(0.1, 0.5, "Hi"), word(1.8, 2.6, "there"), word(2.7, 3.0, "Hello"), word(4.5, 5.0, "Again"), word(6.5, 6.8, "Bye"), word(20, 21, "Late")]
+        let labelled = SpeakerLabels.assign(turns, to: words)
+        XCTAssertEqual(labelled.map(\.speaker), ["Speaker 1", "Speaker 2", "Speaker 2", "Speaker 1", "Speaker 1", nil])
+    }
+
+    func testNoTurnsLeavesTranscriptAlone() {
+        let words = [word(0, 1, "Hi")]
+        XCTAssertEqual(SpeakerLabels.assign([], to: words), words)
+    }
+
+    func testLabelledWordsJoinIntoLinesPerSpeaker() {
+        let turns = [SpeakerLabels.Turn(speaker: "A", start: 0, end: 1.2), SpeakerLabels.Turn(speaker: "B", start: 1.2, end: 3)]
+        let words = [word(0, 0.4, "Hi"), word(0.4, 1.0, "there."), word(1.3, 1.6, "Hi"), word(1.6, 2.0, "too.")]
+        let lines = TranscriptLayout.lines(from: SpeakerLabels.assign(turns, to: words))
+        XCTAssertEqual(lines.map(\.text), ["Hi there.", "Hi too."])
+        XCTAssertEqual(lines.map(\.speaker), ["Speaker 1", "Speaker 2"])
+    }
+}

@@ -176,6 +176,15 @@ public extension Directory {
         }
     }
 
+    /// The Apple ID in an Apple Podcasts link, e.g.
+    /// "https://podcasts.apple.com/gb/podcast/elis-james-and-john-robins/id1465290044" → "1465290044".
+    static func appleID(fromLink link: URL) -> String? {
+        guard let host = link.host?.lowercased(), host.hasSuffix("apple.com") else { return nil }
+        let text = link.absoluteString
+        guard let range = text.range(of: #"id(\d{5,})"#, options: .regularExpression) else { return nil }
+        return String(text[range].dropFirst(2))
+    }
+
     /// Chart artwork comes small ("100x100bb"); ask for 600px instead.
     static func largerArtwork(_ string: String?) -> URL? {
         guard let string else { return nil }

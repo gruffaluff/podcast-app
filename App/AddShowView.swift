@@ -24,7 +24,7 @@ struct AddShowView: View {
                 }
                 if looksLikeFeedLink, let url = feedLink {
                     Button { follow(url) } label: {
-                        Label("Follow this feed link", systemImage: "link")
+                        Label("Follow this link", systemImage: "link")
                     }
                     .foregroundStyle(Theme.accentText)
                     .listRowBackground(Theme.background)
@@ -44,14 +44,14 @@ struct AddShowView: View {
                 if searching {
                     ProgressView()
                 } else if results.isEmpty && !looksLikeFeedLink && message == nil {
-                    Text("Search by show name, person or topic, or paste an RSS feed link.")
+                    Text("Search by show name, person or topic, or paste a link from Apple Podcasts or a show's RSS feed.")
                         .font(.subheadline)
                         .foregroundStyle(Theme.muted)
                         .multilineTextAlignment(.center)
                         .padding(32)
                 }
             }
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Shows, people, topics or a feed link")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Shows, people, topics, or a link")
             .textInputAutocapitalization(.never)
             .onSubmit(of: .search) { search() }
             .sheet(item: $justFollowed) { show in
@@ -111,8 +111,17 @@ struct AddShowView: View {
         Task {
             defer { following.remove(key) }
             do {
-                let isNew = store.podcast(feedURL: key) == nil
-                let show = try await store.follow(feedURL: url)
+                // An Apple Podcasts link: look up the show's feed first.
+                var feedURL = url
+                if let appleID = Directory.appleID(fromLink: url) {
+                    guard let found = try await FeedClient.lookup(appleID: appleID)?.feedURL else {
+                        message = "Couldn't find that show in Apple's directory."
+                        return
+                    }
+                    feedURL = found
+                }
+                let isNew = store.podcast(feedURL: feedURL.absoluteString) == nil
+                let show = try await store.follow(feedURL: feedURL)
                 message = "Following \(show.title)."
                 if isNew { justFollowed = show }
             } catch {

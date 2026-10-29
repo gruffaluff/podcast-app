@@ -10,6 +10,7 @@ struct ShowSettingsView: View {
     let show: Podcast
     /// True when shown right after following ("Following …" heading).
     var justFollowed = false
+    @State private var olderUnplayed = false
 
     var body: some View {
         NavigationStack {
@@ -59,6 +60,25 @@ struct ShowSettingsView: View {
                 }
                 .listRowBackground(Theme.surface)
                 .tint(Theme.accentFill)
+
+                if justFollowed {
+                    Section {
+                        Button(olderUnplayed ? "Mark older episodes as played" : "Keep older episodes unplayed") {
+                            let latest = store.latestEpisode(of: show)
+                            let older = show.episodes.filter { $0.episodeID != latest?.episodeID }
+                            if olderUnplayed { store.markPlayed(older) } else { store.markUnplayed(older) }
+                            olderUnplayed.toggle()
+                        }
+                        .foregroundStyle(Theme.accentText)
+                    } header: {
+                        Text("Older episodes")
+                    } footer: {
+                        Text(olderUnplayed
+                             ? "All \(show.episodes.count) episodes are unplayed."
+                             : "The newest episode is downloading. The other \(max(0, show.episodes.count - 1)) are marked as played, so only new ones show as unplayed.")
+                    }
+                    .listRowBackground(Theme.surface)
+                }
 
                 if show.autoAdd == .top {
                     Section {

@@ -306,6 +306,12 @@ final class ChartTests: XCTestCase {
         XCTAssertEqual(try Directory.decodeGenreChart(Data(single.utf8)).map(\.appleID), ["789"])
     }
 
+    func testAppleIDFromApplePodcastsLink() {
+        XCTAssertEqual(Directory.appleID(fromLink: URL(string: "https://podcasts.apple.com/gb/podcast/elis-james-and-john-robins/id1465290044")!), "1465290044")
+        XCTAssertEqual(Directory.appleID(fromLink: URL(string: "https://podcasts.apple.com/gb/podcast/x/id1465290044?i=1000123")!), "1465290044")
+        XCTAssertNil(Directory.appleID(fromLink: URL(string: "https://example.com/feed/id1465290044")!))
+    }
+
     func testLookupURLAndGenres() {
         XCTAssertTrue(Directory.lookupURL(appleID: "123").absoluteString.contains("id=123"))
         XCTAssertEqual(PodcastGenre.named("technology")?.id, "1318")

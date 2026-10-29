@@ -80,8 +80,11 @@ struct RootView: View {
             guard phase == .active else { return }
             store.cleanUpPlayedDownloads()
             transcripts.prepareUpNext()
-            if store.lastChecked.map({ Date().timeIntervalSince($0) > 3600 }) ?? true {
-                Task { await store.refreshAll() }
+            Task {
+                await store.followStarterShowIfNeeded()
+                if store.lastChecked.map({ Date().timeIntervalSince($0) > 3600 }) ?? true {
+                    await store.refreshAll()
+                }
             }
         }
     }

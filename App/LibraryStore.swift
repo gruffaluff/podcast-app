@@ -105,8 +105,27 @@ final class LibraryStore {
         show.website = feed.link
         context.insert(show)
         _ = apply(feed, to: show)
+        // Start fresh: older episodes count as played, and only the newest
+        // one downloads (following the Wi-Fi only setting).
+        let latest = latestEpisode(of: show)
+        markPlayed(show.episodes.filter { $0.episodeID != latest?.episodeID })
+        if let latest { downloads?.download(latest, automatic: true) }
         save()
         return show
+    }
+
+    /// For testing: on a fresh install, follow Elis James and John Robins
+    /// (Paul's pick) so there's something to play straight away.
+    func followStarterShowIfNeeded() async {
+        let key = "starterShowFollowed"
+        guard !UserDefaults.standard.bool(forKey: key), allPodcasts.isEmpty else { return }
+        guard let feedURL = try? await FeedClient.lookup(appleID: "1465290044")?.feedURL,
+              (try? await follow(feedURL: feedURL)) != nil else { return }
+        UserDefaults.standard.set(true, forKey: key)
+    }
+
+    func latestEpisode(of show: Podcast) -> PodcastEpisode? {
+        show.episodes.max { $0.published < $1.published }
     }
 
     func unfollow(_ show: Podcast) {
@@ -261,9 +280,34 @@ final class LibraryStore {
     }
 
     func markUnplayed(_ episode: PodcastEpisode) {
-        episode.played = false
-        episode.playedAt = nil
-        episode.position = 0
+        markUnplayed([episode])
+    }
+
+    /// Marks many episodes played at once (e.g. a show's back catalogue).
+    func markPlayed(_ episodes: [PodcastEpisode]) {
+        var ids = Set<String>()
+        for episode in episodes where !episode.played {
+            episode.played = true
+            episode.playedAt = Date()
+            episode.position = 0
+            ids.insert(episode.episodeID)
+            if DownloadCleanup.shouldDelete(played: true, playedAt: episode.playedAt, keepFor24Hours: keepPlayedDownloads) {
+                removeDownloadFile(of: episode)
+            }
+        }
+        if queue.contains(where: { ids.contains($0.episode.id) }) {
+            commit(queue.filter { !ids.contains($0.episode.id) })
+        } else {
+            save()
+        }
+    }
+
+    func markUnplayed(_ episodes: [PodcastEpisode]) {
+        for episode in episodes where episode.played {
+            episode.played = false
+            episode.playedAt = nil
+            episode.position = 0
+        }
         save()
     }
 

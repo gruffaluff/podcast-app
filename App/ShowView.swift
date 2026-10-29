@@ -9,9 +9,14 @@ struct ShowView: View {
     let show: Podcast
     @State private var confirmingUnfollow = false
     @State private var showingSettings = false
+    /// Show only unplayed episodes (default), or every episode.
+    @State private var showAll = false
+    @State private var confirmingMarkAll = false
 
     var body: some View {
-        let episodes = show.episodes.sorted { $0.published > $1.published }
+        let allEpisodes = show.episodes.sorted { $0.published > $1.published }
+        let unplayedCount = allEpisodes.filter { !$0.played }.count
+        let episodes = showAll ? allEpisodes : allEpisodes.filter { !$0.played }
 
         List {
             Section {
@@ -25,7 +30,19 @@ struct ShowView: View {
                         EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode))
                     }
                     .buttonStyle(.plain)
-                    .contextMenu { EpisodeMenuItems(episode: episode) }
+                    .contextMenu {
+                        EpisodeMenuItems(episode: episode)
+                        Button("Mark this and older as played", systemImage: "text.badge.checkmark") {
+                            store.markPlayed(allEpisodes.filter { $0.published <= episode.published })
+                        }
+                    }
+                    .swipeActions(edge: .trailing) {
+                        if episode.played {
+                            Button("Unplayed") { store.markUnplayed(episode) }.tint(Theme.muted)
+                        } else {
+                            Button("Played") { store.markPlayed(episode.episodeID) }.tint(Theme.accentFill)
+                        }
+                    }
                     .swipeActions(edge: .leading) {
                         Button("Play next") { store.playNext(episode) }
                             .tint(Theme.accentFill)
@@ -36,10 +53,21 @@ struct ShowView: View {
                 .listRowBackground(Theme.background)
                 .listRowSeparatorTint(Theme.hairline)
             } header: {
-                Text("\(episodes.count) episodes")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.muted)
-                    .textCase(nil)
+                HStack {
+                    Picker("Episodes", selection: $showAll) {
+                        Text("Unplayed (\(unplayedCount))").tag(false)
+                        Text("All (\(allEpisodes.count))").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                .textCase(nil)
+                .padding(.vertical, 4)
+            } footer: {
+                if episodes.isEmpty {
+                    Text(showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.muted)
+                }
             }
         }
         .listStyle(.plain)
@@ -50,6 +78,8 @@ struct ShowView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
+                    Button("Mark all as played", systemImage: "checkmark.circle") { confirmingMarkAll = true }
+                    Button("Mark all as unplayed", systemImage: "circle") { store.markUnplayed(show.episodes) }
                     Button("Unfollow", systemImage: "minus.circle", role: .destructive) { confirmingUnfollow = true }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -58,6 +88,11 @@ struct ShowView: View {
             }
         }
         .sheet(isPresented: $showingSettings) { ShowSettingsView(show: show) }
+        .confirmationDialog("Mark all \(show.episodes.count) episodes as played?", isPresented: $confirmingMarkAll, titleVisibility: .visible) {
+            Button("Mark all as played") { store.markPlayed(show.episodes) }
+        } message: {
+            Text("They leave Up Next and stop showing as unplayed. You can undo this with Mark all as unplayed.")
+        }
         .confirmationDialog("Unfollow \(show.title)?", isPresented: $confirmingUnfollow, titleVisibility: .visible) {
             Button("Unfollow", role: .destructive) {
                 player.stopIfPlaying(showFeedURL: show.feedURL)
