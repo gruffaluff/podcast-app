@@ -182,6 +182,7 @@ struct EpisodeMenuItems: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @Environment(DownloadManager.self) private var downloads
+    @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
 
     var body: some View {
@@ -194,6 +195,9 @@ struct EpisodeMenuItems: View {
             Button("Remove download", systemImage: "trash", role: .destructive) { store.removeDownload(episode) }
         } else {
             Button("Download", systemImage: "arrow.down.circle") { downloads.download(episode) }
+        }
+        if transcripts.canTranscribeNow(episode) {
+            Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
         }
         if episode.played {
             Button("Mark as unplayed", systemImage: "circle") { store.markUnplayed(episode) }

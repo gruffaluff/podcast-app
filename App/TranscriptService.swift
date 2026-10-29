@@ -4,6 +4,7 @@ import Foundation
 import Observation
 import SoundAnalysis
 import Speech
+import UIKit
 import PodcastCore
 
 /// Where transcripts live: Application Support/Transcripts, one JSON file
@@ -38,11 +39,44 @@ enum TranscriptFiles {
 /// Gets every Up Next episode a transcript: the publisher's when the feed
 /// has one, otherwise one made on the iPhone from the downloaded audio
 /// (speech-to-text plus music detection). Works one episode at a time,
-/// Up Next order first; continues overnight while charging.
+/// Up Next order first, following Paul's schedule; "Transcribe now" skips
+/// the schedule for one episode.
 @MainActor
 @Observable
 final class TranscriptService {
     static let backgroundTaskID = "com.gruffaluff.podcasts.transcribe"
+
+    /// When on-device transcription runs by itself.
+    enum Schedule: String, CaseIterable, Identifiable {
+        case whenDownloaded
+        case whileCharging
+        case onRequest
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .whenDownloaded: return "As soon as downloaded"
+            case .whileCharging: return "While charging"
+            case .onRequest: return "Only when I ask"
+            }
+        }
+
+        var explanation: String {
+            switch self {
+            case .whenDownloaded: return "Up Next episodes are transcribed as soon as they download."
+            case .whileCharging: return "Transcribes while your iPhone is plugged in, including overnight."
+            case .onRequest: return "Nothing is transcribed until you tap Transcribe now."
+            }
+        }
+    }
+
+    var schedule: Schedule = .whenDownloaded {
+        didSet {
+            UserDefaults.standard.set(schedule.rawValue, forKey: "transcriptSchedule")
+            startWorker()
+        }
+    }
 
     /// The episode being transcribed on the iPhone right now.
     private(set) var current: String?
@@ -50,10 +84,63 @@ final class TranscriptService {
     @ObservationIgnored private let store: LibraryStore
     @ObservationIgnored private var pending: [String] = []
     @ObservationIgnored private var worker: Task<Void, Never>?
+    /// Episodes Paul asked for with "Transcribe now"; these ignore the schedule.
+    private var requested: Set<String> = []
+    @ObservationIgnored private var batteryObserver: NSObjectProtocol?
 
     init(store: LibraryStore) {
         self.store = store
+        self.schedule = UserDefaults.standard.string(forKey: "transcriptSchedule").flatMap(Schedule.init(rawValue:)) ?? .whenDownloaded
         store.transcripts = self
+
+        // Start (or resume) when the phone is plugged in.
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        batteryObserver = NotificationCenter.default.addObserver(forName: UIDevice.batteryStateDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.startWorker() }
+        }
+    }
+
+    private var isCharging: Bool {
+        let state = UIDevice.current.batteryState
+        return state == .charging || state == .full
+    }
+
+    /// Whether episodes nobody asked for may be transcribed right now.
+    private var scheduleAllowsWork: Bool {
+        switch schedule {
+        case .whenDownloaded: return true
+        case .whileCharging: return isCharging
+        case .onRequest: return false
+        }
+    }
+
+    /// Whether this episode is waiting for a transcript that isn't being made yet.
+    func canTranscribeNow(_ episode: PodcastEpisode) -> Bool {
+        episode.transcriptState != .ready && episode.transcriptState != .transcribing && !requested.contains(episode.episodeID)
+    }
+
+    /// "Transcribe now": straight away, whatever the schedule. Downloads the
+    /// episode first if needed (transcripts are made from the audio file).
+    func transcribeNow(_ episode: PodcastEpisode) {
+        let id = episode.episodeID
+        requested.insert(id)
+        if episode.transcriptState == .failed { episode.transcriptState = .none }
+        if store.localAudioURL(for: episode) == nil && episode.transcriptURL == nil {
+            store.downloads?.download(episode)
+            episode.transcriptState = .waiting
+            return
+        }
+        prepare(episode, urgent: true)
+    }
+
+    /// "Transcribe Up Next now".
+    func transcribeUpNextNow() {
+        let episodes = store.episodes(store.queue.map(\.episode.id))
+        for item in store.queue.reversed() {
+            if let episode = episodes[item.episode.id], episode.transcriptState != .ready {
+                transcribeNow(episode)
+            }
+        }
     }
 
     // MARK: Requests
@@ -72,7 +159,7 @@ final class TranscriptService {
             episode.transcriptState = .waiting
             return
         }
-        if urgent {
+        if urgent || requested.contains(id) {
             pending.removeAll { $0 == id }
             pending.insert(id, at: 0)
         } else if !pending.contains(id), current != id {
@@ -119,8 +206,8 @@ final class TranscriptService {
     private func startWorker() {
         guard worker == nil else { return }
         worker = Task {
-            while !Task.isCancelled, !pending.isEmpty {
-                let id = pending.removeFirst()
+            while !Task.isCancelled, let index = nextIndex() {
+                let id = pending.remove(at: index)
                 guard let episode = store.episode(id), let audio = store.localAudioURL(for: episode) else { continue }
                 current = id
                 episode.transcriptState = .transcribing
@@ -135,10 +222,18 @@ final class TranscriptService {
                     }
                 }
                 current = nil
+                requested.remove(id)
                 store.save()
             }
             worker = nil
         }
+    }
+
+    /// Next job: anything Paul asked for first, then (if the schedule
+    /// allows) the rest in Up Next order.
+    private func nextIndex() -> Int? {
+        if let index = pending.firstIndex(where: requested.contains) { return index }
+        return scheduleAllowsWork && !pending.isEmpty ? 0 : nil
     }
 
     private func finish(_ episode: PodcastEpisode, with transcript: Transcript) {
@@ -172,7 +267,7 @@ final class TranscriptService {
 
     /// Called when the app goes to the background with work left.
     func scheduleBackgroundWork() {
-        guard !pending.isEmpty || worker != nil else { return }
+        guard schedule != .onRequest, !pending.isEmpty || worker != nil else { return }
         let request = BGProcessingTaskRequest(identifier: Self.backgroundTaskID)
         request.requiresExternalPower = true
         request.requiresNetworkConnectivity = false

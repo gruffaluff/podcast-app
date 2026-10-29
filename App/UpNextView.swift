@@ -4,6 +4,7 @@ import PodcastCore
 struct UpNextView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
+    @Environment(TranscriptService.self) private var transcripts
     @State private var showingPriority = false
 
     var body: some View {
@@ -26,6 +27,9 @@ struct UpNextView: View {
                                     .tint(Theme.muted)
                             }
                             .contextMenu {
+                                if transcripts.canTranscribeNow(episode) {
+                                    Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
+                                }
                                 Button("Mark as played", systemImage: "checkmark.circle") { store.markPlayed(episode.episodeID) }
                                 Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
                             }

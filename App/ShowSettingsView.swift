@@ -107,11 +107,13 @@ struct TopPriorityView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(DownloadManager.self) private var downloads
     @Environment(PlayerModel.self) private var player
+    @Environment(TranscriptService.self) private var transcripts
     @State private var shows: [Podcast] = []
 
     var body: some View {
         @Bindable var store = store
         @Bindable var downloads = downloads
+        @Bindable var transcripts = transcripts
         List {
             Section {
                 if shows.isEmpty {
@@ -158,6 +160,22 @@ struct TopPriorityView: View {
                 Text("Play next and Play last never put an episode before an older one from the same show.")
             }
             .listRowBackground(Theme.background)
+
+            Section {
+                // A menu picker, as this screen's list stays in edit mode for dragging.
+                Picker("Transcribe", selection: $transcripts.schedule) {
+                    ForEach(TranscriptService.Schedule.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.menu)
+                Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
+                    .foregroundStyle(Theme.accentText)
+            } header: {
+                Text("Transcripts")
+            } footer: {
+                Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now.")
+            }
+            .listRowBackground(Theme.background)
+            .tint(Theme.accentFill)
 
             Section {
                 Toggle("Download on Wi-Fi only", isOn: $downloads.wifiOnly)

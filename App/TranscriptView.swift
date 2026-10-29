@@ -70,7 +70,9 @@ struct TranscriptView: View {
     private func load() {
         transcript = transcripts.transcript(for: episode)
         blocks = transcript.map(TranscriptLayout.blocks(for:)) ?? []
-        if transcript == nil { transcripts.prepare(episode, urgent: true) }
+        // Publisher transcripts are just fetched; on-device ones follow the
+        // schedule unless Paul taps Transcribe now.
+        if transcript == nil { transcripts.prepare(episode) }
     }
 
     // MARK: Lines
@@ -208,20 +210,22 @@ struct TranscriptView: View {
                     .font(.title)
                 Text("Couldn't make a transcript for this episode.")
                     .foregroundStyle(Theme.ink)
-                Button("Try again") {
-                    episode.transcriptState = .none
-                    transcripts.prepare(episode, urgent: true)
-                }
+                Button("Try again") { transcripts.transcribeNow(episode) }
                 .buttonStyle(.bordered)
                 .tint(Theme.ink)
             default:
-                if store.localAudioURL(for: episode) == nil && episode.transcriptURL == nil {
-                    Text("Download this episode to transcribe it.")
+                if transcripts.canTranscribeNow(episode) {
+                    Text("No transcript yet")
                         .foregroundStyle(Theme.ink)
-                    Text("Transcripts are made on your iPhone from the downloaded audio.")
+                    Text(store.localAudioURL(for: episode) == nil
+                         ? "It's made on your iPhone from the audio, so the episode downloads first."
+                         : "Transcripts are made on your iPhone. " + transcripts.schedule.explanation)
+                    Button("Transcribe now") { transcripts.transcribeNow(episode) }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Theme.ink)
                 } else {
                     ProgressView()
-                    Text("Getting the transcript ready…")
+                    Text(store.localAudioURL(for: episode) == nil ? "Downloading, then transcribing…" : "Getting the transcript ready…")
                         .foregroundStyle(Theme.ink)
                 }
             }
