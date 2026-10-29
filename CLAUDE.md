@@ -9,9 +9,9 @@ original screen mockups are in `design/`.
 
 **Podspot** (Paul's name; icon: a sound wave turning into headphones,
 off-white on terracotta, drawn by `design/icon/make_icon.py`. The first
-design looked too like an existing logo; now using option B, sound-wave
-bars forming the headband. Options A–C in `design/icon/options.png`;
-Paul to confirm). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
+design looked too like an existing logo; Paul chose **option C**: a
+headband over a sound wave that runs between the ear cups. Options A–C in
+`design/icon/options.png`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**, with a
 calm look inspired by the Claude app (warm off-white, serif headings, one
@@ -276,7 +276,7 @@ terracotta accent).
   SpeechTranscriber matched to FluidAudio speaker turns).
 - Done (second round of answers): Skip ad button + find ads while
   listening; transcription default Only when I ask; no automatic
-  mark-as-played on follow, Select mode instead; new icon (option B).
+  mark-as-played on follow, Select mode instead; new icon (option C, Paul's pick).
 - To check on the phone first: Trim silences / Boost voices strength, ad
   detection accuracy (rule-based; tune phrases), auto-chapter quality,
   Apple chart feeds (could not be reached from the build machine; Discover
