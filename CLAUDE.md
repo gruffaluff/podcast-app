@@ -7,7 +7,8 @@ original screen mockups are in `design/`.
 
 ## What this is
 
-A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
+**Podspot** (Paul's name; icon: a sound wave turning into headphones,
+off-white on terracotta, drawn by `design/icon/make_icon.py`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**, with a
 calm look inspired by the Claude app (warm off-white, serif headings, one
@@ -35,6 +36,13 @@ terracotta accent).
 - Manual queue with drag to reorder, plus "Play next" and "Play last" on any episode.
 - **Auto-add per show**: each subscribed show is set to **Off**, **Top** or **Bottom**.
   Newly followed shows default to **Bottom** (Paul's call).
+- **Following a show**: older episodes are marked as played and only the
+  newest episode downloads (Paul's call); the follow sheet can undo it
+  ("Keep older episodes unplayed"). Show pages list **Unplayed** episodes
+  by default (switch to All), with Mark all as played / unplayed, "Mark
+  this and older as played", and swipe to mark played.
+- Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
+  subscription list, so there is no OPML import from it).
 - **Right after following a show, a settings sheet opens**: auto-add
   (Off/Top/Bottom), auto-download, notifications; the **last** item links to
   the separate "Top show priority" screen (ranking lives there, not in the
@@ -102,15 +110,17 @@ terracotta accent).
 - Use the publisher's transcript when the feed provides one
   (`<podcast:transcript>`), otherwise **transcribe on the iPhone**.
 - Transcription follows a schedule Paul picks (Shows screen → Transcripts):
-  **As soon as downloaded** (default), **While charging** (incl. overnight
-  via a background task), or **Only when I ask**. **Transcribe now** (in
+  **While charging** (default, incl. overnight via a background task;
+  Paul was worried about battery), **As soon as downloaded**, or **Only
+  when I ask**. **Transcribe now** (in
   the transcript screen, episode menus, Up Next menu; "Transcribe Up Next
   now" in settings) skips the schedule and downloads the episode first if
   needed. Transcripts are made only from downloaded audio and kept after
   the episode is played (for search and bookmarks).
-- **Speakers**: identify who is speaking (on-device speaker separation, e.g. an
-  open-source Core ML diarization model) and label each line "Speaker 1",
-  "Speaker 2"… Use real names when the publisher's transcript has them; Paul
+- **Speakers**: identify who is speaking (on-device speaker separation with
+  the open-source FluidAudio library, Apache 2.0; its ~30 MB of models
+  download once, free) and label each line "Speaker 1", "Speaker 2"…
+  ("Label speakers" setting, default on) Use real names when the publisher's transcript has them; Paul
   can tap "Name speakers" to rename, and names stick for that show.
 - **Layout**: lines grouped under a timestamp every ~20 seconds or at each pause,
   e.g. `1m 20s` then `Speaker 1 — Hi` / `Speaker 2 — Hi too`.
@@ -205,7 +215,7 @@ terracotta accent).
   new episodes". The per-show notification toggle is saved but does
   nothing until step 7.
 - Waiting on Paul: Apple Developer Program membership (name correction with
-  Apple support in progress). Then add signing + the TestFlight upload job
+  Apple support in progress; earliest news the day after 29 Oct 2026). Then add signing + the TestFlight upload job
   (see `docs/SETUP.md`) to finish step 1.
 - Waiting on GitHub: the macOS build machines only have Xcode 26.6 (iOS
   26.5 SDK) while the app targets iOS 27. It compiles (with a warning), but
@@ -250,6 +260,12 @@ terracotta accent).
 - All seven build steps are in place and the cloud build is green. Nothing
   has run on a real iPhone yet: first TestFlight build needs Paul's Apple
   Developer membership (then add signing + upload, docs/SETUP.md).
+- Done (after Paul's answers): Podspot name and icon; follow = older
+  played + newest downloaded; Unplayed/All filter and mark-all actions;
+  Apple Podcasts links in Add a show; a fresh install follows Elis James
+  and John Robins for testing (remove later); transcription default While
+  charging; speaker labels on on-device transcripts (word timings from
+  SpeechTranscriber matched to FluidAudio speaker turns).
 - To check on the phone first: Trim silences / Boost voices strength, ad
   detection accuracy (rule-based; tune phrases), auto-chapter quality,
   Apple chart feeds (could not be reached from the build machine; Discover
@@ -257,7 +273,5 @@ terracotta accent).
 
 ## Open questions for Paul
 
-- Speaker separation for on-device transcripts: needs a bundled open-source
-  diarization model (roughly 30–100 MB). Now, later, or never?
-- App name and icon.
-- Importing existing subscriptions (OPML export from his current app).
+- None open. (Answered: name Podspot + icon; Apple Podcasts has no export,
+  links supported instead; speaker labels added now, can be removed.)
