@@ -38,6 +38,11 @@ final class PlayerModel {
     /// When a timed sleep timer will pause playback.
     private(set) var sleepEndsAt: Date?
 
+    /// "Trim silences" (speed through pauses) and "Boost voices" (even out
+    /// and lift speech). Both remembered; off by default.
+    private(set) var trimSilences = false
+    private(set) var boostVoices = false
+
     /// Chapters from the show (feed JSON or embedded in the audio), if any.
     private(set) var chapters: [Chapter] = []
 
@@ -55,6 +60,9 @@ final class PlayerModel {
     @ObservationIgnored private var lastSavedTime: TimeInterval = 0
     @ObservationIgnored private var artwork: MPMediaItemArtwork?
     @ObservationIgnored private var sleepTask: Task<Void, Never>?
+    @ObservationIgnored private let tapState = AudioTapState()
+    @ObservationIgnored private var trimTimer: Timer?
+    @ObservationIgnored private var hurrying = false
 
     init(store: LibraryStore) {
         self.store = store
@@ -63,6 +71,10 @@ final class PlayerModel {
         skipForwardSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipForward") as? Int ?? PlayerOptions.defaultSkip)
         speed = min(2, max(1, defaults.object(forKey: "speed") as? Double ?? 1))
         player.defaultRate = Float(speed)
+        trimSilences = defaults.bool(forKey: "trimSilences")
+        boostVoices = defaults.bool(forKey: "boostVoices")
+        tapState.trimSilences = trimSilences
+        tapState.boostVoices = boostVoices
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio, options: [])
         observePlayer()
         setUpRemoteCommands()
@@ -96,6 +108,9 @@ final class PlayerModel {
         let item = AVPlayerItem(url: source)
         item.audioTimePitchAlgorithm = .timeDomain  // Clear speech when sped up.
         player.replaceCurrentItem(with: item)
+        hurrying = false
+        let tapState = self.tapState
+        Task { _ = await tapState.attach(to: item) }
         if start > 1 {
             player.seek(to: CMTime(seconds: start, preferredTimescale: 600))
         }
@@ -133,9 +148,49 @@ final class PlayerModel {
         UserDefaults.standard.set(speed, forKey: "speed")
         player.defaultRate = Float(speed)
         if player.timeControlStatus != .paused {
-            player.rate = Float(speed)
+            player.rate = Float(hurrying ? SilenceDetector.trimRate(forSpeed: speed) : speed)
         }
         updateNowPlayingInfo()
+    }
+
+    func setTrimSilences(_ on: Bool) {
+        trimSilences = on
+        tapState.trimSilences = on
+        UserDefaults.standard.set(on, forKey: "trimSilences")
+        updateTrimTimer()
+    }
+
+    func setBoostVoices(_ on: Bool) {
+        boostVoices = on
+        tapState.boostVoices = on
+        UserDefaults.standard.set(on, forKey: "boostVoices")
+    }
+
+    /// While trimming, checks a few times a second whether playback is in a
+    /// pause and, if so, speeds through it.
+    private func updateTrimTimer() {
+        let shouldRun = trimSilences && isPlaying
+        if shouldRun, trimTimer == nil {
+            trimTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.trimTick() }
+            }
+        } else if !shouldRun {
+            trimTimer?.invalidate()
+            trimTimer = nil
+            if hurrying {
+                hurrying = false
+                if player.timeControlStatus != .paused { player.rate = Float(speed) }
+            }
+        }
+    }
+
+    private func trimTick() {
+        guard player.timeControlStatus == .playing else { return }
+        let pause = tapState.inPause
+        if pause != hurrying {
+            hurrying = pause
+            player.rate = Float(pause ? SilenceDetector.trimRate(forSpeed: speed) : speed)
+        }
     }
 
     func setSkipBack(_ seconds: Int) {
@@ -257,7 +312,10 @@ final class PlayerModel {
 
         statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             let playing = player.timeControlStatus != .paused
-            Task { @MainActor in self?.isPlaying = playing }
+            Task { @MainActor in
+                self?.isPlaying = playing
+                self?.updateTrimTimer()
+            }
         }
 
         let center = NotificationCenter.default

@@ -221,3 +221,50 @@ final class ChaptersTests: XCTestCase {
         XCTAssertEqual(Chapters.index(at: 51, in: chapters), 1)
     }
 }
+
+final class AudioProcessingTests: XCTestCase {
+
+    func testQuietSpeechIsLiftedAndLoudIsEvened() {
+        var quiet = [Float](repeating: 0, count: 4800)
+        var loud = [Float](repeating: 0, count: 4800)
+        for i in 0..<4800 {
+            let wave = Float(sin(Double(i) * 2 * .pi * 200 / 48_000))
+            quiet[i] = 0.03 * wave
+            loud[i] = 0.6 * wave
+        }
+        var boostQuiet = VoiceBoost()
+        var boostLoud = VoiceBoost()
+        quiet.withUnsafeMutableBufferPointer { boostQuiet.process($0, sampleRate: 48_000) }
+        loud.withUnsafeMutableBufferPointer { boostLoud.process($0, sampleRate: 48_000) }
+        let quietPeak = quiet[2400...].map(abs).max()!
+        let loudPeak = loud[2400...].map(abs).max()!
+        XCTAssertGreaterThan(quietPeak, 0.06)        // louder than before
+        XCTAssertLessThan(loudPeak / quietPeak, 20)   // was 20× apart
+        XCTAssertLessThanOrEqual(loudPeak, 1)         // never clips
+    }
+
+    func testSoftLimitStaysUnderFullScale() {
+        XCTAssertEqual(VoiceBoost.softLimit(0.5), 0.5)
+        XCTAssertLessThan(VoiceBoost.softLimit(5), 1)
+        XCTAssertGreaterThan(VoiceBoost.softLimit(-5), -1)
+    }
+
+    func testSilenceDetectorWaitsForARealPause() {
+        var detector = SilenceDetector()
+        XCTAssertFalse(detector.feed(rms: 0.1, duration: 0.1))   // speech
+        XCTAssertFalse(detector.feed(rms: 0.001, duration: 0.1)) // short gap
+        XCTAssertFalse(detector.feed(rms: 0.001, duration: 0.1))
+        XCTAssertTrue(detector.feed(rms: 0.001, duration: 0.15)) // now a pause
+        XCTAssertFalse(detector.feed(rms: 0.1, duration: 0.05))  // speech again
+    }
+
+    func testRMS() {
+        let samples: [Float] = [0.5, -0.5, 0.5, -0.5]
+        samples.withUnsafeBufferPointer { XCTAssertEqual(SilenceDetector.rms($0), 0.5, accuracy: 0.0001) }
+    }
+
+    func testTrimRate() {
+        XCTAssertEqual(SilenceDetector.trimRate(forSpeed: 1), 2.5)
+        XCTAssertEqual(SilenceDetector.trimRate(forSpeed: 2), 4)
+    }
+}

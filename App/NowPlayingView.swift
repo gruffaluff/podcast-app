@@ -154,7 +154,15 @@ struct NowPlayingView: View {
             }
             .accessibilityLabel("Speed, \(PlayerOptions.speedLabel(player.speed))")
 
-            Rectangle().fill(secondary.opacity(0.4)).frame(width: 1, height: 22)
+            divider
+            toggleChip("Trim", systemImage: "scissors", isOn: player.trimSilences, hint: "Trim silences: speeds through pauses") {
+                player.setTrimSilences(!player.trimSilences)
+            }
+            divider
+            toggleChip("Boost", systemImage: "waveform", isOn: player.boostVoices, hint: "Boost voices: makes speech clearer and more even") {
+                player.setBoostVoices(!player.boostVoices)
+            }
+            divider
 
             Menu {
                 if player.sleepTimer != nil {
@@ -173,20 +181,35 @@ struct NowPlayingView: View {
         .tint(text)
     }
 
+    private var divider: some View {
+        Rectangle().fill(secondary.opacity(0.4)).frame(width: 1, height: 22)
+    }
+
+    private func toggleChip(_ title: String, systemImage: String, isOn: Bool, hint: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .labelStyle(.titleOnly)
+                .font(.subheadline.weight(isOn ? .bold : .medium))
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(isOn ? Color.white.opacity(0.22) : .clear, in: RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(hint)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
     @ViewBuilder private var sleepLabel: some View {
         if let ends = player.sleepEndsAt {
             let now = Date()
-            HStack(spacing: 6) {
-                Image(systemName: "moon.fill")
-                Text(timerInterval: now...max(ends, now), countsDown: true)
-                    .monospacedDigit()
-            }
+            Text(timerInterval: now...max(ends, now), countsDown: true)
+                .monospacedDigit()
             .font(.subheadline.weight(.medium))
             .frame(maxWidth: .infinity, minHeight: 44)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Sleep timer on")
         } else if player.sleepTimer == .endOfEpisode {
-            optionLabel("End of episode", systemImage: "moon.fill")
+            optionLabel("Ep. end", systemImage: "moon.fill")
         } else {
             optionLabel("Sleep", systemImage: "moon")
         }
@@ -194,7 +217,10 @@ struct NowPlayingView: View {
 
     private func optionLabel(_ title: String, systemImage: String) -> some View {
         Label(title, systemImage: systemImage)
+            .labelStyle(.titleOnly)
             .font(.subheadline.weight(.medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .frame(maxWidth: .infinity, minHeight: 44)
     }
 
