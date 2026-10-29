@@ -100,6 +100,15 @@ public enum QueueEngine {
         return result
     }
 
+    // MARK: Keep playing new episodes
+
+    /// When Up Next runs out: which new episode to play next. Picks from
+    /// unplayed recent episodes of auto-add shows, in the order the rules
+    /// would queue them (Top shows by priority, each show oldest first).
+    public static func continuation(from candidates: [Episode], settings: QueueSettings) -> Episode? {
+        addNewEpisodes(candidates, to: [], settings: settings).first?.episode
+    }
+
     // MARK: Completion and re-ranking
 
     /// Removes a finished episode from Up Next.

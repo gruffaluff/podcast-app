@@ -150,4 +150,16 @@ final class QueueEngineTests: XCTestCase {
         let result = QueueEngine.applyRanking(to: q, settings: swapped)
         XCTAssertEqual(ids(result), ["tw1", "tw2", "ls1", "sm1", "fn1"])
     }
+
+    // MARK: Keep playing new episodes
+
+    func testContinuationPrefersFavouriteTopShowOldestFirst() {
+        let candidates = [ep("fn1", "FN", day: 1), ep("tw2", "TW", day: 5), ep("ls2", "LS", day: 4), ep("ls1", "LS", day: 3)]
+        XCTAssertEqual(QueueEngine.continuation(from: candidates, settings: settings)?.id, "ls1")
+    }
+
+    func testContinuationIgnoresOffShowsAndCanBeEmpty() {
+        XCTAssertNil(QueueEngine.continuation(from: [ep("sm1", "SM", day: 1)], settings: settings))
+        XCTAssertNil(QueueEngine.continuation(from: [], settings: settings))
+    }
 }

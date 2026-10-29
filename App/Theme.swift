@@ -11,6 +11,22 @@ enum Theme {
     static let accentFill = Color(hex: 0xAD5230)
     static let accentText = Color(hex: 0xA4512F)
     static let highlight = Color(hex: 0xF3E3C6)
+    static let adMarker = Color(hex: 0xD9A441)
+
+    /// Muted tones for artwork placeholders.
+    static let placeholders: [Color] = ([0x4A5D73, 0x4F6B5A, 0x7A5368, 0x8A6A3F, 0x5B5750, 0x6A5E86] as [UInt32]).map { Color(hex: $0) }
+
+    /// The same title always gets the same colour.
+    static func placeholderColor(for title: String) -> Color {
+        let sum = title.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        return placeholders[sum % placeholders.count]
+    }
+
+    /// "Tidewater Weekly" → "TW"; a leading "The" is skipped.
+    static func initials(for title: String) -> String {
+        let words = title.split(separator: " ").filter { $0.lowercased() != "the" }
+        return String(words.prefix(2).compactMap(\.first)).uppercased()
+    }
 
     static func screenTitle(_ size: CGFloat = 34) -> Font {
         .system(size: size, weight: .medium, design: .serif)

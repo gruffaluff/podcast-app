@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Keep playing when the screen is locked or another app is open. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>processing</string>
+		<string>fetch</string>
+	</array>
+	<!-- Overnight transcription while charging. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.gruffaluff.podcasts.transcribe</string>
+		<string>com.gruffaluff.podcasts.refresh</string>
+	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Transcripts are made on your iPhone from episodes you've downloaded. Nothing is sent anywhere.</string>
+	<!-- Many podcast feeds and audio files are still served over plain http. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

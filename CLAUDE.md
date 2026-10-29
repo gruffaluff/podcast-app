@@ -7,7 +7,8 @@ original screen mockups are in `design/`.
 
 ## What this is
 
-A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
+**Podspot** (Paul's name; icon: a sound wave turning into headphones,
+off-white on terracotta, drawn by `design/icon/make_icon.py`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**, with a
 calm look inspired by the Claude app (warm off-white, serif headings, one
@@ -23,12 +24,31 @@ terracotta accent).
   Nothing calls Claude or any paid API at runtime.
 - Paul is not a developer. Explain changes in plain English, keep the build
   green, and tell him when a new TestFlight build is ready to try.
+- **After committing any change, ask Paul whether to update CLAUDE.md**
+  (e.g. Progress, decisions, open questions), and say what you'd change.
+  Don't skip this, even for small changes. Exception: when Paul says to
+  keep going through the steps, keep CLAUDE.md up to date yourself and
+  give him one summary (including what changed here) when the work is done.
 
 ## Features (decided)
 
 ### Up Next queue
 - Manual queue with drag to reorder, plus "Play next" and "Play last" on any episode.
 - **Auto-add per show**: each subscribed show is set to **Off**, **Top** or **Bottom**.
+  Newly followed shows default to **Bottom** (Paul's call).
+- **Following a show**: older episodes are marked as played and only the
+  newest episode downloads (Paul's call); the follow sheet can undo it
+  ("Keep older episodes unplayed"). Show pages list **Unplayed** episodes
+  by default (switch to All), with Mark all as played / unplayed, "Mark
+  this and older as played", and swipe to mark played.
+- Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
+  subscription list, so there is no OPML import from it).
+- **Right after following a show, a settings sheet opens**: auto-add
+  (Off/Top/Bottom), auto-download, notifications; the **last** item links to
+  the separate "Top show priority" screen (ranking lives there, not in the
+  sheet). The same sheet opens from the show page. The sliders icon on
+  Up Next opens the "Shows" screen: Top show priority, "Keep each show in
+  order", and download settings (Wi-Fi only, keep played downloads 24 hours).
 - **Each show always stays in chronological order (oldest first).** This is the core rule.
   - **Top shows are ranked by priority** (Paul drags them into order on the
     Shows screen). The top of Up Next holds Top-show episodes in that rank order.
@@ -49,11 +69,12 @@ terracotta accent).
   (respecting the Wi-Fi-only setting) so they are ready to play and transcribe.
 - **Removal on completion**: when an episode finishes it is marked played,
   removed from Up Next, and its download is deleted to save space.
-  Proposed defaults (confirm with Paul): delete straight away, with a setting
-  to keep played downloads for 24 hours; episodes with bookmarks or clips keep
-  their transcript but not the audio.
-- "Keep playing new episodes" toggle: when the queue runs out, continue with new
-  episodes from auto-add shows.
+  Decided: delete straight away by default, with a setting "Keep played
+  downloads for 24 hours" (off by default). Still proposed: episodes with
+  bookmarks or clips keep their transcript but not the audio.
+- "Keep playing new episodes" toggle (default on, at the bottom of Up Next):
+  when the queue runs out, continue with the last week's unplayed episodes
+  from auto-add shows, in the order the queue rules would put them.
 - Queue rows show transcript status (ready / transcribing / waiting) and source
   (Auto · Top, Auto · Bottom, Added by you).
 
@@ -74,6 +95,10 @@ terracotta accent).
   player shows "Playing on …" when not on the phone.
 - Variable speed (1.0–2.0×), **Trim silences** (Overcast-style Smart Speed),
   **Boost voices**, sleep timer.
+  - Built as: speed remembered globally; Trim and Boost are global switches,
+    off by default (not per show); sleep timer 5/15/30/45/60 minutes or end
+    of episode. Skip lengths are set on the Shows screen ("Skip buttons") or
+    by touching and holding a skip button.
 
 ### Library and new episode cards
 - Library tab opens with a **New Episodes** carousel of large cards like Apple
@@ -84,10 +109,18 @@ terracotta accent).
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
   (`<podcast:transcript>`), otherwise **transcribe on the iPhone**.
-- Transcription runs in the background, preferring charging + Wi-Fi.
-- **Speakers**: identify who is speaking (on-device speaker separation, e.g. an
-  open-source Core ML diarization model) and label each line "Speaker 1",
-  "Speaker 2"… Use real names when the publisher's transcript has them; Paul
+- Transcription follows a schedule Paul picks (Shows screen → Transcripts):
+  **While charging** (default, incl. overnight via a background task;
+  Paul was worried about battery), **As soon as downloaded**, or **Only
+  when I ask**. **Transcribe now** (in
+  the transcript screen, episode menus, Up Next menu; "Transcribe Up Next
+  now" in settings) skips the schedule and downloads the episode first if
+  needed. Transcripts are made only from downloaded audio and kept after
+  the episode is played (for search and bookmarks).
+- **Speakers**: identify who is speaking (on-device speaker separation with
+  the open-source FluidAudio library, Apache 2.0; its ~30 MB of models
+  download once, free) and label each line "Speaker 1", "Speaker 2"…
+  ("Label speakers" setting, default on) Use real names when the publisher's transcript has them; Paul
   can tap "Name speakers" to rename, and names stick for that show.
 - **Layout**: lines grouped under a timestamp every ~20 seconds or at each pause,
   e.g. `1m 20s` then `Speaker 1 — Hi` / `Speaker 2 — Hi too`.
@@ -156,18 +189,89 @@ terracotta accent).
 
 ## Progress
 
-- Done: Up Next ordering rules in `Packages/PodcastCore` (`QueueEngine`) with
-  unit tests; SwiftUI app skeleton (`App/`, project generated from
-  `project.yml` by XcodeGen) with tabs and an Up Next list driven by the real
-  rules using sample data; GitHub Actions `Build` workflow (tests + unsigned
-  simulator build) passing.
+- Done (step 1, minus TestFlight): Up Next ordering rules in
+  `Packages/PodcastCore` (`QueueEngine`) with unit tests; SwiftUI app
+  (`App/`, project generated from `project.yml` by XcodeGen); GitHub Actions
+  `Build` workflow (tests + unsigned simulator build). It runs on pushes to
+  `main` and PRs; for other branches, start it by hand ("Run workflow").
+- Done (step 2): feed reader (RSS + iTunes + Podcasting 2.0 transcript and
+  chapter links), new-episode detection that never floods Up Next with
+  back-filled episodes, Apple directory search, all unit-tested in
+  PodcastCore. App: SwiftData library (shows, episodes, saved Up Next);
+  "Add a show" (search by name or paste a feed link) followed by the show
+  settings sheet; Library (New Episodes cards + Your shows grid); show page
+  with episode list, Play next / Play last / mark played; refresh on launch
+  (at most hourly) and pull to refresh, feeding Up Next by the rules; Top
+  show priority screen (drag to re-rank, re-sorts Up Next; "Keep each show
+  in order" toggle); streaming playback with mini player, basic full player,
+  lock screen / headphone controls, resume position, mark played and
+  auto-advance on finish, AirPlay device picker.
+- Done (downloads and the rest of step 3): background downloads that carry
+  on while the app is closed; auto-download of new episodes from auto-add
+  shows (per-show toggle, Wi-Fi only setting, manual downloads go straight
+  away); plays the downloaded copy when there is one; download deleted when
+  played (or after 24 hours if that setting is on) and on unfollow;
+  download buttons/status in Library, Up Next and show pages; "Keep playing
+  new episodes". The per-show notification toggle is saved but does
+  nothing until step 7.
 - Waiting on Paul: Apple Developer Program membership (name correction with
-  Apple support in progress). Then add signing + the TestFlight upload job
+  Apple support in progress; earliest news the day after 29 Oct 2026). Then add signing + the TestFlight upload job
   (see `docs/SETUP.md`) to finish step 1.
-- Next without Apple: step 2 (subscriptions, feed parsing, episode list,
-  basic playback).
+- Waiting on GitHub: the macOS build machines only have Xcode 26.6 (iOS
+  26.5 SDK) while the app targets iOS 27. It compiles (with a warning), but
+  TestFlight uploads will need the iOS 27 SDK once GitHub adds it.
+- Done (step 4): speed, sleep timer, separate skip lengths (settings +
+  touch and hold), artwork-coloured player and New Episodes cards (4.5:1
+  text), "Playing on …", chapters (feed JSON or embedded in the audio, with
+  chapter artwork, Chapters list, tap to jump), Trim silences (speeds
+  through pauses over 0.3s) and Boost voices (compressor + limiter) via an
+  audio tap. Trim/Boost strengths are first guesses: tune once Paul has
+  listened. Ad breaks on the scrubber come with step 6.
+- Done (step 5): publisher transcripts (best of JSON/VTT/SRT, with speaker
+  names), on-device transcription with Apple's SpeechAnalyzer /
+  SpeechTranscriber (checked against Apple's docs; iOS 26+ API), music
+  rows via SoundAnalysis, transcript screen (timestamp groups, follows
+  playback, tap to play, copy/share/bookmark, Name speakers per show),
+  transcript status on Up Next rows, schedule + Transcribe now, Search tab
+  (transcripts with highlighted quotes, shows/episodes, My clips =
+  bookmarks for now). Not yet: speaker separation for on-device
+  transcripts (see open questions); clip cards (step 7).
+- Done (step 6): rule-based ad detection on on-device transcripts of
+  Paul's download (sponsor phrases, promo codes, web addresses, "after the
+  break", widened to bracketing music); shows with their own transcript
+  still get an on-device pass (per the schedule) just for ads and music.
+  Auto skip (setting "Skip ads automatically", default on), breaks marked
+  on the scrubber, "Ad skipped at …" with Play ad / Not an ad (remembered),
+  dashed ad band in the transcript. Auto-generated chapters (topic change
+  by word overlap, ~8 min, ads as skipped "Sponsor break" chapters),
+  titled by Apple's on-device language model (Foundation Models) when the
+  iPhone supports it, word-based titles otherwise; Chapters screen switch
+  From the show / Auto-generated. CI prints failing test lines at the end.
+- Done (step 7): background feed checks (BGAppRefreshTask, Hourly / Every
+  3 hours (default) / Every 6 hours on the Shows screen); per-show bell with
+  local alerts saying where the episode went ("Added to the top of Up
+  Next", "…at number 3", "…to the end"); Shows screen "All shows" list
+  (bell + Off/Top/Bottom per show); Discover (directory search, category
+  chips with category charts, "Because you listen to …", UK top charts,
+  Follow buttons that open the show settings sheet); Share a clip from any
+  transcript line (quote card in the artwork colour, 5–30s with −5/+5 and a
+  waveform, include audio cut on the iPhone, link to the moment via the
+  episode/show web page, video card as mp4; shared clips saved to My clips).
+- All seven build steps are in place and the cloud build is green. Nothing
+  has run on a real iPhone yet: first TestFlight build needs Paul's Apple
+  Developer membership (then add signing + upload, docs/SETUP.md).
+- Done (after Paul's answers): Podspot name and icon; follow = older
+  played + newest downloaded; Unplayed/All filter and mark-all actions;
+  Apple Podcasts links in Add a show; a fresh install follows Elis James
+  and John Robins for testing (remove later); transcription default While
+  charging; speaker labels on on-device transcripts (word timings from
+  SpeechTranscriber matched to FluidAudio speaker turns).
+- To check on the phone first: Trim silences / Boost voices strength, ad
+  detection accuracy (rule-based; tune phrases), auto-chapter quality,
+  Apple chart feeds (could not be reached from the build machine; Discover
+  falls back to directory search).
 
 ## Open questions for Paul
 
-- App name and icon.
-- Importing existing subscriptions (OPML export from his current app).
+- None open. (Answered: name Podspot + icon; Apple Podcasts has no export,
+  links supported instead; speaker labels added now, can be removed.)

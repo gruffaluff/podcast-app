@@ -1,0 +1,531 @@
+import AVFoundation
+import MediaPlayer
+import Observation
+import UIKit
+import PodcastCore
+
+/// Plays one episode at a time (downloaded copy if any), remembers where Paul
+/// stopped, and moves on to the next episode in Up Next when one finishes.
+/// Lock screen and headphone controls use the same skip lengths.
+@MainActor
+@Observable
+final class PlayerModel {
+    /// What's playing. A plain copy, so a show being unfollowed mid-play is safe.
+    struct NowPlaying: Equatable {
+        let episodeID: String
+        let title: String
+        let showTitle: String
+        let artworkURL: URL?
+        let audioURL: URL
+    }
+
+    private(set) var nowPlaying: NowPlaying?
+    private(set) var isPlaying = false
+    private(set) var currentTime: TimeInterval = 0
+    private(set) var duration: TimeInterval = 0
+
+    /// Skip lengths in seconds (5, 10, 15, 30 or 60; 10 by default), set
+    /// separately. Lock screen and headphone controls use the same lengths.
+    private(set) var skipBackSeconds = PlayerOptions.defaultSkip
+    private(set) var skipForwardSeconds = PlayerOptions.defaultSkip
+    var skipBack: TimeInterval { TimeInterval(skipBackSeconds) }
+    var skipForward: TimeInterval { TimeInterval(skipForwardSeconds) }
+
+    /// Playback speed, 1.0× to 2.0×.
+    private(set) var speed: Double = 1.0
+
+    private(set) var sleepTimer: SleepTimerOption?
+    /// When a timed sleep timer will pause playback.
+    private(set) var sleepEndsAt: Date?
+
+    /// "Trim silences" (speed through pauses) and "Boost voices" (even out
+    /// and lift speech). Both remembered; off by default.
+    private(set) var trimSilences = false
+    private(set) var boostVoices = false
+
+    /// Chapters from the show (feed JSON or embedded in the audio), if any.
+    private(set) var showChapters: [Chapter] = []
+    /// Made from the transcript when the show supplies none.
+    private(set) var autoChapters: [Chapter] = []
+
+    enum ChapterSource { case show, auto }
+    /// "From the show" or "Auto-generated" (Chapters screen).
+    var chapterSource: ChapterSource = .show
+
+    var chapters: [Chapter] {
+        chapterSource == .show && !showChapters.isEmpty ? showChapters : autoChapters
+    }
+
+    // MARK: Ads
+
+    /// Ad breaks found in this download.
+    private(set) var adBreaks: [AdBreak] = []
+    /// The break just skipped, for the "Ad skipped" note with Play ad / Not an ad.
+    private(set) var lastSkippedAd: AdBreak?
+    /// Skip ad breaks automatically (default on).
+    private(set) var skipAds = true
+
+    var currentChapterIndex: Int? { Chapters.index(at: currentTime, in: chapters) }
+    var currentChapter: Chapter? { currentChapterIndex.map { chapters[$0] } }
+
+    /// Name of the AirPlay / Bluetooth device when not playing on the phone.
+    private(set) var outputName: String?
+
+    @ObservationIgnored private let store: LibraryStore
+    @ObservationIgnored private let player = AVPlayer()
+    @ObservationIgnored private var timeObserver: Any?
+    @ObservationIgnored private var statusObservation: NSKeyValueObservation?
+    @ObservationIgnored private var notificationTokens: [NSObjectProtocol] = []
+    @ObservationIgnored private var lastSavedTime: TimeInterval = 0
+    @ObservationIgnored private var artwork: MPMediaItemArtwork?
+    @ObservationIgnored private var sleepTask: Task<Void, Never>?
+    @ObservationIgnored private let tapState = AudioTapState()
+    @ObservationIgnored private var trimTimer: Timer?
+    @ObservationIgnored private var hurrying = false
+    /// Breaks Paul chose to hear (Play ad) this time.
+    @ObservationIgnored private var allowedAds: Set<TimeInterval> = []
+    @ObservationIgnored private var skippedNoteTask: Task<Void, Never>?
+
+    init(store: LibraryStore) {
+        self.store = store
+        let defaults = UserDefaults.standard
+        skipBackSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipBack") as? Int ?? PlayerOptions.defaultSkip)
+        skipForwardSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipForward") as? Int ?? PlayerOptions.defaultSkip)
+        speed = min(2, max(1, defaults.object(forKey: "speed") as? Double ?? 1))
+        player.defaultRate = Float(speed)
+        skipAds = defaults.object(forKey: "skipAds") as? Bool ?? true
+        trimSilences = defaults.bool(forKey: "trimSilences")
+        boostVoices = defaults.bool(forKey: "boostVoices")
+        tapState.trimSilences = trimSilences
+        tapState.boostVoices = boostVoices
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio, options: [])
+        observePlayer()
+        setUpRemoteCommands()
+        updateRoute()
+    }
+
+    // MARK: Controls
+
+    /// Plays an episode from where Paul left off (or from the start if played).
+    func play(_ episode: PodcastEpisode) {
+        if nowPlaying?.episodeID == episode.episodeID {
+            resume()
+            return
+        }
+        saveProgress()
+        nowPlaying = NowPlaying(
+            episodeID: episode.episodeID,
+            title: episode.title,
+            showTitle: episode.podcast?.title ?? "",
+            artworkURL: episode.artwork,
+            audioURL: episode.audioURL
+        )
+        duration = episode.duration ?? 0
+        let start = episode.played ? 0 : episode.position
+        currentTime = start
+        lastSavedTime = start
+        artwork = nil
+
+        // Play the downloaded copy when there is one, otherwise stream.
+        let source = store.localAudioURL(for: episode) ?? episode.audioURL
+        let item = AVPlayerItem(url: source)
+        item.audioTimePitchAlgorithm = .timeDomain  // Clear speech when sped up.
+        player.replaceCurrentItem(with: item)
+        hurrying = false
+        let tapState = self.tapState
+        Task { _ = await tapState.attach(to: item) }
+        if start > 1 {
+            player.seek(to: CMTime(seconds: start, preferredTimescale: 600))
+        }
+        resume()
+        loadArtwork(episode.artwork)
+        showChapters = []
+        chapterSource = .show
+        loadAnalysis(for: episode)
+        loadChapters(episodeID: episode.episodeID, chaptersURL: episode.chaptersURL, audio: source)
+    }
+
+    /// Jumps to the start of a chapter.
+    func play(chapter: Chapter) {
+        seek(to: chapter.start)
+        if !isPlaying { resume() }
+    }
+
+    func resume() {
+        guard nowPlaying != nil else { return }
+        try? AVAudioSession.sharedInstance().setActive(true)
+        player.play()
+        updateNowPlayingInfo()
+    }
+
+    func pause() {
+        player.pause()
+        saveProgress()
+        updateNowPlayingInfo()
+    }
+
+    func togglePlayPause() {
+        isPlaying ? pause() : resume()
+    }
+
+    func setSpeed(_ newSpeed: Double) {
+        speed = min(2, max(1, newSpeed))
+        UserDefaults.standard.set(speed, forKey: "speed")
+        player.defaultRate = Float(speed)
+        if player.timeControlStatus != .paused {
+            player.rate = Float(hurrying ? SilenceDetector.trimRate(forSpeed: speed) : speed)
+        }
+        updateNowPlayingInfo()
+    }
+
+    func setTrimSilences(_ on: Bool) {
+        trimSilences = on
+        tapState.trimSilences = on
+        UserDefaults.standard.set(on, forKey: "trimSilences")
+        updateTrimTimer()
+    }
+
+    func setBoostVoices(_ on: Bool) {
+        boostVoices = on
+        tapState.boostVoices = on
+        UserDefaults.standard.set(on, forKey: "boostVoices")
+    }
+
+    /// While trimming, checks a few times a second whether playback is in a
+    /// pause and, if so, speeds through it.
+    private func updateTrimTimer() {
+        let shouldRun = trimSilences && isPlaying
+        if shouldRun, trimTimer == nil {
+            trimTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.trimTick() }
+            }
+        } else if !shouldRun {
+            trimTimer?.invalidate()
+            trimTimer = nil
+            if hurrying {
+                hurrying = false
+                if player.timeControlStatus != .paused { player.rate = Float(speed) }
+            }
+        }
+    }
+
+    private func trimTick() {
+        guard player.timeControlStatus == .playing else { return }
+        let pause = tapState.inPause
+        if pause != hurrying {
+            hurrying = pause
+            player.rate = Float(pause ? SilenceDetector.trimRate(forSpeed: speed) : speed)
+        }
+    }
+
+    func setSkipBack(_ seconds: Int) {
+        skipBackSeconds = PlayerOptions.validSkip(seconds)
+        UserDefaults.standard.set(skipBackSeconds, forKey: "skipBack")
+        MPRemoteCommandCenter.shared().skipBackwardCommand.preferredIntervals = [NSNumber(value: skipBack)]
+    }
+
+    func setSkipForward(_ seconds: Int) {
+        skipForwardSeconds = PlayerOptions.validSkip(seconds)
+        UserDefaults.standard.set(skipForwardSeconds, forKey: "skipForward")
+        MPRemoteCommandCenter.shared().skipForwardCommand.preferredIntervals = [NSNumber(value: skipForward)]
+    }
+
+    /// Starts (or with nil, cancels) the sleep timer.
+    func setSleepTimer(_ option: SleepTimerOption?) {
+        sleepTask?.cancel()
+        sleepTask = nil
+        sleepTimer = option
+        sleepEndsAt = nil
+        guard case .minutes(let minutes)? = option else { return }
+        let ends = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        sleepEndsAt = ends
+        sleepTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(ends.timeIntervalSinceNow))
+            guard !Task.isCancelled, let self else { return }
+            self.pause()
+            self.sleepTimer = nil
+            self.sleepEndsAt = nil
+        }
+    }
+
+    func skipBackward() { seek(to: currentTime - skipBack) }
+    func skipForwardBy() { seek(to: currentTime + skipForward) }
+
+    func seek(to time: TimeInterval) {
+        guard nowPlaying != nil else { return }
+        let upper = duration > 0 ? duration : .greatestFiniteMagnitude
+        let target = min(max(0, time), upper)
+        currentTime = target
+        player.seek(to: CMTime(seconds: target, preferredTimescale: 600)) { [weak self] _ in
+            Task { @MainActor in self?.updateNowPlayingInfo() }
+        }
+        saveProgress()
+    }
+
+    func stop() {
+        saveProgress()
+        player.replaceCurrentItem(with: nil)
+        nowPlaying = nil
+        currentTime = 0
+        duration = 0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
+    /// Stops if the playing episode is one of these (e.g. its show was unfollowed).
+    func stopIfPlaying(showFeedURL: String) {
+        if let id = nowPlaying?.episodeID, id.hasPrefix(showFeedURL + "|") {
+            stop()
+        }
+    }
+
+    // MARK: Progress
+
+    private func tick(_ time: CMTime) {
+        let seconds = time.seconds
+        guard seconds.isFinite else { return }
+        currentTime = seconds
+        skipAdIfNeeded(at: seconds)
+        if let itemDuration = player.currentItem?.duration.seconds, itemDuration.isFinite, itemDuration > 0,
+           abs(itemDuration - duration) > 1 {
+            duration = itemDuration
+            if let id = nowPlaying?.episodeID { store.saveDuration(itemDuration, for: id) }
+            updateNowPlayingInfo()
+        }
+        if abs(seconds - lastSavedTime) >= 15 {
+            saveProgress()
+        }
+    }
+
+    private func saveProgress() {
+        guard let id = nowPlaying?.episodeID else { return }
+        lastSavedTime = currentTime
+        store.savePosition(currentTime, for: id)
+    }
+
+    /// Finished: mark played, remove from Up Next, play the next one.
+    private func didFinish() {
+        guard let id = nowPlaying?.episodeID else { return }
+        store.markPlayed(id)
+        if sleepTimer == .endOfEpisode {
+            setSleepTimer(nil)
+            stop()
+            return
+        }
+        var next: PodcastEpisode?
+        for item in store.queue {
+            if let episode = store.episode(item.episode.id) {
+                next = episode
+                break
+            }
+        }
+        if next == nil {
+            next = store.nextNewEpisode(excluding: id)
+        }
+        if let next {
+            nowPlaying = nil
+            play(next)
+        } else {
+            stop()
+        }
+    }
+
+    // MARK: System hooks
+
+    private func observePlayer() {
+        timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self] time in
+            MainActor.assumeIsolated { self?.tick(time) }
+        }
+
+        statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
+            let playing = player.timeControlStatus != .paused
+            Task { @MainActor in
+                self?.isPlaying = playing
+                self?.updateTrimTimer()
+            }
+        }
+
+        let center = NotificationCenter.default
+        notificationTokens.append(center.addObserver(forName: AVPlayerItem.didPlayToEndTimeNotification, object: nil, queue: .main) { [weak self] note in
+            let finishedItem = note.object as? AVPlayerItem
+            MainActor.assumeIsolated {
+                guard let self, let finishedItem, finishedItem === self.player.currentItem else { return }
+                self.didFinish()
+            }
+        })
+        notificationTokens.append(center.addObserver(forName: .episodeAnalysisUpdated, object: nil, queue: .main) { [weak self] note in
+            let id = note.object as? String
+            MainActor.assumeIsolated {
+                guard let self, let id, id == self.nowPlaying?.episodeID, let episode = self.store.episode(id) else { return }
+                self.adBreaks = episode.adBreaks
+                self.autoChapters = episode.autoChapters
+            }
+        })
+        notificationTokens.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateRoute() }
+        })
+        // Resume after a phone call or Siri if iOS says it's appropriate.
+        notificationTokens.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
+            let typeValue = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            let optionsValue = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            MainActor.assumeIsolated {
+                guard let self, typeValue == AVAudioSession.InterruptionType.ended.rawValue else { return }
+                if AVAudioSession.InterruptionOptions(rawValue: optionsValue).contains(.shouldResume) {
+                    self.resume()
+                }
+            }
+        })
+    }
+
+    private func updateRoute() {
+        let output = AVAudioSession.sharedInstance().currentRoute.outputs.first
+        let onPhone: Set<AVAudioSession.Port> = [.builtInSpeaker, .builtInReceiver]
+        if let output, !onPhone.contains(output.portType) {
+            outputName = output.portName
+        } else {
+            outputName = nil
+        }
+    }
+
+    private func setUpRemoteCommands() {
+        let commands = MPRemoteCommandCenter.shared()
+        commands.playCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.resume() }
+            return .success
+        }
+        commands.pauseCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.pause() }
+            return .success
+        }
+        commands.togglePlayPauseCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.togglePlayPause() }
+            return .success
+        }
+        commands.skipBackwardCommand.preferredIntervals = [NSNumber(value: skipBack)]
+        commands.skipBackwardCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.skipBackward() }
+            return .success
+        }
+        commands.skipForwardCommand.preferredIntervals = [NSNumber(value: skipForward)]
+        commands.skipForwardCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.skipForwardBy() }
+            return .success
+        }
+        commands.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            let position = event.positionTime
+            Task { @MainActor in self?.seek(to: position) }
+            return .success
+        }
+        commands.nextTrackCommand.isEnabled = false
+        commands.previousTrackCommand.isEnabled = false
+    }
+
+    private func updateNowPlayingInfo() {
+        guard let nowPlaying else { return }
+        var info: [String: Any] = [
+            MPMediaItemPropertyTitle: nowPlaying.title,
+            MPMediaItemPropertyArtist: nowPlaying.showTitle,
+            MPMediaItemPropertyAlbumTitle: nowPlaying.showTitle,
+            MPMediaItemPropertyMediaType: MPMediaType.podcast.rawValue,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
+            MPNowPlayingInfoPropertyPlaybackRate: player.timeControlStatus == .paused ? 0.0 : speed,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: speed
+        ]
+        if duration > 0 { info[MPMediaItemPropertyPlaybackDuration] = duration }
+        if let artwork { info[MPMediaItemPropertyArtwork] = artwork }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    /// Ad breaks and auto chapters, which arrive once the transcript is analysed.
+    private func loadAnalysis(for episode: PodcastEpisode) {
+        adBreaks = episode.adBreaks
+        autoChapters = episode.autoChapters
+        allowedAds = []
+        lastSkippedAd = nil
+    }
+
+    private func skipAdIfNeeded(at time: TimeInterval) {
+        guard skipAds, player.timeControlStatus != .paused,
+              let adBreak = adBreaks.first(where: { $0.contains(time) && !allowedAds.contains($0.start) }) else { return }
+        seek(to: adBreak.end)
+        lastSkippedAd = adBreak
+        skippedNoteTask?.cancel()
+        skippedNoteTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(20))
+            guard !Task.isCancelled else { return }
+            self?.lastSkippedAd = nil
+        }
+    }
+
+    func setSkipAds(_ on: Bool) {
+        skipAds = on
+        UserDefaults.standard.set(on, forKey: "skipAds")
+    }
+
+    /// "Play ad": goes back and plays this break once.
+    func playAd(_ adBreak: AdBreak) {
+        allowedAds.insert(adBreak.start)
+        lastSkippedAd = nil
+        seek(to: adBreak.start)
+    }
+
+    /// "Not an ad": it's never skipped again, and playback goes back to it.
+    func notAnAd(_ adBreak: AdBreak, transcripts: TranscriptService) {
+        guard let id = nowPlaying?.episodeID else { return }
+        transcripts.notAnAd(adBreak, in: id)
+        adBreaks.removeAll { $0 == adBreak }
+        if lastSkippedAd == adBreak {
+            lastSkippedAd = nil
+            seek(to: adBreak.start)
+        }
+    }
+
+    private func loadChapters(episodeID: String, chaptersURL: URL?, audio: URL) {
+        Task {
+            var found: [Chapter] = []
+            if let chaptersURL, let data = try? await URLSession.shared.data(from: chaptersURL).0 {
+                found = (try? Chapters.parseJSON(data)) ?? []
+            }
+            if found.isEmpty {
+                found = await Self.embeddedChapters(in: audio)
+            }
+            guard nowPlaying?.episodeID == episodeID else { return }
+            showChapters = Chapters.tidy(found, duration: duration > 0 ? duration : nil)
+        }
+    }
+
+    /// Chapters stored inside the audio file (common in AAC/M4A podcasts).
+    nonisolated private static func embeddedChapters(in url: URL) async -> [Chapter] {
+        let asset = AVURLAsset(url: url)
+        guard let groups = try? await asset.loadChapterMetadataGroups(bestMatchingPreferredLanguages: Locale.preferredLanguages) else {
+            return []
+        }
+        var chapters: [Chapter] = []
+        for group in groups {
+            let start = group.timeRange.start.seconds
+            let end = group.timeRange.end.seconds
+            guard start.isFinite else { continue }
+            let titleItem = AVMetadataItem.metadataItems(from: group.items, filteredByIdentifier: .commonIdentifierTitle).first
+            let title = (try? await titleItem?.load(.stringValue)) ?? nil
+            chapters.append(Chapter(start: start, end: end.isFinite ? end : nil, title: title ?? ""))
+        }
+        return chapters
+    }
+
+    private func loadArtwork(_ url: URL?) {
+        guard let url else { return }
+        let episodeID = nowPlaying?.episodeID
+        Task {
+            guard let response = try? await URLSession.shared.data(from: url),
+                  let image = UIImage(data: response.0) else { return }
+            guard nowPlaying?.episodeID == episodeID else { return }
+            artwork = Self.makeArtwork(image)
+            updateNowPlayingInfo()
+        }
+    }
+
+    /// Built outside the main actor: iOS asks for the image on a background thread.
+    nonisolated private static func makeArtwork(_ image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    }
+}

@@ -2,83 +2,165 @@ import SwiftUI
 import PodcastCore
 
 struct UpNextView: View {
-    @State private var queue: [QueueItem] = SampleData.initialQueue()
-    @State private var checkedLabel = "Checked 2 hours ago · pull to check now"
-    private let settings = SampleData.settings
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @Environment(TranscriptService.self) private var transcripts
+    @State private var showingPriority = false
 
     var body: some View {
+        let episodes = store.episodes(store.queue.map(\.episode.id))
+        let settings = store.queueSettings
+
         NavigationStack {
             List {
                 Section {
-                    ForEach(queue, id: \.episode.id) { item in
-                        QueueRow(item: item, settings: settings)
-                            .swipeActions(edge: .trailing) {
-                                Button("Played") {
-                                    queue = QueueEngine.complete(item.episode.id, in: queue)
-                                }
-                                .tint(Theme.accentFill)
+                    ForEach(store.queue, id: \.episode.id) { item in
+                        if let episode = episodes[item.episode.id] {
+                            Button { player.play(episode) } label: {
+                                QueueRow(item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID)
                             }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing) {
+                                Button("Played") { store.markPlayed(episode.episodeID) }
+                                    .tint(Theme.accentFill)
+                                Button("Remove") { store.removeFromQueue(episode.episodeID) }
+                                    .tint(Theme.muted)
+                            }
+                            .contextMenu {
+                                if transcripts.canTranscribeNow(episode) {
+                                    Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
+                                }
+                                Button("Mark as played", systemImage: "checkmark.circle") { store.markPlayed(episode.episodeID) }
+                                Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
+                            }
+                        }
                     }
-                    .onMove { from, to in queue.move(fromOffsets: from, toOffset: to) }
+                    .onMove { from, to in store.moveQueue(from: from, to: to) }
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.hairline)
                 } header: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(checkedLabel)
-                        Text("\(queue.count) episodes")
+                    header(episodes: episodes)
+                }
+
+                Section {
+                    Toggle(isOn: Binding(get: { store.keepPlayingNew }, set: { store.keepPlayingNew = $0 })) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Keep playing new episodes")
+                                .foregroundStyle(Theme.ink)
+                            Text("When Up Next runs out, carry on with this week's new episodes from your auto-add shows.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.muted)
+                        }
                     }
-                    .font(.footnote)
-                    .foregroundStyle(Theme.muted)
-                    .textCase(nil)
+                    .tint(Theme.accentFill)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .refreshable { checkForNewEpisodes() }
+            .overlay {
+                if store.queue.isEmpty {
+                    ContentUnavailableView(
+                        "Up Next is empty",
+                        systemImage: "list.bullet",
+                        description: Text("Follow shows in Library and set them to Top or Bottom, or use Play next on any episode.")
+                    )
+                    .foregroundStyle(Theme.muted)
+                    .allowsHitTesting(false)
+                }
+            }
+            .refreshable { await store.refreshAll() }
             .navigationTitle("Up Next")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingPriority = true } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                    .accessibilityLabel("Top show priority")
+                }
                 ToolbarItem(placement: .topBarTrailing) { EditButton() }
+            }
+            .sheet(isPresented: $showingPriority) {
+                NavigationStack {
+                    TopPriorityView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { showingPriority = false }
+                            }
+                        }
+                }
             }
         }
     }
 
-    /// Stand-in for the real feed check: adds sample arrivals using the queue rules.
-    private func checkForNewEpisodes() {
-        queue = QueueEngine.addNewEpisodes(SampleData.arrivals, to: queue, settings: settings)
-        checkedLabel = "Up to date · checked just now"
+    private func header(episodes: [String: PodcastEpisode]) -> some View {
+        let total = store.queue.compactMap { episodes[$0.episode.id]?.timeLeft }.reduce(0, +)
+        var counts = "\(store.queue.count) episode\(store.queue.count == 1 ? "" : "s")"
+        if total > 0 { counts += " · \(TimeFormat.length(total))" }
+
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(checkedLabel)
+            Text(counts)
+        }
+        .font(.footnote)
+        .foregroundStyle(Theme.muted)
+        .textCase(nil)
+    }
+
+    private var checkedLabel: String {
+        if store.isRefreshing { return "Checking for new episodes…" }
+        guard let last = store.lastChecked else { return "Pull to check for new episodes" }
+        let ago = TimeFormat.ago(last)
+        return "Checked \(ago == "Just now" ? "just now" : ago) · pull to check now"
     }
 }
 
 private struct QueueRow: View {
+    @Environment(DownloadManager.self) private var downloads
     let item: QueueItem
+    let episode: PodcastEpisode
     let settings: QueueSettings
+    let isPlaying: Bool
 
     var body: some View {
-        let show = SampleData.shows[item.episode.showID]
         HStack(spacing: 14) {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(show?.color ?? Theme.muted)
-                .frame(width: 52, height: 52)
-                .overlay(
-                    Text(show?.initials ?? "")
-                        .font(.system(size: 18, design: .serif))
-                        .foregroundStyle(Theme.background)
-                )
+            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title)
             VStack(alignment: .leading, spacing: 3) {
-                Text(show?.name ?? "")
+                Text(episode.podcast?.title ?? "")
                     .font(.caption)
                     .foregroundStyle(Theme.muted)
-                Text(item.episode.title)
+                    .lineLimit(1)
+                Text(episode.title)
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                Text(sourceLabel)
+                    .lineLimit(2)
+                Text(meta)
                     .font(.caption)
-                    .foregroundStyle(Theme.muted)
+                    .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
             }
+            Spacer(minLength: 0)
         }
         .padding(.vertical, 6)
+        .contentShape(Rectangle())
+    }
+
+    private var meta: String {
+        var parts: [String] = []
+        if isPlaying { parts.append("Playing") }
+        if let left = episode.timeLeft, left > 0 {
+            parts.append(episode.position > 30 ? "\(TimeFormat.length(left)) left" : TimeFormat.length(left))
+        }
+        parts.append(sourceLabel)
+        if let download = downloads.status(for: episode) { parts.append(download) }
+        switch episode.transcriptState {
+        case .ready: parts.append("Transcript ready")
+        case .transcribing: parts.append("Transcribing")
+        case .waiting: parts.append("Transcript waiting")
+        case .none, .failed: break
+        }
+        return parts.joined(separator: " · ")
     }
 
     private var sourceLabel: String {
