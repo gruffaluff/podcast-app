@@ -26,9 +26,28 @@ button{font-family:inherit}
 
 <div style="flex: 1; overflow: auto; padding: 4px 20px 24px; display: flex; flex-direction: column; gap: 22px">
 
-<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B675E">New episodes join Up Next oldest first. A <span style="color: #1F1E1B; font-weight: 500">Top</span> show's new episode goes to the top, straight after its episodes already queued.</p>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B675E"><span style="color: #1F1E1B; font-weight: 500">Top</span> shows are ranked. A new episode from a higher-ranked show always goes above lower-ranked shows, and every show stays oldest first.</p>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 20px; font-weight: 500">Top, in priority order</h2>
+<sc-for list="{{tops}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #E8E3D8">
+<span style="width: 18px; font-size: 13px; font-weight: 600; color: #A4512F; font-variant-numeric: tabular-nums">{{t.rank}}</span>
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{t.art}}; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 14px; flex-shrink: 0">{{t.initials}}</div>
+<span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.name}}</span>
+<button onClick="{{t.up}}" aria-label="{{t.upLabel}}" style="width: 44px; height: 44px; border: 0; background: transparent; color: {{t.upInk}}; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>
+</button>
+<button aria-label="Drag to reorder" style="width: 44px; height: 44px; margin-right: -12px; border: 0; background: transparent; color: #8F8A7E; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 9h14M5 15h14"></path></svg>
+</button>
+</div>
+</sc-for>
+<p style="margin: 6px 0 0; font-size: 12px; color: #6B675E">Drag to rank. Set a show below to Top to add it here.</p>
+</div>
 
 <div style="display: flex; flex-direction: column">
+<h2 style="margin: 0 0 4px; font-family: Newsreader, Georgia, serif; font-size: 20px; font-weight: 500">All shows</h2>
 <sc-for list="{{shows}}" as="s" hint-placeholder-count="6">
 <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid #E8E3D8">
 <div style="display: flex; align-items: center; gap: 12px">
@@ -76,6 +95,7 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       freq: '3h', wifi: true, keep: true,
+      rank: ['ls', 'tw'],
       modes: { ls: 'top', tw: 'top', sm: 'off', fn: 'bottom', nd: 'off', pp: 'bottom' },
       bells: { ls: true, tw: true, sm: false, fn: false, nd: true, pp: false }
     };
@@ -103,10 +123,28 @@ class Component extends DCLogic {
         toggleBell: () => this.setState({ bells: { ...s.bells, [sh.id]: !bell } }),
         modes: [['off', 'Off'], ['top', 'Top'], ['bottom', 'Bottom']].map(([v, label]) => ({
           label, ...seg(s.modes[sh.id] === v),
-          pick: () => this.setState({ modes: { ...s.modes, [sh.id]: v } })
+          pick: () => {
+            const rank = s.rank.filter((id) => id !== sh.id);
+            if (v === 'top') rank.push(sh.id);
+            this.setState({ modes: { ...s.modes, [sh.id]: v }, rank });
+          }
         }))
       };
     });
+    const byId = {};
+    list.forEach((x) => { byId[x.id] = x; });
+    const tops = s.rank.map((id, i) => ({
+      ...byId[id],
+      rank: String(i + 1),
+      upLabel: 'Move ' + byId[id].name + ' up',
+      upInk: i === 0 ? '#D9D4C7' : '#1F1E1B',
+      up: () => {
+        if (i === 0) return;
+        const r = s.rank.slice();
+        [r[i - 1], r[i]] = [r[i], r[i - 1]];
+        this.setState({ rank: r });
+      }
+    }));
     const freqs = [['1h', 'Hourly'], ['3h', 'Every 3 hours'], ['6h', 'Every 6 hours']].map(([v, label]) => ({
       label, ...seg(s.freq === v), pick: () => this.setState({ freq: v })
     }));
@@ -118,7 +156,7 @@ class Component extends DCLogic {
       toggle: () => this.setState({ [key]: !s[key] })
     });
     return {
-      shows, freqs,
+      shows, freqs, tops,
       toggles: [
         tg('wifi', 'Download on Wi-Fi only', 'Checks still run on mobile data'),
         tg('keep', 'Keep each show in order', 'Applies to Play next and Play last too')

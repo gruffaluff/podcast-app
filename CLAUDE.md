@@ -30,9 +30,14 @@ terracotta accent).
 - Manual queue with drag to reorder, plus "Play next" and "Play last" on any episode.
 - **Auto-add per show**: each subscribed show is set to **Off**, **Top** or **Bottom**.
 - **Each show always stays in chronological order (oldest first).** This is the core rule.
-  - A new episode from a **Top** show goes to the top of the queue, *unless* that
-    show already has episodes queued, in which case it goes **directly after the
-    last queued episode of that show**.
+  - **Top shows are ranked by priority** (Paul drags them into order on the
+    Shows screen). The top of Up Next holds Top-show episodes in that rank order.
+  - A new episode from a **Top** show goes **directly after the last queued
+    episode of that show** if it has any; otherwise it goes **above every
+    episode from lower-ranked Top shows** and below those from higher-ranked
+    ones. So Paul's favourite show is always first, whenever its episodes arrive.
+  - Re-ranking shows re-sorts the Top-show block of the queue (each show still
+    oldest first). Manually placed episodes (Play next/Play last) keep their place.
   - A new episode from a **Bottom** show goes to the end of the queue, and is
     likewise never placed before an older queued episode of the same show.
   - If a show's older episodes sit further down the queue (e.g. added

@@ -64,7 +64,8 @@ The player opens from the mini player.
 5. **Share a clip** (`design/Clip.dc.html`): quote card, length waveform with
    −5 / +5 sec, toggles (audio, link to moment, video card), Share button.
 6. **Shows** (`design/AutoAdd.dc.html`): explanation of the ordering rule;
-   per-show row with notification bell and Off / Top / Bottom; "Checking for
+   "Top, in priority order" ranked list (rank number, move up, drag handle);
+   "All shows" with a per-show row with notification bell and Off / Top / Bottom; "Checking for
    new episodes" with Hourly / Every 3 hours / Every 6 hours; toggles for
    Wi-Fi-only downloads and "Keep each show in order".
 7. **Chapters** (`design/Chapters.dc.html`): From the show / Auto-generated
