@@ -49,11 +49,12 @@ The player opens from the mini player.
    total time; rows of artwork, show, title, meta (length · source · transcript
    status) and a reorder handle; "Keep playing new episodes" toggle; mini player
    with back 10 / play-pause / forward 10 buttons; tab bar.
-2. **Now Playing** (`design/NowPlaying.dc.html`): close chevron, large episode
+2. **Now Playing** (`design/NowPlaying.dc.html`): themed to the artwork
+   (background colour from the artwork, light text); grabber to close, large episode
    artwork, serif title, show name, current chapter link, scrubber with ad
    segments and "Ad skipped at …", back 10 / play-pause / forward 10, a single
-   segmented row (speed · Trim · Boost · Sleep), bottom links to Transcript,
-   Chapters, Up Next.
+   segmented row (speed · Trim · Boost · Sleep), Trim silences / Boost voices chips;
+   bottom row Transcript · Play on (device picker sheet) · Up Next.
 3. **Transcript** (`design/Transcript.dc.html`): timestamp headings
    (e.g. "1m 20s") with speaker-labelled lines beneath (Speaker 1 in ink,
    Speaker 2 in accent text), "Name speakers" button in the header, music rows
@@ -79,3 +80,10 @@ The player opens from the mini player.
 
 Copy in the mockups (show names, episode titles, transcript lines) is
 placeholder content.
+
+9. **Library** (`design/Library.dc.html`): "New Episodes" carousel of large
+   artwork-tinted cards (when, title, description, play pill with length,
+   download, more), then a "Your shows" artwork grid.
+
+Exception to the calm palette: the Now Playing screen and the new-episode cards
+take their colours from each show's artwork.

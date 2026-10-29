@@ -65,8 +65,21 @@ terracotta accent).
   set separately (5, 10, 15, 30 or 60s) in settings, and touch-and-hold a skip
   button to change it on the spot. Lock screen and headphone controls use the
   same lengths.
+- **Themed to the artwork** (like Apple Podcasts): the full player uses a large
+  episode artwork image and a background colour taken from that artwork
+  (extract a dominant/average colour on device), with light text and controls
+  tinted to match. Pick text colours that keep 4.5:1 contrast.
+- **Choose where to play**: an AirPlay/route button in the player opens the
+  system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
+  player shows "Playing on …" when not on the phone.
 - Variable speed (1.0–2.0×), **Trim silences** (Overcast-style Smart Speed),
   **Boost voices**, sleep timer.
+
+### Library and new episode cards
+- Library tab opens with a **New Episodes** carousel of large cards like Apple
+  Podcasts: episode artwork on top, card tinted with the artwork's colour,
+  "4h ago", title, one-line description, a play pill showing the length,
+  a download button and a more menu. Below: "Your shows" grid.
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one

@@ -11,99 +11,153 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0}
-a{color:#A4512F;text-decoration:none}a:hover{color:#7E3C21}
+a{color:#FFFFFF;text-decoration:none}a:hover{color:#E4ECF4}
 button{font-family:inherit}
 </style>
 </helmet>
-<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAF8F3; color: #1F1E1B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; padding: 52px 24px 28px; gap: 18px; overflow: hidden">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{bg}}; color: #FFFFFF; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; padding: 14px 24px 26px; gap: 14px; overflow: hidden; position: relative">
 
-<div style="display: flex; align-items: center; justify-content: space-between; margin: 0 -12px">
-<a href="Main.dc.html" aria-label="Close player" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #1F1E1B">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+<a href="Main.dc.html" aria-label="Close player" style="align-self: center; width: 60px; height: 24px; display: flex; align-items: center; justify-content: center">
+<span style="width: 40px; height: 5px; border-radius: 3px; background: {{soft}}; display: block"></span>
 </a>
-<button aria-label="More options" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1F1E1B; display: flex; align-items: center; justify-content: center">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+
+<div style="align-self: center; width: 330px; height: 330px; border-radius: 16px; background: {{art}}; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; box-sizing: border-box; margin-top: 8px">
+<span style="font-family: Newsreader, Georgia, serif; font-size: 46px; line-height: 0.95">{{showName}}</span>
+<span style="font-size: 12px; margin-top: 8px; color: {{soft}}">Episode artwork</span>
+</div>
+
+<div style="display: flex; align-items: flex-end; gap: 10px; margin-top: 8px">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<span style="font-size: 13px; color: {{soft}}">27 October</span>
+<h1 style="margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2">{{episode}}</h1>
+<span style="font-size: 17px; color: {{soft}}">{{showName}}</span>
+</div>
+<button aria-label="More options" style="width: 44px; height: 44px; border: 0; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
 </button>
 </div>
 
-<div style="align-self: center; width: 280px; height: 280px; border-radius: 20px; background: #4A5D73; color: #FAF8F3; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; box-sizing: border-box">
-<span style="font-family: Newsreader, Georgia, serif; font-size: 40px; line-height: 1; letter-spacing: -0.01em">The Long Signal</span>
-<span style="font-size: 12px; margin-top: 8px; color: #DDE3EA">Episode 142 artwork</span>
-</div>
-
-<div style="display: flex; flex-direction: column; gap: 4px">
-<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 26px; font-weight: 500; line-height: 1.15">How radio learned to listen</h1>
-<p style="margin: 0; font-size: 14px; color: #6B675E">The Long Signal</p>
-</div>
-
-<a href="Chapters.dc.html" style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #1F1E1B; min-height: 32px">
-<span style="color: #6B675E">Chapter 3</span><span style="font-weight: 500">Clipboards on street corners</span>
-<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B675E" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+<a href="Chapters.dc.html" style="display: flex; align-items: center; gap: 6px; font-size: 14px; min-height: 28px; color: #FFFFFF">
+<span style="color: {{soft}}">Chapter 3</span><span style="font-weight: 500">Clipboards on street corners</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
 </a>
 
-<div style="display: flex; flex-direction: column; gap: 8px">
-<div role="slider" aria-label="Playback position" aria-valuemin="0" aria-valuemax="3370" aria-valuenow="1122" aria-valuetext="18 minutes 42 seconds" style="position: relative; height: 16px">
-<div style="position: absolute; left: 0; right: 0; top: 7px; height: 3px; border-radius: 2px; background: #E2DDD1"></div>
-<div style="position: absolute; left: 0; width: 33%; top: 7px; height: 3px; border-radius: 2px; background: #1F1E1B"></div>
-<div style="position: absolute; left: 5%; width: 3%; top: 7px; height: 3px; background: #D9A441"></div>
-<div style="position: absolute; left: 37%; width: 3%; top: 7px; height: 3px; background: #D9A441"></div>
-<div style="position: absolute; left: 71%; width: 4%; top: 7px; height: 3px; background: #D9A441"></div>
-<div style="position: absolute; left: calc(33% - 7px); top: 1px; width: 14px; height: 14px; border-radius: 7px; background: #1F1E1B"></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div role="slider" aria-label="Playback position" aria-valuemin="0" aria-valuemax="3370" aria-valuenow="1122" aria-valuetext="18 minutes 42 seconds" style="position: relative; height: 8px">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 8px; border-radius: 4px; background: {{track}}"></div>
+<div style="position: absolute; left: 0; width: 33%; top: 0; height: 8px; border-radius: 4px; background: {{soft}}"></div>
+<div style="position: absolute; left: 37%; width: 3%; top: 0; height: 8px; background: #E9B85C"></div>
+<div style="position: absolute; left: 71%; width: 4%; top: 0; height: 8px; background: #E9B85C"></div>
 </div>
-<div style="display: flex; justify-content: space-between; font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; font-size: 12px; color: {{soft}}; font-variant-numeric: tabular-nums">
 <span>18:42</span><span>Ad skipped at 18:52</span><span>−37:28</span>
 </div>
 </div>
 
-<div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 16px">
-<button aria-label="Back 10 seconds" style="width: 56px; height: 56px; border: 0; background: transparent; color: #1F1E1B; position: relative; display: flex; align-items: center; justify-content: center">
-<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"></path><path d="M4 4v4h4"></path></svg>
-<span style="position: absolute; font-size: 9px; font-weight: 600; top: 23px">10</span>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<button onClick="{{cycleSpeed}}" aria-label="Playback speed" style="width: 48px; height: 48px; border: 0; background: transparent; color: {{soft}}; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums">{{speed}}</button>
+<button aria-label="Back 10 seconds" style="width: 56px; height: 56px; border: 0; background: transparent; color: #FFFFFF; position: relative; display: flex; align-items: center; justify-content: center">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"></path><path d="M4 4v4h4"></path></svg>
+<span style="position: absolute; font-size: 10px; font-weight: 700; top: 22px">10</span>
 </button>
-<button onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 76px; height: 76px; border: 0; border-radius: 38px; background: #1F1E1B; color: #FAF8F3; display: flex; align-items: center; justify-content: center">
+<button onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 72px; height: 72px; border: 0; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
 <sc-if value="{{playing}}" hint-placeholder-val="{{ true }}">
-<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+<svg width="46" height="46" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
 </sc-if>
 <sc-if value="{{paused}}" hint-placeholder-val="{{ false }}">
-<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>
+<svg width="46" height="46" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"></path></svg>
 </sc-if>
 </button>
-<button aria-label="Forward 10 seconds" style="width: 56px; height: 56px; border: 0; background: transparent; color: #1F1E1B; position: relative; display: flex; align-items: center; justify-content: center">
-<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"></path><path d="M20 4v4h-4"></path></svg>
-<span style="position: absolute; font-size: 9px; font-weight: 600; top: 23px">10</span>
+<button aria-label="Forward 10 seconds" style="width: 56px; height: 56px; border: 0; background: transparent; color: #FFFFFF; position: relative; display: flex; align-items: center; justify-content: center">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"></path><path d="M20 4v4h-4"></path></svg>
+<span style="position: absolute; font-size: 10px; font-weight: 700; top: 22px">10</span>
+</button>
+<button aria-label="Sleep timer" style="width: 48px; height: 48px; border: 0; background: transparent; color: {{soft}}; display: flex; align-items: center; justify-content: center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
 </button>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #F1EEE6; border-radius: 14px; padding: 4px">
-<button onClick="{{cycleSpeed}}" style="min-height: 44px; border: 0; background: transparent; color: #1F1E1B; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums">{{speed}}</button>
-<button aria-pressed="true" style="min-height: 44px; border: 0; border-radius: 10px; background: #FAF8F3; color: #1F1E1B; font-size: 13px; font-weight: 500">Trim</button>
-<button aria-pressed="false" style="min-height: 44px; border: 0; background: transparent; color: #6B675E; font-size: 13px">Boost</button>
-<button style="min-height: 44px; border: 0; background: transparent; color: #6B675E; font-size: 13px">Sleep</button>
+<div style="display: flex; justify-content: center; gap: 8px">
+<button aria-pressed="true" style="min-height: 34px; padding: 0 14px; border: 0; border-radius: 17px; background: {{chip}}; color: #FFFFFF; font-size: 13px; font-weight: 500">Trim silences</button>
+<button aria-pressed="false" style="min-height: 34px; padding: 0 14px; border: 1px solid {{track}}; border-radius: 17px; background: transparent; color: {{soft}}; font-size: 13px">Boost voices</button>
 </div>
 
-<div style="margin-top: auto; display: flex; justify-content: space-around">
-<a href="Transcript.dc.html" style="min-height: 48px; padding: 0 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; color: #1F1E1B">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"></path></svg>Transcript</a>
-<a href="Chapters.dc.html" style="min-height: 48px; padding: 0 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; color: #1F1E1B">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h4M4 12h4M4 18h4M11 6h9M11 12h9M11 18h9"></path></svg>Chapters</a>
-<a href="Main.dc.html" style="min-height: 48px; padding: 0 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; color: #1F1E1B">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>Up Next</a>
+<div style="margin-top: auto; display: flex; justify-content: space-around; align-items: center">
+<a href="Transcript.dc.html" aria-label="Transcript" style="width: 52px; height: 48px; display: flex; align-items: center; justify-content: center; color: {{soft}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path><path d="M8 9h8M8 12h5"></path></svg>
+</a>
+<button onClick="{{openDevices}}" aria-label="Play on another device" style="width: 52px; height: 48px; border: 0; background: transparent; color: {{routeInk}}; display: flex; align-items: center; justify-content: center">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 16.5a7.5 7.5 0 1 1 11 0"></path><path d="M9 14a4 4 0 1 1 6 0"></path><path d="M12 15l4 6H8z" fill="currentColor"></path></svg>
+</button>
+<a href="Main.dc.html" aria-label="Up Next" style="width: 52px; height: 48px; display: flex; align-items: center; justify-content: center; color: {{soft}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg>
+</a>
 </div>
+<sc-if value="{{onOther}}" hint-placeholder-val="{{ false }}">
+<p style="margin: -6px 0 0; text-align: center; font-size: 12px; color: {{soft}}">Playing on {{deviceName}}</p>
+</sc-if>
+
+<sc-if value="{{devicesOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(10, 16, 24, 0.45); display: flex; flex-direction: column; justify-content: flex-end">
+<div role="dialog" aria-label="Play on" style="background: #FAF8F3; color: #1F1E1B; border-radius: 22px 22px 0 0; padding: 18px 20px 30px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 22px; font-weight: 500">Play on</h2>
+<button onClick="{{closeDevices}}" style="min-height: 40px; padding: 0 4px; border: 0; background: transparent; color: #A4512F; font-size: 15px; font-weight: 500">Done</button>
+</div>
+<sc-for list="{{devices}}" as="d" hint-placeholder-count="4">
+<button onClick="{{d.pick}}" aria-pressed="{{d.on}}" style="min-height: 56px; border: 0; border-bottom: 1px solid #E8E3D8; background: transparent; display: flex; align-items: center; gap: 14px; text-align: left; color: #1F1E1B; padding: 0">
+<span style="width: 36px; height: 36px; border-radius: 18px; background: #F1EEE6; display: flex; align-items: center; justify-content: center; color: #1F1E1B">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icon}}"></path></svg>
+</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+<span style="font-size: 15px; font-weight: 500">{{d.name}}</span>
+<span style="font-size: 12px; color: #6B675E">{{d.kind}}</span>
+</span>
+<sc-if value="{{d.selected}}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A4512F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+</sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { playing: true, speedIx: 2 }; }
+  constructor(props) { super(props); this.state = { playing: true, speedIx: 2, open: false, device: 'phone' }; }
   renderVals() {
-    const speeds = ['1.0×', '1.2×', '1.4×', '1.6×', '2.0×'];
+    const speeds = ['1×', '1.2×', '1.4×', '1.6×', '2×'];
     const s = this.state;
+    const devices = [
+      { id: 'phone', name: 'iPhone', kind: 'This phone', icon: 'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2' },
+      { id: 'pods', name: 'AirPods Pro', kind: 'Headphones · connected', icon: 'M7 4a3 3 0 0 1 3 3v6H8v7H6V7a3 3 0 0 1 1-3zM17 4a3 3 0 0 0-3 3v6h2v7h2V7a3 3 0 0 0-1-3z' },
+      { id: 'kitchen', name: 'Kitchen', kind: 'Speaker · AirPlay', icon: 'M7 3h10v18H7zM12 13a3 3 0 1 0 0 .01M12 7h.01' },
+      { id: 'tv', name: 'Living Room TV', kind: 'TV · AirPlay', icon: 'M3 5h18v12H3zM8 21h8' }
+    ].map((d) => ({
+      ...d,
+      selected: s.device === d.id,
+      on: s.device === d.id ? 'true' : 'false',
+      pick: () => this.setState({ device: d.id })
+    }));
+    const current = devices.find((d) => d.selected);
     return {
+      bg: '#2E3D50', art: '#4A5D73', soft: '#C9D4E0', track: '#4E6178', chip: '#4A5D73',
+      showName: 'The Long Signal',
+      episode: 'How radio learned to listen',
       playing: s.playing,
       paused: !s.playing,
       playLabel: s.playing ? 'Pause' : 'Play',
       togglePlay: () => this.setState({ playing: !s.playing }),
       speed: speeds[s.speedIx],
-      cycleSpeed: () => this.setState({ speedIx: (s.speedIx + 1) % speeds.length })
+      cycleSpeed: () => this.setState({ speedIx: (s.speedIx + 1) % speeds.length }),
+      devices,
+      devicesOpen: s.open,
+      openDevices: () => this.setState({ open: true }),
+      closeDevices: () => this.setState({ open: false }),
+      onOther: s.device !== 'phone',
+      deviceName: current ? current.name : 'iPhone',
+      routeInk: s.device !== 'phone' ? '#E9B85C' : '#C9D4E0'
     };
   }
 }
