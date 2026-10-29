@@ -141,6 +141,19 @@ terracotta accent).
 6. Ad detection and skipping; auto-generated chapters.
 7. Notifications, background checks, Discover, clip sharing.
 
+## Progress
+
+- Done: Up Next ordering rules in `Packages/PodcastCore` (`QueueEngine`) with
+  unit tests; SwiftUI app skeleton (`App/`, project generated from
+  `project.yml` by XcodeGen) with tabs and an Up Next list driven by the real
+  rules using sample data; GitHub Actions `Build` workflow (tests + unsigned
+  simulator build) passing.
+- Waiting on Paul: Apple Developer Program membership (name correction with
+  Apple support in progress). Then add signing + the TestFlight upload job
+  (see `docs/SETUP.md`) to finish step 1.
+- Next without Apple: step 2 (subscriptions, feed parsing, episode list,
+  basic playback).
+
 ## Open questions for Paul
 
 - App name and icon.
