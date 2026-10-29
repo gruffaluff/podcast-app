@@ -146,3 +146,42 @@ final class DownloadCleanupTests: XCTestCase {
         XCTAssertTrue(DownloadCleanup.shouldDelete(played: true, playedAt: now.addingTimeInterval(-25 * 3600), keepFor24Hours: true, now: now))
     }
 }
+
+final class PlayerOptionsTests: XCTestCase {
+
+    func testSpeeds() {
+        XCTAssertEqual(PlayerOptions.speeds.first, 1.0)
+        XCTAssertEqual(PlayerOptions.speeds.last, 2.0)
+        XCTAssertEqual(PlayerOptions.speeds.count, 11)
+        XCTAssertEqual(PlayerOptions.speedLabel(1.0), "1×")
+        XCTAssertEqual(PlayerOptions.speedLabel(1.5), "1.5×")
+        XCTAssertEqual(PlayerOptions.speedLabel(2.0), "2×")
+    }
+
+    func testSkipLengths() {
+        XCTAssertEqual(PlayerOptions.validSkip(30), 30)
+        XCTAssertEqual(PlayerOptions.validSkip(7), 10)
+    }
+}
+
+final class ColorContrastTests: XCTestCase {
+
+    func testKnownRatios() {
+        XCTAssertEqual(ColorContrast.ratio(.white, RGB(r: 0, g: 0, b: 0)), 21, accuracy: 0.01)
+        XCTAssertEqual(ColorContrast.ratio(.white, .white), 1, accuracy: 0.001)
+    }
+
+    func testPaleArtworkIsDarkenedUntilTextIsReadable() {
+        let pale = RGB(r: 0.95, g: 0.88, b: 0.60)
+        let background = ColorContrast.themedBackground(from: pale)
+        XCTAssertTrue(ColorContrast.passes(background))
+        XCTAssertGreaterThanOrEqual(ColorContrast.ratio(.white, background), 4.5)
+        // Keeps the hue: red stays the strongest channel.
+        XCTAssertGreaterThan(background.r, background.b)
+    }
+
+    func testDarkArtworkIsLeftAlone() {
+        let navy = RGB(r: 0.1, g: 0.15, b: 0.3)
+        XCTAssertEqual(ColorContrast.themedBackground(from: navy), navy)
+    }
+}

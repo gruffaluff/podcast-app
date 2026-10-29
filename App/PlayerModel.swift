@@ -24,9 +24,22 @@ final class PlayerModel {
     private(set) var currentTime: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
 
-    /// Skip lengths (adjustable in settings later; 10 seconds each by default).
-    let skipBack: TimeInterval = 10
-    let skipForward: TimeInterval = 10
+    /// Skip lengths in seconds (5, 10, 15, 30 or 60; 10 by default), set
+    /// separately. Lock screen and headphone controls use the same lengths.
+    private(set) var skipBackSeconds = PlayerOptions.defaultSkip
+    private(set) var skipForwardSeconds = PlayerOptions.defaultSkip
+    var skipBack: TimeInterval { TimeInterval(skipBackSeconds) }
+    var skipForward: TimeInterval { TimeInterval(skipForwardSeconds) }
+
+    /// Playback speed, 1.0× to 2.0×.
+    private(set) var speed: Double = 1.0
+
+    private(set) var sleepTimer: SleepTimerOption?
+    /// When a timed sleep timer will pause playback.
+    private(set) var sleepEndsAt: Date?
+
+    /// Name of the AirPlay / Bluetooth device when not playing on the phone.
+    private(set) var outputName: String?
 
     @ObservationIgnored private let store: LibraryStore
     @ObservationIgnored private let player = AVPlayer()
@@ -35,12 +48,19 @@ final class PlayerModel {
     @ObservationIgnored private var notificationTokens: [NSObjectProtocol] = []
     @ObservationIgnored private var lastSavedTime: TimeInterval = 0
     @ObservationIgnored private var artwork: MPMediaItemArtwork?
+    @ObservationIgnored private var sleepTask: Task<Void, Never>?
 
     init(store: LibraryStore) {
         self.store = store
+        let defaults = UserDefaults.standard
+        skipBackSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipBack") as? Int ?? PlayerOptions.defaultSkip)
+        skipForwardSeconds = PlayerOptions.validSkip(defaults.object(forKey: "skipForward") as? Int ?? PlayerOptions.defaultSkip)
+        speed = min(2, max(1, defaults.object(forKey: "speed") as? Double ?? 1))
+        player.defaultRate = Float(speed)
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio, options: [])
         observePlayer()
         setUpRemoteCommands()
+        updateRoute()
     }
 
     // MARK: Controls
@@ -67,7 +87,9 @@ final class PlayerModel {
 
         // Play the downloaded copy when there is one, otherwise stream.
         let source = store.localAudioURL(for: episode) ?? episode.audioURL
-        player.replaceCurrentItem(with: AVPlayerItem(url: source))
+        let item = AVPlayerItem(url: source)
+        item.audioTimePitchAlgorithm = .timeDomain  // Clear speech when sped up.
+        player.replaceCurrentItem(with: item)
         if start > 1 {
             player.seek(to: CMTime(seconds: start, preferredTimescale: 600))
         }
@@ -90,6 +112,46 @@ final class PlayerModel {
 
     func togglePlayPause() {
         isPlaying ? pause() : resume()
+    }
+
+    func setSpeed(_ newSpeed: Double) {
+        speed = min(2, max(1, newSpeed))
+        UserDefaults.standard.set(speed, forKey: "speed")
+        player.defaultRate = Float(speed)
+        if player.timeControlStatus != .paused {
+            player.rate = Float(speed)
+        }
+        updateNowPlayingInfo()
+    }
+
+    func setSkipBack(_ seconds: Int) {
+        skipBackSeconds = PlayerOptions.validSkip(seconds)
+        UserDefaults.standard.set(skipBackSeconds, forKey: "skipBack")
+        MPRemoteCommandCenter.shared().skipBackwardCommand.preferredIntervals = [NSNumber(value: skipBack)]
+    }
+
+    func setSkipForward(_ seconds: Int) {
+        skipForwardSeconds = PlayerOptions.validSkip(seconds)
+        UserDefaults.standard.set(skipForwardSeconds, forKey: "skipForward")
+        MPRemoteCommandCenter.shared().skipForwardCommand.preferredIntervals = [NSNumber(value: skipForward)]
+    }
+
+    /// Starts (or with nil, cancels) the sleep timer.
+    func setSleepTimer(_ option: SleepTimerOption?) {
+        sleepTask?.cancel()
+        sleepTask = nil
+        sleepTimer = option
+        sleepEndsAt = nil
+        guard case .minutes(let minutes)? = option else { return }
+        let ends = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        sleepEndsAt = ends
+        sleepTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(ends.timeIntervalSinceNow))
+            guard !Task.isCancelled, let self else { return }
+            self.pause()
+            self.sleepTimer = nil
+            self.sleepEndsAt = nil
+        }
     }
 
     func skipBackward() { seek(to: currentTime - skipBack) }
@@ -149,6 +211,11 @@ final class PlayerModel {
     private func didFinish() {
         guard let id = nowPlaying?.episodeID else { return }
         store.markPlayed(id)
+        if sleepTimer == .endOfEpisode {
+            setSleepTimer(nil)
+            stop()
+            return
+        }
         var next: PodcastEpisode?
         for item in store.queue {
             if let episode = store.episode(item.episode.id) {
@@ -187,6 +254,9 @@ final class PlayerModel {
                 self.didFinish()
             }
         })
+        notificationTokens.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateRoute() }
+        })
         // Resume after a phone call or Siri if iOS says it's appropriate.
         notificationTokens.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             let typeValue = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
@@ -198,6 +268,16 @@ final class PlayerModel {
                 }
             }
         })
+    }
+
+    private func updateRoute() {
+        let output = AVAudioSession.sharedInstance().currentRoute.outputs.first
+        let onPhone: Set<AVAudioSession.Port> = [.builtInSpeaker, .builtInReceiver]
+        if let output, !onPhone.contains(output.portType) {
+            outputName = output.portName
+        } else {
+            outputName = nil
+        }
     }
 
     private func setUpRemoteCommands() {
@@ -242,7 +322,8 @@ final class PlayerModel {
             MPMediaItemPropertyAlbumTitle: nowPlaying.showTitle,
             MPMediaItemPropertyMediaType: MPMediaType.podcast.rawValue,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
-            MPNowPlayingInfoPropertyPlaybackRate: player.timeControlStatus == .paused ? 0.0 : Double(player.rate)
+            MPNowPlayingInfoPropertyPlaybackRate: player.timeControlStatus == .paused ? 0.0 : speed,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: speed
         ]
         if duration > 0 { info[MPMediaItemPropertyPlaybackDuration] = duration }
         if let artwork { info[MPMediaItemPropertyArtwork] = artwork }

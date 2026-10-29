@@ -49,22 +49,14 @@ struct MiniPlayer: View {
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens the player")
 
-                Button { player.skipBackward() } label: {
-                    Image(systemName: "gobackward.\(Int(player.skipBack))")
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Back \(Int(player.skipBack)) seconds")
+                SkipButton(direction: .back)
                 Button { player.togglePlayPause() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                         .font(.title3)
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-                Button { player.skipForwardBy() } label: {
-                    Image(systemName: "goforward.\(Int(player.skipForward))")
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Forward \(Int(player.skipForward)) seconds")
+                SkipButton(direction: .forward)
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.ink)

@@ -98,18 +98,23 @@ private struct EpisodeCard: View {
     let episode: PodcastEpisode
 
     var body: some View {
+        // Tinted with the artwork's colour once known (white text at 4.5:1).
+        let tint = ArtworkColors.shared.background(for: episode.artwork)
+        let text = tint == nil ? Theme.ink : Color.white
+        let secondary = tint == nil ? Theme.muted : Color.white.opacity(ColorContrast.secondaryAlpha)
+
         VStack(alignment: .leading, spacing: 10) {
             ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 236, radius: 14)
             Text(TimeFormat.ago(episode.published).uppercased())
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(secondary)
             Text(episode.title)
                 .font(.system(.headline, design: .serif))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(text)
                 .lineLimit(2, reservesSpace: true)
             Text(episode.summary)
                 .font(.caption)
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(secondary)
                 .lineLimit(1)
             HStack {
                 Button { player.play(episode) } label: {
@@ -117,24 +122,25 @@ private struct EpisodeCard: View {
                         .font(.footnote.weight(.semibold))
                         .padding(.horizontal, 14)
                         .frame(minHeight: 36)
-                        .background(Theme.ink, in: Capsule())
-                        .foregroundStyle(Theme.background)
+                        .background(text, in: Capsule())
+                        .foregroundStyle(tint ?? Theme.background)
                 }
                 Spacer()
-                DownloadButton(episode: episode)
+                DownloadButton(episode: episode, tint: text)
                 Menu {
                     EpisodeMenuItems(episode: episode)
                 } label: {
                     Image(systemName: "ellipsis")
                         .frame(width: 44, height: 44)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(text)
                 }
                 .accessibilityLabel("More")
             }
         }
         .padding(12)
         .frame(width: 260)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20))
+        .background(tint ?? Theme.surface, in: RoundedRectangle(cornerRadius: 20))
+        .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
     }
 
     private var playLabel: String {
@@ -202,15 +208,16 @@ struct DownloadButton: View {
     @Environment(LibraryStore.self) private var store
     @Environment(DownloadManager.self) private var downloads
     let episode: PodcastEpisode
+    var tint: Color = Theme.ink
 
     var body: some View {
         Group {
             if let fraction = downloads.progress[episode.episodeID] {
                 Button { store.removeDownload(episode) } label: {
                     ZStack {
-                        Circle().stroke(Theme.controlBorder, lineWidth: 2)
+                        Circle().stroke(tint.opacity(0.3), lineWidth: 2)
                         Circle().trim(from: 0, to: max(0.03, fraction))
-                            .stroke(Theme.accentFill, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                            .stroke(tint == Theme.ink ? Theme.accentFill : tint, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                         Image(systemName: "stop.fill").font(.system(size: 8))
                     }
@@ -219,7 +226,7 @@ struct DownloadButton: View {
                 .accessibilityLabel("Stop download, \(Int(fraction * 100)) percent done")
             } else if episode.downloadFile != nil {
                 Image(systemName: "arrow.down.circle.fill")
-                    .foregroundStyle(Theme.accentText)
+                    .foregroundStyle(tint == Theme.ink ? Theme.accentText : tint)
                     .accessibilityLabel("Downloaded")
             } else {
                 Button { downloads.download(episode) } label: {
@@ -229,7 +236,7 @@ struct DownloadButton: View {
             }
         }
         .font(.title3)
-        .foregroundStyle(Theme.ink)
+        .foregroundStyle(tint)
         .frame(width: 44, height: 44)
     }
 }

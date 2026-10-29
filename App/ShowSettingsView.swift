@@ -106,6 +106,7 @@ struct ShowSettingsView: View {
 struct TopPriorityView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(DownloadManager.self) private var downloads
+    @Environment(PlayerModel.self) private var player
     @State private var shows: [Podcast] = []
 
     var body: some View {
@@ -141,6 +142,16 @@ struct TopPriorityView: View {
             .listRowBackground(Theme.background)
 
             Section {
+                skipPicker("Back", selection: Binding(get: { player.skipBackSeconds }, set: { player.setSkipBack($0) }))
+                skipPicker("Forward", selection: Binding(get: { player.skipForwardSeconds }, set: { player.setSkipForward($0) }))
+            } header: {
+                Text("Skip buttons")
+            } footer: {
+                Text("Seconds skipped by the back and forward buttons, lock screen and headphones. You can also touch and hold a skip button in the player to change it.")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
                 Toggle("Keep each show in order", isOn: $store.keepShowOrder)
                     .tint(Theme.accentFill)
             } footer: {
@@ -166,5 +177,19 @@ struct TopPriorityView: View {
         .navigationTitle("Shows")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { shows = store.topShows }
+    }
+
+    private func skipPicker(_ title: String, selection: Binding<Int>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(Theme.ink)
+            Picker(title, selection: selection) {
+                ForEach(PlayerOptions.skipLengths, id: \.self) { Text("\($0)s").tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+        }
+        .padding(.vertical, 4)
     }
 }
