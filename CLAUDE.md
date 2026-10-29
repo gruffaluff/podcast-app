@@ -101,8 +101,9 @@ terracotta accent).
 - Chapter titles and ad detection: rule-based on the transcript first; consider
   Apple's on-device language model framework if available on Paul's iPhone.
 - Background refresh with BGTaskScheduler; local notifications only.
-- Target device: Paul's iPhone 17 Pro. Minimum iOS: iOS 26 (it ships with it),
-  so the latest on-device speech and Apple Intelligence APIs are available.
+- Target device: Paul's iPhone 17 Pro on iOS 27.2. Minimum iOS: 27 (personal
+  app, one device). Check Apple's current docs for iOS 27 speech, audio and
+  on-device model APIs rather than relying on older knowledge.
 
 ## Build order (suggested)
 
