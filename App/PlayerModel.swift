@@ -156,6 +156,9 @@ final class PlayerModel {
                 break
             }
         }
+        if next == nil {
+            next = store.nextNewEpisode(excluding: id)
+        }
         if let next {
             nowPlaying = nil
             play(next)

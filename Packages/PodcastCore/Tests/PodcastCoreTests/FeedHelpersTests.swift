@@ -129,3 +129,20 @@ final class DownloadNamingTests: XCTestCase {
         XCTAssertEqual(DownloadNaming.stableHash(""), "cbf29ce484222325")
     }
 }
+
+final class DownloadCleanupTests: XCTestCase {
+    let now = Date(timeIntervalSince1970: 1_000_000)
+
+    func testUnplayedIsKept() {
+        XCTAssertFalse(DownloadCleanup.shouldDelete(played: false, playedAt: nil, keepFor24Hours: false, now: now))
+    }
+
+    func testPlayedIsDeletedStraightAwayByDefault() {
+        XCTAssertTrue(DownloadCleanup.shouldDelete(played: true, playedAt: now, keepFor24Hours: false, now: now))
+    }
+
+    func testPlayedIsKeptFor24HoursWhenSettingOn() {
+        XCTAssertFalse(DownloadCleanup.shouldDelete(played: true, playedAt: now.addingTimeInterval(-23 * 3600), keepFor24Hours: true, now: now))
+        XCTAssertTrue(DownloadCleanup.shouldDelete(played: true, playedAt: now.addingTimeInterval(-25 * 3600), keepFor24Hours: true, now: now))
+    }
+}

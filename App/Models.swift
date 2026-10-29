@@ -52,6 +52,7 @@ final class PodcastEpisode {
     /// Where playback stopped, in seconds.
     var position: TimeInterval = 0
     var played: Bool = false
+    var playedAt: Date?
     /// File name in `DownloadFiles.directory` once downloaded.
     var downloadFile: String?
     var podcast: Podcast?

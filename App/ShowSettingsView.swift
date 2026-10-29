@@ -151,10 +151,12 @@ struct TopPriorityView: View {
             Section {
                 Toggle("Download on Wi-Fi only", isOn: $downloads.wifiOnly)
                     .tint(Theme.accentFill)
+                Toggle("Keep played downloads for 24 hours", isOn: $store.keepPlayedDownloads)
+                    .tint(Theme.accentFill)
             } header: {
                 Text("Downloads")
             } footer: {
-                Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted to save space. Downloads you start yourself go straight away.")
+                Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away.")
             }
             .listRowBackground(Theme.background)
         }

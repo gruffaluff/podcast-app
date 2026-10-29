@@ -37,6 +37,21 @@ struct UpNextView: View {
                 } header: {
                     header(episodes: episodes)
                 }
+
+                Section {
+                    Toggle(isOn: Binding(get: { store.keepPlayingNew }, set: { store.keepPlayingNew = $0 })) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Keep playing new episodes")
+                                .foregroundStyle(Theme.ink)
+                            Text("When Up Next runs out, carry on with this week's new episodes from your auto-add shows.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                    .tint(Theme.accentFill)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
+                }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -49,6 +64,7 @@ struct UpNextView: View {
                         description: Text("Follow shows in Library and set them to Top or Bottom, or use Play next on any episode.")
                     )
                     .foregroundStyle(Theme.muted)
+                    .allowsHitTesting(false)
                 }
             }
             .refreshable { await store.refreshAll() }

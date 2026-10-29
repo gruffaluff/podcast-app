@@ -22,6 +22,19 @@ final class LibraryStore {
         didSet { UserDefaults.standard.set(keepShowOrder, forKey: "keepShowOrder") }
     }
 
+    /// When Up Next runs out, carry on with new episodes from auto-add shows.
+    var keepPlayingNew: Bool = true {
+        didSet { UserDefaults.standard.set(keepPlayingNew, forKey: "keepPlayingNew") }
+    }
+
+    /// Keep played downloads for 24 hours instead of deleting them straight away.
+    var keepPlayedDownloads: Bool = false {
+        didSet {
+            UserDefaults.standard.set(keepPlayedDownloads, forKey: "keepPlayedDownloads")
+            cleanUpPlayedDownloads()
+        }
+    }
+
     /// Set by `DownloadManager` so new episodes can be auto-downloaded.
     @ObservationIgnored weak var downloads: DownloadManager?
 
@@ -29,6 +42,8 @@ final class LibraryStore {
         self.context = context
         self.lastChecked = UserDefaults.standard.object(forKey: "lastChecked") as? Date
         self.keepShowOrder = UserDefaults.standard.object(forKey: "keepShowOrder") as? Bool ?? true
+        self.keepPlayingNew = UserDefaults.standard.object(forKey: "keepPlayingNew") as? Bool ?? true
+        self.keepPlayedDownloads = UserDefaults.standard.bool(forKey: "keepPlayedDownloads")
         loadQueue()
     }
 
@@ -166,6 +181,7 @@ final class LibraryStore {
 
         let freshEpisodes = episodes(fresh.map(\.id))
         downloads?.autoDownload(fresh.compactMap { freshEpisodes[$0.id] })
+        cleanUpPlayedDownloads()
     }
 
     /// Saves episodes not seen before; returns the fresh releases among them.
@@ -219,18 +235,23 @@ final class LibraryStore {
         commit(moved)
     }
 
-    /// Marks an episode played, takes it out of Up Next and deletes its download.
+    /// Marks an episode played, takes it out of Up Next and deletes its
+    /// download (or keeps it for 24 hours, if that setting is on).
     func markPlayed(_ episodeID: String) {
         if let episode = self.episode(episodeID) {
             episode.played = true
+            episode.playedAt = Date()
             episode.position = 0
-            removeDownloadFile(of: episode)
+            if DownloadCleanup.shouldDelete(played: true, playedAt: episode.playedAt, keepFor24Hours: keepPlayedDownloads) {
+                removeDownloadFile(of: episode)
+            }
         }
         commit(QueueEngine.complete(episodeID, in: queue))
     }
 
     func markUnplayed(_ episode: PodcastEpisode) {
         episode.played = false
+        episode.playedAt = nil
         episode.position = 0
         save()
     }
@@ -247,7 +268,31 @@ final class LibraryStore {
         save()
     }
 
+    /// For "Keep playing new episodes": the next new episode to play when
+    /// Up Next is empty, chosen by the queue rules from the last week's
+    /// unplayed episodes of auto-add shows.
+    func nextNewEpisode(excluding episodeID: String?) -> PodcastEpisode? {
+        guard keepPlayingNew else { return nil }
+        let cutoff = Date().addingTimeInterval(-7 * 86_400)
+        let descriptor = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.played == false && $0.published > cutoff })
+        let recent = ((try? context.fetch(descriptor)) ?? []).filter {
+            $0.episodeID != episodeID && ($0.podcast?.autoAdd ?? .off) != .off
+        }
+        guard let next = QueueEngine.continuation(from: recent.map(\.queueEpisode), settings: queueSettings) else { return nil }
+        return recent.first { $0.episodeID == next.id }
+    }
+
     // MARK: Downloads
+
+    /// Deletes downloads of played episodes that are due to go.
+    func cleanUpPlayedDownloads() {
+        let descriptor = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.played == true && $0.downloadFile != nil })
+        let played = (try? context.fetch(descriptor)) ?? []
+        for episode in played where DownloadCleanup.shouldDelete(played: true, playedAt: episode.playedAt, keepFor24Hours: keepPlayedDownloads) {
+            removeDownloadFile(of: episode)
+        }
+        save()
+    }
 
     /// The downloaded file, if there is one and it's still on the phone.
     func localAudioURL(for episode: PodcastEpisode) -> URL? {

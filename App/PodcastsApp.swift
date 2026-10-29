@@ -67,6 +67,7 @@ struct RootView: View {
         .onChange(of: scenePhase, initial: true) { _, phase in
             // Check feeds when the app opens, at most once an hour.
             guard phase == .active else { return }
+            store.cleanUpPlayedDownloads()
             if store.lastChecked.map({ Date().timeIntervalSince($0) > 3600 }) ?? true {
                 Task { await store.refreshAll() }
             }
