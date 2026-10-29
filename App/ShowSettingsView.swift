@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import PodcastCore
 
 /// A show's settings. Opens straight after following a show, and from the
@@ -48,9 +49,13 @@ struct ShowSettingsView: View {
 
                 Section {
                     Toggle("Download new episodes", isOn: binding(\.autoDownload))
-                    Toggle("Notify me of new episodes", isOn: binding(\.notify))
+                    Toggle("Notify me of new episodes", isOn: Binding(get: { show.notify }, set: { on in
+                        show.notify = on
+                        store.save()
+                        if on { Task { await NewEpisodeAlerts.requestPermission() } }
+                    }))
                 } footer: {
-                    Text("Downloads follow your Wi-Fi only setting. Alerts start working in a coming update; your choice is saved.")
+                    Text("Downloads follow your Wi-Fi only setting. Alerts say where the episode went in Up Next.")
                 }
                 .listRowBackground(Theme.surface)
                 .tint(Theme.accentFill)
@@ -108,7 +113,9 @@ struct TopPriorityView: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
+    @Query(sort: \Podcast.title) private var allShows: [Podcast]
     @State private var shows: [Podcast] = []
+    @State private var checkHours = BackgroundRefresh.intervalHours
 
     var body: some View {
         @Bindable var store = store
@@ -140,6 +147,35 @@ struct TopPriorityView: View {
                 Text("Top, in priority order")
             } footer: {
                 Text("Your favourite goes first. Its new episodes always land above lower-ranked Top shows, whenever they arrive.")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
+                ForEach(allShows) { show in
+                    AllShowsRow(show: show) { shows = store.topShows }
+                }
+            } header: {
+                Text("All shows")
+            } footer: {
+                Text("The bell sends an alert when a new episode arrives, saying where it went in Up Next.")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
+                Picker("Check for new episodes", selection: $checkHours) {
+                    Text("Hourly").tag(1)
+                    Text("Every 3 hours").tag(3)
+                    Text("Every 6 hours").tag(6)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: checkHours) { _, hours in
+                    BackgroundRefresh.intervalHours = hours
+                    BackgroundRefresh.schedule()
+                }
+            } header: {
+                Text("Checking for new episodes")
+            } footer: {
+                Text("iOS decides the exact moment, so checks can run a little late. Pull down on Up Next to check now.")
             }
             .listRowBackground(Theme.background)
 
@@ -219,5 +255,49 @@ struct TopPriorityView: View {
             .labelsHidden()
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// A show in the Shows screen's "All shows" list: bell and Off / Top / Bottom.
+private struct AllShowsRow: View {
+    @Environment(LibraryStore.self) private var store
+    let show: Podcast
+    /// Called after the mode changes (the Top list may need refreshing).
+    let changed: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ArtworkView(url: show.artworkURL, title: show.title, size: 36, radius: 6)
+            Text(show.title)
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Button {
+                show.notify.toggle()
+                store.save()
+                if show.notify { Task { await NewEpisodeAlerts.requestPermission() } }
+            } label: {
+                Image(systemName: show.notify ? "bell.fill" : "bell")
+                    .foregroundStyle(show.notify ? Theme.accentText : Theme.muted)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(show.notify ? "Alerts on" : "Alerts off")
+            Menu {
+                Picker("New episodes", selection: Binding(get: { show.autoAdd }, set: { store.setAutoAdd($0, for: show); changed() })) {
+                    Text("Off").tag(AutoAddMode.off)
+                    Text("Top").tag(AutoAddMode.top)
+                    Text("Bottom").tag(AutoAddMode.bottom)
+                }
+            } label: {
+                Text(show.autoAdd.rawValue.capitalized)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 10)
+                    .frame(minWidth: 64, minHeight: 32)
+                    .background(Theme.surface, in: Capsule())
+            }
+            .accessibilityLabel("New episodes go to: \(show.autoAdd.rawValue)")
+        }
     }
 }

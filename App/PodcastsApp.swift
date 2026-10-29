@@ -19,6 +19,7 @@ struct PodcastsApp: App {
         _downloads = State(initialValue: DownloadManager(store: store))
         let transcripts = TranscriptService(store: store)
         transcripts.registerBackgroundTask()
+        BackgroundRefresh.register(store: store)
         _transcripts = State(initialValue: transcripts)
     }
 
@@ -73,6 +74,7 @@ struct RootView: View {
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
                 transcripts.scheduleBackgroundWork()
+                BackgroundRefresh.schedule()
             }
             // Check feeds when the app opens, at most once an hour.
             guard phase == .active else { return }

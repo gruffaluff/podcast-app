@@ -7,11 +7,13 @@
 	<array>
 		<string>audio</string>
 		<string>processing</string>
+		<string>fetch</string>
 	</array>
 	<!-- Overnight transcription while charging. -->
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.gruffaluff.podcasts.transcribe</string>
+		<string>com.gruffaluff.podcasts.refresh</string>
 	</array>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Transcripts are made on your iPhone from episodes you've downloaded. Nothing is sent anywhere.</string>

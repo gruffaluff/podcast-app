@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import UIKit
+import UserNotifications
 import PodcastCore
 
 /// Where downloaded episodes live: Application Support/Downloads, left out of
@@ -170,8 +171,18 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, @unc
     }
 }
 
-/// Lets iOS hand over finished background downloads when it wakes the app.
-final class AppDelegate: NSObject, UIApplicationDelegate {
+/// Lets iOS hand over finished background downloads when it wakes the app,
+/// and shows new-episode alerts even while the app is open.
+final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
+    }
+
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         if identifier == DownloadManager.sessionID {
             DownloadManager.backgroundCompletion = completionHandler

@@ -183,7 +183,9 @@ final class LibraryStore {
         lastChecked = Date()
 
         let freshEpisodes = episodes(fresh.map(\.id))
-        downloads?.autoDownload(fresh.compactMap { freshEpisodes[$0.id] })
+        let freshModels = fresh.compactMap { freshEpisodes[$0.id] }
+        downloads?.autoDownload(freshModels)
+        NewEpisodeAlerts.post(for: freshModels, queue: queue)
         cleanUpPlayedDownloads()
         transcripts?.prepareUpNext()
     }
