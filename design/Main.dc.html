@@ -118,7 +118,7 @@ class Component extends DCLogic {
     const labels = { old: 'Checked 2 hours ago · tap or pull to check now', busy: 'Checking 18 shows…', now: 'Up to date · checked just now' };
     return {
       items,
-      miniTime: fmt(s.pos) + ' · ad break skipped in 2m',
+      miniTime: fmt(s.pos) + ' / 56:10',
       back: () => this.setState({ pos: Math.max(0, s.pos - 10) }),
       fwd: () => this.setState({ pos: s.pos + 10 }),
       summary: items.length + ' episodes · ' + (s.arrived ? '4h 10m' : '3h 15m'),

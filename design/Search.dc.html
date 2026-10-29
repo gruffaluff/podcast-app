@@ -48,7 +48,7 @@ mark{background:#F3E3C6;color:#1F1E1B;border-radius:3px;padding:0 2px}
 </div>
 <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.45">“{{r.pre}}<mark>{{r.hit}}</mark>{{r.post}}”</p>
 <div style="display: flex; gap: 16px">
-<a href="Transcript.dc.html" style="min-height: 32px; display: flex; align-items: center; font-size: 13px; font-weight: 500">Play from {{r.t}}</a>
+<a href="Transcript.dc.html" style="min-height: 32px; display: flex; align-items: center; font-size: 13px; font-weight: 500">{{r.play}}</a>
 <button style="min-height: 32px; padding: 0; border: 0; background: transparent; color: #6B675E; font-size: 13px">Add to Up Next</button>
 </div>
 </div>
@@ -74,7 +74,7 @@ class Component extends DCLogic {
         { title: 'How radio learned to listen', show: 'The Long Signal', initials: 'LS', art: '#4A5D73', t: '18:31', pre: '…the gap between what people say about their ', hit: 'listening habits', post: ' and what they actually do…' },
         { title: 'Why your commute sounds different', show: 'Tidewater Weekly', initials: 'TW', art: '#4F6B5A', t: '07:12', pre: 'Car stereos changed our ', hit: 'listening habits', post: ' more than any app did.' },
         { title: 'The quiet economics of birdsong', show: 'Field Notes FM', initials: 'FN', art: '#8A6A3F', t: '33:48', pre: 'Even birds seem to adjust their ', hit: 'listening habits', post: ' to the noise of the city.' }
-      ]
+      ].map((r) => ({ ...r, play: 'Play from ' + r.t }))
     };
   }
 }
