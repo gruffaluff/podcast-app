@@ -23,6 +23,15 @@ public enum TimeFormat {
         return hours > 0 ? "\(hours):\(mm):\(ss)" : "\(mm):\(ss)"
     }
 
+    /// A transcript timestamp heading: "45s", "1m 20s", "1h 2m 5s".
+    public static func stamp(_ seconds: TimeInterval) -> String {
+        let total = seconds.isFinite ? max(0, Int(seconds)) : 0
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        if h > 0 { return "\(h)h \(m)m \(s)s" }
+        if m > 0 { return "\(m)m \(s)s" }
+        return "\(s)s"
+    }
+
     /// How long ago something happened: "Just now", "4h ago", "3d ago",
     /// then a plain date such as "12 Oct".
     public static func ago(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
