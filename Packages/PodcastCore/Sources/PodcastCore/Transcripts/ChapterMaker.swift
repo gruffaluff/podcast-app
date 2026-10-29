@@ -20,10 +20,12 @@ public enum ChapterMaker {
         for index in contentLines.indices.dropFirst() {
             let line = contentLines[index]
             var score = topicShift(at: index, in: contentLines)
-            let gap = line.start - contentLines[index - 1].end
-            if gap >= 2 { score += min(0.4, gap / 10) }
+            let previous = contentLines[index - 1]
+            let gap = line.start - previous.end
+            // A gap left by a removed ad isn't a pause (the ad is its own chapter).
+            let adBetween = ads.contains { $0.start >= previous.start && $0.end <= line.start + 1 }
+            if gap >= 2, !adBetween { score += min(0.4, gap / 10) }
             if music.contains(where: { abs($0.end - line.start) < 5 }) { score += 0.4 }
-            if ads.contains(where: { abs($0.end - line.start) < 5 }) { score += 0.6 }
             candidates.append((line.start, score))
         }
 
@@ -68,11 +70,11 @@ public enum ChapterMaker {
         return result
     }
 
-    /// 0–1: how different the words in the minute before are from the minute after.
-    static func topicShift(at index: Int, in lines: [TranscriptLayout.Line], window: TimeInterval = 60) -> Double {
-        let time = lines[index].start
-        let before = words(lines.filter { $0.start >= time - window && $0.start < time }.map(\.text))
-        let after = words(lines.filter { $0.start >= time && $0.start < time + window }.map(\.text))
+    /// 0–1: how different the words in the lines just before are from the
+    /// lines just after (counted in lines, so a removed ad doesn't leave a hole).
+    static func topicShift(at index: Int, in lines: [TranscriptLayout.Line], window: Int = 6) -> Double {
+        let before = words(lines[max(0, index - window)..<index].map(\.text))
+        let after = words(lines[index..<min(lines.count, index + window)].map(\.text))
         guard !before.isEmpty, !after.isEmpty else { return 0 }
         return 1 - cosine(before, after)
     }
