@@ -226,8 +226,18 @@ terracotta accent).
   (transcripts with highlighted quotes, shows/episodes, My clips =
   bookmarks for now). Not yet: speaker separation for on-device
   transcripts (see open questions); clip cards (step 7).
-- Next: step 6 (ad detection and skipping, auto-generated chapters), then
-  step 7 (notifications, background checks, Discover, clip sharing).
+- Done (step 6): rule-based ad detection on on-device transcripts of
+  Paul's download (sponsor phrases, promo codes, web addresses, "after the
+  break", widened to bracketing music); shows with their own transcript
+  still get an on-device pass (per the schedule) just for ads and music.
+  Auto skip (setting "Skip ads automatically", default on), breaks marked
+  on the scrubber, "Ad skipped at …" with Play ad / Not an ad (remembered),
+  dashed ad band in the transcript. Auto-generated chapters (topic change
+  by word overlap, ~8 min, ads as skipped "Sponsor break" chapters),
+  titled by Apple's on-device language model (Foundation Models) when the
+  iPhone supports it, word-based titles otherwise; Chapters screen switch
+  From the show / Auto-generated. CI prints failing test lines at the end.
+- Next: step 7 (notifications, background checks, Discover, clip sharing).
 
 ## Open questions for Paul
 
