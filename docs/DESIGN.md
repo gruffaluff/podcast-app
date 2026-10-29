@@ -54,8 +54,10 @@ The player opens from the mini player.
    segments and "Ad skipped at …", skip 15 / play-pause / skip 30, a single
    segmented row (speed · Trim · Boost · Sleep), bottom links to Transcript,
    Chapters, Up Next.
-3. **Transcript** (`design/Transcript.dc.html`): lines with speaker and time,
-   past lines muted, current line larger, tap to select; selection actions
+3. **Transcript** (`design/Transcript.dc.html`): timestamp headings
+   (e.g. "1m 20s") with speaker-labelled lines beneath (Speaker 1 in ink,
+   Speaker 2 in accent text), "Name speakers" button in the header, music rows
+   with a music-note icon, past lines muted, current line larger, tap to select; selection actions
    Share clip / Copy / Bookmark; ad break shown as a dashed band with
    Show and "Not an ad?"; footer with play, time and "Follow along".
 4. **Search** (`design/Search.dc.html`): search field; tabs Transcripts / Shows /

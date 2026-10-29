@@ -67,6 +67,15 @@ terracotta accent).
 - Use the publisher's transcript when the feed provides one
   (`<podcast:transcript>`), otherwise **transcribe on the iPhone**.
 - Transcription runs in the background, preferring charging + Wi-Fi.
+- **Speakers**: identify who is speaking (on-device speaker separation, e.g. an
+  open-source Core ML diarization model) and label each line "Speaker 1",
+  "Speaker 2"… Use real names when the publisher's transcript has them; Paul
+  can tap "Name speakers" to rename, and names stick for that show.
+- **Layout**: lines grouped under a timestamp every ~20 seconds or at each pause,
+  e.g. `1m 20s` then `Speaker 1 — Hi` / `Speaker 2 — Hi too`.
+- **Music**: detect music on-device (Apple's SoundAnalysis built-in sound
+  classifier includes music) and show a music-note row with its time and
+  length, e.g. "Music · intro theme · 14s". Ad breaks show as a dashed band.
 - Transcript view follows playback; tap any line to jump there; select a line
   to share a clip, copy the quote or bookmark it.
 - Search across all transcripts (and show titles, and saved clips).

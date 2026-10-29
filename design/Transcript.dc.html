@@ -23,79 +23,103 @@ button{font-family:inherit}
 </a>
 <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
 <span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">How radio learned to listen</span>
-<span style="font-size: 12px; color: #6B675E">Transcribed on this iPhone</span>
+<span style="font-size: 12px; color: #6B675E">2 speakers · transcribed on this iPhone</span>
 </div>
-<button aria-label="Find in transcript" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1F1E1B; display: flex; align-items: center; justify-content: center">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-</button>
+<button onClick="{{toggleNames}}" style="min-height: 36px; padding: 0 10px; border: 0; border-radius: 18px; background: #F1EEE6; color: #1F1E1B; font-size: 12px; font-weight: 500">{{namesLabel}}</button>
 </header>
 
-<div style="flex: 1; overflow: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 20px">
-<sc-for list="{{before}}" as="line" hint-placeholder-count="4">
-<button onClick="{{line.pick}}" style="border: 0; background: {{line.bg}}; border-radius: 10px; padding: 8px 10px; margin: -8px -10px; text-align: left; display: flex; flex-direction: column; gap: 4px; color: {{line.ink}}">
-<span style="font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">{{line.who}} · {{line.t}}</span>
-<span style="font-family: Newsreader, Georgia, serif; font-size: {{line.size}}; line-height: 1.45">{{line.text}}</span>
-</button>
-</sc-for>
+<div style="flex: 1; overflow: auto; padding: 16px 24px 20px; display: flex; flex-direction: column; gap: 22px">
+<sc-for list="{{blocks}}" as="b" hint-placeholder-count="6">
 
-<div style="display: flex; gap: 8px; flex-wrap: wrap">
-<a href="Clip.dc.html" style="min-height: 36px; padding: 0 14px; border-radius: 18px; background: #1F1E1B; color: #FAF8F3; display: flex; align-items: center; font-size: 13px; font-weight: 500">Share clip</a>
-<button style="min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #D9D4C7; background: transparent; color: #1F1E1B; font-size: 13px">Copy</button>
-<button style="min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #D9D4C7; background: transparent; color: #1F1E1B; font-size: 13px">Bookmark</button>
+<sc-if value="{{b.isMusic}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 10px; color: #6B675E">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>
+<span style="font-size: 13px; font-variant-numeric: tabular-nums">{{b.t}} · {{b.label}}</span>
 </div>
-
-<div style="border-top: 1px dashed #D9D4C7; border-bottom: 1px dashed #D9D4C7; padding: 10px 0; display: flex; align-items: center; gap: 8px">
-<span style="font-size: 13px; color: #6B675E; flex: 1">Ad break · 1m 40s · will be skipped</span>
-<button onClick="{{toggleAd}}" style="min-height: 36px; padding: 0 8px; border: 0; background: transparent; color: #A4512F; font-size: 13px; font-weight: 500">{{adLabel}}</button>
-</div>
-<sc-if value="{{adOpen}}" hint-placeholder-val="{{ false }}">
-<p style="margin: -10px 0 0; font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.45; color: #6B675E">This episode is brought to you by [SPONSOR]… <button style="border: 0; background: transparent; padding: 0; color: #A4512F; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500">Not an ad?</button></p>
 </sc-if>
 
-<sc-for list="{{after}}" as="line" hint-placeholder-count="3">
-<button onClick="{{line.pick}}" style="border: 0; background: {{line.bg}}; border-radius: 10px; padding: 8px 10px; margin: -8px -10px; text-align: left; display: flex; flex-direction: column; gap: 4px; color: {{line.ink}}">
-<span style="font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">{{line.who}} · {{line.t}}</span>
+<sc-if value="{{b.isAd}}" hint-placeholder-val="{{ false }}">
+<div style="border-top: 1px dashed #D9D4C7; border-bottom: 1px dashed #D9D4C7; padding: 10px 0; display: flex; align-items: center; gap: 8px">
+<span style="font-size: 13px; color: #6B675E; flex: 1; font-variant-numeric: tabular-nums">{{b.t}} · Ad break · 1m 40s · skipped</span>
+<button style="min-height: 36px; padding: 0 8px; border: 0; background: transparent; color: #A4512F; font-size: 13px; font-weight: 500">Show</button>
+</div>
+</sc-if>
+
+<sc-if value="{{b.isGroup}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 600; color: #6B675E; font-variant-numeric: tabular-nums; letter-spacing: 0.02em">{{b.t}}</span>
+<sc-for list="{{b.lines}}" as="line" hint-placeholder-count="2">
+<button onClick="{{line.pick}}" style="border: 0; background: {{line.bg}}; border-radius: 10px; padding: 6px 10px; margin: -6px -10px; text-align: left; display: flex; flex-direction: column; gap: 2px; color: {{line.ink}}">
+<span style="font-size: 12px; font-weight: 600; color: {{line.whoInk}}">{{line.who}}</span>
 <span style="font-family: Newsreader, Georgia, serif; font-size: {{line.size}}; line-height: 1.45">{{line.text}}</span>
 </button>
 </sc-for>
 </div>
+</sc-if>
+
+</sc-for>
+</div>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 10px 20px; border-top: 1px solid #E8E3D8; display: flex; gap: 8px">
+<a href="Clip.dc.html" style="min-height: 36px; padding: 0 14px; border-radius: 18px; background: #1F1E1B; color: #FAF8F3; display: flex; align-items: center; font-size: 13px; font-weight: 500">Share clip</a>
+<button style="min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #D9D4C7; background: transparent; color: #1F1E1B; font-size: 13px">Copy</button>
+<button style="min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #D9D4C7; background: transparent; color: #1F1E1B; font-size: 13px">Play from here</button>
+</div>
+</sc-if>
 
 <div style="border-top: 1px solid #E8E3D8; padding: 10px 20px 28px; display: flex; align-items: center; gap: 12px">
 <button aria-label="Pause" style="width: 44px; height: 44px; border: 0; border-radius: 22px; background: #1F1E1B; color: #FAF8F3; display: flex; align-items: center; justify-content: center">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
 </button>
-<span style="flex: 1; font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">18:42 / 56:10 · 1.4×</span>
+<span style="flex: 1; font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">1:52 / 56:10 · 1.4×</span>
 <button style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: #F1EEE6; color: #1F1E1B; font-size: 12px; font-weight: 500">Follow along</button>
 </div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { sel: 'b3', adOpen: false }; }
+  constructor(props) { super(props); this.state = { sel: 'l4', named: false }; }
   renderVals() {
     const s = this.state;
-    const style = (l) => ({
-      ...l,
-      bg: l.id === s.sel ? '#F1EEE6' : 'transparent',
-      ink: l.past ? '#6B675E' : '#1F1E1B',
-      size: l.id === 'b3' ? '21px' : '18px',
-      pick: () => this.setState({ sel: l.id })
+    const names = s.named ? { 1: 'Maya', 2: 'Dev' } : { 1: 'Speaker 1', 2: 'Speaker 2' };
+    const whoInk = { 1: '#1F1E1B', 2: '#A4512F' };
+    const current = 'l4';
+    const pastIds = ['l1', 'l2', 'l3'];
+    const line = (id, sp, text) => ({
+      who: names[sp],
+      whoInk: whoInk[sp],
+      text,
+      bg: id === s.sel ? '#F1EEE6' : 'transparent',
+      ink: pastIds.indexOf(id) >= 0 ? '#6B675E' : '#1F1E1B',
+      size: id === current ? '20px' : '18px',
+      pick: () => this.setState({ sel: id })
     });
-    const before = [
-      { id: 'b0', who: 'Maya', t: '17:58', past: true, text: 'So the first audience research was literally people with clipboards on street corners.' },
-      { id: 'b1', who: 'Dev', t: '18:09', past: true, text: 'Asking what you had listened to yesterday.' },
-      { id: 'b2', who: 'Maya', t: '18:14', past: true, text: 'Which nobody remembers accurately. You would name the station you liked, not the one you had on.' },
-      { id: 'b3', who: 'Dev', t: '18:31', past: false, text: 'And that gap, between what people say and what they actually do, is the whole story of the next forty years.' }
-    ].map(style);
-    const after = [
-      { id: 'a0', who: 'Maya', t: '20:33', past: false, text: 'Then the portable meters arrived, and suddenly you could hear what people heard.' },
-      { id: 'a1', who: 'Dev', t: '20:47', past: false, text: 'Little pagers clipped to your belt, picking up a code hidden in the broadcast.' }
-    ].map(style);
+    const blocks = [
+      { isMusic: true, t: '0:00', label: 'Music · intro theme · 14s' },
+      { isGroup: true, t: '1m 20s', lines: [
+        line('l1', 1, 'Hi, and welcome back to the show.'),
+        line('l2', 2, 'Hi, good to be here again.')
+      ] },
+      { isGroup: true, t: '1m 40s', lines: [
+        line('l3', 1, 'How was your week?'),
+        line('l4', 2, 'Honestly, I spent it buried in old ratings diaries, which is where today starts.')
+      ] },
+      { isGroup: true, t: '2m 05s', lines: [
+        line('l5', 1, 'Paper diaries! People actually wrote down every station they heard?'),
+        line('l6', 2, 'Every fifteen minutes, in pencil, for a whole week.')
+      ] },
+      { isMusic: true, t: '2m 31s', label: 'Music · 8s' },
+      { isAd: true, t: '2m 39s' },
+      { isGroup: true, t: '4m 19s', lines: [
+        line('l7', 1, 'So, back to those diaries.')
+      ] }
+    ].map((b) => ({ isMusic: !!b.isMusic, isAd: !!b.isAd, isGroup: !!b.isGroup, t: b.t, label: b.label || '', lines: b.lines || [] }));
     return {
-      before, after,
-      adOpen: s.adOpen,
-      adLabel: s.adOpen ? 'Hide' : 'Show',
-      toggleAd: () => this.setState({ adOpen: !s.adOpen })
+      blocks,
+      hasSel: !!s.sel,
+      namesLabel: s.named ? 'Show as Speaker 1, 2' : 'Name speakers',
+      toggleNames: () => this.setState({ named: !s.named })
     };
   }
 }
