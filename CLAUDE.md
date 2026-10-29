@@ -85,6 +85,10 @@ terracotta accent).
   player shows "Playing on …" when not on the phone.
 - Variable speed (1.0–2.0×), **Trim silences** (Overcast-style Smart Speed),
   **Boost voices**, sleep timer.
+  - Built as: speed remembered globally; Trim and Boost are global switches,
+    off by default (not per show); sleep timer 5/15/30/45/60 minutes or end
+    of episode. Skip lengths are set on the Shows screen ("Skip buttons") or
+    by touching and holding a skip button.
 
 ### Library and new episode cards
 - Library tab opens with a **New Episodes** carousel of large cards like Apple
@@ -198,8 +202,15 @@ terracotta accent).
 - Waiting on GitHub: the macOS build machines only have Xcode 26.6 (iOS
   26.5 SDK) while the app targets iOS 27. It compiles (with a warning), but
   TestFlight uploads will need the iOS 27 SDK once GitHub adds it.
-- Next: step 4 (speed, Trim silences, Boost voices, sleep timer,
-  artwork-themed player, skip-length settings, chapters from feeds).
+- Done (step 4): speed, sleep timer, separate skip lengths (settings +
+  touch and hold), artwork-coloured player and New Episodes cards (4.5:1
+  text), "Playing on …", chapters (feed JSON or embedded in the audio, with
+  chapter artwork, Chapters list, tap to jump), Trim silences (speeds
+  through pauses over 0.3s) and Boost voices (compressor + limiter) via an
+  audio tap. Trim/Boost strengths are first guesses: tune once Paul has
+  listened. Ad breaks on the scrubber come with step 6.
+- Next: step 5 (publisher transcripts, on-device transcription, transcript
+  view, search).
 
 ## Open questions for Paul
 
