@@ -1,0 +1,36 @@
+# XcodeGen spec. The Xcode project is generated from this file in CI
+# (`xcodegen generate`), so no one needs to open Xcode.
+name: Podcasts
+options:
+  bundleIdPrefix: com.gruffaluff
+  deploymentTarget:
+    iOS: "27.0"
+packages:
+  PodcastCore:
+    path: Packages/PodcastCore
+targets:
+  Podcasts:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: PodcastCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gruffaluff.podcasts
+        PRODUCT_NAME: Podcasts
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Podcasts
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+schemes:
+  Podcasts:
+    build:
+      targets:
+        Podcasts: all
