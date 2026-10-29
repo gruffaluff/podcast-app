@@ -8,7 +8,10 @@ original screen mockups are in `design/`.
 ## What this is
 
 **Podspot** (Paul's name; icon: a sound wave turning into headphones,
-off-white on terracotta, drawn by `design/icon/make_icon.py`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
+off-white on terracotta, drawn by `design/icon/make_icon.py`. The first
+design looked too like an existing logo; now using option B, sound-wave
+bars forming the headband. Options A–C in `design/icon/options.png`;
+Paul to confirm). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**, with a
 calm look inspired by the Claude app (warm off-white, serif headings, one
@@ -36,11 +39,12 @@ terracotta accent).
 - Manual queue with drag to reorder, plus "Play next" and "Play last" on any episode.
 - **Auto-add per show**: each subscribed show is set to **Off**, **Top** or **Bottom**.
   Newly followed shows default to **Bottom** (Paul's call).
-- **Following a show**: older episodes are marked as played and only the
-  newest episode downloads (Paul's call); the follow sheet can undo it
-  ("Keep older episodes unplayed"). Show pages list **Unplayed** episodes
-  by default (switch to All), with Mark all as played / unplayed, "Mark
-  this and older as played", and swipe to mark played.
+- **Following a show**: only the newest episode downloads; older episodes
+  are **not** marked played automatically (Paul's call). Instead, show
+  pages have **Select** → Select All → Mark as played / unplayed, plus
+  Mark all as played (menu), "Mark this and older as played", swipe to mark
+  played, and an Unplayed / All filter. The follow sheet offers "Mark
+  older episodes as played" as a one-tap option.
 - Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
   subscription list, so there is no OPML import from it).
 - **Right after following a show, a settings sheet opens**: auto-add
@@ -109,10 +113,9 @@ terracotta accent).
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
   (`<podcast:transcript>`), otherwise **transcribe on the iPhone**.
-- Transcription follows a schedule Paul picks (Shows screen → Transcripts):
-  **While charging** (default, incl. overnight via a background task;
-  Paul was worried about battery), **As soon as downloaded**, or **Only
-  when I ask**. **Transcribe now** (in
+- Transcripts are a nice-to-have (Paul): default **Only when I ask** (a
+  Transcribe now button); **Automatically while charging** is off unless
+  Paul picks it; **As soon as downloaded** also available. **Transcribe now** (in
   the transcript screen, episode menus, Up Next menu; "Transcribe Up Next
   now" in settings) skips the schedule and downloads the episode first if
   needed. Transcripts are made only from downloaded audio and kept after
@@ -140,8 +143,13 @@ terracotta accent).
 - Detect ad breaks from the transcript (sponsor-read language, promo codes,
   "brought to you by", plus audio boundary cues). Dynamically inserted ads
   differ per download, so detection runs on Paul's own downloaded file.
-- Skip automatically, mark breaks on the scrubber and in the transcript, and
-  offer **Play ad** and **Not an ad** so Paul can correct it.
+- **Like Spotify: a Skip ad button** shows while an ad plays (full and mini
+  player) and jumps to where the show resumes; skipping automatically is
+  an option, off by default. Breaks marked on the scrubber and in the
+  transcript; **Play ad** and **Not an ad** to correct.
+- **Find ads while listening** (default on): no full transcript needed.
+  While a downloaded episode plays, the next ~4 minutes are transcribed on
+  the iPhone in 150s slices just to find sponsor reads (`AdScanPlan`).
 
 ### Chapters
 - Use chapters supplied by the show (`<podcast:chapters>` JSON, or chapters
@@ -266,6 +274,9 @@ terracotta accent).
   and John Robins for testing (remove later); transcription default While
   charging; speaker labels on on-device transcripts (word timings from
   SpeechTranscriber matched to FluidAudio speaker turns).
+- Done (second round of answers): Skip ad button + find ads while
+  listening; transcription default Only when I ask; no automatic
+  mark-as-played on follow, Select mode instead; new icon (option B).
 - To check on the phone first: Trim silences / Boost voices strength, ad
   detection accuracy (rule-based; tune phrases), auto-chapter quality,
   Apple chart feeds (could not be reached from the build machine; Discover
