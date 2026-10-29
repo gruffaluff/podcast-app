@@ -63,14 +63,26 @@ button{font-family:inherit}
 <div style="height: 12px"></div>
 </div>
 
-<a href="NowPlaying.dc.html" style="margin: 0 12px 8px; background: #F1EEE6; color: #1F1E1B; border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 12px">
-<div style="width: 40px; height: 40px; border-radius: 8px; background: #4A5D73; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 15px">LS</div>
+<div style="margin: 0 12px 8px; background: #F1EEE6; color: #1F1E1B; border-radius: 14px; padding: 8px 6px 8px 10px; display: flex; align-items: center; gap: 2px">
+<a href="NowPlaying.dc.html" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; color: #1F1E1B">
+<div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; background: #4A5D73; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 15px">LS</div>
 <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
 <span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">How radio learned to listen</span>
-<span style="font-size: 12px; color: #6B675E">18:42 · ad break skipped in 2m</span>
+<span style="font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">{{miniTime}}</span>
 </div>
-<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
 </a>
+<button onClick="{{back}}" aria-label="Back 10 seconds" style="width: 40px; height: 44px; border: 0; background: transparent; color: #1F1E1B; position: relative; display: flex; align-items: center; justify-content: center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"></path><path d="M4 4v4h4"></path></svg>
+<span style="position: absolute; font-size: 8px; font-weight: 600; top: 18px">10</span>
+</button>
+<button aria-label="Pause" style="width: 40px; height: 44px; border: 0; background: transparent; color: #1F1E1B; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+</button>
+<button onClick="{{fwd}}" aria-label="Forward 10 seconds" style="width: 40px; height: 44px; border: 0; background: transparent; color: #1F1E1B; position: relative; display: flex; align-items: center; justify-content: center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"></path><path d="M20 4v4h-4"></path></svg>
+<span style="position: absolute; font-size: 8px; font-weight: 600; top: 18px">10</span>
+</button>
+</div>
 
 <nav aria-label="Main" style="border-top: 1px solid #E8E3D8; padding: 6px 8px 28px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
 <a href="Main.dc.html" aria-current="page" style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: #1F1E1B">
@@ -86,9 +98,10 @@ button{font-family:inherit}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { autoOn: true, arrived: false, checked: 'old' }; }
+  constructor(props) { super(props); this.state = { autoOn: true, arrived: false, checked: 'old', pos: 1122 }; }
   renderVals() {
     const s = this.state;
+    const fmt = (n) => Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
     const base = [
       { key: 'tw', show: 'Tidewater Weekly', title: 'Low tide, high stakes', initials: 'TW', art: '#4F6B5A', meta: '52m · Top · transcript ready' },
       { key: 'tw', show: 'Tidewater Weekly', title: 'Harbour lights', initials: 'TW', art: '#4F6B5A', meta: '47m · Top · transcript ready' },
@@ -105,6 +118,9 @@ class Component extends DCLogic {
     const labels = { old: 'Checked 2 hours ago · tap or pull to check now', busy: 'Checking 18 shows…', now: 'Up to date · checked just now' };
     return {
       items,
+      miniTime: fmt(s.pos) + ' · ad break skipped in 2m',
+      back: () => this.setState({ pos: Math.max(0, s.pos - 10) }),
+      fwd: () => this.setState({ pos: s.pos + 10 }),
       summary: items.length + ' episodes · ' + (s.arrived ? '4h 10m' : '3h 15m'),
       checkLabel: labels[s.checked],
       refresh: () => { this.setState({ checked: 'busy' }); setTimeout(() => this.setState({ checked: 'now' }), 1200); },

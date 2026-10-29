@@ -59,7 +59,12 @@ terracotta accent).
 
 ### Player
 - Episode artwork (falls back to show artwork), chapter title, scrubber with ad
-  breaks marked, skip back 15s / forward 30s.
+  breaks marked.
+- **Skip back / forward buttons** in both the full player and the mini
+  ("now playing") bar. Default **10 seconds** each way; back and forward are
+  set separately (5, 10, 15, 30 or 60s) in settings, and touch-and-hold a skip
+  button to change it on the spot. Lock screen and headphone controls use the
+  same lengths.
 - Variable speed (1.0–2.0×), **Trim silences** (Overcast-style Smart Speed),
   **Boost voices**, sleep timer.
 

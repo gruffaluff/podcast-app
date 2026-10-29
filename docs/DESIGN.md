@@ -47,11 +47,11 @@ The player opens from the mini player.
 1. **Up Next** (`design/Main.dc.html`): title, sliders and search icons;
    "Checked 2 hours ago · tap or pull to check now" line; episode count and
    total time; rows of artwork, show, title, meta (length · source · transcript
-   status) and a reorder handle; "Keep playing new episodes" toggle; mini player;
-   tab bar.
+   status) and a reorder handle; "Keep playing new episodes" toggle; mini player
+   with back 10 / play-pause / forward 10 buttons; tab bar.
 2. **Now Playing** (`design/NowPlaying.dc.html`): close chevron, large episode
    artwork, serif title, show name, current chapter link, scrubber with ad
-   segments and "Ad skipped at …", skip 15 / play-pause / skip 30, a single
+   segments and "Ad skipped at …", back 10 / play-pause / forward 10, a single
    segmented row (speed · Trim · Boost · Sleep), bottom links to Transcript,
    Chapters, Up Next.
 3. **Transcript** (`design/Transcript.dc.html`): timestamp headings
@@ -66,7 +66,7 @@ The player opens from the mini player.
 5. **Share a clip** (`design/Clip.dc.html`): quote card, length waveform with
    −5 / +5 sec, toggles (audio, link to moment, video card), Share button.
 6. **Shows** (`design/AutoAdd.dc.html`): explanation of the ordering rule;
-   "Top, in priority order" ranked list (rank number, move up, drag handle);
+   "Top, in priority order" ranked list; "Skip buttons" back and forward lengths (5/10/15/30/60s); (rank number, move up, drag handle);
    "All shows" with a per-show row with notification bell and Off / Top / Bottom; "Checking for
    new episodes" with Hourly / Every 3 hours / Every 6 hours; toggles for
    Wi-Fi-only downloads and "Keep each show in order".

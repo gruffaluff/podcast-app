@@ -67,6 +67,21 @@ button{font-family:inherit}
 </div>
 
 <div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 20px; font-weight: 500">Skip buttons</h2>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: #6B675E">Used in the player and the mini player. Touch and hold a skip button to change it on the spot.</p>
+<sc-for list="{{skips}}" as="k" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 14px">{{k.label}}</span>
+<div role="group" aria-label="{{k.label}}" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #F1EEE6; border-radius: 10px; padding: 3px; gap: 2px">
+<sc-for list="{{k.opts}}" as="o" hint-placeholder-count="5">
+<button onClick="{{o.pick}}" aria-pressed="{{o.on}}" style="min-height: 34px; border: 0; border-radius: 8px; background: {{o.bg}}; color: {{o.ink}}; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
 <h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 20px; font-weight: 500">Checking for new episodes</h2>
 <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #6B675E">Pull down on Up Next to check any time. In the background, iOS decides the exact moment, so alerts can arrive a little late.</p>
 <div role="group" aria-label="Background check frequency" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: #F1EEE6; border-radius: 10px; padding: 3px; gap: 2px">
@@ -96,6 +111,7 @@ class Component extends DCLogic {
     this.state = {
       freq: '3h', wifi: true, keep: true,
       rank: ['ls', 'tw'],
+      back: 10, fwd: 10,
       modes: { ls: 'top', tw: 'top', sm: 'off', fn: 'bottom', nd: 'off', pp: 'bottom' },
       bells: { ls: true, tw: true, sm: false, fn: false, nd: true, pp: false }
     };
@@ -157,6 +173,13 @@ class Component extends DCLogic {
     });
     return {
       shows, freqs, tops,
+      skips: [['back', 'Back'], ['fwd', 'Forward']].map(([key, label]) => ({
+        label,
+        opts: [5, 10, 15, 30, 60].map((n) => ({
+          label: n + 's', ...seg(s[key] === n),
+          pick: () => this.setState({ [key]: n })
+        }))
+      })),
       toggles: [
         tg('wifi', 'Download on Wi-Fi only', 'Checks still run on mobile data'),
         tg('keep', 'Keep each show in order', 'Applies to Play next and Play last too')
