@@ -185,3 +185,39 @@ final class ColorContrastTests: XCTestCase {
         XCTAssertEqual(ColorContrast.themedBackground(from: navy), navy)
     }
 }
+
+final class ChaptersTests: XCTestCase {
+
+    func testParsesJSONChapters() throws {
+        let json = """
+        {"version": "1.2.0", "chapters": [
+          {"startTime": 95.5, "title": "The harbour", "img": "https://example.com/c2.jpg"},
+          {"startTime": 0, "title": "Intro"},
+          {"startTime": 60, "title": "Hidden marker", "toc": false},
+          {"startTime": 300, "title": "  ", "url": "https://example.com/more"}
+        ]}
+        """
+        let chapters = try Chapters.parseJSON(Data(json.utf8))
+        XCTAssertEqual(chapters.map(\.title), ["Intro", "The harbour", "Chapter 3"])
+        XCTAssertEqual(chapters.map(\.start), [0, 95.5, 300])
+        XCTAssertEqual(chapters[0].end, 95.5)
+        XCTAssertEqual(chapters[1].end, 300)
+        XCTAssertNil(chapters[2].end)
+        XCTAssertEqual(chapters[1].imageURL, URL(string: "https://example.com/c2.jpg"))
+        XCTAssertEqual(chapters[2].link, URL(string: "https://example.com/more"))
+    }
+
+    func testLastChapterEndsAtEpisodeEnd() {
+        let chapters = Chapters.tidy([Chapter(start: 0, title: "A"), Chapter(start: 50, title: "B")], duration: 120)
+        XCTAssertEqual(chapters.map(\.end), [50, 120])
+        XCTAssertEqual(chapters[1].length, 70)
+    }
+
+    func testCurrentChapter() {
+        let chapters = Chapters.tidy([Chapter(start: 10, title: "A"), Chapter(start: 50, title: "B")], duration: 120)
+        XCTAssertNil(Chapters.index(at: 5, in: chapters))
+        XCTAssertEqual(Chapters.index(at: 10, in: chapters), 0)
+        XCTAssertEqual(Chapters.index(at: 49, in: chapters), 0)
+        XCTAssertEqual(Chapters.index(at: 51, in: chapters), 1)
+    }
+}

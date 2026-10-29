@@ -10,6 +10,7 @@ struct NowPlayingView: View {
     @Environment(\.dismiss) private var dismiss
     /// While dragging the scrubber, where the thumb is.
     @State private var scrubTime: TimeInterval?
+    @State private var showingChapters = false
 
     private let text = Color.white
     private let secondary = Color.white.opacity(ColorContrast.secondaryAlpha)
@@ -21,7 +22,8 @@ struct NowPlayingView: View {
                 VStack(spacing: 22) {
                     Spacer(minLength: 4)
                     GeometryReader { proxy in
-                        ArtworkView(url: item.artworkURL, title: item.showTitle, size: proxy.size.width, radius: 20)
+                        // Chapter artwork when the show provides it.
+                        ArtworkView(url: player.currentChapter?.imageURL ?? item.artworkURL, title: item.showTitle, size: proxy.size.width, radius: 20)
                     }
                     .aspectRatio(1, contentMode: .fit)
                     .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
@@ -37,6 +39,7 @@ struct NowPlayingView: View {
                             .foregroundStyle(secondary)
                     }
 
+                    chapterLink
                     scrubber
                     controls
                     optionsRow
@@ -52,6 +55,35 @@ struct NowPlayingView: View {
             }
         }
         .animation(.easeInOut(duration: 0.4), value: player.nowPlaying?.artworkURL)
+        .sheet(isPresented: $showingChapters) { ChaptersView() }
+    }
+
+    /// Current chapter; tap for the list.
+    @ViewBuilder private var chapterLink: some View {
+        if let index = player.currentChapterIndex {
+            Button { showingChapters = true } label: {
+                HStack(spacing: 6) {
+                    Text("\(index + 1)/\(player.chapters.count)")
+                        .monospacedDigit()
+                        .foregroundStyle(secondary)
+                    Text(player.chapters[index].title)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(text)
+                .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Chapter \(index + 1) of \(player.chapters.count), \(player.chapters[index].title)")
+            .accessibilityHint("Shows all chapters")
+        } else if !player.chapters.isEmpty {
+            Button("Chapters") { showingChapters = true }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(text)
+                .frame(minHeight: 44)
+        }
     }
 
     /// Artwork colour, or a calm placeholder tone until it's known.

@@ -38,6 +38,12 @@ final class PlayerModel {
     /// When a timed sleep timer will pause playback.
     private(set) var sleepEndsAt: Date?
 
+    /// Chapters from the show (feed JSON or embedded in the audio), if any.
+    private(set) var chapters: [Chapter] = []
+
+    var currentChapterIndex: Int? { Chapters.index(at: currentTime, in: chapters) }
+    var currentChapter: Chapter? { currentChapterIndex.map { chapters[$0] } }
+
     /// Name of the AirPlay / Bluetooth device when not playing on the phone.
     private(set) var outputName: String?
 
@@ -95,6 +101,14 @@ final class PlayerModel {
         }
         resume()
         loadArtwork(episode.artwork)
+        chapters = []
+        loadChapters(episodeID: episode.episodeID, chaptersURL: episode.chaptersURL, audio: source)
+    }
+
+    /// Jumps to the start of a chapter.
+    func play(chapter: Chapter) {
+        seek(to: chapter.start)
+        if !isPlaying { resume() }
     }
 
     func resume() {
@@ -328,6 +342,38 @@ final class PlayerModel {
         if duration > 0 { info[MPMediaItemPropertyPlaybackDuration] = duration }
         if let artwork { info[MPMediaItemPropertyArtwork] = artwork }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    private func loadChapters(episodeID: String, chaptersURL: URL?, audio: URL) {
+        Task {
+            var found: [Chapter] = []
+            if let chaptersURL, let data = try? await URLSession.shared.data(from: chaptersURL).0 {
+                found = (try? Chapters.parseJSON(data)) ?? []
+            }
+            if found.isEmpty {
+                found = await Self.embeddedChapters(in: audio)
+            }
+            guard nowPlaying?.episodeID == episodeID else { return }
+            chapters = Chapters.tidy(found, duration: duration > 0 ? duration : nil)
+        }
+    }
+
+    /// Chapters stored inside the audio file (common in AAC/M4A podcasts).
+    nonisolated private static func embeddedChapters(in url: URL) async -> [Chapter] {
+        let asset = AVURLAsset(url: url)
+        guard let groups = try? await asset.loadChapterMetadataGroups(bestMatchingPreferredLanguages: Locale.preferredLanguages) else {
+            return []
+        }
+        var chapters: [Chapter] = []
+        for group in groups {
+            let start = group.timeRange.start.seconds
+            let end = group.timeRange.end.seconds
+            guard start.isFinite else { continue }
+            let titleItem = AVMetadataItem.metadataItems(from: group.items, filteredByIdentifier: .commonIdentifierTitle).first
+            let title = (try? await titleItem?.load(.stringValue)) ?? nil
+            chapters.append(Chapter(start: start, end: end.isFinite ? end : nil, title: title ?? ""))
+        }
+        return chapters
     }
 
     private func loadArtwork(_ url: URL?) {
