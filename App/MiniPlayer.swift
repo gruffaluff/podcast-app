@@ -49,6 +49,18 @@ struct MiniPlayer: View {
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens the player")
 
+                if player.currentAd != nil {
+                    Button { player.skipCurrentAd() } label: {
+                        Text("Skip ad")
+                            .font(.footnote.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .frame(minHeight: 32)
+                            .foregroundStyle(Theme.background)
+                            .background(Theme.ink, in: Capsule())
+                            .frame(minHeight: 44)
+                    }
+                    .accessibilityLabel("Skip ad")
+                }
                 SkipButton(direction: .back)
                 Button { player.togglePlayPause() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")

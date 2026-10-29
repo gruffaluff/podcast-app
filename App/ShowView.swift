@@ -12,13 +12,16 @@ struct ShowView: View {
     /// Show only unplayed episodes (default), or every episode.
     @State private var showAll = false
     @State private var confirmingMarkAll = false
+    /// Select mode: tick episodes (or Select All), then mark them played/unplayed.
+    @State private var selecting = false
+    @State private var selection: Set<String> = []
 
     var body: some View {
         let allEpisodes = show.episodes.sorted { $0.published > $1.published }
         let unplayedCount = allEpisodes.filter { !$0.played }.count
         let episodes = showAll ? allEpisodes : allEpisodes.filter { !$0.played }
 
-        List {
+        List(selection: $selection) {
             Section {
                 header
                     .listRowBackground(Theme.background)
@@ -26,40 +29,23 @@ struct ShowView: View {
             }
             Section {
                 ForEach(episodes) { episode in
-                    Button { player.play(episode) } label: {
-                        EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode))
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        EpisodeMenuItems(episode: episode)
-                        Button("Mark this and older as played", systemImage: "text.badge.checkmark") {
-                            store.markPlayed(allEpisodes.filter { $0.published <= episode.published })
-                        }
-                    }
-                    .swipeActions(edge: .trailing) {
-                        if episode.played {
-                            Button("Unplayed") { store.markUnplayed(episode) }.tint(Theme.muted)
+                    Group {
+                        if selecting {
+                            row(episode)
                         } else {
-                            Button("Played") { store.markPlayed(episode.episodeID) }.tint(Theme.accentFill)
+                            episodeButton(episode, allEpisodes: allEpisodes)
                         }
                     }
-                    .swipeActions(edge: .leading) {
-                        Button("Play next") { store.playNext(episode) }
-                            .tint(Theme.accentFill)
-                        Button("Play last") { store.playLast(episode) }
-                            .tint(Theme.ink)
-                    }
+                    .tag(episode.episodeID)
                 }
                 .listRowBackground(Theme.background)
                 .listRowSeparatorTint(Theme.hairline)
             } header: {
-                HStack {
-                    Picker("Episodes", selection: $showAll) {
-                        Text("Unplayed (\(unplayedCount))").tag(false)
-                        Text("All (\(allEpisodes.count))").tag(true)
-                    }
-                    .pickerStyle(.segmented)
+                Picker("Episodes", selection: $showAll) {
+                    Text("Unplayed (\(unplayedCount))").tag(false)
+                    Text("All (\(allEpisodes.count))").tag(true)
                 }
+                .pickerStyle(.segmented)
                 .textCase(nil)
                 .padding(.vertical, 4)
             } footer: {
@@ -70,21 +56,56 @@ struct ShowView: View {
                 }
             }
         }
+        .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(selecting)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
-                    Button("Mark all as played", systemImage: "checkmark.circle") { confirmingMarkAll = true }
-                    Button("Mark all as unplayed", systemImage: "circle") { store.markUnplayed(show.episodes) }
-                    Button("Unfollow", systemImage: "minus.circle", role: .destructive) { confirmingUnfollow = true }
-                } label: {
-                    Image(systemName: "ellipsis")
+            if selecting {
+                ToolbarItem(placement: .topBarLeading) {
+                    let allSelected = !episodes.isEmpty && selection.count == episodes.count
+                    Button(allSelected ? "Deselect All" : "Select All") {
+                        selection = allSelected ? [] : Set(episodes.map(\.episodeID))
+                    }
                 }
-                .accessibilityLabel("More")
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { endSelecting() }.fontWeight(.semibold)
+                }
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Mark as played") {
+                        store.markPlayed(allEpisodes.filter { selection.contains($0.episodeID) })
+                        endSelecting()
+                    }
+                    .disabled(selection.isEmpty)
+                    Spacer()
+                    Text(selection.isEmpty ? "None selected" : "\(selection.count) selected")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.muted)
+                    Spacer()
+                    Button("Mark as unplayed") {
+                        store.markUnplayed(allEpisodes.filter { selection.contains($0.episodeID) })
+                        endSelecting()
+                    }
+                    .disabled(selection.isEmpty)
+                }
+            } else {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Select") { selecting = true }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
+                        Button("Select episodes", systemImage: "checkmark.circle") { selecting = true }
+                        Button("Mark all as played", systemImage: "checkmark.circle.fill") { confirmingMarkAll = true }
+                        Button("Mark all as unplayed", systemImage: "circle") { store.markUnplayed(show.episodes) }
+                        Button("Unfollow", systemImage: "minus.circle", role: .destructive) { confirmingUnfollow = true }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                    }
+                    .accessibilityLabel("More")
+                }
             }
         }
         .sheet(isPresented: $showingSettings) { ShowSettingsView(show: show) }
@@ -106,6 +127,41 @@ struct ShowView: View {
             }
         } message: {
             Text("Its episodes leave Up Next and your library.")
+        }
+    }
+
+    private func endSelecting() {
+        selecting = false
+        selection = []
+    }
+
+    private func row(_ episode: PodcastEpisode) -> some View {
+        EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode))
+    }
+
+    private func episodeButton(_ episode: PodcastEpisode, allEpisodes: [PodcastEpisode]) -> some View {
+        Button { player.play(episode) } label: {
+            row(episode)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            EpisodeMenuItems(episode: episode)
+            Button("Mark this and older as played", systemImage: "text.badge.checkmark") {
+                store.markPlayed(allEpisodes.filter { $0.published <= episode.published })
+            }
+        }
+        .swipeActions(edge: .trailing) {
+            if episode.played {
+                Button("Unplayed") { store.markUnplayed(episode) }.tint(Theme.muted)
+            } else {
+                Button("Played") { store.markPlayed(episode.episodeID) }.tint(Theme.accentFill)
+            }
+        }
+        .swipeActions(edge: .leading) {
+            Button("Play next") { store.playNext(episode) }
+                .tint(Theme.accentFill)
+            Button("Play last") { store.playLast(episode) }
+                .tint(Theme.ink)
         }
     }
 

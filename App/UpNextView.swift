@@ -119,6 +119,7 @@ struct UpNextView: View {
 
 private struct QueueRow: View {
     @Environment(DownloadManager.self) private var downloads
+    @Environment(TranscriptService.self) private var transcripts
     let item: QueueItem
     let episode: PodcastEpisode
     let settings: QueueSettings
@@ -157,7 +158,9 @@ private struct QueueRow: View {
         switch episode.transcriptState {
         case .ready: parts.append("Transcript ready")
         case .transcribing: parts.append("Transcribing")
-        case .waiting: parts.append("Transcript waiting")
+        case .waiting:
+            // Only when it's actually lined up (asked for, or the schedule allows).
+            if transcripts.schedule != .onRequest || !transcripts.canTranscribeNow(episode) { parts.append("Transcript waiting") }
         case .none, .failed: break
         }
         return parts.joined(separator: " · ")

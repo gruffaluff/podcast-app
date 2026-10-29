@@ -10,7 +10,7 @@ struct ShowSettingsView: View {
     let show: Podcast
     /// True when shown right after following ("Following …" heading).
     var justFollowed = false
-    @State private var olderUnplayed = false
+    @State private var olderUnplayed = true
 
     var body: some View {
         NavigationStack {
@@ -74,8 +74,8 @@ struct ShowSettingsView: View {
                         Text("Older episodes")
                     } footer: {
                         Text(olderUnplayed
-                             ? "All \(show.episodes.count) episodes are unplayed."
-                             : "The newest episode is downloading. The other \(max(0, show.episodes.count - 1)) are marked as played, so only new ones show as unplayed.")
+                             ? "The newest episode is downloading. All \(show.episodes.count) episodes are unplayed; you can also do this later from the show's Select button."
+                             : "The other \(max(0, show.episodes.count - 1)) are marked as played, so only new ones show as unplayed.")
                     }
                     .listRowBackground(Theme.surface)
                 }
@@ -137,6 +137,7 @@ struct TopPriorityView: View {
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
     @State private var labelSpeakers = SpeakerSeparation.isEnabled
+    @State private var findAds = AdScanner.isEnabled
 
     var body: some View {
         @Bindable var store = store
@@ -211,12 +212,15 @@ struct TopPriorityView: View {
             .listRowBackground(Theme.background)
 
             Section {
+                Toggle("Find ads while listening", isOn: $findAds)
+                    .onChange(of: findAds) { _, on in AdScanner.isEnabled = on }
+                    .tint(Theme.accentFill)
                 Toggle("Skip ads automatically", isOn: Binding(get: { player.skipAds }, set: { player.setSkipAds($0) }))
                     .tint(Theme.accentFill)
             } header: {
                 Text("Ads")
             } footer: {
-                Text("Ad breaks are found in each downloaded episode's transcript on your iPhone. Skipped breaks are marked on the scrubber; tap Play ad or Not an ad to correct one.")
+                Text("While a downloaded episode plays, Podspot checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
             }
             .listRowBackground(Theme.background)
 

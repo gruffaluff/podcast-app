@@ -74,6 +74,8 @@ final class PodcastEpisode {
     var dismissedAdsData: Data?
     /// True once ads were looked for in an on-device transcript of the download.
     var adsChecked: Bool = false
+    /// Parts of the download already checked for ads while listening (JSON).
+    var adScannedData: Data?
     /// Chapters made from the transcript (JSON `[Chapter]`).
     var autoChaptersData: Data?
     var chaptersURL: URL?
@@ -108,6 +110,11 @@ final class PodcastEpisode {
     var adBreaks: [AdBreak] {
         get { adBreaksData.flatMap { try? JSONDecoder().decode([AdBreak].self, from: $0) } ?? [] }
         set { adBreaksData = try? JSONEncoder().encode(newValue) }
+    }
+
+    var adScanned: [ClosedRange<TimeInterval>] {
+        get { adScannedData.flatMap { try? JSONDecoder().decode([ClosedRange<TimeInterval>].self, from: $0) } ?? [] }
+        set { adScannedData = try? JSONEncoder().encode(newValue) }
     }
 
     var dismissedAds: [TimeInterval] {
