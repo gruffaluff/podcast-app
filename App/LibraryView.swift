@@ -121,6 +121,7 @@ private struct EpisodeCard: View {
                         .foregroundStyle(Theme.background)
                 }
                 Spacer()
+                DownloadButton(episode: episode)
                 Menu {
                     EpisodeMenuItems(episode: episode)
                 } label: {
@@ -174,16 +175,61 @@ private struct ShowTile: View {
 struct EpisodeMenuItems: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
+    @Environment(DownloadManager.self) private var downloads
     let episode: PodcastEpisode
 
     var body: some View {
         Button("Play", systemImage: "play") { player.play(episode) }
         Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { store.playNext(episode) }
         Button("Play last", systemImage: "text.line.last.and.arrowtriangle.forward") { store.playLast(episode) }
+        if downloads.progress[episode.episodeID] != nil {
+            Button("Stop download", systemImage: "xmark.circle") { store.removeDownload(episode) }
+        } else if episode.downloadFile != nil {
+            Button("Remove download", systemImage: "trash", role: .destructive) { store.removeDownload(episode) }
+        } else {
+            Button("Download", systemImage: "arrow.down.circle") { downloads.download(episode) }
+        }
         if episode.played {
             Button("Mark as unplayed", systemImage: "circle") { store.markUnplayed(episode) }
         } else {
             Button("Mark as played", systemImage: "checkmark.circle") { store.markPlayed(episode.episodeID) }
         }
+    }
+}
+
+/// Download / progress / downloaded, for the New Episodes cards.
+struct DownloadButton: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(DownloadManager.self) private var downloads
+    let episode: PodcastEpisode
+
+    var body: some View {
+        Group {
+            if let fraction = downloads.progress[episode.episodeID] {
+                Button { store.removeDownload(episode) } label: {
+                    ZStack {
+                        Circle().stroke(Theme.controlBorder, lineWidth: 2)
+                        Circle().trim(from: 0, to: max(0.03, fraction))
+                            .stroke(Theme.accentFill, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                        Image(systemName: "stop.fill").font(.system(size: 8))
+                    }
+                    .frame(width: 22, height: 22)
+                }
+                .accessibilityLabel("Stop download, \(Int(fraction * 100)) percent done")
+            } else if episode.downloadFile != nil {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundStyle(Theme.accentText)
+                    .accessibilityLabel("Downloaded")
+            } else {
+                Button { downloads.download(episode) } label: {
+                    Image(systemName: "arrow.down.circle")
+                }
+                .accessibilityLabel("Download")
+            }
+        }
+        .font(.title3)
+        .foregroundStyle(Theme.ink)
+        .frame(width: 44, height: 44)
     }
 }

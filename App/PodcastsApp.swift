@@ -6,6 +6,8 @@ struct PodcastsApp: App {
     private let container: ModelContainer
     @State private var store: LibraryStore
     @State private var player: PlayerModel
+    @State private var downloads: DownloadManager
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
         let container = Self.makeContainer()
@@ -13,6 +15,7 @@ struct PodcastsApp: App {
         self.container = container
         _store = State(initialValue: store)
         _player = State(initialValue: PlayerModel(store: store))
+        _downloads = State(initialValue: DownloadManager(store: store))
     }
 
     var body: some Scene {
@@ -20,6 +23,7 @@ struct PodcastsApp: App {
             RootView()
                 .environment(store)
                 .environment(player)
+                .environment(downloads)
         }
         .modelContainer(container)
     }

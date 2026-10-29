@@ -4,7 +4,7 @@ import Observation
 import UIKit
 import PodcastCore
 
-/// Plays one episode at a time, streams the audio, remembers where Paul
+/// Plays one episode at a time (downloaded copy if any), remembers where Paul
 /// stopped, and moves on to the next episode in Up Next when one finishes.
 /// Lock screen and headphone controls use the same skip lengths.
 @MainActor
@@ -65,7 +65,9 @@ final class PlayerModel {
         lastSavedTime = start
         artwork = nil
 
-        player.replaceCurrentItem(with: AVPlayerItem(url: episode.audioURL))
+        // Play the downloaded copy when there is one, otherwise stream.
+        let source = store.localAudioURL(for: episode) ?? episode.audioURL
+        player.replaceCurrentItem(with: AVPlayerItem(url: source))
         if start > 1 {
             player.seek(to: CMTime(seconds: start, preferredTimescale: 600))
         }

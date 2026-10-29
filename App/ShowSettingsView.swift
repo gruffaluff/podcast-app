@@ -50,7 +50,7 @@ struct ShowSettingsView: View {
                     Toggle("Download new episodes", isOn: binding(\.autoDownload))
                     Toggle("Notify me of new episodes", isOn: binding(\.notify))
                 } footer: {
-                    Text("Your choices are saved now. Downloads and alerts start working in a coming update.")
+                    Text("Downloads follow your Wi-Fi only setting. Alerts start working in a coming update; your choice is saved.")
                 }
                 .listRowBackground(Theme.surface)
                 .tint(Theme.accentFill)
@@ -105,10 +105,12 @@ struct ShowSettingsView: View {
 /// Top shows in priority order. Drag to re-order; Up Next re-sorts to match.
 struct TopPriorityView: View {
     @Environment(LibraryStore.self) private var store
+    @Environment(DownloadManager.self) private var downloads
     @State private var shows: [Podcast] = []
 
     var body: some View {
         @Bindable var store = store
+        @Bindable var downloads = downloads
         List {
             Section {
                 if shows.isEmpty {
@@ -145,11 +147,21 @@ struct TopPriorityView: View {
                 Text("Play next and Play last never put an episode before an older one from the same show.")
             }
             .listRowBackground(Theme.background)
+
+            Section {
+                Toggle("Download on Wi-Fi only", isOn: $downloads.wifiOnly)
+                    .tint(Theme.accentFill)
+            } header: {
+                Text("Downloads")
+            } footer: {
+                Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted to save space. Downloads you start yourself go straight away.")
+            }
+            .listRowBackground(Theme.background)
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
         .environment(\.editMode, .constant(.active))
-        .navigationTitle("Top show priority")
+        .navigationTitle("Shows")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { shows = store.topShows }
     }

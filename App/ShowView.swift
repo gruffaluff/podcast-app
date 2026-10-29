@@ -128,6 +128,7 @@ struct ShowView: View {
 }
 
 private struct EpisodeRow: View {
+    @Environment(DownloadManager.self) private var downloads
     let episode: PodcastEpisode
     let isPlaying: Bool
     let isQueued: Bool
@@ -165,6 +166,7 @@ private struct EpisodeRow: View {
             parts.append(episode.position > 30 ? "\(TimeFormat.length(left)) left" : TimeFormat.length(left))
         }
         if isQueued { parts.append("In Up Next") }
+        if !episode.played, let download = downloads.status(for: episode) { parts.append(download) }
         return parts.joined(separator: " · ")
     }
 }

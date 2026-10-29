@@ -22,6 +22,9 @@ final class LibraryStore {
         didSet { UserDefaults.standard.set(keepShowOrder, forKey: "keepShowOrder") }
     }
 
+    /// Set by `DownloadManager` so new episodes can be auto-downloaded.
+    @ObservationIgnored weak var downloads: DownloadManager?
+
     init(context: ModelContext) {
         self.context = context
         self.lastChecked = UserDefaults.standard.object(forKey: "lastChecked") as? Date
@@ -90,6 +93,9 @@ final class LibraryStore {
 
     func unfollow(_ show: Podcast) {
         let feedURL = show.feedURL
+        for episode in show.episodes {
+            removeDownloadFile(of: episode)
+        }
         commit(queue.filter { $0.episode.showID != feedURL })
         context.delete(show)
         save()
@@ -157,6 +163,9 @@ final class LibraryStore {
         save()
         commit(QueueEngine.addNewEpisodes(fresh, to: queue, settings: queueSettings))
         lastChecked = Date()
+
+        let freshEpisodes = episodes(fresh.map(\.id))
+        downloads?.autoDownload(fresh.compactMap { freshEpisodes[$0.id] })
     }
 
     /// Saves episodes not seen before; returns the fresh releases among them.
@@ -210,11 +219,12 @@ final class LibraryStore {
         commit(moved)
     }
 
-    /// Marks an episode played and takes it out of Up Next.
+    /// Marks an episode played, takes it out of Up Next and deletes its download.
     func markPlayed(_ episodeID: String) {
         if let episode = self.episode(episodeID) {
             episode.played = true
             episode.position = 0
+            removeDownloadFile(of: episode)
         }
         commit(QueueEngine.complete(episodeID, in: queue))
     }
@@ -235,6 +245,38 @@ final class LibraryStore {
         guard let episode = self.episode(episodeID), episode.duration.map({ abs($0 - duration) > 1 }) ?? true else { return }
         episode.duration = duration
         save()
+    }
+
+    // MARK: Downloads
+
+    /// The downloaded file, if there is one and it's still on the phone.
+    func localAudioURL(for episode: PodcastEpisode) -> URL? {
+        guard let name = episode.downloadFile else { return nil }
+        let url = DownloadFiles.url(for: name)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    func setDownloaded(_ episodeID: String, fileName: String) {
+        guard let episode = self.episode(episodeID) else {
+            DownloadFiles.delete(fileName)  // Show was unfollowed meanwhile.
+            return
+        }
+        episode.downloadFile = fileName
+        save()
+    }
+
+    /// Deletes an episode's download (or stops it downloading).
+    func removeDownload(_ episode: PodcastEpisode) {
+        removeDownloadFile(of: episode)
+        save()
+    }
+
+    private func removeDownloadFile(of episode: PodcastEpisode) {
+        downloads?.cancel(episode.episodeID)
+        if let name = episode.downloadFile {
+            DownloadFiles.delete(name)
+            episode.downloadFile = nil
+        }
     }
 
     // MARK: Saving

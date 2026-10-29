@@ -98,6 +98,7 @@ struct UpNextView: View {
 }
 
 private struct QueueRow: View {
+    @Environment(DownloadManager.self) private var downloads
     let item: QueueItem
     let episode: PodcastEpisode
     let settings: QueueSettings
@@ -132,6 +133,7 @@ private struct QueueRow: View {
             parts.append(episode.position > 30 ? "\(TimeFormat.length(left)) left" : TimeFormat.length(left))
         }
         parts.append(sourceLabel)
+        if let download = downloads.status(for: episode) { parts.append(download) }
         return parts.joined(separator: " · ")
     }
 

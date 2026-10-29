@@ -99,3 +99,33 @@ final class TextFormatTests: XCTestCase {
         XCTAssertEqual(PlainText.fromHTML("AT&T and &unknown; stay"), "AT&T and &unknown; stay")
     }
 }
+
+final class DownloadNamingTests: XCTestCase {
+
+    func testNameIsStableAndKeepsAudioExtension() {
+        let url = URL(string: "https://cdn.example.com/show/ep%201.m4a?token=abc")!
+        let name = DownloadNaming.fileName(episodeID: "https://example.com/feed.xml|ep-1", audioURL: url)
+        XCTAssertEqual(name, DownloadNaming.fileName(episodeID: "https://example.com/feed.xml|ep-1", audioURL: url))
+        XCTAssertTrue(name.hasSuffix(".m4a"))
+        XCTAssertEqual(name.count, 16 + 4)
+        XCTAssertFalse(name.contains("/"))
+    }
+
+    func testDifferentEpisodesGetDifferentNames() {
+        let url = URL(string: "https://cdn.example.com/a.mp3")!
+        XCTAssertNotEqual(
+            DownloadNaming.fileName(episodeID: "feed|1", audioURL: url),
+            DownloadNaming.fileName(episodeID: "feed|2", audioURL: url)
+        )
+    }
+
+    func testUnknownExtensionFallsBackToMP3() {
+        let url = URL(string: "https://tracking.example.com/redirect/12345")!
+        XCTAssertTrue(DownloadNaming.fileName(episodeID: "x", audioURL: url).hasSuffix(".mp3"))
+    }
+
+    func testKnownHash() {
+        // FNV-1a 64 of the empty string is its offset basis.
+        XCTAssertEqual(DownloadNaming.stableHash(""), "cbf29ce484222325")
+    }
+}
