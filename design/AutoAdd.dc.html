@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shows and notifications</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A4512F;text-decoration:none}a:hover{color:#7E3C21}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAF8F3; color: #1F1E1B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="padding: 52px 12px 4px; display: flex; align-items: center; gap: 4px">
+<a href="Main.dc.html" aria-label="Back to Up Next" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #1F1E1B">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+</a>
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 26px; font-weight: 500">Shows</h1>
+</header>
+
+<div style="flex: 1; overflow: auto; padding: 4px 20px 24px; display: flex; flex-direction: column; gap: 22px">
+
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B675E">New episodes join Up Next oldest first. A <span style="color: #1F1E1B; font-weight: 500">Top</span> show's new episode goes to the top, straight after its episodes already queued.</p>
+
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{shows}}" as="s" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid #E8E3D8">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{s.art}}; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 14px; flex-shrink: 0">{{s.initials}}</div>
+<span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.name}}</span>
+<button onClick="{{s.toggleBell}}" aria-pressed="{{s.bellOn}}" aria-label="{{s.bellLabel}}" style="width: 44px; height: 44px; margin-right: -10px; border: 0; background: transparent; color: {{s.bellInk}}; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="{{s.bellFill}}" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path></svg>
+</button>
+</div>
+<div role="group" aria-label="{{s.groupLabel}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: #F1EEE6; border-radius: 10px; padding: 3px; gap: 2px">
+<sc-for list="{{s.modes}}" as="m" hint-placeholder-count="3">
+<button onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="min-height: 32px; border: 0; border-radius: 8px; background: {{m.bg}}; color: {{m.ink}}; font-size: 13px; font-weight: 500">{{m.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 20px; font-weight: 500">Checking for new episodes</h2>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: #6B675E">Pull down on Up Next to check any time. In the background, iOS decides the exact moment, so alerts can arrive a little late.</p>
+<div role="group" aria-label="Background check frequency" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: #F1EEE6; border-radius: 10px; padding: 3px; gap: 2px">
+<sc-for list="{{freqs}}" as="f" hint-placeholder-count="3">
+<button onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="min-height: 36px; border: 0; border-radius: 8px; background: {{f.bg}}; color: {{f.ink}}; font-size: 13px; font-weight: 500">{{f.label}}</button>
+</sc-for>
+</div>
+<sc-for list="{{toggles}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #E8E3D8">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 14px">{{t.label}}</span>
+<span style="font-size: 12px; color: #6B675E">{{t.hint}}</span>
+</div>
+<button onClick="{{t.toggle}}" aria-pressed="{{t.pressed}}" aria-label="{{t.label}}" style="width: 48px; height: 30px; flex-shrink: 0; border: 0; border-radius: 15px; background: {{t.track}}; padding: 3px; display: flex; justify-content: {{t.side}}">
+<span style="width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; display: block"></span>
+</button>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      freq: '3h', wifi: true, keep: true,
+      modes: { ls: 'top', tw: 'top', sm: 'off', fn: 'bottom', nd: 'off', pp: 'bottom' },
+      bells: { ls: true, tw: true, sm: false, fn: false, nd: true, pp: false }
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const seg = (on) => ({ on: on ? 'true' : 'false', bg: on ? '#FAF8F3' : 'transparent', ink: on ? '#1F1E1B' : '#6B675E' });
+    const list = [
+      { id: 'ls', name: 'The Long Signal', initials: 'LS', art: '#4A5D73' },
+      { id: 'tw', name: 'Tidewater Weekly', initials: 'TW', art: '#4F6B5A' },
+      { id: 'sm', name: 'Small Machines', initials: 'SM', art: '#7A5368' },
+      { id: 'fn', name: 'Field Notes FM', initials: 'FN', art: '#8A6A3F' },
+      { id: 'nd', name: 'The Night Desk', initials: 'ND', art: '#5B5750' },
+      { id: 'pp', name: 'Paper Planes', initials: 'PP', art: '#6A5E86' }
+    ];
+    const shows = list.map((sh) => {
+      const bell = !!s.bells[sh.id];
+      return {
+        ...sh,
+        groupLabel: 'Auto-add ' + sh.name,
+        bellOn: bell ? 'true' : 'false',
+        bellLabel: 'Notify me about new ' + sh.name + ' episodes',
+        bellInk: bell ? '#A4512F' : '#8F8A7E',
+        bellFill: bell ? '#F3E3C6' : 'none',
+        toggleBell: () => this.setState({ bells: { ...s.bells, [sh.id]: !bell } }),
+        modes: [['off', 'Off'], ['top', 'Top'], ['bottom', 'Bottom']].map(([v, label]) => ({
+          label, ...seg(s.modes[sh.id] === v),
+          pick: () => this.setState({ modes: { ...s.modes, [sh.id]: v } })
+        }))
+      };
+    });
+    const freqs = [['1h', 'Hourly'], ['3h', 'Every 3 hours'], ['6h', 'Every 6 hours']].map(([v, label]) => ({
+      label, ...seg(s.freq === v), pick: () => this.setState({ freq: v })
+    }));
+    const tg = (key, label, hint) => ({
+      label, hint,
+      pressed: s[key] ? 'true' : 'false',
+      track: s[key] ? '#AD5230' : '#D9D4C7',
+      side: s[key] ? 'flex-end' : 'flex-start',
+      toggle: () => this.setState({ [key]: !s[key] })
+    });
+    return {
+      shows, freqs,
+      toggles: [
+        tg('wifi', 'Download on Wi-Fi only', 'Checks still run on mobile data'),
+        tg('keep', 'Keep each show in order', 'Applies to Play next and Play last too')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

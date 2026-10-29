@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Up Next</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A4512F;text-decoration:none}a:hover{color:#7E3C21}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAF8F3; color: #1F1E1B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="padding: 56px 20px 4px; display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 34px; font-weight: 500; letter-spacing: -0.01em">Up Next</h1>
+<div style="display: flex">
+<a href="AutoAdd.dc.html" aria-label="Auto-add and notification settings" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #1F1E1B">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg>
+</a>
+<a href="Search.dc.html" aria-label="Search" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #1F1E1B">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+</a>
+</div>
+</header>
+
+<button onClick="{{refresh}}" style="margin: 0 20px 8px; padding: 6px 0; min-height: 36px; border: 0; background: transparent; color: #6B675E; font-size: 13px; display: flex; align-items: center; gap: 6px; text-align: left">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 4v4h-4"></path></svg>
+<span>{{checkLabel}}</span>
+</button>
+
+<div style="flex: 1; overflow: auto; padding: 0 20px; display: flex; flex-direction: column">
+<p style="margin: 0 0 4px; font-size: 13px; color: #6B675E">{{summary}}</p>
+<sc-for list="{{items}}" as="item" hint-placeholder-count="4">
+<div style="display: flex; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid #E8E3D8; background: {{item.bg}}">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 10px; background: {{item.art}}; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 18px">{{item.initials}}</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<span style="font-size: 12px; color: #6B675E">{{item.show}}</span>
+<span style="font-size: 15px; font-weight: 500; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{item.title}}</span>
+<span style="font-size: 12px; color: #6B675E">{{item.meta}}</span>
+</div>
+<button aria-label="Reorder" style="width: 44px; height: 44px; margin-right: -12px; border: 0; background: transparent; color: #8F8A7E; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 9h14M5 15h14"></path></svg>
+</button>
+</div>
+</sc-for>
+
+<div style="display: flex; align-items: center; gap: 12px; padding: 16px 0">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 14px; font-weight: 500">Keep playing new episodes</span>
+<span style="font-size: 12px; color: #6B675E">From shows set to auto-add</span>
+</div>
+<button onClick="{{toggleAuto}}" aria-pressed="{{autoOn}}" aria-label="Keep playing new episodes" style="width: 48px; height: 30px; border: 0; border-radius: 15px; background: {{trackBg}}; padding: 3px; display: flex; justify-content: {{knobSide}}">
+<span style="width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; display: block"></span>
+</button>
+</div>
+<button onClick="{{toggleArrive}}" style="align-self: flex-start; min-height: 40px; padding: 0; border: 0; background: transparent; color: #A4512F; font-size: 13px; font-weight: 500">{{arriveLabel}}</button>
+<div style="height: 12px"></div>
+</div>
+
+<a href="NowPlaying.dc.html" style="margin: 0 12px 8px; background: #F1EEE6; color: #1F1E1B; border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 12px">
+<div style="width: 40px; height: 40px; border-radius: 8px; background: #4A5D73; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 15px">LS</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">How radio learned to listen</span>
+<span style="font-size: 12px; color: #6B675E">18:42 · ad break skipped in 2m</span>
+</div>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+</a>
+
+<nav aria-label="Main" style="border-top: 1px solid #E8E3D8; padding: 6px 8px 28px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+<a href="Main.dc.html" aria-current="page" style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: #1F1E1B">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>Up Next</a>
+<a href="Main.dc.html" style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: #6B675E">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg>Library</a>
+<a href="Discover.dc.html" style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: #6B675E">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Discover</a>
+<a href="Search.dc.html" style="height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: #6B675E">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Search</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { autoOn: true, arrived: false, checked: 'old' }; }
+  renderVals() {
+    const s = this.state;
+    const base = [
+      { key: 'tw', show: 'Tidewater Weekly', title: 'Low tide, high stakes', initials: 'TW', art: '#4F6B5A', meta: '52m · Top · transcript ready' },
+      { key: 'tw', show: 'Tidewater Weekly', title: 'Harbour lights', initials: 'TW', art: '#4F6B5A', meta: '47m · Top · transcript ready' },
+      { key: 'sm', show: 'Small Machines', title: 'Inside the tiny chips in everything', initials: 'SM', art: '#7A5368', meta: '1h 04m · added by you · transcribing' },
+      { key: 'fn', show: 'Field Notes FM', title: 'The quiet economics of birdsong', initials: 'FN', art: '#8A6A3F', meta: '41m · Bottom' }
+    ];
+    let items = base.slice();
+    if (s.arrived) {
+      let at = 0;
+      items.forEach((it, i) => { if (it.key === 'tw') at = i + 1; });
+      items.splice(at, 0, { key: 'tw', show: 'Tidewater Weekly', title: 'The salt road', initials: 'TW', art: '#4F6B5A', meta: 'New · 55m · Top', fresh: true });
+    }
+    items = items.map((it) => ({ ...it, bg: it.fresh ? '#F3E9DD' : 'transparent' }));
+    const labels = { old: 'Checked 2 hours ago · tap or pull to check now', busy: 'Checking 18 shows…', now: 'Up to date · checked just now' };
+    return {
+      items,
+      summary: items.length + ' episodes · ' + (s.arrived ? '4h 10m' : '3h 15m'),
+      checkLabel: labels[s.checked],
+      refresh: () => { this.setState({ checked: 'busy' }); setTimeout(() => this.setState({ checked: 'now' }), 1200); },
+      autoOn: s.autoOn ? 'true' : 'false',
+      trackBg: s.autoOn ? '#AD5230' : '#D9D4C7',
+      knobSide: s.autoOn ? 'flex-end' : 'flex-start',
+      toggleAuto: () => this.setState({ autoOn: !s.autoOn }),
+      arriveLabel: s.arrived ? 'Reset preview' : 'Preview a new Tidewater episode arriving',
+      toggleArrive: () => this.setState({ arrived: !s.arrived })
+    };
+  }
+}
+</script>
+</body>
+</html>

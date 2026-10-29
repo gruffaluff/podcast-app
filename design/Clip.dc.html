@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Share a clip</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A4512F;text-decoration:none}a:hover{color:#7E3C21}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAF8F3; color: #1F1E1B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; padding: 52px 24px 28px; gap: 20px; overflow: hidden">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 26px; font-weight: 500">Share a clip</h1>
+<a href="Transcript.dc.html" style="font-size: 14px; font-weight: 500; min-height: 44px; display: flex; align-items: center">Cancel</a>
+</div>
+
+<div style="background: #F1EEE6; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 23px; line-height: 1.35">“That gap, between what people say and what they actually do, is the whole story of the next forty years.”</p>
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="width: 32px; height: 32px; border-radius: 7px; background: #4A5D73; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 13px">LS</div>
+<span style="font-size: 13px; color: #6B675E">The Long Signal · Ep 142 · 18:31</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<span style="font-size: 14px; font-weight: 500">Length</span>
+<span style="font-size: 13px; color: #6B675E; font-variant-numeric: tabular-nums">{{lengthLabel}}</span>
+</div>
+<div aria-hidden="true" style="height: 40px; display: flex; align-items: center; gap: 3px">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="40">
+<span style="flex: 1; height: {{b.h}}; border-radius: 2px; background: {{b.c}}; display: block"></span>
+</sc-for>
+</div>
+<div style="display: flex; gap: 8px">
+<button onClick="{{shorter}}" style="flex: 1; min-height: 40px; border: 1px solid #D9D4C7; border-radius: 10px; background: transparent; color: #1F1E1B; font-size: 13px">− 5 sec</button>
+<button onClick="{{longer}}" style="flex: 1; min-height: 40px; border: 1px solid #D9D4C7; border-radius: 10px; background: transparent; color: #1F1E1B; font-size: 13px">+ 5 sec</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #E8E3D8">
+<span style="flex: 1; font-size: 14px">{{o.label}}</span>
+<button onClick="{{o.toggle}}" aria-pressed="{{o.pressed}}" aria-label="{{o.label}}" style="width: 48px; height: 30px; border: 0; border-radius: 15px; background: {{o.track}}; padding: 3px; display: flex; justify-content: {{o.side}}">
+<span style="width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; display: block"></span>
+</button>
+</div>
+</sc-for>
+</div>
+
+<button style="margin-top: auto; min-height: 52px; border: 0; border-radius: 14px; background: #1F1E1B; color: #FAF8F3; font-size: 15px; font-weight: 500">Share</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { secs: 21, audio: true, link: true, video: false }; }
+  renderVals() {
+    const s = this.state;
+    const heights = [12,20,28,16,32,36,24,18,30,38,28,14,22,34,26,16,30,36,32,20,12,24,30,36,28,18,26,32,22,14,28,34,24,16,20,30,26,18,12,22];
+    const selCount = Math.round((s.secs / 40) * heights.length);
+    const start = 4;
+    const bars = heights.map((h, i) => ({ h: h + 'px', c: (i >= start && i < start + selCount) ? '#AD5230' : '#D9D4C7' }));
+    const mk = (key, label) => ({
+      label,
+      pressed: s[key] ? 'true' : 'false',
+      track: s[key] ? '#AD5230' : '#D9D4C7',
+      side: s[key] ? 'flex-end' : 'flex-start',
+      toggle: () => this.setState({ [key]: !s[key] })
+    });
+    return {
+      bars,
+      lengthLabel: s.secs + ' seconds',
+      shorter: () => this.setState({ secs: Math.max(5, s.secs - 5) }),
+      longer: () => this.setState({ secs: Math.min(30, s.secs + 5) }),
+      opts: [mk('audio', 'Include the audio'), mk('link', 'Link to this moment'), mk('video', 'Video card with captions')]
+    };
+  }
+}
+</script>
+</body>
+</html>

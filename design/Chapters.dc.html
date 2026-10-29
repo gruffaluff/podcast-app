@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chapters</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A4512F;text-decoration:none}a:hover{color:#7E3C21}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAF8F3; color: #1F1E1B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="padding: 52px 12px 4px; display: flex; align-items: center; gap: 4px">
+<a href="NowPlaying.dc.html" aria-label="Back to player" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #1F1E1B">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+</a>
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 26px; font-weight: 500">Chapters</h1>
+</header>
+
+<div role="group" aria-label="Chapter source" style="margin: 8px 20px 4px; padding: 3px; background: #F1EEE6; border-radius: 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px">
+<sc-for list="{{sources}}" as="src" hint-placeholder-count="2">
+<button onClick="{{src.pick}}" aria-pressed="{{src.on}}" style="min-height: 36px; border: 0; border-radius: 8px; background: {{src.bg}}; color: {{src.ink}}; font-size: 13px; font-weight: 500">{{src.label}}</button>
+</sc-for>
+</div>
+<p style="margin: 6px 20px 4px; font-size: 12px; line-height: 1.4; color: #6B675E">{{footnote}}</p>
+
+<div style="flex: 1; overflow: auto; padding: 0 20px 24px; display: flex; flex-direction: column">
+<sc-for list="{{chapters}}" as="c" hint-placeholder-count="6">
+<button onClick="{{c.pick}}" style="border: 0; border-bottom: 1px solid #E8E3D8; background: transparent; padding: 12px 0; display: flex; gap: 14px; align-items: center; text-align: left; color: #1F1E1B">
+<div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 9px; background: {{c.art}}; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-size: 12px; font-variant-numeric: tabular-nums">{{c.n}}</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<span style="font-size: 15px; font-weight: {{c.weight}}; line-height: 1.3">{{c.title}}</span>
+<span style="font-size: 12px; color: #6B675E; font-variant-numeric: tabular-nums">{{c.meta}}</span>
+</div>
+<sc-if value="{{c.current}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 500; color: #A4512F">Playing</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { src: 'show', cur: 2 }; }
+  renderVals() {
+    const s = this.state;
+    const show = [
+      ['Cold open', '00:00', '2m', '#5B5750'],
+      ['Before the ratings', '02:10', '9m', '#4A5D73'],
+      ['Clipboards on street corners', '11:40', '7m', '#4F6B5A'],
+      ['Sponsor', '18:52', '2m', '#C9BFA9', true],
+      ['The portable meter', '20:33', '14m', '#7A5368'],
+      ['What streaming changed', '34:50', '15m', '#6A5E86'],
+      ['Listener questions', '49:30', '7m', '#5B5750']
+    ];
+    const auto = [
+      ['Intro and catch-up', '00:00', '2m', '#5B5750'],
+      ['Early audience research', '02:10', '16m', '#4A5D73'],
+      ['Ad break', '18:52', '2m', '#C9BFA9', true],
+      ['Portable people meters', '20:33', '14m', '#7A5368'],
+      ['Streaming data and playlists', '34:50', '15m', '#6A5E86'],
+      ['Listener questions', '49:30', '7m', '#5B5750']
+    ];
+    const rows = s.src === 'show' ? show : auto;
+    const chapters = rows.map(([title, t, len, art, isAd], i) => ({
+      n: String(i + 1).padStart(2, '0'), title, art,
+      meta: t + ' · ' + len + (isAd ? ' · skipped' : ''),
+      current: i === s.cur,
+      weight: i === s.cur ? '600' : '400',
+      pick: () => this.setState({ cur: i })
+    }));
+    const mk = (id, label) => ({
+      label,
+      on: s.src === id ? 'true' : 'false',
+      bg: s.src === id ? '#FAF8F3' : 'transparent',
+      ink: s.src === id ? '#1F1E1B' : '#6B675E',
+      pick: () => this.setState({ src: id, cur: id === 'show' ? 2 : 1 })
+    });
+    return {
+      sources: [mk('show', 'From the show'), mk('auto', 'Auto-generated')],
+      chapters,
+      footnote: s.src === 'show'
+        ? 'Supplied by the show, with its chapter artwork.'
+        : 'Made on your iPhone from the transcript, for shows without chapters.'
+    };
+  }
+}
+</script>
+</body>
+</html>

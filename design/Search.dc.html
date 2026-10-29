@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A4512F;text-decoration:none}a:hover{color:#7E3C21}
+button,input{font-family:inherit}
+mark{background:#F3E3C6;color:#1F1E1B;border-radius:3px;padding:0 2px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FAF8F3; color: #1F1E1B; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="padding: 56px 20px 8px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 34px; font-weight: 500">Search</h1>
+<a href="Main.dc.html" style="font-size: 14px; font-weight: 500; min-height: 44px; display: flex; align-items: center">Done</a>
+</div>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search shows and transcripts</label>
+<div style="display: flex; align-items: center; gap: 8px; background: #F1EEE6; border-radius: 12px; padding: 0 12px; height: 46px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B675E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input id="q" type="search" value="listening habits" style="flex: 1; border: 0; outline: 0; background: transparent; font-size: 16px; color: #1F1E1B">
+</div>
+<div role="tablist" aria-label="Search scope" style="display: flex; gap: 18px; border-bottom: 1px solid #E8E3D8">
+<sc-for list="{{scopes}}" as="sc" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{sc.on}}" onClick="{{sc.pick}}" style="min-height: 40px; padding: 0; border: 0; border-bottom: 2px solid {{sc.line}}; margin-bottom: -1px; background: transparent; color: {{sc.ink}}; font-size: 14px; font-weight: 500">{{sc.label}}</button>
+</sc-for>
+</div>
+</header>
+
+<div style="flex: 1; overflow: auto; padding: 4px 20px 20px; display: flex; flex-direction: column">
+<p style="margin: 4px 0 4px; font-size: 12px; color: #6B675E">7 moments in 4 episodes</p>
+<sc-for list="{{results}}" as="r" hint-placeholder-count="4">
+<div style="padding: 16px 0; border-bottom: 1px solid #E8E3D8; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; gap: 10px; align-items: center">
+<div style="width: 32px; height: 32px; border-radius: 7px; background: {{r.art}}; color: #FAF8F3; display: flex; align-items: center; justify-content: center; font-family: Newsreader, Georgia, serif; font-size: 13px; flex-shrink: 0">{{r.initials}}</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.title}}</span>
+<span style="font-size: 12px; color: #6B675E">{{r.show}}</span>
+</div>
+</div>
+<p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.45">“{{r.pre}}<mark>{{r.hit}}</mark>{{r.post}}”</p>
+<div style="display: flex; gap: 16px">
+<a href="Transcript.dc.html" style="min-height: 32px; display: flex; align-items: center; font-size: 13px; font-weight: 500">Play from {{r.t}}</a>
+<button style="min-height: 32px; padding: 0; border: 0; background: transparent; color: #6B675E; font-size: 13px">Add to Up Next</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { scope: 'tr' }; }
+  renderVals() {
+    const cur = this.state.scope;
+    const scopes = [['tr', 'Transcripts'], ['shows', 'Shows'], ['clips', 'My clips']].map(([id, label]) => ({
+      label,
+      on: id === cur ? 'true' : 'false',
+      line: id === cur ? '#1F1E1B' : 'transparent',
+      ink: id === cur ? '#1F1E1B' : '#6B675E',
+      pick: () => this.setState({ scope: id })
+    }));
+    return {
+      scopes,
+      results: [
+        { title: 'How radio learned to listen', show: 'The Long Signal', initials: 'LS', art: '#4A5D73', t: '18:31', pre: '…the gap between what people say about their ', hit: 'listening habits', post: ' and what they actually do…' },
+        { title: 'Why your commute sounds different', show: 'Tidewater Weekly', initials: 'TW', art: '#4F6B5A', t: '07:12', pre: 'Car stereos changed our ', hit: 'listening habits', post: ' more than any app did.' },
+        { title: 'The quiet economics of birdsong', show: 'Field Notes FM', initials: 'FN', art: '#8A6A3F', t: '33:48', pre: 'Even birds seem to adjust their ', hit: 'listening habits', post: ' to the noise of the city.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
