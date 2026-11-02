@@ -169,6 +169,20 @@ terracotta accent).
 - Browse by category; "Because you listen to…" suggestions from shows in
   the same categories as ones Paul follows; UK top charts with Follow buttons.
 
+## Website
+
+- Showcase page: `website/podspot.html`, published as a private claude.ai
+  page (https://claude.ai/artifact/AQnieLZr5m9vCoNU9GoWpn); republish from
+  that file to keep the same link. Only Paul can open it until he shares it.
+- Same look as the app; feature sections with phone mock-ups, a live Up
+  Next demo using the app's ordering rules, privacy note, download section.
+- The download button says "Coming soon to TestFlight" until
+  `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
+  public invite link.
+- Show and episode names on the page are made-up examples (footer says so).
+- Hosting it at its own address (e.g. GitHub Pages) is possible later;
+  may need a paid GitHub plan because the repo is private.
+
 ## Proposed technical approach (confirm with Paul before big changes)
 
 - SwiftUI app, SwiftData for storage, AVFoundation / AVAudioEngine for playback
