@@ -82,6 +82,7 @@ struct DiscoverView: View {
                 }
             }
             .padding(.vertical, 4)
+            .padding(.bottom, 3)
         }
         .listRowBackground(Theme.background)
         .listRowSeparator(.hidden)
@@ -89,14 +90,16 @@ struct DiscoverView: View {
 
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title)
-                .font(.subheadline.weight(.medium))
-                .padding(.horizontal, 14)
-                .frame(minHeight: 36)
-                .foregroundStyle(selected ? Theme.background : Theme.ink)
-                .background(selected ? Theme.ink : Theme.surface, in: Capsule())
+            HStack(spacing: 6) {
+                if selected { LED(on: true, color: Theme.accentFill) }
+                Text(title.uppercased())
+                    .font(Theme.mono(12, .bold))
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(KeyButtonStyle(kind: selected ? .dark : .plain, radius: 8))
+        .accessibilityLabel(title)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
@@ -113,10 +116,7 @@ struct DiscoverView: View {
                 DirectoryItemRow(item: item, rank: index + 1)
             }
         } header: {
-            Text(genre.map { "Top in \($0.name)" } ?? "Top in the UK this week")
-                .font(Theme.screenTitle(20))
-                .foregroundStyle(Theme.ink)
-                .textCase(nil)
+            DeckHeader(title: genre.map { "Top in \($0.name)" } ?? "UK top shows", detail: genre == nil ? "This week" : "Chart")
         }
         .listRowBackground(Theme.background)
         .listRowSeparatorTint(Theme.hairline)
@@ -146,10 +146,7 @@ struct DiscoverView: View {
                 .padding(.vertical, 4)
             }
         } header: {
-            Text("Because you listen to \(showTitle)")
-                .font(Theme.screenTitle(20))
-                .foregroundStyle(Theme.ink)
-                .textCase(nil)
+            DeckHeader(title: "Because you listen to \(showTitle)")
         }
         .listRowBackground(Theme.background)
         .listRowSeparator(.hidden)
@@ -185,10 +182,10 @@ struct DirectoryItemRow: View {
     var body: some View {
         HStack(spacing: 12) {
             if let rank {
-                Text("\(rank)")
-                    .font(.system(.subheadline, design: .monospaced).weight(.bold))
-                    .foregroundStyle(Theme.muted)
-                    .frame(width: 24)
+                Text(String(format: "%02d", rank))
+                    .font(Theme.mono(15, .bold))
+                    .foregroundStyle(rank <= 3 ? Theme.accentText : Theme.muted)
+                    .frame(width: 26)
             }
             ArtworkView(url: item.artworkURL, title: item.title, size: 52)
             VStack(alignment: .leading, spacing: 2) {
@@ -196,8 +193,8 @@ struct DirectoryItemRow: View {
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2)
-                Text([item.artist, item.genre].compactMap { $0 }.joined(separator: " · "))
-                    .font(.caption)
+                Text([item.artist, item.genre].compactMap { $0 }.joined(separator: " · ").uppercased())
+                    .font(Theme.mono(10))
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
             }
@@ -215,7 +212,7 @@ private struct SuggestionCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ArtworkView(url: item.artworkURL, title: item.title, size: 132, radius: 12)
+            ArtworkView(url: item.artworkURL, title: item.title, size: 132, radius: 10)
             Text(item.title)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(Theme.ink)
@@ -267,18 +264,26 @@ private struct FollowButton: View {
         if follower.busy {
             ProgressView().frame(width: 44, height: 32)
         } else if isFollowing {
-            Label("Following", systemImage: "checkmark")
-                .labelStyle(.iconOnly)
-                .foregroundStyle(Theme.accentText)
-                .frame(width: 44, height: 32)
-                .accessibilityLabel("Following")
-        } else {
-            Button(follower.failed ? "Retry" : "Follow") {
-                Task { await follower.follow(item, store: store) }
+            HStack(spacing: 5) {
+                LED(on: true, color: Theme.accentFill)
+                Text("ON").font(Theme.mono(11, .bold))
             }
-            .font(.footnote.weight(.semibold))
-            .buttonStyle(.bordered)
-            .tint(Theme.ink)
+            .foregroundStyle(Theme.ink)
+            .frame(minWidth: 44, minHeight: 32)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Following")
+        } else {
+            Button {
+                Task { await follower.follow(item, store: store) }
+            } label: {
+                Text(follower.failed ? "RETRY" : "+ FOLLOW")
+                    .font(Theme.mono(11, .bold))
+                    .padding(.horizontal, 10)
+                    .frame(minHeight: 34)
+            }
+            .buttonStyle(KeyButtonStyle(radius: 8))
+            .padding(.bottom, 3)
+            .accessibilityLabel(follower.failed ? "Retry follow" : "Follow")
         }
     }
 }

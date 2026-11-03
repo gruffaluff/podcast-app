@@ -25,10 +25,7 @@ struct SearchView: View {
     var body: some View {
         NavigationStack {
             List {
-                Picker("Search in", selection: $scope) {
-                    ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
+                DeckSwitch(options: Scope.allCases.map { (label: $0.rawValue, value: $0) }, selection: $scope)
                 .listRowBackground(Theme.background)
                 .listRowSeparator(.hidden)
 
@@ -111,7 +108,7 @@ struct SearchView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(show.title).foregroundStyle(Theme.ink)
                         if !show.author.isEmpty {
-                            Text(show.author).font(.caption).foregroundStyle(Theme.muted)
+                            Text(show.author.uppercased()).font(Theme.mono(10)).foregroundStyle(Theme.muted).lineLimit(1)
                         }
                     }
                 }
@@ -121,16 +118,14 @@ struct SearchView: View {
         if text.count >= 2 {
             let episodes = matchingEpisodes(text)
             if !episodes.isEmpty {
-                Text("Episodes")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.muted)
+                DeckHeader(title: "Episodes", detail: "\(episodes.count) found")
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
             }
             ForEach(episodes) { episode in
                 Button { player.play(episode) } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(episode.podcast?.title ?? "").font(.caption).foregroundStyle(Theme.muted)
+                        Text((episode.podcast?.title ?? "").uppercased()).font(Theme.mono(10)).foregroundStyle(Theme.muted)
                         Text(episode.title).foregroundStyle(Theme.ink).lineLimit(2)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -204,25 +199,31 @@ private struct TranscriptResultRow: View {
             HStack(spacing: 10) {
                 ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 36, radius: 6)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(episode.podcast?.title ?? "").font(.caption).foregroundStyle(Theme.muted)
+                    Text((episode.podcast?.title ?? "").uppercased()).font(Theme.mono(10)).foregroundStyle(Theme.muted)
                     Text(episode.title).font(.subheadline.weight(.medium)).foregroundStyle(Theme.ink).lineLimit(1)
                 }
             }
             Text(highlighted)
                 .font(.system(.body))
                 .foregroundStyle(Theme.ink)
-            HStack(spacing: 18) {
-                Button("Play from \(TimeFormat.clock(match.time))") {
+            HStack(spacing: 8) {
+                Button {
                     player.play(episode)
                     player.seek(to: match.time)
+                } label: {
+                    deckKeyLabel("▶ \(TimeFormat.clock(match.time))")
                 }
+                .buttonStyle(KeyButtonStyle(kind: .dark, radius: 8))
+                .accessibilityLabel("Play from \(TimeFormat.clock(match.time))")
                 if !store.isQueued(episode) {
-                    Button("Add to Up Next") { store.playLast(episode) }
+                    Button { store.playLast(episode) } label: {
+                        deckKeyLabel("+ UP NEXT")
+                    }
+                    .buttonStyle(KeyButtonStyle(radius: 8))
+                    .accessibilityLabel("Add to Up Next")
                 }
             }
-            .font(.footnote.weight(.medium))
-            .foregroundStyle(Theme.accentText)
-            .buttonStyle(.plain)
+            .padding(.bottom, 3)
         }
         .padding(.vertical, 6)
     }
@@ -245,23 +246,28 @@ private struct ClipRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("\(episode.podcast?.title ?? "") · \(episode.title)")
-                .font(.caption)
+            Text("\(episode.podcast?.title ?? "") · \(episode.title)".uppercased())
+                .font(Theme.mono(10))
                 .foregroundStyle(Theme.muted)
                 .lineLimit(1)
             Text("“\(bookmark.text)”")
                 .font(.system(.body))
                 .foregroundStyle(Theme.ink)
-            HStack(spacing: 18) {
-                Button("Play from \(TimeFormat.clock(bookmark.time))") {
+            HStack(spacing: 8) {
+                Button {
                     player.play(episode)
                     player.seek(to: bookmark.time)
+                } label: {
+                    deckKeyLabel("▶ \(TimeFormat.clock(bookmark.time))")
                 }
-                ShareLink("Share", item: "“\(bookmark.text)”\n— \(episode.podcast?.title ?? ""), \(episode.title) (\(TimeFormat.clock(bookmark.time)))")
+                .buttonStyle(KeyButtonStyle(kind: .dark, radius: 8))
+                .accessibilityLabel("Play from \(TimeFormat.clock(bookmark.time))")
+                ShareLink(item: "“\(bookmark.text)”\n— \(episode.podcast?.title ?? ""), \(episode.title) (\(TimeFormat.clock(bookmark.time)))") {
+                    deckKeyLabel("SHARE")
+                }
+                .buttonStyle(KeyButtonStyle(radius: 8))
             }
-            .font(.footnote.weight(.medium))
-            .foregroundStyle(Theme.accentText)
-            .buttonStyle(.plain)
+            .padding(.bottom, 3)
         }
         .padding(.vertical, 6)
     }
@@ -300,4 +306,12 @@ actor TranscriptIndex {
         }
         return results
     }
+}
+
+/// The label inside a small key in a list row.
+func deckKeyLabel(_ text: String) -> some View {
+    Text(text)
+        .font(Theme.mono(11, .bold))
+        .padding(.horizontal, 10)
+        .frame(minHeight: 34)
 }
