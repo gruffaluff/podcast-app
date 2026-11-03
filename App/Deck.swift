@@ -98,3 +98,56 @@ struct DeckTag: View {
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.ink, lineWidth: 1))
     }
 }
+
+/// A section heading: monospaced title, with an optional detail on the right.
+struct DeckHeader: View {
+    let title: String
+    var detail: String?
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title.uppercased())
+                .font(Theme.mono(14, .bold))
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            if let detail {
+                Text(detail.uppercased())
+                    .font(Theme.mono(11))
+                    .foregroundStyle(Theme.muted)
+            }
+        }
+        .textCase(nil)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// A row of keys where one is pressed in: the deck's version of a
+/// segmented control (e.g. OFF / TOP / BOTTOM).
+struct DeckSwitch<Value: Hashable>: View {
+    let options: [(label: String, value: Value)]
+    @Binding var selection: Value
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(options.indices, id: \.self) { index in
+                let option = options[index]
+                let selected = option.value == selection
+                Button { selection = option.value } label: {
+                    HStack(spacing: 6) {
+                        LED(on: selected, color: Theme.accentFill)
+                        Text(option.label.uppercased())
+                            .font(Theme.mono(12, .bold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                }
+                .buttonStyle(KeyButtonStyle(kind: selected ? .dark : .plain))
+                .accessibilityLabel(option.label)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(.bottom, 3)
+    }
+}

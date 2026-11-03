@@ -102,7 +102,7 @@ Function matters more than look to Paul.
   with a big counter and a segmented progress bar (drag to scrub, ads in
   amber), transport keys, a SKIP AD key during ads, SPEED / TRIM / BOOST /
   SLEEP keys with lights, Transcript / Chapters / AirPlay keys. Library's
-  New Episodes cards still take the artwork's colour.
+  New Episodes cards keep the show's colour on a cassette-style label strip.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
   player shows "Playing on …" when not on the phone.
@@ -115,9 +115,10 @@ Function matters more than look to Paul.
 
 ### Library and new episode cards
 - Library tab opens with a **New Episodes** carousel of large cards like Apple
-  Podcasts: episode artwork on top, card tinted with the artwork's colour,
-  "4h ago", title, one-line description, a play pill showing the length,
-  a download button and a more menu. Below: "Your shows" grid.
+  Podcasts, styled as cassettes: episode artwork on top, a label strip in
+  the artwork's colour with the show and "4H AGO", title, one-line
+  description, a play key showing the time left, a download button and a
+  more menu. Below: "Your shows" grid.
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -303,9 +304,10 @@ Function matters more than look to Paul.
 - Done (Tape Deck restyle): theme, key buttons, display panel, segment
   bar; Up Next (now-playing display + numbered tracks with TOP1/TOP2/BTM/
   YOU tags, times, download/transcript lights), mini player, player and
-  transcript redesigned. Library, Discover, Search and settings take the
-  new colours and type but their layouts aren't redesigned yet (next, if
-  Paul wants). Showcase website still shows the old look.
+  transcript redesigned; then Library (cassette cards), Discover (category
+  and Follow keys), Search, show pages and settings screens (key switches
+  for Off/Top/Bottom etc., mono headings). Every screen is now Tape Deck.
+  Showcase website restyled to match (same link).
 - CI: GitHub's Apple-silicon Macs are sometimes unavailable ("job was not
   acquired by runner"). Manual runs can pick the machine: run the Build
   workflow with `runner=macos-15-intel` (worked 3 Nov 2026).

@@ -350,7 +350,7 @@ struct NameSpeakersView: View {
                     Text("Names are used in every transcript of \(show.title).")
                 }
             }
-            .navigationTitle("Name speakers")
+            .navigationTitle("NAME SPEAKERS")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button("Cancel") { dismiss() } }

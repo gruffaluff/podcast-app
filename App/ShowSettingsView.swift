@@ -20,12 +20,12 @@ struct ShowSettingsView: View {
                         ArtworkView(url: show.artworkURL, title: show.title, size: 64, radius: 10)
                         VStack(alignment: .leading, spacing: 4) {
                             if justFollowed {
-                                Text("Now following")
-                                    .font(.caption)
+                                Text("NOW FOLLOWING")
+                                    .font(Theme.mono(10, .semibold))
                                     .foregroundStyle(Theme.muted)
                             }
-                            Text(show.title)
-                                .font(Theme.screenTitle(20))
+                            Text(show.title.uppercased())
+                                .font(Theme.mono(17, .bold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(2)
                         }
@@ -34,19 +34,14 @@ struct ShowSettingsView: View {
                 .listRowBackground(Theme.background)
 
                 Section {
-                    Picker("New episodes go to Up Next", selection: autoAdd) {
-                        Text("Off").tag(AutoAddMode.off)
-                        Text("Top").tag(AutoAddMode.top)
-                        Text("Bottom").tag(AutoAddMode.bottom)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
+                    DeckSwitch(options: [(label: "Off", value: AutoAddMode.off), (label: "Top", value: .top), (label: "Bottom", value: .bottom)], selection: autoAdd)
                 } header: {
-                    Text("New episodes go to Up Next")
+                    DeckHeader(title: "New episodes go to Up Next")
                 } footer: {
                     Text(autoAddExplanation)
                 }
-                .listRowBackground(Theme.surface)
+                .listRowBackground(Theme.background)
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
                 Section {
                     Toggle("Download new episodes", isOn: binding(\.autoDownload))
@@ -71,7 +66,7 @@ struct ShowSettingsView: View {
                         }
                         .foregroundStyle(Theme.accentText)
                     } header: {
-                        Text("Older episodes")
+                        DeckHeader(title: "Older episodes")
                     } footer: {
                         Text(olderUnplayed
                              ? "The newest episode is downloading. All \(show.episodes.count) episodes are unplayed; you can also do this later from the show's Select button."
@@ -95,7 +90,7 @@ struct ShowSettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .navigationTitle("Show settings")
+            .navigationTitle("SHOW SETTINGS")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -151,10 +146,10 @@ struct TopPriorityView: View {
                 }
                 ForEach(Array(shows.enumerated()), id: \.element.feedURL) { index, show in
                     HStack(spacing: 14) {
-                        Text("\(index + 1)")
-                            .font(.system(.body, design: .monospaced).weight(.bold))
+                        Text(String(format: "%02d", index + 1))
+                            .font(Theme.mono(15, .bold))
                             .foregroundStyle(Theme.accentText)
-                            .frame(width: 22)
+                            .frame(width: 26)
                         ArtworkView(url: show.artworkURL, title: show.title, size: 40, radius: 8)
                         Text(show.title)
                             .foregroundStyle(Theme.ink)
@@ -166,7 +161,7 @@ struct TopPriorityView: View {
                     store.setTopOrder(shows)
                 }
             } header: {
-                Text("Top, in priority order")
+                DeckHeader(title: "Top, in priority order")
             } footer: {
                 Text("Your favourite goes first. Its new episodes always land above lower-ranked Top shows, whenever they arrive.")
             }
@@ -177,7 +172,7 @@ struct TopPriorityView: View {
                     AllShowsRow(show: show) { shows = store.topShows }
                 }
             } header: {
-                Text("All shows")
+                DeckHeader(title: "All shows")
             } footer: {
                 Text("The bell sends an alert when a new episode arrives, saying where it went in Up Next.")
             }
@@ -195,7 +190,7 @@ struct TopPriorityView: View {
                     BackgroundRefresh.schedule()
                 }
             } header: {
-                Text("Checking for new episodes")
+                DeckHeader(title: "Checking for new episodes")
             } footer: {
                 Text("iOS decides the exact moment, so checks can run a little late. Pull down on Up Next to check now.")
             }
@@ -205,7 +200,7 @@ struct TopPriorityView: View {
                 skipPicker("Back", selection: Binding(get: { player.skipBackSeconds }, set: { player.setSkipBack($0) }))
                 skipPicker("Forward", selection: Binding(get: { player.skipForwardSeconds }, set: { player.setSkipForward($0) }))
             } header: {
-                Text("Skip buttons")
+                DeckHeader(title: "Skip buttons")
             } footer: {
                 Text("Seconds skipped by the back and forward buttons, lock screen and headphones. You can also touch and hold a skip button in the player to change it.")
             }
@@ -218,7 +213,7 @@ struct TopPriorityView: View {
                 Toggle("Skip ads automatically", isOn: Binding(get: { player.skipAds }, set: { player.setSkipAds($0) }))
                     .tint(Theme.accentFill)
             } header: {
-                Text("Ads")
+                DeckHeader(title: "Ads")
             } footer: {
                 Text("While a downloaded episode plays, Podspot checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
             }
@@ -243,7 +238,7 @@ struct TopPriorityView: View {
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
             } header: {
-                Text("Transcripts")
+                DeckHeader(title: "Transcripts")
             } footer: {
                 Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now. Label speakers works out who is talking (Speaker 1, Speaker 2…); it downloads a small model once.")
             }
@@ -256,7 +251,7 @@ struct TopPriorityView: View {
                 Toggle("Keep played downloads for 24 hours", isOn: $store.keepPlayedDownloads)
                     .tint(Theme.accentFill)
             } header: {
-                Text("Downloads")
+                DeckHeader(title: "Downloads")
             } footer: {
                 Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away.")
             }
@@ -265,16 +260,16 @@ struct TopPriorityView: View {
         .scrollContentBackground(.hidden)
         .background(Theme.background)
         .environment(\.editMode, .constant(.active))
-        .navigationTitle("Shows")
+        .navigationTitle("SHOWS")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { shows = store.topShows }
     }
 
     private func skipPicker(_ title: String, selection: Binding<Int>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(Theme.ink)
+            Text(title.uppercased())
+                .font(Theme.mono(11, .semibold))
+                .foregroundStyle(Theme.muted)
             Picker(title, selection: selection) {
                 ForEach(PlayerOptions.skipLengths, id: \.self) { Text("\($0)s").tag($0) }
             }
@@ -317,12 +312,13 @@ private struct AllShowsRow: View {
                     Text("Bottom").tag(AutoAddMode.bottom)
                 }
             } label: {
-                Text(show.autoAdd.rawValue.capitalized)
-                    .font(.footnote.weight(.medium))
+                Text(show.autoAdd == .bottom ? "BTM ▾" : "\(show.autoAdd.rawValue.uppercased()) ▾")
+                    .font(Theme.mono(11, .bold))
                     .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 10)
                     .frame(minWidth: 64, minHeight: 32)
-                    .background(Theme.surface, in: Capsule())
+                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
+                    .shadow(color: Theme.controlBorder, radius: 0, x: 0, y: 2)
             }
             .accessibilityLabel("New episodes go to: \(show.autoAdd.rawValue)")
         }

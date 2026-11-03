@@ -11,16 +11,13 @@ struct ChaptersView: View {
         NavigationStack {
             List {
                 if !player.showChapters.isEmpty && !player.autoChapters.isEmpty {
-                    Picker("Chapters", selection: Binding(get: { player.chapterSource }, set: { player.chapterSource = $0 })) {
-                        Text("From the show").tag(PlayerModel.ChapterSource.show)
-                        Text("Auto-generated").tag(PlayerModel.ChapterSource.auto)
-                    }
-                    .pickerStyle(.segmented)
+                    DeckSwitch(options: [(label: "From the show", value: PlayerModel.ChapterSource.show), (label: "Auto", value: .auto)],
+                               selection: Binding(get: { player.chapterSource }, set: { player.chapterSource = $0 }))
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
                 } else if player.showChapters.isEmpty && !player.autoChapters.isEmpty {
-                    Text("Made on your iPhone from the transcript.")
-                        .font(.footnote)
+                    Text("AUTO · MADE ON YOUR IPHONE FROM THE TRANSCRIPT")
+                        .font(Theme.mono(10))
                         .foregroundStyle(Theme.muted)
                         .listRowBackground(Theme.background)
                         .listRowSeparator(.hidden)
@@ -47,7 +44,7 @@ struct ChaptersView: View {
                         .foregroundStyle(Theme.muted)
                 }
             }
-            .navigationTitle("Chapters")
+            .navigationTitle("CHAPTERS")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -72,8 +69,8 @@ private struct ChapterRow: View {
                     .font(.body.weight(isCurrent ? .semibold : .regular))
                     .foregroundStyle(chapter.isAd ? Theme.muted : Theme.ink)
                     .lineLimit(2)
-                Text(meta)
-                    .font(.caption)
+                Text(meta.uppercased())
+                    .font(Theme.mono(10))
                     .foregroundStyle(isCurrent ? Theme.accentText : Theme.muted)
             }
             Spacer(minLength: 0)

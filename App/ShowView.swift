@@ -41,13 +41,10 @@ struct ShowView: View {
                 .listRowBackground(Theme.background)
                 .listRowSeparatorTint(Theme.hairline)
             } header: {
-                Picker("Episodes", selection: $showAll) {
-                    Text("Unplayed (\(unplayedCount))").tag(false)
-                    Text("All (\(allEpisodes.count))").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .textCase(nil)
-                .padding(.vertical, 4)
+                DeckSwitch(options: [(label: "Unplayed \(unplayedCount)", value: false), (label: "All \(allEpisodes.count)", value: true)], selection: $showAll)
+                    .textCase(nil)
+                    .padding(.vertical, 6)
+                    .background(Theme.background)
             } footer: {
                 if episodes.isEmpty {
                     Text(showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
@@ -168,16 +165,22 @@ struct ShowView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 16) {
-                ArtworkView(url: show.artworkURL, title: show.title, size: 110, radius: 14)
+                ArtworkView(url: show.artworkURL, title: show.title, size: 110, radius: 10)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(show.title)
-                        .font(Theme.screenTitle(24))
+                    Text(show.title.uppercased())
+                        .font(Theme.mono(19, .bold))
                         .foregroundStyle(Theme.ink)
                     if !show.author.isEmpty {
-                        Text(show.author)
-                            .font(.subheadline)
+                        Text(show.author.uppercased())
+                            .font(Theme.mono(11))
                             .foregroundStyle(Theme.muted)
                     }
+                    HStack(spacing: 6) {
+                        DeckTag(text: "\(show.episodes.count) EPS")
+                        if show.notify { DeckTag(text: "BELL") }
+                        if show.autoDownload { DeckTag(text: "AUTO DL") }
+                    }
+                    .padding(.top, 2)
                 }
             }
             if !show.summary.isEmpty {
@@ -187,16 +190,8 @@ struct ShowView: View {
                     .lineLimit(4)
             }
             VStack(alignment: .leading, spacing: 6) {
-                Text("New episodes go to Up Next")
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(Theme.ink)
-                Picker("New episodes go to Up Next", selection: autoAdd) {
-                    Text("Off").tag(AutoAddMode.off)
-                    Text("Top").tag(AutoAddMode.top)
-                    Text("Bottom").tag(AutoAddMode.bottom)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                DeckHeader(title: "New episodes → Up Next")
+                DeckSwitch(options: [(label: "Off", value: AutoAddMode.off), (label: "Top", value: .top), (label: "Bottom", value: .bottom)], selection: autoAdd)
                 Text(autoAddExplanation)
                     .font(.caption)
                     .foregroundStyle(Theme.muted)
@@ -226,9 +221,12 @@ private struct EpisodeRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(episode.published.formatted(date: .abbreviated, time: .omitted))
-                .font(.caption)
-                .foregroundStyle(Theme.muted)
+            HStack(spacing: 6) {
+                if isPlaying { LED(on: true, color: Theme.accentFill) }
+                Text(episode.published.formatted(date: .abbreviated, time: .omitted).uppercased())
+                    .font(Theme.mono(10))
+                    .foregroundStyle(Theme.muted)
+            }
             Text(episode.title)
                 .font(.body.weight(.medium))
                 .foregroundStyle(episode.played ? Theme.muted : Theme.ink)
@@ -239,8 +237,8 @@ private struct EpisodeRow: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(2)
             }
-            Text(meta)
-                .font(.caption)
+            Text(meta.uppercased())
+                .font(Theme.mono(10))
                 .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
         }
         .padding(.vertical, 6)

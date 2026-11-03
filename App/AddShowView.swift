@@ -57,7 +57,7 @@ struct AddShowView: View {
             .sheet(item: $justFollowed) { show in
                 ShowSettingsView(show: show, justFollowed: true)
             }
-            .navigationTitle("Add a show")
+            .navigationTitle("ADD A SHOW")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

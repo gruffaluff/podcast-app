@@ -2,41 +2,50 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Hanken+Grotesk:wght@400;500;600&display=swap">
 <style>
-/* Layout: one calm column of "listening moments"; each feature pairs plain words with
-   a phone screen drawn in the app's own look. One live demo: Up Next keeping shows in order. */
+/* Layout: the page is a tape deck's front panel. Grey device panels, ink, one orange
+   accent for keys, mono labels and times, dark displays for "what's playing".
+   Each feature pairs plain words with a phone screen drawn in the app's Tape Deck look.
+   One live demo: Up Next keeping shows in order. */
 :root {
-  --bg: #FAF8F3;          /* the app's background */
-  --surface: #F1EEE6;     /* fields, mini player, cards in the app */
-  --hairline: #E8E3D8;
-  --ink: #1F1E1B;
-  --muted: #6B675E;
-  --accent: #AD5230;      /* terracotta, used for one thing at a time */
-  --accent-text: #A4512F;
-  --highlight: #F3E3C6;
-  --ad: #D9A441;
-  --phone-edge: #2A2824;
-  --art-1: #4A5D73; --art-2: #4F6B5A; --art-3: #7A5368; --art-4: #8A6A3F;
-  --font-display: "Newsreader", "New York", "Iowan Old Style", Georgia, serif;
-  --font-body: "Hanken Grotesk", -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-  --step-0: 1rem; --step-1: 1.25rem; --step-2: 1.6rem; --step-3: 2.2rem; --step-4: clamp(2.6rem, 6vw, 4.2rem);
+  --bg: #E8E6E1;          /* device panel (the app's background) */
+  --surface: #F4F3EF;     /* raised keys and cards */
+  --hairline: #DCD9D2;
+  --key-edge: #C9C6BE;    /* the shadow under a key */
+  --ink: #1B1B1A;
+  --muted: #5F5C55;
+  --accent: #F05A1A;      /* orange keys and lit LEDs */
+  --accent-edge: #B8410E;
+  --accent-text: #B03A0A;
+  --highlight: #FCD9C1;
+  --ad: #FFB000;          /* ad breaks, amber */
+  --display: #22231F;     /* the dark readout */
+  --display-text: #E6EDD7;
+  --display-dim: #9DA690;
+  --display-track: #3A3C35;
+  --phone-edge: #1B1B1A;
+  --art-1: #3D5A80; --art-2: #2F6B5E; --art-3: #7A3F66; --art-4: #8A6A2F;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-body: -apple-system, "SF Pro Text", "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --step-0: 1rem; --step-1: 1.2rem; --step-2: 1.45rem; --step-3: 1.95rem; --step-4: clamp(2.1rem, 5.2vw, 3.5rem);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1A1815; --surface: #24211D; --hairline: #34302A; --ink: #F2EEE6; --muted: #ADA697;
-    --accent: #D06B44; --accent-text: #E08A64; --highlight: #4A3A22; --ad: #D9A441; --phone-edge: #0E0D0B;
+    --bg: #2A2A27; --surface: #383834; --hairline: #45443F; --key-edge: #161614; --ink: #EDEBE5; --muted: #ABA79D;
+    --accent-text: #FF8A55; --highlight: #5A3520; --phone-edge: #0D0D0C; --display: #151613;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1A1815; --surface: #24211D; --hairline: #34302A; --ink: #F2EEE6; --muted: #ADA697;
-  --accent: #D06B44; --accent-text: #E08A64; --highlight: #4A3A22; --ad: #D9A441; --phone-edge: #0E0D0B;
+  --bg: #2A2A27; --surface: #383834; --hairline: #45443F; --key-edge: #161614; --ink: #EDEBE5; --muted: #ABA79D;
+  --accent-text: #FF8A55; --highlight: #5A3520; --phone-edge: #0D0D0C; --display: #151613;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 body {
+  margin: 0;
   background: var(--bg); color: var(--ink);
   font: 400 var(--step-0)/1.6 var(--font-body);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -44,142 +53,154 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 .wrap { max-width: 1080px; margin: 0 auto; }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 500; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
-h1 { font-size: var(--step-4); line-height: 1.05; }
-h2 { font-size: var(--step-3); line-height: 1.12; }
-h3 { font-size: var(--step-2); line-height: 1.2; }
+h1, h2, h3 { font-family: var(--font-mono); font-weight: 700; text-wrap: balance; margin: 0; letter-spacing: -0.02em; text-transform: uppercase; }
+h1 { font-size: var(--step-4); line-height: 1.08; }
+h2 { font-size: var(--step-3); line-height: 1.15; }
+h3 { font-size: var(--step-2); line-height: 1.25; }
 p { margin: 0; max-width: 62ch; }
 .lede { font-size: var(--step-1); color: var(--muted); }
-.eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-text); }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font: 700 0.78rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+.led { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); flex: none; display: inline-block; }
+.led.off { background: var(--key-edge); box-shadow: none; }
 a { color: var(--accent-text); }
-a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+strong { font-weight: 600; }
 
 /* Header */
 .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; }
-.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 1.45rem; color: var(--ink); text-decoration: none; }
-.brand img { width: 36px; height: 36px; }
-.top nav { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.95rem; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 1.2rem var(--font-mono); letter-spacing: 0.04em; color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.brand img { width: 36px; height: 36px; border-radius: 9px; }
+.top nav { display: flex; gap: 18px; flex-wrap: wrap; font: 500 0.8rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
 .top nav a { color: var(--muted); text-decoration: none; }
 .top nav a:hover { color: var(--ink); }
 
-/* Buttons */
-.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; font: 600 1rem var(--font-body); text-decoration: none; border: 0; cursor: pointer; }
-.btn-primary { background: var(--ink); color: var(--bg); }
-.btn-quiet { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--hairline); }
-.btn[aria-disabled="true"] { cursor: default; }
+/* Keys */
+.key { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 10px; border: 0; cursor: pointer;
+  font: 700 0.9rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none;
+  background: var(--surface); color: var(--ink); box-shadow: 0 3px 0 var(--key-edge); transition: transform .08s ease-out, box-shadow .08s ease-out; }
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.key.accent { background: var(--accent); color: #1B1B1A; box-shadow: 0 3px 0 var(--accent-edge); }
+.key.accent:active { box-shadow: 0 1px 0 var(--accent-edge); }
+.key.dark { background: #1B1B1A; color: #E8E6E1; box-shadow: 0 3px 0 #000; }
+.key[aria-disabled="true"] { cursor: default; }
 
 /* Hero */
 .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; padding-block: 32px 72px; }
 .hero > div { min-width: 0; display: grid; gap: 22px; }
-.hero .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-.hero .note { font-size: 0.9rem; color: var(--muted); }
+.hero .actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.hero .note { font: 500 0.8rem var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* Phone */
-.phone { width: min(300px, 100%); margin: 0 auto; aspect-ratio: 9 / 19; border-radius: 44px; padding: 10px; background: var(--phone-edge); box-shadow: 0 30px 60px -30px rgba(40, 30, 20, 0.45); max-width: 100%; }
-.screen { height: 100%; border-radius: 35px; overflow: hidden; background: var(--bg); position: relative; display: flex; flex-direction: column; font-size: 12px; line-height: 1.35; }
-.statusbar { display: flex; justify-content: space-between; padding: 12px 22px 4px; font-size: 11px; font-weight: 600; }
-.screen h4 { font-family: var(--font-display); font-weight: 500; font-size: 24px; margin: 6px 16px 2px; }
-.screen .sub { color: var(--muted); font-size: 10.5px; margin: 0 16px 8px; }
-.art { width: 40px; height: 40px; border-radius: 8px; flex: none; display: grid; place-items: center; color: #FAF8F3; font-family: var(--font-display); font-size: 14px; }
-.row { display: flex; gap: 10px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--hairline); }
-.row .t { min-width: 0; }
-.row .show { color: var(--muted); font-size: 10px; }
-.row .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row .meta { color: var(--muted); font-size: 10px; }
-.mini { margin: auto 10px 8px; background: var(--surface); border-radius: 14px; padding: 8px 10px; display: flex; gap: 8px; align-items: center; font-size: 11px; }
-.mini .grow { flex: 1; min-width: 0; }
-.pill { background: var(--ink); color: var(--bg); border-radius: 999px; padding: 4px 9px; font-weight: 600; font-size: 10px; white-space: nowrap; }
-.tabbar { display: flex; justify-content: space-around; padding: 8px 6px 14px; border-top: 1px solid var(--hairline); font-size: 9.5px; color: var(--muted); }
-.tabbar b { color: var(--ink); font-weight: 600; }
+.phone { width: min(300px, 100%); margin: 0 auto; aspect-ratio: 9 / 19; border-radius: 44px; padding: 10px; background: var(--phone-edge); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5); max-width: 100%; }
+.screen { height: 100%; border-radius: 35px; overflow: hidden; background: #E8E6E1; color: #1B1B1A; position: relative; display: flex; flex-direction: column; font-size: 12px; line-height: 1.35;
+  --s-surface: #F4F3EF; --s-hair: #DCD9D2; --s-edge: #C9C6BE; --s-muted: #5F5C55; }
+.statusbar { display: flex; justify-content: space-between; padding: 12px 22px 4px; font: 600 11px var(--font-mono); }
+.screen h4 { font: 700 19px var(--font-mono); margin: 6px 14px 2px; letter-spacing: 0.02em; }
+.screen .sub { color: var(--s-muted); font: 500 9px var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 14px 8px; }
+.mono { font-family: var(--font-mono); }
+.art { width: 34px; height: 34px; border-radius: 6px; flex: none; display: grid; place-items: center; color: #F4F3EF; font: 700 11px var(--font-mono); }
+.disp { margin: 0 10px 10px; background: #22231F; color: #E6EDD7; border-radius: 14px; padding: 10px 12px; font-family: var(--font-mono); display: grid; gap: 6px; }
+.disp .dim { color: #9DA690; font-size: 9px; letter-spacing: 0.04em; }
+.disp .big { font-size: 13px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg { display: flex; gap: 2px; height: 8px; }
+.seg i { flex: 1; border-radius: 1px; background: #3A3C35; }
+.seg i.on { background: #E6EDD7; }
+.seg i.ad { background: #FFB000; }
+.mkey { background: var(--s-surface); color: #1B1B1A; border-radius: 8px; box-shadow: 0 2px 0 var(--s-edge); padding: 5px 9px; font: 700 9.5px var(--font-mono); text-transform: uppercase; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.mkey.accent { background: #F05A1A; box-shadow: 0 2px 0 #B8410E; }
+.mkey.dark { background: #1B1B1A; color: #E8E6E1; box-shadow: 0 2px 0 #000; }
+.mled { width: 6px; height: 6px; border-radius: 50%; background: var(--s-edge); flex: none; display: inline-block; }
+.mled.on { background: #F05A1A; }
+.mled.ink { background: #1B1B1A; }
+.track { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 7px 14px; border-bottom: 1px solid var(--s-hair); }
+.track .n { font: 700 12px var(--font-mono); color: var(--s-muted); }
+.track .t { min-width: 0; }
+.track .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track .meta { color: var(--s-muted); font: 500 8.5px var(--font-mono); text-transform: uppercase; display: flex; gap: 5px; align-items: center; margin-top: 1px; }
+.track .right { display: grid; justify-items: end; gap: 4px; font: 500 9.5px var(--font-mono); }
+.track .lights { display: flex; gap: 3px; }
+.tag { font: 700 8px var(--font-mono); padding: 0 3px; border: 1px solid #1B1B1A; border-radius: 3px; color: #1B1B1A; line-height: 1.5; }
+.tabbar { display: flex; justify-content: space-around; padding: 8px 6px 14px; border-top: 1px solid var(--s-hair); font: 600 8.5px var(--font-mono); color: var(--s-muted); text-transform: uppercase; margin-top: auto; }
+.tabbar b { color: #1B1B1A; }
 
-/* Now playing screen (themed to artwork) */
-.np { background: #3E5168; color: #fff; }
-.np .artwork { margin: 18px 22px 12px; aspect-ratio: 1; border-radius: 16px; background: linear-gradient(160deg, #6F86A3, #2E3E52); display: grid; place-items: end start; padding: 14px; font-family: var(--font-display); font-size: 22px; line-height: 1.05; box-shadow: 0 14px 30px -14px rgba(0,0,0,.6); }
-.np .ttl { font-family: var(--font-display); font-size: 18px; text-align: center; padding: 0 18px; }
-.np .showname { text-align: center; opacity: .78; font-size: 11px; margin-top: 2px; }
-.np .chapter { text-align: center; font-size: 10.5px; margin-top: 8px; }
-.scrub { margin: 12px 22px 4px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.25); position: relative; }
-.scrub i { position: absolute; top: 0; height: 4px; border-radius: 2px; }
-.scrub .done { left: 0; width: 41%; background: #fff; }
-.scrub .ad { background: var(--ad); }
-.times { display: flex; justify-content: space-between; margin: 0 22px; font-size: 9.5px; opacity: .78; font-variant-numeric: tabular-nums; }
-.skipad { display: flex; justify-content: space-between; align-items: center; margin: 10px 22px 0; }
-.skipad .pill { background: #fff; color: #3E5168; font-size: 11px; padding: 6px 12px; }
-.skipad span { font-size: 10.5px; }
-.controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 12px; font-size: 12px; }
-.controls .play { width: 50px; height: 50px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: #3E5168; font-size: 18px; }
-.opts { display: grid; grid-template-columns: repeat(4, 1fr); margin: 14px 22px 0; background: rgba(255,255,255,.14); border-radius: 12px; text-align: center; font-size: 10.5px; font-weight: 600; }
-.opts span { padding: 8px 0; }
-.opts .on { background: rgba(255,255,255,.22); border-radius: 10px; }
+/* Player screen */
+.pl-head { display: flex; gap: 10px; align-items: center; margin: 4px 14px 10px; }
+.pl-head .cover { width: 64px; height: 64px; border-radius: 8px; background: linear-gradient(160deg, #5B7A9E, #2E3E52); flex: none; display: grid; place-items: center; color: #F4F3EF; font: 700 14px var(--font-mono); }
+.pl-head .t { min-width: 0; }
+.pl-head .title { font-weight: 700; font-size: 13px; line-height: 1.2; }
+.pl-head .ch { font: 600 9px var(--font-mono); color: var(--s-muted); margin-top: 4px; text-transform: uppercase; }
+.counter { font: 700 30px var(--font-mono); letter-spacing: 0.02em; line-height: 1; }
+.counter small { font-size: 11px; color: #9DA690; font-weight: 500; }
+.row-keys { display: flex; gap: 6px; margin: 0 10px 8px; }
+.row-keys > * { flex: 1; justify-content: center; min-height: 32px; }
 
 /* Transcript screen */
-.tx { padding: 4px 16px; display: grid; gap: 9px; font-family: var(--font-display); font-size: 13px; overflow: hidden; }
-.tx .stamp { font-family: var(--font-body); font-size: 9.5px; font-weight: 600; color: var(--muted); }
-.tx .past { color: var(--muted); }
-.tx .now { font-size: 15.5px; }
-.who-a { font-weight: 600; }
-.who-b { font-weight: 600; color: var(--accent-text); }
-.tx .music { font-family: var(--font-body); font-size: 10.5px; color: var(--muted); }
-.tx .adband { border: 1.5px dashed var(--ad); border-radius: 8px; padding: 6px 8px; font-family: var(--font-body); font-size: 10.5px; color: var(--muted); display: flex; justify-content: space-between; }
-.tx .adband b { color: var(--accent-text); font-weight: 600; }
+.tx { padding: 4px 14px; display: grid; gap: 8px; font-size: 12.5px; overflow: hidden; }
+.tx .stamp { font: 700 9px var(--font-mono); color: var(--s-muted); }
+.tx .who { display: block; font: 700 8.5px var(--font-mono); color: var(--s-muted); margin-bottom: 1px; }
+.tx .who.b { color: #B03A0A; }
+.tx .past { color: var(--s-muted); }
+.tx .now { font-size: 14.5px; font-weight: 600; background: #FCD9C1; margin: 0 -14px; padding: 4px 14px; }
+.tx .music { font: 600 9px var(--font-mono); color: var(--s-muted); text-transform: uppercase; }
+.tx .adband { border: 1.5px dashed #FFB000; border-radius: 8px; padding: 6px 8px; font: 600 9px var(--font-mono); color: var(--s-muted); display: flex; justify-content: space-between; text-transform: uppercase; }
+.tx .adband b { color: #B03A0A; }
+
+/* Settings rows in the phone */
+.setting { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--s-hair); font-size: 11.5px; }
+.sw { display: flex; gap: 4px; }
 
 /* Sections */
-section { padding-block: 56px; border-top: 1px solid var(--hairline); }
+section { padding-block: 56px; border-top: 2px solid var(--hairline); }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
 .split > div { min-width: 0; display: grid; gap: 16px; }
 .split.flip > :first-child { order: 2; }
 ul.ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; max-width: 60ch; }
 ul.ticks li { padding-left: 22px; position: relative; }
-ul.ticks li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+ul.ticks li::before { content: ""; position: absolute; left: 1px; top: 0.6em; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 
 /* Up Next demo */
 .demo { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; align-items: start; }
 .demo > div { min-width: 0; display: grid; gap: 18px; }
-.rank { display: grid; gap: 6px; font-size: 0.95rem; }
+.rank { display: grid; gap: 8px; font-size: 0.95rem; background: var(--surface); border-radius: 14px; padding: 14px; box-shadow: 0 3px 0 var(--key-edge); }
 .rank div { display: flex; gap: 10px; align-items: center; }
-.rank .n { font-family: var(--font-display); color: var(--accent-text); width: 1.2em; }
-.tag { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--muted); }
-.arrivals { display: flex; flex-wrap: wrap; gap: 8px; }
-.arrivals button { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--hairline); background: var(--bg); color: var(--ink); font: 500 0.92rem var(--font-body); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-.arrivals button:hover { border-color: var(--muted); }
-.arrivals .dot { width: 12px; height: 12px; border-radius: 3px; }
+.rank .n { font: 700 1rem var(--font-mono); color: var(--accent-text); width: 1.6em; }
+.rank .tagbig { margin-left: auto; font: 700 0.72rem var(--font-mono); padding: 1px 6px; border: 1.5px solid var(--ink); border-radius: 5px; }
+.arrivals { display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 3px; }
+.arrivals .key { min-height: 44px; padding: 0 14px; font-size: 0.8rem; }
+.arrivals .dot { width: 10px; height: 10px; border-radius: 3px; }
 .explain { min-height: 3.2em; color: var(--muted); }
-.explain strong { color: var(--ink); font-weight: 600; }
-#queue .row { transition: background-color 1.2s ease; }
-#queue .row.fresh { background: var(--highlight); }
+.explain strong { color: var(--ink); }
+#queue .track { transition: background-color 1.2s ease; }
+#queue .track.fresh { background: #FCD9C1; }
 @keyframes slidein { from { transform: translateY(-6px); opacity: .3; } to { transform: none; opacity: 1; } }
-#queue .row.fresh { animation: slidein .35s ease-out; }
+#queue .track.fresh { animation: slidein .35s ease-out; }
 
 /* Feature index */
-.index { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 36px; }
-.index > div { min-width: 0; display: grid; gap: 6px; align-content: start; padding-top: 14px; border-top: 2px solid var(--ink); }
-.index h3 { font-size: 1.25rem; }
-.index p { color: var(--muted); font-size: 0.95rem; }
+.index { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.index > div { min-width: 0; display: grid; gap: 6px; align-content: start; padding: 16px; background: var(--surface); border-radius: 14px; box-shadow: 0 3px 0 var(--key-edge); }
+.index h3 { font-size: 0.95rem; letter-spacing: 0.02em; display: flex; gap: 8px; align-items: center; }
+.index p { color: var(--muted); font-size: 0.93rem; }
 
 /* Clip card */
-.clip { margin: 18px 16px; aspect-ratio: 1; border-radius: 14px; background: #4F6B5A; color: #fff; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
-.clip q { font-family: var(--font-display); font-size: 17px; line-height: 1.3; quotes: "“" "”"; }
-.clip small { opacity: .8; font-size: 10px; }
-.wave { display: flex; gap: 2px; align-items: center; height: 34px; margin: 0 16px; }
-.wave i { flex: 1; border-radius: 2px; background: var(--hairline); }
-.wave i.sel { background: var(--accent); }
-.toggles { margin: 12px 16px; display: grid; gap: 8px; font-size: 11px; }
-.toggles div { display: flex; justify-content: space-between; align-items: center; }
-.sw { width: 30px; height: 18px; border-radius: 9px; background: var(--hairline); position: relative; }
-.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
-.sw.on { background: var(--accent); }
-.sw.on::after { left: 14px; }
+.clip { margin: 10px 14px; aspect-ratio: 1; border-radius: 12px; background: #2F6B5E; color: #fff; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; }
+.clip q { font-size: 16px; font-weight: 600; line-height: 1.3; quotes: "“" "”"; }
+.clip small { opacity: .85; font: 600 9px var(--font-mono); text-transform: uppercase; }
+.wave { display: flex; gap: 2px; align-items: center; height: 30px; margin: 0 14px 6px; }
+.wave i { flex: 1; border-radius: 1px; background: var(--s-edge); }
+.wave i.sel { background: #F05A1A; }
 
 /* Privacy band and download */
-.quiet { background: var(--surface); border-radius: 28px; padding: 40px max(24px, 4vw); display: grid; gap: 14px; }
+.quiet { background: var(--display); color: var(--display-text); border-radius: 22px; padding: 40px max(24px, 4vw); display: grid; gap: 14px; }
+.quiet .eyebrow { color: var(--display-dim); }
+.quiet p { color: var(--display-text); opacity: 0.9; }
 .download { text-align: center; display: grid; gap: 18px; justify-items: center; }
-.download img { width: 88px; height: 88px; }
+.download img { width: 88px; height: 88px; border-radius: 20px; box-shadow: 0 4px 0 var(--key-edge); }
 .download p { margin: 0 auto; }
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; text-align: left; margin-top: 8px; max-width: 820px; }
-.steps > div { min-width: 0; background: var(--surface); border-radius: 18px; padding: 18px; display: grid; gap: 4px; }
-.steps b { font-family: var(--font-display); font-weight: 500; font-size: 1.15rem; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin-top: 8px; max-width: 820px; }
+.steps > div { min-width: 0; background: var(--surface); border-radius: 14px; padding: 16px; display: grid; gap: 4px; box-shadow: 0 3px 0 var(--key-edge); }
+.steps b { font: 700 0.9rem var(--font-mono); text-transform: uppercase; }
 .steps span { color: var(--muted); font-size: 0.93rem; }
-footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--hairline); }
+footer { padding-block: 36px 48px; color: var(--muted); font: 500 0.75rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 2px solid var(--hairline); }
 
 @media (max-width: 860px) {
   .hero, .split, .demo { grid-template-columns: 1fr; gap: 32px; }
@@ -193,7 +214,8 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
   section { padding-block: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #queue .row, #queue .row.fresh { animation: none; transition: none; }
+  #queue .track, #queue .track.fresh { animation: none; transition: none; }
+  .key { transition: none; }
 }
 </style>
 
@@ -212,28 +234,37 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
   <main>
     <div class="hero">
       <div>
-        <span class="eyebrow">Podcasts for iPhone</span>
+        <span class="eyebrow"><span class="led"></span>Podcasts for iPhone</span>
         <h1>Every show in order. Ads skipped. Nothing to sign up for.</h1>
-        <p class="lede">Podspot is a calm podcast player that queues new episodes exactly where you want them, gives you a Skip ad button the moment an ad starts, and turns episodes into searchable transcripts on your iPhone.</p>
+        <p class="lede">Podspot is a podcast player built like a tape deck: chunky keys, a clear display, and underneath, a queue that puts new episodes exactly where you want them, a Skip ad key the moment an ad starts, and searchable transcripts made on your iPhone.</p>
         <div class="actions">
-          <a class="btn btn-primary download-link" href="#get">Get Podspot</a>
-          <a class="btn btn-quiet" href="#up-next">See how Up Next works</a>
+          <a class="key accent download-link" href="#get">Get Podspot</a>
+          <a class="key" href="#up-next">How Up Next works</a>
         </div>
-        <p class="note">Free. Built for iOS 27. Coming to TestFlight.</p>
+        <p class="note">Free · Built for iOS 27 · Coming to TestFlight</p>
       </div>
 
-      <div aria-label="Podspot's player, coloured from the episode artwork, with a Skip ad button">
-        <div class="phone"><div class="screen np">
+      <div aria-label="Podspot's tape deck player, playing an episode with a Skip ad key lit">
+        <div class="phone"><div class="screen">
           <div class="statusbar"><span>9:41</span><span>●●●</span></div>
-          <div class="artwork" aria-hidden="true">How radio<br>learned to<br>listen</div>
-          <div class="ttl">How radio learned to listen</div>
-          <div class="showname">The Long Signal</div>
-          <div class="chapter">3/8 · The first broadcast ›</div>
-          <div class="scrub"><i class="done"></i><i class="ad" style="left:40%;width:7%"></i><i class="ad" style="left:72%;width:5%"></i></div>
-          <div class="times"><span>23:12</span><span>-33:04</span></div>
-          <div class="skipad"><span class="pill">⏭ Skip ad · 0:58</span><span>Not an ad</span></div>
-          <div class="controls"><span>↺ 10</span><span class="play">❚❚</span><span>30 ↻</span></div>
-          <div class="opts"><span>1.4×</span><span class="on">Trim</span><span>Boost</span><span>Sleep</span></div>
+          <div class="pl-head">
+            <div class="cover" aria-hidden="true">LS</div>
+            <div class="t"><div class="title">How radio learned to listen</div><div class="sub" style="margin:2px 0 0">The Long Signal</div><div class="ch">CH 3/8 · The first broadcast ▸</div></div>
+          </div>
+          <div class="disp">
+            <div class="dim">▶ PLAYING · 1.4× · TRIM</div>
+            <div class="counter">23:12 <small>/ 56:16</small></div>
+            <div class="seg" id="hero-seg"></div>
+            <div class="dim" style="display:flex;justify-content:space-between"><span>AD 0:58 LEFT</span><span>ON: IPHONE</span></div>
+          </div>
+          <div class="row-keys"><span class="mkey accent">Skip ad ▸▸</span><span class="mkey">Not an ad</span></div>
+          <div class="row-keys"><span class="mkey">↺ 10</span><span class="mkey dark">❚❚</span><span class="mkey">30 ↻</span></div>
+          <div class="row-keys"><span class="mkey"><span class="mled on"></span>1.4×</span><span class="mkey"><span class="mled on"></span>Trim</span><span class="mkey"><span class="mled"></span>Boost</span><span class="mkey"><span class="mled"></span>Sleep</span></div>
+          <div class="row-keys"><span class="mkey">Transcript</span><span class="mkey">Chapters</span><span class="mkey">AirPlay</span></div>
+          <div class="sub" style="margin-top:6px">Up next</div>
+          <div class="track"><span class="n">01</span><span class="t"><div class="title">Harbour lights</div><div class="meta"><span class="tag">TOP2</span><span>Tidewater Weekly</span></div></span><span class="right"><span>52:30</span><span class="lights"><span class="mled ink"></span><span class="mled on"></span></span></span></div>
+          <div class="track"><span class="n">02</span><span class="t"><div class="title">The rook census</div><div class="meta"><span class="tag">BTM</span><span>Field Notes FM</span></div></span><span class="right"><span>39:44</span><span class="lights"><span class="mled ink"></span><span class="mled"></span></span></span></div>
+          <div class="tabbar"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
         </div></div>
       </div>
     </div>
@@ -241,30 +272,34 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
     <section id="up-next" aria-labelledby="h-upnext">
       <div class="demo">
         <div>
-          <span class="eyebrow">Up Next</span>
+          <span class="eyebrow"><span class="led"></span>Up Next</span>
           <h2 id="h-upnext">New episodes land where they belong.</h2>
           <p>Set each show to <strong>Top</strong>, <strong>Bottom</strong> or <strong>Off</strong>, and rank your Top shows. Podspot keeps every show oldest first, puts your favourite above the rest whenever it releases, and never drops an episode in front of an older one from the same show.</p>
           <div class="rank" aria-label="Example settings">
-            <div><span class="n">1</span><span class="art" style="background:var(--art-1);width:26px;height:26px;font-size:11px">LS</span>The Long Signal <span class="tag">Top</span></div>
-            <div><span class="n">2</span><span class="art" style="background:var(--art-2);width:26px;height:26px;font-size:11px">TW</span>Tidewater Weekly <span class="tag">Top</span></div>
-            <div><span class="n"></span><span class="art" style="background:var(--art-4);width:26px;height:26px;font-size:11px">FN</span>Field Notes FM <span class="tag">Bottom</span></div>
+            <div><span class="n">01</span><span class="art" style="background:var(--art-1);width:26px;height:26px;font-size:10px">LS</span>The Long Signal <span class="tagbig">TOP</span></div>
+            <div><span class="n">02</span><span class="art" style="background:var(--art-2);width:26px;height:26px;font-size:10px">TW</span>Tidewater Weekly <span class="tagbig">TOP</span></div>
+            <div><span class="n">––</span><span class="art" style="background:var(--art-4);width:26px;height:26px;font-size:10px">FN</span>Field Notes FM <span class="tagbig">BTM</span></div>
           </div>
           <p><strong>Try it.</strong> Release a new episode and watch where it goes.</p>
           <div class="arrivals">
-            <button type="button" id="new-ls" data-show="LS"><span class="dot" style="background:var(--art-1)"></span>New Long Signal</button>
-            <button type="button" id="new-tw" data-show="TW"><span class="dot" style="background:var(--art-2)"></span>New Tidewater Weekly</button>
-            <button type="button" id="new-fn" data-show="FN"><span class="dot" style="background:var(--art-4)"></span>New Field Notes FM</button>
-            <button type="button" id="reset-queue">Start again</button>
+            <button type="button" class="key" data-show="LS"><span class="dot" style="background:var(--art-1)"></span>New Long Signal</button>
+            <button type="button" class="key" data-show="TW"><span class="dot" style="background:var(--art-2)"></span>New Tidewater</button>
+            <button type="button" class="key" data-show="FN"><span class="dot" style="background:var(--art-4)"></span>New Field Notes</button>
+            <button type="button" class="key dark" id="reset-queue">Start again</button>
           </div>
           <p class="explain" id="explain" aria-live="polite">Up Next has two Tidewater Weekly episodes, a Field Notes episode and one you added yourself.</p>
         </div>
         <div>
           <div class="phone"><div class="screen">
             <div class="statusbar"><span>9:41</span><span>●●●</span></div>
-            <h4>Up Next</h4>
-            <div class="sub">Checked just now · <span id="count">4 episodes</span></div>
+            <h4>UP NEXT</h4>
+            <div class="disp">
+              <div class="dim">NOW ▸ SMALL MACHINES</div>
+              <div class="big">Inside the tiny chips</div>
+              <div class="seg" id="np-seg"></div>
+            </div>
+            <div class="sub"><span id="count">4 episodes</span> · checked just now</div>
             <div id="queue"></div>
-            <div class="mini"><span class="art" style="background:var(--art-3);width:28px;height:28px;font-size:10px">SM</span><span class="grow"><b>Inside the tiny chips</b><br><span style="color:var(--muted)">Small Machines</span></span><span>↺</span><span>❚❚</span><span>↻</span></div>
             <div class="tabbar"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
           </div></div>
         </div>
@@ -274,11 +309,11 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
     <section id="ads" aria-labelledby="h-ads">
       <div class="split">
         <div>
-          <span class="eyebrow">Skip ads</span>
-          <h2 id="h-ads">A Skip ad button, right when you need it.</h2>
-          <p>While you listen, Podspot quietly checks the next few minutes of the episode for sponsor reads, promo codes and "after the break". When an ad starts, a <strong>Skip ad</strong> button appears in the player and the mini player and jumps you to where the show picks up again.</p>
+          <span class="eyebrow"><span class="led"></span>Skip ads</span>
+          <h2 id="h-ads">A Skip ad key, right when you need it.</h2>
+          <p>While you listen, Podspot quietly checks the next few minutes of the episode for sponsor reads, promo codes and "after the break". When an ad starts, an orange <strong>Skip ad</strong> key lights up in the player and the mini player and jumps you to where the show picks up again.</p>
           <ul class="ticks">
-            <li>Breaks are marked in gold on the scrubber.</li>
+            <li>Breaks show in amber on the progress bar.</li>
             <li>Wrong call? Tap <strong>Not an ad</strong> and it's remembered.</li>
             <li>Prefer hands-free? Turn on skipping automatically.</li>
             <li>Ads are found in your own download, so inserted ads that change from listener to listener are caught too.</li>
@@ -287,15 +322,17 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
         <div>
           <div class="phone"><div class="screen">
             <div class="statusbar"><span>9:41</span><span>●●●</span></div>
-            <h4>Shows</h4>
+            <h4>SHOWS</h4>
             <div class="sub">Ads</div>
-            <div class="toggles">
-              <div><span>Find ads while listening</span><span class="sw on" aria-label="on"></span></div>
-              <div><span>Skip ads automatically</span><span class="sw" aria-label="off"></span></div>
+            <div class="setting"><span>Find ads while listening</span><span class="sw"><span class="mkey">Off</span><span class="mkey dark"><span class="mled on"></span>On</span></span></div>
+            <div class="setting"><span>Skip ads automatically</span><span class="sw"><span class="mkey dark"><span class="mled on"></span>Off</span><span class="mkey">On</span></span></div>
+            <div class="sub" style="margin-top:8px">Checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad key appears.</div>
+            <div class="disp" style="margin-top:auto;grid-template-columns:auto 1fr auto;align-items:center">
+              <span class="art" style="background:var(--art-1);width:30px;height:30px;font-size:10px">LS</span>
+              <span style="min-width:0"><span class="big" style="display:block;font-size:11px">How radio learned…</span><span class="dim">23:12 / 56:16</span></span>
+              <span class="mkey accent">Skip ad</span>
             </div>
-            <div class="sub" style="margin-top:6px">Checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears.</div>
-            <div class="mini" style="margin-top:auto"><span class="art" style="background:var(--art-1);width:28px;height:28px;font-size:10px">LS</span><span class="grow"><b>How radio learned to listen</b><br><span style="color:var(--muted)">The Long Signal</span></span><span class="pill">Skip ad</span><span>❚❚</span></div>
-            <div class="tabbar"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
+            <div class="tabbar" style="margin-top:0"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
           </div></div>
         </div>
       </div>
@@ -304,7 +341,7 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
     <section id="transcripts" aria-labelledby="h-tx">
       <div class="split flip">
         <div>
-          <span class="eyebrow">Transcripts</span>
+          <span class="eyebrow"><span class="led"></span>Transcripts</span>
           <h2 id="h-tx">Read along, search everything, quote anything.</h2>
           <p>Podspot uses the show's own transcript when there is one. For everything else, tap <strong>Transcribe now</strong> and your iPhone writes one, telling speakers apart and marking music and ad breaks. Nothing is sent anywhere.</p>
           <ul class="ticks">
@@ -318,19 +355,19 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
         <div>
           <div class="phone"><div class="screen">
             <div class="statusbar"><span>9:41</span><span>●●●</span></div>
-            <h4 style="font-size:20px">Transcript</h4>
-            <div class="sub">2 speakers · transcribed on this iPhone</div>
+            <h4>TRANSCRIPT</h4>
+            <div class="sub">2 speakers · made on this iPhone</div>
             <div class="tx">
-              <span class="stamp">1m 20s</span>
-              <span class="past"><span class="who-a">Speaker 1 —</span> So the first radios couldn't receive anything at all.</span>
-              <span class="past"><span class="who-b">Speaker 2 —</span> They were transmitters, really. Shouting into the dark.</span>
+              <span class="stamp">01:20</span>
+              <span class="past"><span class="who">S1</span>So the first radios couldn't receive anything at all.</span>
+              <span class="past"><span class="who b">S2</span>They were transmitters, really. Shouting into the dark.</span>
               <span class="music">♪ Music · 14s</span>
-              <span class="stamp">1m 42s</span>
-              <span class="now"><span class="who-a">Speaker 1 —</span> And then somebody thought: what if we listened back?</span>
-              <span><span class="who-b">Speaker 2 —</span> Which changes everything.</span>
-              <span class="adband"><span>Ad break · 1m 40s · skipped</span><b>Show</b></span>
-              <span class="stamp">3m 30s</span>
-              <span><span class="who-a">Speaker 1 —</span> Back to the harbour, then.</span>
+              <span class="stamp">01:42</span>
+              <span class="now"><span class="who">S1</span>And then somebody thought: what if we listened back?</span>
+              <span><span class="who b">S2</span>Which changes everything.</span>
+              <span class="adband"><span>Ad 02:10–03:30 · skipped</span><b>Play ad</b></span>
+              <span class="stamp">03:30</span>
+              <span><span class="who">S1</span>Back to the harbour, then.</span>
             </div>
           </div></div>
         </div>
@@ -340,33 +377,32 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
     <section aria-labelledby="h-player">
       <div class="split">
         <div>
-          <span class="eyebrow">The player</span>
-          <h2 id="h-player">Coloured by the artwork. Tuned for voices.</h2>
-          <p>The full player takes its colour from each episode's artwork, with text kept easy to read. Underneath are the controls podcast listeners actually use.</p>
+          <span class="eyebrow"><span class="led"></span>The player</span>
+          <h2 id="h-player">A tape deck in your pocket.</h2>
+          <p>A dark display with a big counter and a segmented progress bar you drag to scrub. Keys that press down, with lights that show what's switched on. Underneath are the controls podcast listeners actually use.</p>
           <ul class="ticks">
             <li>Speed from 1.0× to 2.0×, with voices kept natural.</li>
             <li><strong>Trim silences</strong> speeds through pauses; <strong>Boost voices</strong> evens out quiet and loud speakers.</li>
-            <li>Skip back and forward set separately (5, 10, 15, 30 or 60 seconds). Touch and hold a skip button to change it on the spot.</li>
+            <li>Skip back and forward set separately (5, 10, 15, 30 or 60 seconds). Touch and hold a skip key to change it on the spot.</li>
             <li>Sleep timer, from 5 minutes to the end of the episode.</li>
             <li>Chapters from the show, or made automatically from the transcript.</li>
-            <li>Play on AirPods, speakers, your TV or the car, with "Playing on …" so you know where the sound is going.</li>
+            <li>Play on AirPods, speakers, your TV or the car, with "On: …" so you know where the sound is going.</li>
+            <li>Share a 5 to 30 second clip from any line as a quote card, with audio or as a short video.</li>
           </ul>
         </div>
         <div>
           <div class="phone"><div class="screen">
             <div class="statusbar"><span>9:41</span><span>●●●</span></div>
-            <h4 style="font-size:20px">Share a clip</h4>
+            <h4>SHARE A CLIP</h4>
             <div class="clip">
               <q>And then somebody thought: what if we listened back?</q>
-              <small>The Long Signal · Ep 142 · 1:42</small>
+              <small>The Long Signal · Ep 142 · 01:42</small>
             </div>
             <div class="sub" style="display:flex;justify-content:space-between"><span>Length</span><span>15 sec</span></div>
             <div class="wave" aria-hidden="true" id="wave"></div>
-            <div class="toggles">
-              <div><span>Include audio</span><span class="sw on"></span></div>
-              <div><span>Link to the moment</span><span class="sw on"></span></div>
-              <div><span>Video card</span><span class="sw"></span></div>
-            </div>
+            <div class="row-keys"><span class="mkey">−5</span><span class="mkey">+5</span></div>
+            <div class="setting"><span>Include audio</span><span class="mkey dark"><span class="mled on"></span>On</span></div>
+            <div class="setting"><span>Video card</span><span class="mkey"><span class="mled"></span>Off</span></div>
           </div></div>
         </div>
       </div>
@@ -375,26 +411,26 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
     <section id="everything" aria-labelledby="h-all">
       <div style="display:grid;gap:28px">
         <div style="display:grid;gap:10px">
-          <span class="eyebrow">Everything else</span>
+          <span class="eyebrow"><span class="led"></span>Everything else</span>
           <h2 id="h-all">The rest of what's inside.</h2>
         </div>
         <div class="index">
-          <div><h3>Downloads that tidy up</h3><p>New episodes from your auto-add shows download in the background, on Wi-Fi only if you like. Finished episodes are deleted straight away, or kept for 24 hours.</p></div>
-          <div><h3>Keep playing</h3><p>When Up Next runs out, Podspot carries on with this week's new episodes from your shows, in the same order the queue would use.</p></div>
-          <div><h3>Alerts that say where</h3><p>Turn on the bell for a show and the alert tells you where the new episode went: "Added to the top of Up Next".</p></div>
-          <div><h3>Discover</h3><p>Search Apple's podcast directory, browse by category, see the UK top charts and get "Because you listen to…" suggestions.</p></div>
-          <div><h3>Clips and bookmarks</h3><p>Share a 5 to 30 second clip as a quote card, with the audio, a link to the moment, or as a short video. Every clip is saved to My clips.</p></div>
-          <div><h3>Tidy back catalogues</h3><p>Following a show with 500 episodes? Select all and mark them played, and only new ones will show as unplayed.</p></div>
-          <div><h3>Library</h3><p>New episodes as big cards in each show's colours, with a play button showing the length, and all your shows in a grid.</p></div>
-          <div><h3>Search</h3><p>Find a show, an episode or a line someone said, then play from that exact moment or add it to Up Next.</p></div>
-          <div><h3>Bring your shows</h3><p>Search by name, or paste a link from Apple Podcasts or a show's RSS feed.</p></div>
+          <div><h3><span class="led"></span>Downloads that tidy up</h3><p>New episodes from your auto-add shows download in the background, on Wi-Fi only if you like. Finished episodes are deleted straight away, or kept for 24 hours.</p></div>
+          <div><h3><span class="led"></span>Keep playing</h3><p>When Up Next runs out, Podspot carries on with this week's new episodes from your shows, in the same order the queue would use.</p></div>
+          <div><h3><span class="led"></span>Alerts that say where</h3><p>Turn on the bell for a show and the alert tells you where the new episode went: "Added to the top of Up Next".</p></div>
+          <div><h3><span class="led"></span>Discover</h3><p>Search Apple's podcast directory, browse by category, see the UK top charts and get "Because you listen to…" suggestions.</p></div>
+          <div><h3><span class="led"></span>Clips and bookmarks</h3><p>Share a clip as a quote card, with the audio, a link to the moment, or as a short video. Every clip is saved to My clips.</p></div>
+          <div><h3><span class="led"></span>Tidy back catalogues</h3><p>Following a show with 500 episodes? Select all and mark them played, and only new ones will show as unplayed.</p></div>
+          <div><h3><span class="led"></span>Library</h3><p>New episodes as cassette-style cards with a label strip in each show's colour, and all your shows in a grid.</p></div>
+          <div><h3><span class="led"></span>Search</h3><p>Find a show, an episode or a line someone said, then play from that exact moment or add it to Up Next.</p></div>
+          <div><h3><span class="led"></span>Bring your shows</h3><p>Search by name, or paste a link from Apple Podcasts or a show's RSS feed.</p></div>
         </div>
       </div>
     </section>
 
     <section aria-labelledby="h-private">
       <div class="quiet">
-        <span class="eyebrow">Private by design</span>
+        <span class="eyebrow"><span class="led"></span>Private by design</span>
         <h2 id="h-private">No account. No Podspot server. No tracking.</h2>
         <p>Transcripts, ad finding, speaker labels and chapter titles are all made on your iPhone. Podspot talks only to the shows you follow and Apple's free podcast directory. Speaker labels download a small model once, the first time you use them.</p>
       </div>
@@ -405,11 +441,11 @@ footer { padding-block: 36px 48px; color: var(--muted); font-size: 0.88rem; disp
         <img src="data:image/png;base64,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" alt="Podspot icon">
         <h2 id="h-get">Get Podspot</h2>
         <p class="lede" id="get-status">Podspot is coming to TestFlight, Apple's app for trying apps before they reach the App Store. The download link will appear here.</p>
-        <a class="btn btn-primary download-link" id="testflight" href="#get" aria-disabled="true">Coming soon to TestFlight</a>
+        <a class="key accent download-link" id="testflight" href="#get" aria-disabled="true">Coming soon to TestFlight</a>
         <div class="steps">
-          <div><b>Install TestFlight</b><span>It's free from the App Store and made by Apple.</span></div>
-          <div><b>Open the invite</b><span>Tap the Podspot link on your iPhone and choose Accept.</span></div>
-          <div><b>Install Podspot</b><span>Needs an iPhone on iOS 27. Updates arrive in TestFlight.</span></div>
+          <div><b>01 Install TestFlight</b><span>It's free from the App Store and made by Apple.</span></div>
+          <div><b>02 Open the invite</b><span>Tap the Podspot link on your iPhone and choose Accept.</span></div>
+          <div><b>03 Install Podspot</b><span>Needs an iPhone on iOS 27. Updates arrive in TestFlight.</span></div>
         </div>
       </div>
     </section>
@@ -435,6 +471,20 @@ const TESTFLIGHT_URL = "";
   document.getElementById("get-status").textContent = "Podspot is on TestFlight, Apple's app for trying apps before they reach the App Store.";
 })();
 
+// Segmented progress bars, like the app's: played segments lit, ads in amber.
+function segments(id, count, played, ads) {
+  const bar = document.getElementById(id);
+  bar.replaceChildren(...Array.from({ length: count }, (_, i) => {
+    const seg = document.createElement("i");
+    const mid = (i + 0.5) / count;
+    if (ads.some(([a, b]) => mid >= a && mid <= b)) seg.className = "ad";
+    else if (mid <= played) seg.className = "on";
+    return seg;
+  }));
+}
+segments("hero-seg", 30, 0.41, [[0.40, 0.47], [0.72, 0.77]]);
+segments("np-seg", 30, 0.62, [[0.2, 0.25]]);
+
 // The Up Next demo uses the same rules as the app:
 // each show stays oldest first; a new Top episode goes straight after its show's
 // queued episodes, otherwise above lower-ranked Top shows; Bottom goes to the end.
@@ -445,11 +495,12 @@ const SHOWS = {
   SM: { name: "Small Machines", color: "var(--art-3)", mode: "off" }
 };
 const START = [
-  { show: "TW", title: "Low tide, high stakes", day: 1, manual: false },
-  { show: "TW", title: "Harbour lights", day: 4, manual: false },
-  { show: "SM", title: "Inside the tiny chips", day: 3, manual: true },
-  { show: "FN", title: "The quiet economics of birdsong", day: 2, manual: false }
+  { show: "TW", title: "Low tide, high stakes", day: 1, manual: false, length: "48:10", downloaded: true },
+  { show: "TW", title: "Harbour lights", day: 4, manual: false, length: "52:30", downloaded: true },
+  { show: "SM", title: "Chips, revisited", day: 3, manual: true, length: "31:05", downloaded: false },
+  { show: "FN", title: "The quiet economics of birdsong", day: 2, manual: false, length: "39:44", downloaded: false }
 ];
+const LENGTHS = ["44:12", "57:08", "36:40", "1:02:15", "41:30"];
 let queue, released, day;
 
 function reset() {
@@ -480,15 +531,21 @@ function insert(ep) {
     : `Added above lower-ranked shows and below The Long Signal, your favourite.`;
 }
 
+function tagFor(ep) {
+  if (ep.manual) return "YOU";
+  const show = SHOWS[ep.show];
+  return show.mode === "top" ? `TOP${show.rank + 1}` : "BTM";
+}
+
 function render(freshEp) {
   const list = document.getElementById("queue");
-  list.replaceChildren(...queue.map(ep => {
+  list.replaceChildren(...queue.map((ep, index) => {
     const show = SHOWS[ep.show];
     const row = document.createElement("div");
-    row.className = "row" + (ep === freshEp ? " fresh" : "");
-    const source = ep.manual ? "Added by you" : `Auto · ${show.mode === "top" ? "Top" : "Bottom"}`;
-    row.innerHTML = `<span class="art" style="background:${show.color}">${ep.show}</span>
-      <span class="t"><div class="show">${show.name}</div><div class="title"></div><div class="meta">${source}</div></span>`;
+    row.className = "track" + (ep === freshEp ? " fresh" : "");
+    row.innerHTML = `<span class="n">${String(index + 1).padStart(2, "0")}</span>
+      <span class="t"><div class="title"></div><div class="meta"><span class="tag">${tagFor(ep)}</span><span>${show.name}</span></div></span>
+      <span class="right"><span>${ep.length}</span><span class="lights"><span class="mled ${ep.downloaded ? "ink" : ""}"></span><span class="mled"></span></span></span>`;
     row.querySelector(".title").textContent = ep.title;
     return row;
   }));
@@ -502,7 +559,7 @@ for (const button of document.querySelectorAll(".arrivals [data-show]")) {
     const show = SHOWS[key];
     const title = show.titles[released[key] % show.titles.length];
     released[key] += 1;
-    const ep = { show: key, title, day: day++, manual: false };
+    const ep = { show: key, title, day: day++, manual: false, length: LENGTHS[day % LENGTHS.length], downloaded: true };
     const why = insert(ep);
     render(ep);
     document.getElementById("explain").innerHTML = `<strong>New: ${title}.</strong> ${why}`;
