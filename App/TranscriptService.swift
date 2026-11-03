@@ -36,6 +36,10 @@ enum TranscriptFiles {
         return try? JSONDecoder().decode(Transcript.self, from: data)
     }
 
+    static func exists(_ name: String) -> Bool {
+        FileManager.default.fileExists(atPath: directory.appendingPathComponent(name).path)
+    }
+
     static func delete(_ name: String) {
         try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
     }

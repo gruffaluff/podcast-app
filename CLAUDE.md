@@ -54,6 +54,10 @@ Function matters more than look to Paul.
   older episodes as played" as a one-tap option.
 - Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
   subscription list, so there is no OPML import from it).
+- **Import & export** (Shows screen): import an OPML file from another
+  podcast app (Pocket Casts, Overcast, Castro…); imported shows start on
+  Bottom, nothing downloads, already-followed shows are skipped. Export
+  all followed shows as an OPML file through the share sheet.
 - **Right after following a show, a settings sheet opens**: auto-add
   (Off/Top/Bottom), auto-download, notifications; the **last** item links to
   the separate "Top show priority" screen (ranking lives there, not in the
@@ -173,6 +177,17 @@ Function matters more than look to Paul.
 - Per-show notification bell. The alert says where the episode went, e.g.
   "New from Tidewater Weekly, added to the top of Up Next".
 - Option: download on Wi-Fi only.
+
+### iCloud sync and backup
+- Decided (Paul): shows and their settings, Up Next, played/progress, ad
+  breaks and corrections, auto chapters, bookmarks/clips and settings sync
+  to Paul's own iCloud (SwiftData + CloudKit private database; settings via
+  iCloud key-value storage), so a reinstall or new iPhone gets them back.
+  Downloads and transcript files stay on the phone (they're in the
+  iPhone's iCloud Backup); unplayed downloads come back by themselves.
+  Made for one iPhone at a time; duplicates from a sync are merged.
+- Everything is also in the iPhone's normal iCloud Backup (downloads
+  excluded on purpose).
 
 ### Discover
 - Search for new shows (people, topics) using Apple's free podcast directory.
@@ -308,6 +323,12 @@ Function matters more than look to Paul.
   and Follow keys), Search, show pages and settings screens (key switches
   for Off/Top/Bottom etc., mono headings). Every screen is now Tape Deck.
   Showcase website restyled to match (same link).
+- Done (iCloud sync + import/export): CloudKit-compatible models,
+  `App/CloudSync.swift` (settings sync, merge duplicates, fix download and
+  transcript records, reload Up Next), iCloud status on the Shows screen,
+  `Config/Podcasts.entitlements`; OPML import/export (`PodcastCore/Feed/
+  OPML.swift`, tested). iCloud only switches on in signed builds: needs the
+  Apple account, then the one-off CloudKit steps in `docs/SETUP.md`.
 - CI: GitHub's Apple-silicon Macs are sometimes unavailable ("job was not
   acquired by runner"). Manual runs can pick the machine: run the Build
   workflow with `runner=macos-15-intel` (worked 3 Nov 2026).
@@ -318,5 +339,12 @@ Function matters more than look to Paul.
 
 ## Open questions for Paul
 
-- None open. (Answered: name Podspot + icon; Apple Podcasts has no export,
+- **Name**: keep Podspot or change to **Poddeck** (fits Tape Deck)? Note
+  "PodSpot: Find My Headphones" already exists on the App Store, and App
+  Store Connect app names must be unique even for TestFlight-only apps.
+- **Icon**: the current icon (option C) is in the old terracotta colours.
+  Tape Deck options D (cassette), E (level meter) and G (option C in Tape
+  Deck colours) are in `design/icon/deck_options.png`
+  (`design/icon/make_deck_icon.py`).
+- Earlier ones all answered. (Answered: name Podspot + icon; Apple Podcasts has no export,
   links supported instead; speaker labels added now, can be removed.)

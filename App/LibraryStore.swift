@@ -39,6 +39,8 @@ final class LibraryStore {
     @ObservationIgnored weak var downloads: DownloadManager?
     /// Set by `TranscriptService` so new and downloaded episodes get transcripts.
     @ObservationIgnored weak var transcripts: TranscriptService?
+    /// Pending tidy-up after changes arrive from iCloud (see CloudSync.swift).
+    @ObservationIgnored var cloudTidyTask: Task<Void, Never>?
 
     init(context: ModelContext) {
         self.context = context
@@ -47,6 +49,7 @@ final class LibraryStore {
         self.keepPlayingNew = UserDefaults.standard.object(forKey: "keepPlayingNew") as? Bool ?? true
         self.keepPlayedDownloads = UserDefaults.standard.bool(forKey: "keepPlayedDownloads")
         loadQueue()
+        observeCloudChanges()
     }
 
     // MARK: Lookups
@@ -87,7 +90,7 @@ final class LibraryStore {
 
     /// Follows the show at `feedURL` (or returns it if already followed).
     @discardableResult
-    func follow(feedURL: URL) async throws -> Podcast {
+    func follow(feedURL: URL, downloadLatest: Bool = true) async throws -> Podcast {
         let key = feedURL.absoluteString
         if let existing = podcast(feedURL: key) { return existing }
         let feed = try await FeedClient.fetchFeed(feedURL)
@@ -107,7 +110,7 @@ final class LibraryStore {
         _ = apply(feed, to: show)
         // Only the newest episode downloads (following the Wi-Fi only setting).
         // Older ones stay unplayed; Paul can select them and mark them played.
-        if let latest = latestEpisode(of: show) { downloads?.download(latest, automatic: true) }
+        if downloadLatest, let latest = latestEpisode(of: show) { downloads?.download(latest, automatic: true) }
         save()
         return show
     }
@@ -116,10 +119,44 @@ final class LibraryStore {
     /// (Paul's pick) so there's something to play straight away.
     func followStarterShowIfNeeded() async {
         let key = "starterShowFollowed"
-        guard !UserDefaults.standard.bool(forKey: key), allPodcasts.isEmpty else { return }
+        guard !UserDefaults.standard.bool(forKey: key), !SettingsSync.starterShowFollowedInCloud, allPodcasts.isEmpty else { return }
         guard let feedURL = try? await FeedClient.lookup(appleID: "1465290044")?.feedURL,
               (try? await follow(feedURL: feedURL)) != nil else { return }
         UserDefaults.standard.set(true, forKey: key)
+    }
+
+    /// Follows every show in an OPML file from another app. Shows already
+    /// followed are skipped; nothing downloads (that could be dozens of
+    /// episodes at once), and nothing is added to Up Next until new
+    /// episodes arrive, by the usual rules (new shows start on Bottom).
+    func importShows(_ shows: [OPML.Show], progress: @MainActor (Int) -> Void) async -> ImportResult {
+        var result = ImportResult()
+        for (index, show) in shows.enumerated() {
+            progress(index)
+            if podcast(feedURL: show.feedURL.absoluteString) != nil {
+                result.alreadyFollowed += 1
+            } else if (try? await follow(feedURL: show.feedURL, downloadLatest: false)) != nil {
+                result.added += 1
+            } else {
+                result.failed.append(show.title)
+            }
+        }
+        progress(shows.count)
+        return result
+    }
+
+    struct ImportResult {
+        var added = 0
+        var alreadyFollowed = 0
+        var failed: [String] = []
+    }
+
+    /// Every followed show, for exporting to another app.
+    var showListOPML: String {
+        let shows = allPodcasts.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        return OPML.make(shows.compactMap { show in
+            URL(string: show.feedURL).map { OPML.Show(title: show.title, feedURL: $0) }
+        })
     }
 
     func latestEpisode(of show: Podcast) -> PodcastEpisode? {
@@ -398,19 +435,31 @@ final class LibraryStore {
     private func commit(_ newQueue: [QueueItem]) {
         queue = newQueue
         let existing = (try? context.fetch(FetchDescriptor<UpNextEntry>())) ?? []
-        for entry in existing { context.delete(entry) }
+        // Rows for episodes not on this iPhone yet (still arriving from
+        // iCloud) are kept, so a sync in progress never loses them.
+        let here = episodes(existing.map(\.episodeID))
+        for entry in existing where here[entry.episodeID] != nil { context.delete(entry) }
         for (index, item) in newQueue.enumerated() {
             context.insert(UpNextEntry(episodeID: item.episode.id, manual: item.source == .manual, order: index))
         }
         save()
     }
 
+    /// Re-reads Up Next after iCloud changed it (only if it differs).
+    func reloadQueueFromSaved() {
+        let before = queue.map(\.episode.id)
+        loadQueue()
+        if queue.map(\.episode.id) != before { transcripts?.prepareUpNext() }
+    }
+
     private func loadQueue() {
         let descriptor = FetchDescriptor<UpNextEntry>(sortBy: [SortDescriptor(\.order)])
         let entries = (try? context.fetch(descriptor)) ?? []
         let found = episodes(entries.map(\.episodeID))
+        var seen = Set<String>()
         queue = entries.compactMap { entry in
-            found[entry.episodeID].map { QueueItem(episode: $0.queueEpisode, source: entry.manual ? .manual : .auto) }
+            guard seen.insert(entry.episodeID).inserted else { return nil }
+            return found[entry.episodeID].map { QueueItem(episode: $0.queueEpisode, source: entry.manual ? .manual : .auto) }
         }
     }
 

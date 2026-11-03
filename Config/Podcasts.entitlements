@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- iCloud sync of shows, Up Next, progress and bookmarks (CloudKit). -->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.gruffaluff.podcasts</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
+	<!-- Which iCloud database TestFlight builds use. Development first, so
+	     the first build can create the record types; after deploying them
+	     to Production in the CloudKit Console, change this to Production
+	     (see docs/SETUP.md). -->
+	<key>com.apple.developer.icloud-container-environment</key>
+	<string>Development</string>
+	<!-- iCloud sync of settings (key-value storage). -->
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<!-- Silent pushes that tell the app iCloud has changes. TestFlight
+	     builds use the production environment. -->
+	<key>aps-environment</key>
+	<string>production</string>
+</dict>
+</plist>

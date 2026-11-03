@@ -13,6 +13,7 @@ struct PodcastsApp: App {
 
     init() {
         Self.styleSystemBars()
+        SettingsSync.shared.start()
         let container = Self.makeContainer()
         let store = LibraryStore(context: container.mainContext)
         self.container = container
@@ -49,13 +50,20 @@ struct PodcastsApp: App {
     }
 
     private static func makeContainer() -> ModelContainer {
-        let types: [any PersistentModel.Type] = [Podcast.self, PodcastEpisode.self, UpNextEntry.self, Bookmark.self]
-        if let container = try? ModelContainer(for: Schema(types), configurations: ModelConfiguration()) {
+        let schema = Schema([Podcast.self, PodcastEpisode.self, UpNextEntry.self, Bookmark.self])
+        // `.automatic` syncs with iCloud when the app has the iCloud
+        // entitlement (signed builds) and keeps everything on the phone
+        // otherwise (e.g. the unsigned cloud test build).
+        if let container = try? ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)) {
+            return container
+        }
+        // If iCloud can't be set up, keep using the library on the phone.
+        if let container = try? ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, cloudKitDatabase: .none)) {
             return container
         }
         // If the saved library can't be opened, still start (with nothing saved)
         // rather than crash on launch.
-        return try! ModelContainer(for: Schema(types), configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        return try! ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true))
     }
 }
 
@@ -92,6 +100,7 @@ struct RootView: View {
             }
             // Check feeds when the app opens, at most once an hour.
             guard phase == .active else { return }
+            store.tidyAfterSync()
             store.cleanUpPlayedDownloads()
             transcripts.prepareUpNext()
             Task {

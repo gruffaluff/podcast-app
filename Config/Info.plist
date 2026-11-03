@@ -8,12 +8,39 @@
 		<string>audio</string>
 		<string>processing</string>
 		<string>fetch</string>
+		<!-- Hear about changes from iCloud sync. -->
+		<string>remote-notification</string>
 	</array>
 	<!-- Overnight transcription while charging. -->
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.gruffaluff.podcasts.transcribe</string>
 		<string>com.gruffaluff.podcasts.refresh</string>
+	</array>
+	<!-- OPML show lists, for Import & export on the Shows screen. -->
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>org.opml.opml</string>
+			<key>UTTypeDescription</key>
+			<string>OPML show list</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.xml</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>opml</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>text/x-opml</string>
+				</array>
+			</dict>
+		</dict>
 	</array>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Transcripts are made on your iPhone from episodes you've downloaded. Nothing is sent anywhere.</string>

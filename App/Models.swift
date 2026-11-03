@@ -2,13 +2,18 @@ import Foundation
 import SwiftData
 import PodcastCore
 
+// iCloud sync rules (SwiftData + CloudKit): no unique attributes, every
+// property optional or with a default, every relationship optional.
+// CloudKit can't enforce uniqueness, so `LibraryStore.mergeDuplicates()`
+// tidies up after a sync.
+
 /// A show Paul follows.
 @Model
 final class Podcast {
-    @Attribute(.unique) var feedURL: String
-    var title: String
-    var author: String
-    var summary: String
+    var feedURL: String = ""
+    var title: String = ""
+    var author: String = ""
+    var summary: String = ""
     var artworkURL: URL?
     /// Off, Top or Bottom (see `AutoAddMode`).
     var autoAddRaw: String = AutoAddMode.off.rawValue
@@ -28,7 +33,9 @@ final class Podcast {
     var followedAt: Date = Date()
     var lastChecked: Date?
     @Relationship(deleteRule: .cascade, inverse: \PodcastEpisode.podcast)
-    var episodes: [PodcastEpisode] = []
+    var storedEpisodes: [PodcastEpisode]? = []
+
+    var episodes: [PodcastEpisode] { storedEpisodes ?? [] }
 
     init(feedURL: String, title: String, author: String, summary: String, artworkURL: URL?) {
         self.feedURL = feedURL
@@ -51,12 +58,12 @@ final class Podcast {
 @Model
 final class PodcastEpisode {
     /// "<feed URL>|<guid>", unique across all shows.
-    @Attribute(.unique) var episodeID: String
-    var guid: String
-    var title: String
-    var summary: String
-    var published: Date
-    var audioURL: URL
+    var episodeID: String = ""
+    var guid: String = ""
+    var title: String = ""
+    var summary: String = ""
+    var published: Date = Date.distantPast
+    var audioURL: URL = URL(fileURLWithPath: "/")
     var duration: TimeInterval?
     var artworkURL: URL?
     /// The episode's web page, from its feed (used for "link to the moment").
@@ -83,7 +90,8 @@ final class PodcastEpisode {
     var position: TimeInterval = 0
     var played: Bool = false
     var playedAt: Date?
-    /// File name in `DownloadFiles.directory` once downloaded.
+    /// File name in `DownloadFiles.directory` once downloaded. Synced, but
+    /// the file itself stays on this iPhone (see `reconcileLocalFiles`).
     var downloadFile: String?
     var podcast: Podcast?
 
@@ -151,9 +159,9 @@ enum TranscriptState: String {
 /// A moment Paul bookmarked from a transcript line.
 @Model
 final class Bookmark {
-    var episodeID: String
-    var time: TimeInterval
-    var text: String
+    var episodeID: String = ""
+    var time: TimeInterval = 0
+    var text: String = ""
     var created: Date = Date()
     /// Set when it was saved by sharing a clip of this length.
     var length: TimeInterval?
@@ -168,9 +176,9 @@ final class Bookmark {
 /// One row of Up Next, saved so the queue survives restarts.
 @Model
 final class UpNextEntry {
-    var episodeID: String
-    var manual: Bool
-    var order: Int
+    var episodeID: String = ""
+    var manual: Bool = false
+    var order: Int = 0
 
     init(episodeID: String, manual: Bool, order: Int) {
         self.episodeID = episodeID

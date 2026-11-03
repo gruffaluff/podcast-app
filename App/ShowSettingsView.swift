@@ -256,6 +256,25 @@ struct TopPriorityView: View {
                 Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away.")
             }
             .listRowBackground(Theme.background)
+
+            ImportExportSection()
+
+            Section {
+                HStack(spacing: 8) {
+                    LED(on: CloudSync.isSignedIn, color: Theme.accentFill)
+                    Text(CloudSync.isSignedIn ? "SYNCING WITH ICLOUD" : "ICLOUD OFF")
+                        .font(Theme.mono(12, .bold))
+                        .foregroundStyle(Theme.ink)
+                }
+                .accessibilityElement(children: .combine)
+            } header: {
+                DeckHeader(title: "iCloud")
+            } footer: {
+                Text(CloudSync.isSignedIn
+                     ? "Your shows, Up Next, progress, bookmarks and settings are saved to your iCloud, so they come back if you reinstall Podspot or get a new iPhone. Downloads and transcripts stay on this iPhone; downloads come back by themselves."
+                     : "Sign in to iCloud in the Settings app to keep your shows, Up Next and progress safe if you reinstall Podspot. Everything is still saved on this iPhone.")
+            }
+            .listRowBackground(Theme.background)
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
