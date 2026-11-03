@@ -54,7 +54,7 @@ struct LibraryView: View {
             }
             .background(Theme.background)
             .refreshable { await store.refreshAll() }
-            .navigationTitle("Library")
+            .navigationTitle("LIBRARY")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -109,7 +109,7 @@ private struct EpisodeCard: View {
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(secondary)
             Text(episode.title)
-                .font(.system(.headline, design: .serif))
+                .font(.system(.headline))
                 .foregroundStyle(text)
                 .lineLimit(2, reservesSpace: true)
             Text(episode.summary)

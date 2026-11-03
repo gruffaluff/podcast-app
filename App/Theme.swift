@@ -1,20 +1,35 @@
 import SwiftUI
 
-/// Colours and type from docs/DESIGN.md.
+/// Colours and type: the "Tape Deck" look (Paul's pick, Nov 2026). Warm grey
+/// device panels, ink keys, one orange accent, monospaced labels and times,
+/// and a dark display panel for what's playing. See docs/DESIGN.md.
 enum Theme {
-    static let background = Color(hex: 0xFAF8F3)
-    static let surface = Color(hex: 0xF1EEE6)
-    static let hairline = Color(hex: 0xE8E3D8)
-    static let controlBorder = Color(hex: 0xD9D4C7)
-    static let ink = Color(hex: 0x1F1E1B)
-    static let muted = Color(hex: 0x6B675E)
-    static let accentFill = Color(hex: 0xAD5230)
-    static let accentText = Color(hex: 0xA4512F)
-    static let highlight = Color(hex: 0xF3E3C6)
-    static let adMarker = Color(hex: 0xD9A441)
+    /// The device face behind everything.
+    static let background = Color(hex: 0xE8E6E1)
+    /// Raised panels and keys.
+    static let surface = Color(hex: 0xF4F3EF)
+    static let hairline = Color(hex: 0xDCD9D2)
+    /// The shadow under a key (and outline buttons).
+    static let controlBorder = Color(hex: 0xC9C6BE)
+    static let ink = Color(hex: 0x1B1B1A)
+    /// Secondary text (5.6:1 on the background).
+    static let muted = Color(hex: 0x5F5C55)
+    /// Orange keys and switches; text on it is ink.
+    static let accentFill = Color(hex: 0xF05A1A)
+    static let accentShadow = Color(hex: 0xB8410E)
+    /// Orange text on light panels (5:1).
+    static let accentText = Color(hex: 0xB03A0A)
+    static let highlight = Color(hex: 0xFCD9C1)
+    static let adMarker = Color(hex: 0xFFB000)
+
+    // The dark display panel.
+    static let display = Color(hex: 0x22231F)
+    static let displayText = Color(hex: 0xE6EDD7)
+    static let displayDim = Color(hex: 0x9DA690)
+    static let displayTrack = Color(hex: 0x3A3C35)
 
     /// Muted tones for artwork placeholders.
-    static let placeholders: [Color] = ([0x4A5D73, 0x4F6B5A, 0x7A5368, 0x8A6A3F, 0x5B5750, 0x6A5E86] as [UInt32]).map { Color(hex: $0) }
+    static let placeholders: [Color] = ([0x3D5A80, 0x2F6B5E, 0x7A3F66, 0x8A6A2F, 0x5B5750, 0x6A5E86] as [UInt32]).map { Color(hex: $0) }
 
     /// The same title always gets the same colour.
     static func placeholderColor(for title: String) -> Color {
@@ -28,8 +43,14 @@ enum Theme {
         return String(words.prefix(2).compactMap(\.first)).uppercased()
     }
 
+    /// Screen and section titles: monospaced, bold.
     static func screenTitle(_ size: CGFloat = 34) -> Font {
-        .system(size: size, weight: .medium, design: .serif)
+        .system(size: size * 0.72, weight: .bold, design: .monospaced)
+    }
+
+    /// Labels, times and counters.
+    static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .monospaced)
     }
 }
 

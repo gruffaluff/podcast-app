@@ -152,7 +152,7 @@ struct TopPriorityView: View {
                 ForEach(Array(shows.enumerated()), id: \.element.feedURL) { index, show in
                     HStack(spacing: 14) {
                         Text("\(index + 1)")
-                            .font(.system(.body, design: .serif))
+                            .font(.system(.body, design: .monospaced).weight(.bold))
                             .foregroundStyle(Theme.accentText)
                             .frame(width: 22)
                         ArtworkView(url: show.artworkURL, title: show.title, size: 40, radius: 8)

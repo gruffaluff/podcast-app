@@ -185,7 +185,7 @@ struct QuoteCard: View {
         VStack(alignment: .leading, spacing: 18) {
             Spacer(minLength: 0)
             Text("“\(quote)”")
-                .font(.system(size: 26, weight: .regular, design: .serif))
+                .font(.system(size: 25, weight: .semibold))
                 .foregroundStyle(.white)
                 .minimumScaleFactor(0.5)
                 .lineLimit(9)

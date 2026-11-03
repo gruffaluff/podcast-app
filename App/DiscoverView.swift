@@ -38,7 +38,7 @@ struct DiscoverView: View {
             .task(id: genre) { await loadChart() }
             .task { await loadSuggestions() }
             .refreshable { await loadChart() }
-            .navigationTitle("Discover")
+            .navigationTitle("DISCOVER")
         }
     }
 
@@ -186,7 +186,7 @@ struct DirectoryItemRow: View {
         HStack(spacing: 12) {
             if let rank {
                 Text("\(rank)")
-                    .font(.system(.subheadline, design: .serif))
+                    .font(.system(.subheadline, design: .monospaced).weight(.bold))
                     .foregroundStyle(Theme.muted)
                     .frame(width: 24)
             }

@@ -13,9 +13,16 @@ design looked too like an existing logo; Paul chose **option C**: a
 headband over a sound wave that runs between the ear cups. Options A–C in
 `design/icon/options.png`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
-Overcast. Goal: **minimal to look at, fully functional underneath**, with a
-calm look inspired by the Claude app (warm off-white, serif headings, one
-terracotta accent).
+Overcast. Goal: **minimal to look at, fully functional underneath**.
+
+**Look: "Tape Deck"** (Paul's pick, Nov 2026, from three redesigns on the
+canvas https://claude.ai/artifact/RgNB6YCQMCdk9XdPfpiaTL; replaces the
+original warm off-white / serif / terracotta look). Warm grey device panels,
+ink black, one orange accent for keys, monospaced titles, labels and times
+(iOS's SF Mono, no bundled fonts), a dark display panel for what's playing,
+segmented progress bars (ads in amber), chunky keys that press down, status
+lights. Tokens in `App/Theme.swift`; shared pieces in `App/Deck.swift`.
+Function matters more than look to Paul.
 
 ## Constraints
 
@@ -90,10 +97,12 @@ terracotta accent).
   set separately (5, 10, 15, 30 or 60s) in settings, and touch-and-hold a skip
   button to change it on the spot. Lock screen and headphone controls use the
   same lengths.
-- **Themed to the artwork** (like Apple Podcasts): the full player uses a large
-  episode artwork image and a background colour taken from that artwork
-  (extract a dominant/average colour on device), with light text and controls
-  tinted to match. Pick text colours that keep 4.5:1 contrast.
+- **Player is a tape deck** (replaces the artwork-coloured player, Paul's
+  call with the Tape Deck look): artwork tile and title, a dark display
+  with a big counter and a segmented progress bar (drag to scrub, ads in
+  amber), transport keys, a SKIP AD key during ads, SPEED / TRIM / BOOST /
+  SLEEP keys with lights, Transcript / Chapters / AirPlay keys. Library's
+  New Episodes cards still take the artwork's colour.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
   player shows "Playing on …" when not on the phone.
@@ -168,6 +177,20 @@ terracotta accent).
 - Search for new shows (people, topics) using Apple's free podcast directory.
 - Browse by category; "Because you listen to…" suggestions from shows in
   the same categories as ones Paul follows; UK top charts with Follow buttons.
+
+## Website
+
+- Showcase page: `website/podspot.html`, published as a private claude.ai
+  page (https://claude.ai/artifact/AQnieLZr5m9vCoNU9GoWpn); republish from
+  that file to keep the same link. Only Paul can open it until he shares it.
+- Same look as the app; feature sections with phone mock-ups, a live Up
+  Next demo using the app's ordering rules, privacy note, download section.
+- The download button says "Coming soon to TestFlight" until
+  `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
+  public invite link.
+- Show and episode names on the page are made-up examples (footer says so).
+- Hosting it at its own address (e.g. GitHub Pages) is possible later;
+  may need a paid GitHub plan because the repo is private.
 
 ## Proposed technical approach (confirm with Paul before big changes)
 
@@ -277,6 +300,15 @@ terracotta accent).
 - Done (second round of answers): Skip ad button + find ads while
   listening; transcription default Only when I ask; no automatic
   mark-as-played on follow, Select mode instead; new icon (option C, Paul's pick).
+- Done (Tape Deck restyle): theme, key buttons, display panel, segment
+  bar; Up Next (now-playing display + numbered tracks with TOP1/TOP2/BTM/
+  YOU tags, times, download/transcript lights), mini player, player and
+  transcript redesigned. Library, Discover, Search and settings take the
+  new colours and type but their layouts aren't redesigned yet (next, if
+  Paul wants). Showcase website still shows the old look.
+- CI: GitHub's Apple-silicon Macs are sometimes unavailable ("job was not
+  acquired by runner"). Manual runs can pick the machine: run the Build
+  workflow with `runner=macos-15-intel` (worked 3 Nov 2026).
 - To check on the phone first: Trim silences / Boost voices strength, ad
   detection accuracy (rule-based; tune phrases), auto-chapter quality,
   Apple chart feeds (could not be reached from the build machine; Discover

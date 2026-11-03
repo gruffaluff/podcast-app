@@ -1,4 +1,5 @@
 import SwiftUI
+import PodcastCore
 
 extension View {
     /// Shows the "now playing" bar at the bottom of a tab while something is loaded.
@@ -22,61 +23,72 @@ private struct MiniPlayerInset: ViewModifier {
     }
 }
 
+/// The "now playing" strip: a small deck display above the tabs.
 struct MiniPlayer: View {
     @Environment(PlayerModel.self) private var player
     let open: () -> Void
 
     var body: some View {
         if let item = player.nowPlaying {
-            HStack(spacing: 12) {
-                Button(action: open) {
-                    HStack(spacing: 12) {
-                        ArtworkView(url: item.artworkURL, title: item.showTitle, size: 40, radius: 8)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.title)
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(1)
-                            Text(item.showTitle)
-                                .font(.caption)
-                                .foregroundStyle(Theme.muted)
-                                .lineLimit(1)
+            VStack(spacing: 8) {
+                HStack(spacing: 10) {
+                    Button(action: open) {
+                        HStack(spacing: 10) {
+                            ArtworkView(url: item.artworkURL, title: item.showTitle, size: 38, radius: 6)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.title.uppercased())
+                                    .font(Theme.mono(12, .semibold))
+                                    .foregroundStyle(Theme.displayText)
+                                    .lineLimit(1)
+                                Text("\(TimeFormat.clock(player.currentTime)) / \(TimeFormat.clock(player.duration))")
+                                    .font(Theme.mono(11))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Theme.displayDim)
+                            }
+                            Spacer(minLength: 0)
                         }
-                        Spacer(minLength: 0)
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Opens the player")
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Opens the player")
 
-                if player.currentAd != nil {
-                    Button { player.skipCurrentAd() } label: {
-                        Text("Skip ad")
-                            .font(.footnote.weight(.semibold))
-                            .padding(.horizontal, 12)
-                            .frame(minHeight: 32)
-                            .foregroundStyle(Theme.background)
-                            .background(Theme.ink, in: Capsule())
-                            .frame(minHeight: 44)
+                    if player.currentAd != nil {
+                        Button { player.skipCurrentAd() } label: {
+                            Text("SKIP AD")
+                                .font(Theme.mono(11, .bold))
+                                .padding(.horizontal, 10)
+                                .frame(minHeight: 36)
+                        }
+                        .buttonStyle(.accentKey)
+                        .accessibilityLabel("Skip ad")
                     }
-                    .accessibilityLabel("Skip ad")
+                    SkipButton(direction: .back)
+                        .foregroundStyle(Theme.displayText)
+                    Button { player.togglePlayPause() } label: {
+                        Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.body)
+                            .frame(width: 44, height: 40)
+                    }
+                    .buttonStyle(.key)
+                    .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                    SkipButton(direction: .forward)
+                        .foregroundStyle(Theme.displayText)
                 }
-                SkipButton(direction: .back)
-                Button { player.togglePlayPause() } label: {
-                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title3)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-                SkipButton(direction: .forward)
+                SegmentBar(progress: progress, ads: adFractions, count: 32, height: 4)
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(Theme.ink)
-            .font(.body)
-            .frame(minHeight: 44)
+            .tint(Theme.displayText)
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, 10)
+            .background(Theme.display, in: RoundedRectangle(cornerRadius: 14))
         }
+    }
+
+    private var progress: Double {
+        player.duration > 0 ? min(1, player.currentTime / player.duration) : 0
+    }
+
+    private var adFractions: [ClosedRange<Double>] {
+        guard player.duration > 0 else { return [] }
+        return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
     }
 }

@@ -42,7 +42,7 @@ struct SearchView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Words, people, shows")
-            .navigationTitle("Search")
+            .navigationTitle("SEARCH")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .task(id: query) { await searchTranscripts() }
         }
@@ -209,7 +209,7 @@ private struct TranscriptResultRow: View {
                 }
             }
             Text(highlighted)
-                .font(.system(.body, design: .serif))
+                .font(.system(.body))
                 .foregroundStyle(Theme.ink)
             HStack(spacing: 18) {
                 Button("Play from \(TimeFormat.clock(match.time))") {
@@ -250,7 +250,7 @@ private struct ClipRow: View {
                 .foregroundStyle(Theme.muted)
                 .lineLimit(1)
             Text("“\(bookmark.text)”")
-                .font(.system(.body, design: .serif))
+                .font(.system(.body))
                 .foregroundStyle(Theme.ink)
             HStack(spacing: 18) {
                 Button("Play from \(TimeFormat.clock(bookmark.time))") {

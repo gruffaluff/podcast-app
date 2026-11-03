@@ -96,8 +96,9 @@ struct TranscriptView: View {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     ForEach(blocks, id: \.start) { block in
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(TimeFormat.stamp(block.start))
-                                .font(.caption.weight(.semibold))
+                            Text(TimeFormat.clock(block.start))
+                                .font(Theme.mono(11, .semibold))
+                                .monospacedDigit()
                                 .foregroundStyle(Theme.muted)
                             ForEach(block.rows, id: \.self) { row in
                                 switch row {
@@ -107,8 +108,8 @@ struct TranscriptView: View {
                                 case .ad(let adBreak, let adLines):
                                     adBand(adBreak, lines: adLines, speakers: speakers, names: names, current: current)
                                 case .music(let span):
-                                    Label("Music · \(TimeFormat.stamp(span.length))", systemImage: "music.note")
-                                        .font(.subheadline)
+                                    Label("MUSIC · \(TimeFormat.stamp(span.length).uppercased())", systemImage: "music.note")
+                                        .font(Theme.mono(12))
                                         .foregroundStyle(Theme.muted)
                                         .padding(.vertical, 4)
                                 }
@@ -141,22 +142,30 @@ struct TranscriptView: View {
         let speakerIndex = line.speaker.flatMap { speakers.firstIndex(of: $0) }
         let speakerName = line.speaker.map { names[$0] ?? $0 }
 
-        var text = AttributedString()
-        if let speakerName {
-            var who = AttributedString(speakerName + " — ")
-            who.foregroundColor = (speakerIndex ?? 0) % 2 == 0 ? Theme.ink : Theme.accentText
-            who.font = .system(size: isCurrent ? 21 : 18, weight: .semibold, design: .serif)
-            text += who
+        // Tape Deck: a mono speaker tag ("S1 · ANNA") over plain text; the
+        // line playing now is larger, on a highlighted strip.
+        let tag = speakerIndex.map { (index: Int) -> String in
+            let short = "S\(index + 1)"
+            return speakerName.map { $0 == line.speaker && $0.hasPrefix("Speaker") ? short : "\(short) · \($0.uppercased())" } ?? short
         }
-        var body = AttributedString(line.text)
-        body.font = .system(size: isCurrent ? 21 : 18, design: .serif)
-        text += body
 
         let quote = (speakerName.map { "\($0): " } ?? "") + line.text
-        return Text(text)
-            .foregroundStyle(isPast ? Theme.muted : Theme.ink)
-            .lineSpacing(4)
+        return VStack(alignment: .leading, spacing: 3) {
+            if let tag {
+                Text(tag)
+                    .font(Theme.mono(10, .bold))
+                    .foregroundStyle((speakerIndex ?? 0) % 2 == 0 ? Theme.ink : Theme.accentText)
+            }
+            Text(line.text)
+                .font(.system(size: isCurrent ? 19 : 16))
+                .fontWeight(isCurrent ? .medium : .regular)
+                .foregroundStyle(isPast ? Theme.muted : Theme.ink)
+                .lineSpacing(3)
+        }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, isCurrent ? 8 : 0)
+            .padding(.horizontal, isCurrent ? 10 : 0)
+            .background(isCurrent ? Theme.highlight : .clear, in: RoundedRectangle(cornerRadius: 8))
             .contentShape(Rectangle())
             .onTapGesture { playFrom(line.start) }
             .contextMenu {
@@ -176,8 +185,8 @@ struct TranscriptView: View {
         let shown = shownAds.contains(adBreak.start)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                Text("Ad break · \(TimeFormat.stamp(adBreak.length))" + (player.skipAds ? " · skipped" : ""))
-                    .font(.subheadline.weight(.medium))
+                Text("AD \(TimeFormat.clock(adBreak.start))–\(TimeFormat.clock(adBreak.end))" + (player.skipAds ? " · SKIPPED" : ""))
+                    .font(Theme.mono(11, .bold))
                     .foregroundStyle(Theme.muted)
                 Spacer()
                 Button(shown ? "Hide" : "Show") {
