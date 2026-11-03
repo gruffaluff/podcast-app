@@ -25,7 +25,7 @@ struct ArtworkView: View {
         Theme.placeholderColor(for: title)
             .overlay(
                 Text(Theme.initials(for: title))
-                    .font(.system(size: size * 0.34, design: .serif))
+                    .font(.system(size: size * 0.3, weight: .bold, design: .monospaced))
                     .foregroundStyle(Theme.background)
             )
     }

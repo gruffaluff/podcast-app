@@ -13,16 +13,24 @@ struct UpNextView: View {
 
         NavigationStack {
             List {
+                if player.nowPlaying != nil {
+                    Section {
+                        NowPlayingDeck()
+                            .listRowBackground(Theme.background)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 14, bottom: 8, trailing: 14))
+                    }
+                }
                 Section {
-                    ForEach(store.queue, id: \.episode.id) { item in
+                    ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
                             Button { player.play(episode) } label: {
-                                QueueRow(item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID)
+                                QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID)
                             }
                             .buttonStyle(.plain)
                             .swipeActions(edge: .trailing) {
                                 Button("Played") { store.markPlayed(episode.episodeID) }
-                                    .tint(Theme.accentFill)
+                                    .tint(Theme.ink)
                                 Button("Remove") { store.removeFromQueue(episode.episodeID) }
                                     .tint(Theme.muted)
                             }
@@ -36,7 +44,7 @@ struct UpNextView: View {
                         }
                     }
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.surface)
                     .listRowSeparatorTint(Theme.hairline)
                 } header: {
                     header(episodes: episodes)
@@ -72,7 +80,7 @@ struct UpNextView: View {
                 }
             }
             .refreshable { await store.refreshAll() }
-            .navigationTitle("Up Next")
+            .navigationTitle("UP NEXT")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { showingPriority = true } label: {
@@ -97,85 +105,166 @@ struct UpNextView: View {
 
     private func header(episodes: [String: PodcastEpisode]) -> some View {
         let total = store.queue.compactMap { episodes[$0.episode.id]?.timeLeft }.reduce(0, +)
-        var counts = "\(store.queue.count) episode\(store.queue.count == 1 ? "" : "s")"
-        if total > 0 { counts += " · \(TimeFormat.length(total))" }
+        var counts = "\(store.queue.count) EPISODE\(store.queue.count == 1 ? "" : "S")"
+        if total > 0 { counts += " · TOTAL \(TimeFormat.clock(total))" }
 
         return VStack(alignment: .leading, spacing: 4) {
-            Text(checkedLabel)
             Text(counts)
+            Text(checkedLabel)
         }
-        .font(.footnote)
+        .font(Theme.mono(11))
         .foregroundStyle(Theme.muted)
         .textCase(nil)
     }
 
     private var checkedLabel: String {
-        if store.isRefreshing { return "Checking for new episodes…" }
-        guard let last = store.lastChecked else { return "Pull to check for new episodes" }
-        let ago = TimeFormat.ago(last)
-        return "Checked \(ago == "Just now" ? "just now" : ago) · pull to check now"
+        if store.isRefreshing { return "CHECKING FOR NEW EPISODES…" }
+        guard let last = store.lastChecked else { return "PULL TO CHECK FOR NEW EPISODES" }
+        return "CHECKED \(TimeFormat.ago(last).uppercased()) · PULL TO CHECK"
+    }
+}
+
+/// The display panel at the top of Up Next: what's playing, segmented
+/// progress (ads in amber), and a Skip ad key while an ad plays.
+private struct NowPlayingDeck: View {
+    @Environment(PlayerModel.self) private var player
+
+    var body: some View {
+        if let item = player.nowPlaying {
+            DeckDisplay {
+                HStack {
+                    Text("NOW ▸ \(item.showTitle.uppercased())").lineLimit(1)
+                    Spacer()
+                    Text(modes)
+                }
+                .font(Theme.mono(11))
+                .foregroundStyle(Theme.displayDim)
+                Text(item.title.uppercased())
+                    .font(Theme.mono(15, .semibold))
+                    .lineLimit(1)
+                SegmentBar(progress: progress, ads: adFractions, count: 24)
+                HStack {
+                    Text("\(TimeFormat.clock(player.currentTime)) / \(TimeFormat.clock(player.duration))")
+                        .monospacedDigit()
+                    Spacer()
+                    if player.currentAd != nil {
+                        Button { player.skipCurrentAd() } label: {
+                            Text("SKIP AD ▸▸").font(Theme.mono(12, .bold)).padding(.horizontal, 12).frame(minHeight: 36)
+                        }
+                        .buttonStyle(.accentKey)
+                    } else {
+                        Button { player.togglePlayPause() } label: {
+                            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                                .frame(width: 44, height: 36)
+                        }
+                        .buttonStyle(.key)
+                        .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                    }
+                }
+            }
+        }
+    }
+
+    private var progress: Double {
+        player.duration > 0 ? min(1, player.currentTime / player.duration) : 0
+    }
+
+    private var adFractions: [ClosedRange<Double>] {
+        guard player.duration > 0 else { return [] }
+        return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
+    }
+
+    private var modes: String {
+        var parts = [PlayerOptions.speedLabel(player.speed)]
+        if player.trimSilences { parts.append("TRIM") }
+        if player.boostVoices { parts.append("BOOST") }
+        return parts.joined(separator: " · ")
     }
 }
 
 private struct QueueRow: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
+    let number: Int
     let item: QueueItem
     let episode: PodcastEpisode
     let settings: QueueSettings
     let isPlaying: Bool
 
     var body: some View {
-        HStack(spacing: 14) {
-            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title)
+        HStack(alignment: .center, spacing: 10) {
+            Text(number < 10 ? "0\(number)" : "\(number)")
+                .font(Theme.mono(15, .bold))
+                .foregroundStyle(isPlaying ? Theme.accentText : Theme.ink)
+                .frame(width: 30, alignment: .leading)
             VStack(alignment: .leading, spacing: 3) {
-                Text(episode.podcast?.title ?? "")
-                    .font(.caption)
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
                 Text(episode.title)
-                    .font(.body.weight(.medium))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2)
-                Text(meta)
-                    .font(.caption)
-                    .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
+                HStack(spacing: 6) {
+                    DeckTag(text: tag)
+                    Text(episode.podcast?.title ?? "")
+                        .lineLimit(1)
+                }
+                .font(Theme.mono(10))
+                .foregroundStyle(Theme.muted)
+                if let status {
+                    Text(status.uppercased())
+                        .font(Theme.mono(10))
+                        .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
+                }
             }
-            Spacer(minLength: 0)
+            Spacer(minLength: 6)
+            VStack(alignment: .trailing, spacing: 5) {
+                Text(episode.timeLeft.map { TimeFormat.clock($0) } ?? "--:--")
+                    .font(Theme.mono(12))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
+                HStack(spacing: 3) {
+                    LED(on: episode.downloadFile != nil)
+                    LED(on: episode.transcriptState == .ready, color: Theme.accentFill)
+                }
+                .accessibilityElement()
+                .accessibilityLabel(lightsLabel)
+            }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
     }
 
-    private var meta: String {
-        var parts: [String] = []
-        if isPlaying { parts.append("Playing") }
-        if let left = episode.timeLeft, left > 0 {
-            parts.append(episode.position > 30 ? "\(TimeFormat.length(left)) left" : TimeFormat.length(left))
-        }
-        parts.append(sourceLabel)
-        if let download = downloads.status(for: episode) { parts.append(download) }
-        switch episode.transcriptState {
-        case .ready: parts.append("Transcript ready")
-        case .transcribing: parts.append("Transcribing")
-        case .waiting:
-            // Only when it's actually lined up (asked for, or the schedule allows).
-            if transcripts.schedule != .onRequest || !transcripts.canTranscribeNow(episode) { parts.append("Transcript waiting") }
-        case .none, .failed: break
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    private var sourceLabel: String {
+    /// TOP1 / TOP2 (rank), BTM, or YOU for episodes Paul added.
+    private var tag: String {
         switch item.source {
-        case .manual:
-            return "Added by you"
+        case .manual: return "YOU"
         case .auto:
             switch settings.mode(for: item.episode.showID) {
-            case .top: return "Auto · Top"
-            case .bottom: return "Auto · Bottom"
-            case .off: return "Auto"
+            case .top:
+                let rank = settings.rank(of: item.episode.showID)
+                return rank == Int.max ? "TOP" : "TOP\(rank + 1)"
+            case .bottom: return "BTM"
+            case .off: return "AUTO"
             }
         }
+    }
+
+    /// Only the things worth a line: playing, downloading, transcribing.
+    private var status: String? {
+        var parts: [String] = []
+        if isPlaying { parts.append("Playing") }
+        if let download = downloads.status(for: episode), download != "Downloaded" { parts.append(download) }
+        switch episode.transcriptState {
+        case .transcribing: parts.append("Transcribing")
+        case .waiting:
+            if transcripts.schedule != .onRequest || !transcripts.canTranscribeNow(episode) { parts.append("Transcript waiting") }
+        default: break
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    private var lightsLabel: String {
+        let downloaded = episode.downloadFile != nil ? "Downloaded" : "Not downloaded"
+        let transcript = episode.transcriptState == .ready ? "transcript ready" : "no transcript"
+        return "\(downloaded), \(transcript)"
     }
 }

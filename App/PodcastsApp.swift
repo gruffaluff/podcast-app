@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct PodcastsApp: App {
@@ -11,6 +12,7 @@ struct PodcastsApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
+        Self.styleSystemBars()
         let container = Self.makeContainer()
         let store = LibraryStore(context: container.mainContext)
         self.container = container
@@ -32,6 +34,18 @@ struct PodcastsApp: App {
                 .environment(transcripts)
         }
         .modelContainer(container)
+    }
+
+    /// Tape Deck type for navigation titles and tab labels.
+    private static func styleSystemBars() {
+        let ink = UIColor(Theme.ink)
+        UINavigationBar.appearance().largeTitleTextAttributes = [
+            .font: UIFont.monospacedSystemFont(ofSize: 28, weight: .bold), .foregroundColor: ink
+        ]
+        UINavigationBar.appearance().titleTextAttributes = [
+            .font: UIFont.monospacedSystemFont(ofSize: 15, weight: .bold), .foregroundColor: ink
+        ]
+        UITabBarItem.appearance().setTitleTextAttributes([.font: UIFont.monospacedSystemFont(ofSize: 10, weight: .semibold)], for: .normal)
     }
 
     private static func makeContainer() -> ModelContainer {
