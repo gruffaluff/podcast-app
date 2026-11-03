@@ -37,7 +37,7 @@ public enum OPML {
     }
 
     /// An OPML file listing `shows`.
-    public static func make(_ shows: [Show], title: String = "Podspot shows", date: Date = Date()) -> String {
+    public static func make(_ shows: [Show], title: String = "Poddeck shows", date: Date = Date()) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(identifier: "GMT")

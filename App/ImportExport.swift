@@ -15,7 +15,7 @@ struct ShowListFile: Transferable {
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(exportedContentType: .opml) { file in
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("Podspot shows.opml")
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("Poddeck shows.opml")
             try Data(file.text.utf8).write(to: url, options: .atomic)
             return SentTransferredFile(url)
         }
@@ -41,7 +41,7 @@ struct ImportExportSection: View {
                 .disabled(importing != nil)
                 .accessibilityLabel("Import shows from an OPML file")
 
-                ShareLink(item: ShowListFile(text: store.showListOPML), preview: SharePreview("Podspot shows")) {
+                ShareLink(item: ShowListFile(text: store.showListOPML), preview: SharePreview("Poddeck shows")) {
                     Text("↑ EXPORT")
                         .font(Theme.mono(12, .bold))
                         .frame(maxWidth: .infinity, minHeight: 40)

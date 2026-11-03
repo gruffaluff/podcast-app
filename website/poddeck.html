@@ -1,0 +1,582 @@
+<title>Poddeck</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<style>
+/* Layout: the page is a tape deck's front panel. Grey device panels, ink, one orange
+   accent for keys, mono labels and times, dark displays for "what's playing".
+   Each feature pairs plain words with a phone screen drawn in the app's Tape Deck look.
+   One live demo: Up Next keeping shows in order. */
+:root {
+  --bg: #E8E6E1;          /* device panel (the app's background) */
+  --surface: #F4F3EF;     /* raised keys and cards */
+  --hairline: #DCD9D2;
+  --key-edge: #C9C6BE;    /* the shadow under a key */
+  --ink: #1B1B1A;
+  --muted: #5F5C55;
+  --accent: #F05A1A;      /* orange keys and lit LEDs */
+  --accent-edge: #B8410E;
+  --accent-text: #B03A0A;
+  --highlight: #FCD9C1;
+  --ad: #FFB000;          /* ad breaks, amber */
+  --display: #22231F;     /* the dark readout */
+  --display-text: #E6EDD7;
+  --display-dim: #9DA690;
+  --display-track: #3A3C35;
+  --phone-edge: #1B1B1A;
+  --art-1: #3D5A80; --art-2: #2F6B5E; --art-3: #7A3F66; --art-4: #8A6A2F;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-body: -apple-system, "SF Pro Text", "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --step-0: 1rem; --step-1: 1.2rem; --step-2: 1.45rem; --step-3: 1.95rem; --step-4: clamp(2.1rem, 5.2vw, 3.5rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #2A2A27; --surface: #383834; --hairline: #45443F; --key-edge: #161614; --ink: #EDEBE5; --muted: #ABA79D;
+    --accent-text: #FF8A55; --highlight: #5A3520; --phone-edge: #0D0D0C; --display: #151613;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #2A2A27; --surface: #383834; --hairline: #45443F; --key-edge: #161614; --ink: #EDEBE5; --muted: #ABA79D;
+  --accent-text: #FF8A55; --highlight: #5A3520; --phone-edge: #0D0D0C; --display: #151613;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font: 400 var(--step-0)/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-mono); font-weight: 700; text-wrap: balance; margin: 0; letter-spacing: -0.02em; text-transform: uppercase; }
+h1 { font-size: var(--step-4); line-height: 1.08; }
+h2 { font-size: var(--step-3); line-height: 1.15; }
+h3 { font-size: var(--step-2); line-height: 1.25; }
+p { margin: 0; max-width: 62ch; }
+.lede { font-size: var(--step-1); color: var(--muted); }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font: 700 0.78rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+.led { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); flex: none; display: inline-block; }
+.led.off { background: var(--key-edge); box-shadow: none; }
+a { color: var(--accent-text); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+strong { font-weight: 600; }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 1.2rem var(--font-mono); letter-spacing: 0.04em; color: var(--ink); text-decoration: none; text-transform: uppercase; }
+.brand img { width: 36px; height: 36px; border-radius: 9px; }
+.top nav { display: flex; gap: 18px; flex-wrap: wrap; font: 500 0.8rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--ink); }
+
+/* Keys */
+.key { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 10px; border: 0; cursor: pointer;
+  font: 700 0.9rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none;
+  background: var(--surface); color: var(--ink); box-shadow: 0 3px 0 var(--key-edge); transition: transform .08s ease-out, box-shadow .08s ease-out; }
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.key.accent { background: var(--accent); color: #1B1B1A; box-shadow: 0 3px 0 var(--accent-edge); }
+.key.accent:active { box-shadow: 0 1px 0 var(--accent-edge); }
+.key.dark { background: #1B1B1A; color: #E8E6E1; box-shadow: 0 3px 0 #000; }
+.key[aria-disabled="true"] { cursor: default; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; padding-block: 32px 72px; }
+.hero > div { min-width: 0; display: grid; gap: 22px; }
+.hero .actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.hero .note { font: 500 0.8rem var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Phone */
+.phone { width: min(300px, 100%); margin: 0 auto; aspect-ratio: 9 / 19; border-radius: 44px; padding: 10px; background: var(--phone-edge); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5); max-width: 100%; }
+.screen { height: 100%; border-radius: 35px; overflow: hidden; background: #E8E6E1; color: #1B1B1A; position: relative; display: flex; flex-direction: column; font-size: 12px; line-height: 1.35;
+  --s-surface: #F4F3EF; --s-hair: #DCD9D2; --s-edge: #C9C6BE; --s-muted: #5F5C55; }
+.statusbar { display: flex; justify-content: space-between; padding: 12px 22px 4px; font: 600 11px var(--font-mono); }
+.screen h4 { font: 700 19px var(--font-mono); margin: 6px 14px 2px; letter-spacing: 0.02em; }
+.screen .sub { color: var(--s-muted); font: 500 9px var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 14px 8px; }
+.mono { font-family: var(--font-mono); }
+.art { width: 34px; height: 34px; border-radius: 6px; flex: none; display: grid; place-items: center; color: #F4F3EF; font: 700 11px var(--font-mono); }
+.disp { margin: 0 10px 10px; background: #22231F; color: #E6EDD7; border-radius: 14px; padding: 10px 12px; font-family: var(--font-mono); display: grid; gap: 6px; }
+.disp .dim { color: #9DA690; font-size: 9px; letter-spacing: 0.04em; }
+.disp .big { font-size: 13px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg { display: flex; gap: 2px; height: 8px; }
+.seg i { flex: 1; border-radius: 1px; background: #3A3C35; }
+.seg i.on { background: #E6EDD7; }
+.seg i.ad { background: #FFB000; }
+.mkey { background: var(--s-surface); color: #1B1B1A; border-radius: 8px; box-shadow: 0 2px 0 var(--s-edge); padding: 5px 9px; font: 700 9.5px var(--font-mono); text-transform: uppercase; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.mkey.accent { background: #F05A1A; box-shadow: 0 2px 0 #B8410E; }
+.mkey.dark { background: #1B1B1A; color: #E8E6E1; box-shadow: 0 2px 0 #000; }
+.mled { width: 6px; height: 6px; border-radius: 50%; background: var(--s-edge); flex: none; display: inline-block; }
+.mled.on { background: #F05A1A; }
+.mled.ink { background: #1B1B1A; }
+.track { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 7px 14px; border-bottom: 1px solid var(--s-hair); }
+.track .n { font: 700 12px var(--font-mono); color: var(--s-muted); }
+.track .t { min-width: 0; }
+.track .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track .meta { color: var(--s-muted); font: 500 8.5px var(--font-mono); text-transform: uppercase; display: flex; gap: 5px; align-items: center; margin-top: 1px; }
+.track .right { display: grid; justify-items: end; gap: 4px; font: 500 9.5px var(--font-mono); }
+.track .lights { display: flex; gap: 3px; }
+.tag { font: 700 8px var(--font-mono); padding: 0 3px; border: 1px solid #1B1B1A; border-radius: 3px; color: #1B1B1A; line-height: 1.5; }
+.tabbar { display: flex; justify-content: space-around; padding: 8px 6px 14px; border-top: 1px solid var(--s-hair); font: 600 8.5px var(--font-mono); color: var(--s-muted); text-transform: uppercase; margin-top: auto; }
+.tabbar b { color: #1B1B1A; }
+
+/* Player screen */
+.pl-head { display: flex; gap: 10px; align-items: center; margin: 4px 14px 10px; }
+.pl-head .cover { width: 64px; height: 64px; border-radius: 8px; background: linear-gradient(160deg, #5B7A9E, #2E3E52); flex: none; display: grid; place-items: center; color: #F4F3EF; font: 700 14px var(--font-mono); }
+.pl-head .t { min-width: 0; }
+.pl-head .title { font-weight: 700; font-size: 13px; line-height: 1.2; }
+.pl-head .ch { font: 600 9px var(--font-mono); color: var(--s-muted); margin-top: 4px; text-transform: uppercase; }
+.counter { font: 700 30px var(--font-mono); letter-spacing: 0.02em; line-height: 1; }
+.counter small { font-size: 11px; color: #9DA690; font-weight: 500; }
+.row-keys { display: flex; gap: 6px; margin: 0 10px 8px; }
+.row-keys > * { flex: 1; justify-content: center; min-height: 32px; }
+
+/* Transcript screen */
+.tx { padding: 4px 14px; display: grid; gap: 8px; font-size: 12.5px; overflow: hidden; }
+.tx .stamp { font: 700 9px var(--font-mono); color: var(--s-muted); }
+.tx .who { display: block; font: 700 8.5px var(--font-mono); color: var(--s-muted); margin-bottom: 1px; }
+.tx .who.b { color: #B03A0A; }
+.tx .past { color: var(--s-muted); }
+.tx .now { font-size: 14.5px; font-weight: 600; background: #FCD9C1; margin: 0 -14px; padding: 4px 14px; }
+.tx .music { font: 600 9px var(--font-mono); color: var(--s-muted); text-transform: uppercase; }
+.tx .adband { border: 1.5px dashed #FFB000; border-radius: 8px; padding: 6px 8px; font: 600 9px var(--font-mono); color: var(--s-muted); display: flex; justify-content: space-between; text-transform: uppercase; }
+.tx .adband b { color: #B03A0A; }
+
+/* Settings rows in the phone */
+.setting { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--s-hair); font-size: 11.5px; }
+.sw { display: flex; gap: 4px; }
+
+/* Sections */
+section { padding-block: 56px; border-top: 2px solid var(--hairline); }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.split > div { min-width: 0; display: grid; gap: 16px; }
+.split.flip > :first-child { order: 2; }
+ul.ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; max-width: 60ch; }
+ul.ticks li { padding-left: 22px; position: relative; }
+ul.ticks li::before { content: ""; position: absolute; left: 1px; top: 0.6em; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+/* Up Next demo */
+.demo { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; align-items: start; }
+.demo > div { min-width: 0; display: grid; gap: 18px; }
+.rank { display: grid; gap: 8px; font-size: 0.95rem; background: var(--surface); border-radius: 14px; padding: 14px; box-shadow: 0 3px 0 var(--key-edge); }
+.rank div { display: flex; gap: 10px; align-items: center; }
+.rank .n { font: 700 1rem var(--font-mono); color: var(--accent-text); width: 1.6em; }
+.rank .tagbig { margin-left: auto; font: 700 0.72rem var(--font-mono); padding: 1px 6px; border: 1.5px solid var(--ink); border-radius: 5px; }
+.arrivals { display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 3px; }
+.arrivals .key { min-height: 44px; padding: 0 14px; font-size: 0.8rem; }
+.arrivals .dot { width: 10px; height: 10px; border-radius: 3px; }
+.explain { min-height: 3.2em; color: var(--muted); }
+.explain strong { color: var(--ink); }
+#queue .track { transition: background-color 1.2s ease; }
+#queue .track.fresh { background: #FCD9C1; }
+@keyframes slidein { from { transform: translateY(-6px); opacity: .3; } to { transform: none; opacity: 1; } }
+#queue .track.fresh { animation: slidein .35s ease-out; }
+
+/* Feature index */
+.index { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.index > div { min-width: 0; display: grid; gap: 6px; align-content: start; padding: 16px; background: var(--surface); border-radius: 14px; box-shadow: 0 3px 0 var(--key-edge); }
+.index h3 { font-size: 0.95rem; letter-spacing: 0.02em; display: flex; gap: 8px; align-items: center; }
+.index p { color: var(--muted); font-size: 0.93rem; }
+
+/* Clip card */
+.clip { margin: 10px 14px; aspect-ratio: 1; border-radius: 12px; background: #2F6B5E; color: #fff; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; }
+.clip q { font-size: 16px; font-weight: 600; line-height: 1.3; quotes: "“" "”"; }
+.clip small { opacity: .85; font: 600 9px var(--font-mono); text-transform: uppercase; }
+.wave { display: flex; gap: 2px; align-items: center; height: 30px; margin: 0 14px 6px; }
+.wave i { flex: 1; border-radius: 1px; background: var(--s-edge); }
+.wave i.sel { background: #F05A1A; }
+
+/* Privacy band and download */
+.quiet { background: var(--display); color: var(--display-text); border-radius: 22px; padding: 40px max(24px, 4vw); display: grid; gap: 14px; }
+.quiet .eyebrow { color: var(--display-dim); }
+.quiet p { color: var(--display-text); opacity: 0.9; }
+.download { text-align: center; display: grid; gap: 18px; justify-items: center; }
+.download img { width: 88px; height: 88px; border-radius: 20px; box-shadow: 0 4px 0 var(--key-edge); }
+.download p { margin: 0 auto; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; margin-top: 8px; max-width: 820px; }
+.steps > div { min-width: 0; background: var(--surface); border-radius: 14px; padding: 16px; display: grid; gap: 4px; box-shadow: 0 3px 0 var(--key-edge); }
+.steps b { font: 700 0.9rem var(--font-mono); text-transform: uppercase; }
+.steps span { color: var(--muted); font-size: 0.93rem; }
+footer { padding-block: 36px 48px; color: var(--muted); font: 500 0.75rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 2px solid var(--hairline); }
+
+@media (max-width: 860px) {
+  .hero, .split, .demo { grid-template-columns: 1fr; gap: 32px; }
+  .split.flip > :first-child { order: 0; }
+  .index { grid-template-columns: 1fr 1fr; }
+  .steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .index { grid-template-columns: 1fr; }
+  .top nav { display: none; }
+  section { padding-block: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #queue .track, #queue .track.fresh { animation: none; transition: none; }
+  .key { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#top" id="top"><img src="data:image/png;base64,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" alt="">Poddeck</a>
+    <nav aria-label="Sections">
+      <a href="#up-next">Up Next</a>
+      <a href="#ads">Skip ads</a>
+      <a href="#transcripts">Transcripts</a>
+      <a href="#everything">Everything</a>
+      <a href="#get">Download</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <span class="eyebrow"><span class="led"></span>Podcasts for iPhone</span>
+        <h1>Every show in order. Ads skipped. Nothing to sign up for.</h1>
+        <p class="lede">Poddeck is a podcast player built like a tape deck: chunky keys, a clear display, and underneath, a queue that puts new episodes exactly where you want them, a Skip ad key the moment an ad starts, and searchable transcripts made on your iPhone.</p>
+        <div class="actions">
+          <a class="key accent download-link" href="#get">Get Poddeck</a>
+          <a class="key" href="#up-next">How Up Next works</a>
+        </div>
+        <p class="note">Free · Built for iOS 27 · Coming to TestFlight</p>
+      </div>
+
+      <div aria-label="Poddeck's tape deck player, playing an episode with a Skip ad key lit">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+          <div class="pl-head">
+            <div class="cover" aria-hidden="true">LS</div>
+            <div class="t"><div class="title">How radio learned to listen</div><div class="sub" style="margin:2px 0 0">The Long Signal</div><div class="ch">CH 3/8 · The first broadcast ▸</div></div>
+          </div>
+          <div class="disp">
+            <div class="dim">▶ PLAYING · 1.4× · TRIM</div>
+            <div class="counter">23:12 <small>/ 56:16</small></div>
+            <div class="seg" id="hero-seg"></div>
+            <div class="dim" style="display:flex;justify-content:space-between"><span>AD 0:58 LEFT</span><span>ON: IPHONE</span></div>
+          </div>
+          <div class="row-keys"><span class="mkey accent">Skip ad ▸▸</span><span class="mkey">Not an ad</span></div>
+          <div class="row-keys"><span class="mkey">↺ 10</span><span class="mkey dark">❚❚</span><span class="mkey">30 ↻</span></div>
+          <div class="row-keys"><span class="mkey"><span class="mled on"></span>1.4×</span><span class="mkey"><span class="mled on"></span>Trim</span><span class="mkey"><span class="mled"></span>Boost</span><span class="mkey"><span class="mled"></span>Sleep</span></div>
+          <div class="row-keys"><span class="mkey">Transcript</span><span class="mkey">Chapters</span><span class="mkey">AirPlay</span></div>
+          <div class="sub" style="margin-top:6px">Up next</div>
+          <div class="track"><span class="n">01</span><span class="t"><div class="title">Harbour lights</div><div class="meta"><span class="tag">TOP2</span><span>Tidewater Weekly</span></div></span><span class="right"><span>52:30</span><span class="lights"><span class="mled ink"></span><span class="mled on"></span></span></span></div>
+          <div class="track"><span class="n">02</span><span class="t"><div class="title">The rook census</div><div class="meta"><span class="tag">BTM</span><span>Field Notes FM</span></div></span><span class="right"><span>39:44</span><span class="lights"><span class="mled ink"></span><span class="mled"></span></span></span></div>
+          <div class="tabbar"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
+        </div></div>
+      </div>
+    </div>
+
+    <section id="up-next" aria-labelledby="h-upnext">
+      <div class="demo">
+        <div>
+          <span class="eyebrow"><span class="led"></span>Up Next</span>
+          <h2 id="h-upnext">New episodes land where they belong.</h2>
+          <p>Set each show to <strong>Top</strong>, <strong>Bottom</strong> or <strong>Off</strong>, and rank your Top shows. Poddeck keeps every show oldest first, puts your favourite above the rest whenever it releases, and never drops an episode in front of an older one from the same show.</p>
+          <div class="rank" aria-label="Example settings">
+            <div><span class="n">01</span><span class="art" style="background:var(--art-1);width:26px;height:26px;font-size:10px">LS</span>The Long Signal <span class="tagbig">TOP</span></div>
+            <div><span class="n">02</span><span class="art" style="background:var(--art-2);width:26px;height:26px;font-size:10px">TW</span>Tidewater Weekly <span class="tagbig">TOP</span></div>
+            <div><span class="n">––</span><span class="art" style="background:var(--art-4);width:26px;height:26px;font-size:10px">FN</span>Field Notes FM <span class="tagbig">BTM</span></div>
+          </div>
+          <p><strong>Try it.</strong> Release a new episode and watch where it goes.</p>
+          <div class="arrivals">
+            <button type="button" class="key" data-show="LS"><span class="dot" style="background:var(--art-1)"></span>New Long Signal</button>
+            <button type="button" class="key" data-show="TW"><span class="dot" style="background:var(--art-2)"></span>New Tidewater</button>
+            <button type="button" class="key" data-show="FN"><span class="dot" style="background:var(--art-4)"></span>New Field Notes</button>
+            <button type="button" class="key dark" id="reset-queue">Start again</button>
+          </div>
+          <p class="explain" id="explain" aria-live="polite">Up Next has two Tidewater Weekly episodes, a Field Notes episode and one you added yourself.</p>
+        </div>
+        <div>
+          <div class="phone"><div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <h4>UP NEXT</h4>
+            <div class="disp">
+              <div class="dim">NOW ▸ SMALL MACHINES</div>
+              <div class="big">Inside the tiny chips</div>
+              <div class="seg" id="np-seg"></div>
+            </div>
+            <div class="sub"><span id="count">4 episodes</span> · checked just now</div>
+            <div id="queue"></div>
+            <div class="tabbar"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ads" aria-labelledby="h-ads">
+      <div class="split">
+        <div>
+          <span class="eyebrow"><span class="led"></span>Skip ads</span>
+          <h2 id="h-ads">A Skip ad key, right when you need it.</h2>
+          <p>While you listen, Poddeck quietly checks the next few minutes of the episode for sponsor reads, promo codes and "after the break". When an ad starts, an orange <strong>Skip ad</strong> key lights up in the player and the mini player and jumps you to where the show picks up again.</p>
+          <ul class="ticks">
+            <li>Breaks show in amber on the progress bar.</li>
+            <li>Wrong call? Tap <strong>Not an ad</strong> and it's remembered.</li>
+            <li>Prefer hands-free? Turn on skipping automatically.</li>
+            <li>Ads are found in your own download, so inserted ads that change from listener to listener are caught too.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <h4>SHOWS</h4>
+            <div class="sub">Ads</div>
+            <div class="setting"><span>Find ads while listening</span><span class="sw"><span class="mkey">Off</span><span class="mkey dark"><span class="mled on"></span>On</span></span></div>
+            <div class="setting"><span>Skip ads automatically</span><span class="sw"><span class="mkey dark"><span class="mled on"></span>Off</span><span class="mkey">On</span></span></div>
+            <div class="sub" style="margin-top:8px">Checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad key appears.</div>
+            <div class="disp" style="margin-top:auto;grid-template-columns:auto 1fr auto;align-items:center">
+              <span class="art" style="background:var(--art-1);width:30px;height:30px;font-size:10px">LS</span>
+              <span style="min-width:0"><span class="big" style="display:block;font-size:11px">How radio learned…</span><span class="dim">23:12 / 56:16</span></span>
+              <span class="mkey accent">Skip ad</span>
+            </div>
+            <div class="tabbar" style="margin-top:0"><b>Up Next</b><span>Library</span><span>Discover</span><span>Search</span></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="transcripts" aria-labelledby="h-tx">
+      <div class="split flip">
+        <div>
+          <span class="eyebrow"><span class="led"></span>Transcripts</span>
+          <h2 id="h-tx">Read along, search everything, quote anything.</h2>
+          <p>Poddeck uses the show's own transcript when there is one. For everything else, tap <strong>Transcribe now</strong> and your iPhone writes one, telling speakers apart and marking music and ad breaks. Nothing is sent anywhere.</p>
+          <ul class="ticks">
+            <li>Lines grouped every 20 seconds or so, and at each pause.</li>
+            <li>Follows playback. Tap any line to play from there.</li>
+            <li>Name the speakers once; the names stick for that show.</li>
+            <li>Search across every transcript and jump straight to the moment.</li>
+            <li>Transcribe only when you ask, or automatically while charging.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <h4>TRANSCRIPT</h4>
+            <div class="sub">2 speakers · made on this iPhone</div>
+            <div class="tx">
+              <span class="stamp">01:20</span>
+              <span class="past"><span class="who">S1</span>So the first radios couldn't receive anything at all.</span>
+              <span class="past"><span class="who b">S2</span>They were transmitters, really. Shouting into the dark.</span>
+              <span class="music">♪ Music · 14s</span>
+              <span class="stamp">01:42</span>
+              <span class="now"><span class="who">S1</span>And then somebody thought: what if we listened back?</span>
+              <span><span class="who b">S2</span>Which changes everything.</span>
+              <span class="adband"><span>Ad 02:10–03:30 · skipped</span><b>Play ad</b></span>
+              <span class="stamp">03:30</span>
+              <span><span class="who">S1</span>Back to the harbour, then.</span>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-player">
+      <div class="split">
+        <div>
+          <span class="eyebrow"><span class="led"></span>The player</span>
+          <h2 id="h-player">A tape deck in your pocket.</h2>
+          <p>A dark display with a big counter and a segmented progress bar you drag to scrub. Keys that press down, with lights that show what's switched on. Underneath are the controls podcast listeners actually use.</p>
+          <ul class="ticks">
+            <li>Speed from 1.0× to 2.0×, with voices kept natural.</li>
+            <li><strong>Trim silences</strong> speeds through pauses; <strong>Boost voices</strong> evens out quiet and loud speakers.</li>
+            <li>Skip back and forward set separately (5, 10, 15, 30 or 60 seconds). Touch and hold a skip key to change it on the spot.</li>
+            <li>Sleep timer, from 5 minutes to the end of the episode.</li>
+            <li>Chapters from the show, or made automatically from the transcript.</li>
+            <li>Play on AirPods, speakers, your TV or the car, with "On: …" so you know where the sound is going.</li>
+            <li>Share a 5 to 30 second clip from any line as a quote card, with audio or as a short video.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <h4>SHARE A CLIP</h4>
+            <div class="clip">
+              <q>And then somebody thought: what if we listened back?</q>
+              <small>The Long Signal · Ep 142 · 01:42</small>
+            </div>
+            <div class="sub" style="display:flex;justify-content:space-between"><span>Length</span><span>15 sec</span></div>
+            <div class="wave" aria-hidden="true" id="wave"></div>
+            <div class="row-keys"><span class="mkey">−5</span><span class="mkey">+5</span></div>
+            <div class="setting"><span>Include audio</span><span class="mkey dark"><span class="mled on"></span>On</span></div>
+            <div class="setting"><span>Video card</span><span class="mkey"><span class="mled"></span>Off</span></div>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="everything" aria-labelledby="h-all">
+      <div style="display:grid;gap:28px">
+        <div style="display:grid;gap:10px">
+          <span class="eyebrow"><span class="led"></span>Everything else</span>
+          <h2 id="h-all">The rest of what's inside.</h2>
+        </div>
+        <div class="index">
+          <div><h3><span class="led"></span>Downloads that tidy up</h3><p>New episodes from your auto-add shows download in the background, on Wi-Fi only if you like. Finished episodes are deleted straight away, or kept for 24 hours.</p></div>
+          <div><h3><span class="led"></span>Keep playing</h3><p>When Up Next runs out, Poddeck carries on with this week's new episodes from your shows, in the same order the queue would use.</p></div>
+          <div><h3><span class="led"></span>Alerts that say where</h3><p>Turn on the bell for a show and the alert tells you where the new episode went: "Added to the top of Up Next".</p></div>
+          <div><h3><span class="led"></span>Discover</h3><p>Search Apple's podcast directory, browse by category, see the UK top charts and get "Because you listen to…" suggestions.</p></div>
+          <div><h3><span class="led"></span>Clips and bookmarks</h3><p>Share a clip as a quote card, with the audio, a link to the moment, or as a short video. Every clip is saved to My clips.</p></div>
+          <div><h3><span class="led"></span>Tidy back catalogues</h3><p>Following a show with 500 episodes? Select all and mark them played, and only new ones will show as unplayed.</p></div>
+          <div><h3><span class="led"></span>Library</h3><p>New episodes as cassette-style cards with a label strip in each show's colour, and all your shows in a grid.</p></div>
+          <div><h3><span class="led"></span>Search</h3><p>Find a show, an episode or a line someone said, then play from that exact moment or add it to Up Next.</p></div>
+          <div><h3><span class="led"></span>Bring your shows</h3><p>Search by name, or paste a link from Apple Podcasts or a show's RSS feed.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-private">
+      <div class="quiet">
+        <span class="eyebrow"><span class="led"></span>Private by design</span>
+        <h2 id="h-private">No account. No Poddeck server. No tracking.</h2>
+        <p>Transcripts, ad finding, speaker labels and chapter titles are all made on your iPhone. Poddeck talks only to the shows you follow and Apple's free podcast directory. Speaker labels download a small model once, the first time you use them.</p>
+      </div>
+    </section>
+
+    <section id="get" aria-labelledby="h-get">
+      <div class="download">
+        <img src="data:image/png;base64,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" alt="Poddeck icon">
+        <h2 id="h-get">Get Poddeck</h2>
+        <p class="lede" id="get-status">Poddeck is coming to TestFlight, Apple's app for trying apps before they reach the App Store. The download link will appear here.</p>
+        <a class="key accent download-link" id="testflight" href="#get" aria-disabled="true">Coming soon to TestFlight</a>
+        <div class="steps">
+          <div><b>01 Install TestFlight</b><span>It's free from the App Store and made by Apple.</span></div>
+          <div><b>02 Open the invite</b><span>Tap the Poddeck link on your iPhone and choose Accept.</span></div>
+          <div><b>03 Install Poddeck</b><span>Needs an iPhone on iOS 27. Updates arrive in TestFlight.</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Poddeck · a personal podcast app for iPhone</span>
+    <span>Show names on this page are examples.</span>
+  </footer>
+</div>
+
+<script>
+// Paste the TestFlight public link here once Apple has approved the account.
+const TESTFLIGHT_URL = "";
+
+(function setUpDownload() {
+  if (!TESTFLIGHT_URL) return;
+  for (const link of document.querySelectorAll(".download-link")) {
+    link.href = TESTFLIGHT_URL;
+    link.removeAttribute("aria-disabled");
+  }
+  document.getElementById("testflight").textContent = "Download on TestFlight";
+  document.getElementById("get-status").textContent = "Poddeck is on TestFlight, Apple's app for trying apps before they reach the App Store.";
+})();
+
+// Segmented progress bars, like the app's: played segments lit, ads in amber.
+function segments(id, count, played, ads) {
+  const bar = document.getElementById(id);
+  bar.replaceChildren(...Array.from({ length: count }, (_, i) => {
+    const seg = document.createElement("i");
+    const mid = (i + 0.5) / count;
+    if (ads.some(([a, b]) => mid >= a && mid <= b)) seg.className = "ad";
+    else if (mid <= played) seg.className = "on";
+    return seg;
+  }));
+}
+segments("hero-seg", 30, 0.41, [[0.40, 0.47], [0.72, 0.77]]);
+segments("np-seg", 30, 0.62, [[0.2, 0.25]]);
+
+// The Up Next demo uses the same rules as the app:
+// each show stays oldest first; a new Top episode goes straight after its show's
+// queued episodes, otherwise above lower-ranked Top shows; Bottom goes to the end.
+const SHOWS = {
+  LS: { name: "The Long Signal", color: "var(--art-1)", mode: "top", rank: 0, titles: ["The ear that came first", "Static, mapped", "Night signals", "Listening back"] },
+  TW: { name: "Tidewater Weekly", color: "var(--art-2)", mode: "top", rank: 1, titles: ["The salt road", "Neap tide", "Harbour pilots", "Mudflat maps"] },
+  FN: { name: "Field Notes FM", color: "var(--art-4)", mode: "bottom", titles: ["Hedgerow economics", "The rook census", "Dawn chorus, counted", "Moth night"] },
+  SM: { name: "Small Machines", color: "var(--art-3)", mode: "off" }
+};
+const START = [
+  { show: "TW", title: "Low tide, high stakes", day: 1, manual: false, length: "48:10", downloaded: true },
+  { show: "TW", title: "Harbour lights", day: 4, manual: false, length: "52:30", downloaded: true },
+  { show: "SM", title: "Chips, revisited", day: 3, manual: true, length: "31:05", downloaded: false },
+  { show: "FN", title: "The quiet economics of birdsong", day: 2, manual: false, length: "39:44", downloaded: false }
+];
+const LENGTHS = ["44:12", "57:08", "36:40", "1:02:15", "41:30"];
+let queue, released, day;
+
+function reset() {
+  queue = START.map(e => ({ ...e }));
+  released = { LS: 0, TW: 0, FN: 0 };
+  day = 5;
+  render(null);
+  document.getElementById("explain").innerHTML = "Up Next has two Tidewater Weekly episodes, a Field Notes episode and one you added yourself.";
+}
+
+function insert(ep) {
+  const show = SHOWS[ep.show];
+  const lastSame = queue.map(e => e.show).lastIndexOf(ep.show);
+  if (lastSame >= 0) {
+    queue.splice(lastSame + 1, 0, ep);
+    return `Added straight after the last ${show.name} episode, so the show stays in order.`;
+  }
+  if (show.mode === "bottom") {
+    queue.push(ep);
+    return `${show.name} is a Bottom show, so it goes to the end of Up Next.`;
+  }
+  // Top show with nothing queued: above every lower-ranked Top episode.
+  let at = queue.findIndex(e => !e.manual && (SHOWS[e.show].mode !== "top" || SHOWS[e.show].rank > show.rank));
+  if (at < 0) at = queue.length;
+  queue.splice(at, 0, ep);
+  return show.rank === 0
+    ? `${show.name} is your favourite Top show, so it goes above every other show (your own picks stay first).`
+    : `Added above lower-ranked shows and below The Long Signal, your favourite.`;
+}
+
+function tagFor(ep) {
+  if (ep.manual) return "YOU";
+  const show = SHOWS[ep.show];
+  return show.mode === "top" ? `TOP${show.rank + 1}` : "BTM";
+}
+
+function render(freshEp) {
+  const list = document.getElementById("queue");
+  list.replaceChildren(...queue.map((ep, index) => {
+    const show = SHOWS[ep.show];
+    const row = document.createElement("div");
+    row.className = "track" + (ep === freshEp ? " fresh" : "");
+    row.innerHTML = `<span class="n">${String(index + 1).padStart(2, "0")}</span>
+      <span class="t"><div class="title"></div><div class="meta"><span class="tag">${tagFor(ep)}</span><span>${show.name}</span></div></span>
+      <span class="right"><span>${ep.length}</span><span class="lights"><span class="mled ${ep.downloaded ? "ink" : ""}"></span><span class="mled"></span></span></span>`;
+    row.querySelector(".title").textContent = ep.title;
+    return row;
+  }));
+  document.getElementById("count").textContent = `${queue.length} episodes`;
+  if (freshEp) setTimeout(() => { for (const r of list.querySelectorAll(".fresh")) r.classList.remove("fresh"); }, 1600);
+}
+
+for (const button of document.querySelectorAll(".arrivals [data-show]")) {
+  button.addEventListener("click", () => {
+    const key = button.dataset.show;
+    const show = SHOWS[key];
+    const title = show.titles[released[key] % show.titles.length];
+    released[key] += 1;
+    const ep = { show: key, title, day: day++, manual: false, length: LENGTHS[day % LENGTHS.length], downloaded: true };
+    const why = insert(ep);
+    render(ep);
+    document.getElementById("explain").innerHTML = `<strong>New: ${title}.</strong> ${why}`;
+  });
+}
+document.getElementById("reset-queue").addEventListener("click", reset);
+reset();
+
+// Clip waveform bars (decorative).
+(function drawWave() {
+  const wave = document.getElementById("wave");
+  const heights = [30, 55, 40, 80, 62, 95, 70, 45, 85, 60, 38, 72, 90, 52, 34, 66, 48, 28, 58, 40, 24, 46, 30, 20];
+  wave.replaceChildren(...heights.map((h, i) => {
+    const bar = document.createElement("i");
+    bar.style.height = h + "%";
+    if (i < 12) bar.className = "sel";
+    return bar;
+  }));
+})();
+</script>
