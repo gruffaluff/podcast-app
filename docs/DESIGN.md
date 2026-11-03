@@ -1,5 +1,10 @@
 # Design spec
 
+> **Superseded look (Nov 2026):** the app now uses the "Tape Deck" look
+> (see CLAUDE.md and `App/Theme.swift`). The screen structure below still
+> applies; the colours, type and player theming in "Look" are the original
+> design and no longer current.
+
 Minimal, calm and functional, inspired by the Claude app. The reference
 mockups are the `.dc.html` files in `/design` (one per screen, 390×844 phone
 frames). They are layout references, not runnable pages: they rely on the
