@@ -90,7 +90,7 @@ final class LibraryStore {
 
     /// Follows the show at `feedURL` (or returns it if already followed).
     @discardableResult
-    func follow(feedURL: URL) async throws -> Podcast {
+    func follow(feedURL: URL, downloadLatest: Bool = true) async throws -> Podcast {
         let key = feedURL.absoluteString
         if let existing = podcast(feedURL: key) { return existing }
         let feed = try await FeedClient.fetchFeed(feedURL)
@@ -110,7 +110,7 @@ final class LibraryStore {
         _ = apply(feed, to: show)
         // Only the newest episode downloads (following the Wi-Fi only setting).
         // Older ones stay unplayed; Paul can select them and mark them played.
-        if let latest = latestEpisode(of: show) { downloads?.download(latest, automatic: true) }
+        if downloadLatest, let latest = latestEpisode(of: show) { downloads?.download(latest, automatic: true) }
         save()
         return show
     }
@@ -123,6 +123,40 @@ final class LibraryStore {
         guard let feedURL = try? await FeedClient.lookup(appleID: "1465290044")?.feedURL,
               (try? await follow(feedURL: feedURL)) != nil else { return }
         UserDefaults.standard.set(true, forKey: key)
+    }
+
+    /// Follows every show in an OPML file from another app. Shows already
+    /// followed are skipped; nothing downloads (that could be dozens of
+    /// episodes at once), and nothing is added to Up Next until new
+    /// episodes arrive, by the usual rules (new shows start on Bottom).
+    func importShows(_ shows: [OPML.Show], progress: @MainActor (Int) -> Void) async -> ImportResult {
+        var result = ImportResult()
+        for (index, show) in shows.enumerated() {
+            progress(index)
+            if podcast(feedURL: show.feedURL.absoluteString) != nil {
+                result.alreadyFollowed += 1
+            } else if (try? await follow(feedURL: show.feedURL, downloadLatest: false)) != nil {
+                result.added += 1
+            } else {
+                result.failed.append(show.title)
+            }
+        }
+        progress(shows.count)
+        return result
+    }
+
+    struct ImportResult {
+        var added = 0
+        var alreadyFollowed = 0
+        var failed: [String] = []
+    }
+
+    /// Every followed show, for exporting to another app.
+    var showListOPML: String {
+        let shows = allPodcasts.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        return OPML.make(shows.compactMap { show in
+            URL(string: show.feedURL).map { OPML.Show(title: show.title, feedURL: $0) }
+        })
     }
 
     func latestEpisode(of show: Podcast) -> PodcastEpisode? {

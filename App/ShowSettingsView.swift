@@ -257,6 +257,8 @@ struct TopPriorityView: View {
             }
             .listRowBackground(Theme.background)
 
+            ImportExportSection()
+
             Section {
                 HStack(spacing: 8) {
                     LED(on: CloudSync.isSignedIn, color: Theme.accentFill)
