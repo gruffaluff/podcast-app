@@ -21,6 +21,23 @@ to TestFlight. Paul installs each build from the TestFlight app on his iPhone.
 3. Let the CI create and manage signing using that API key (automatic
    signing via `xcodebuild -allowProvisioningUpdates` with the API key, or
    fastlane match). No Mac keychain needed.
+4. iCloud sync (`Config/Podcasts.entitlements`): in Certificates,
+   Identifiers & Profiles, turn on **iCloud** (with CloudKit) and **Push
+   Notifications** for the app ID `com.gruffaluff.podcasts`, and create the
+   iCloud container `iCloud.com.gruffaluff.podcasts`. Automatic signing
+   with `-allowProvisioningUpdates` can do this itself.
+5. CloudKit schema (no Mac needed): the entitlements start with
+   `com.apple.developer.icloud-container-environment` = Development, so the
+   first TestFlight build creates the record types (CD_Podcast,
+   CD_PodcastEpisode, CD_UpNextEntry, CD_Bookmark) as it saves. Once Paul
+   has used it a little, sign in to the CloudKit Console
+   (icloud.developer.apple.com), check the record types exist, and
+   **Deploy Schema Changes** to Production. Then change the entitlement to
+   Production and ship the next build. Do this again (deploy first) after
+   any change to the SwiftData models in `App/Models.swift`. Note: data
+   saved while on Development doesn't move to Production by itself; after
+   switching, check in the CloudKit Console that the phone's library has
+   arrived in Production.
 
 ## GitHub repository secrets
 

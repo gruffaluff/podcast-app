@@ -33,6 +33,9 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         # Extra keys (background audio, http feeds) merged with the generated ones.
         INFOPLIST_FILE: Config/Info.plist
+        # iCloud sync. Only used by signed builds; the unsigned test build
+        # ignores it and keeps everything on the device.
+        CODE_SIGN_ENTITLEMENTS: Config/Podcasts.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Podspot
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

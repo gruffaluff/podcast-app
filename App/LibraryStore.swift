@@ -39,6 +39,8 @@ final class LibraryStore {
     @ObservationIgnored weak var downloads: DownloadManager?
     /// Set by `TranscriptService` so new and downloaded episodes get transcripts.
     @ObservationIgnored weak var transcripts: TranscriptService?
+    /// Pending tidy-up after changes arrive from iCloud (see CloudSync.swift).
+    @ObservationIgnored var cloudTidyTask: Task<Void, Never>?
 
     init(context: ModelContext) {
         self.context = context
@@ -47,6 +49,7 @@ final class LibraryStore {
         self.keepPlayingNew = UserDefaults.standard.object(forKey: "keepPlayingNew") as? Bool ?? true
         self.keepPlayedDownloads = UserDefaults.standard.bool(forKey: "keepPlayedDownloads")
         loadQueue()
+        observeCloudChanges()
     }
 
     // MARK: Lookups
@@ -116,7 +119,7 @@ final class LibraryStore {
     /// (Paul's pick) so there's something to play straight away.
     func followStarterShowIfNeeded() async {
         let key = "starterShowFollowed"
-        guard !UserDefaults.standard.bool(forKey: key), allPodcasts.isEmpty else { return }
+        guard !UserDefaults.standard.bool(forKey: key), !SettingsSync.starterShowFollowedInCloud, allPodcasts.isEmpty else { return }
         guard let feedURL = try? await FeedClient.lookup(appleID: "1465290044")?.feedURL,
               (try? await follow(feedURL: feedURL)) != nil else { return }
         UserDefaults.standard.set(true, forKey: key)
@@ -398,19 +401,31 @@ final class LibraryStore {
     private func commit(_ newQueue: [QueueItem]) {
         queue = newQueue
         let existing = (try? context.fetch(FetchDescriptor<UpNextEntry>())) ?? []
-        for entry in existing { context.delete(entry) }
+        // Rows for episodes not on this iPhone yet (still arriving from
+        // iCloud) are kept, so a sync in progress never loses them.
+        let here = episodes(existing.map(\.episodeID))
+        for entry in existing where here[entry.episodeID] != nil { context.delete(entry) }
         for (index, item) in newQueue.enumerated() {
             context.insert(UpNextEntry(episodeID: item.episode.id, manual: item.source == .manual, order: index))
         }
         save()
     }
 
+    /// Re-reads Up Next after iCloud changed it (only if it differs).
+    func reloadQueueFromSaved() {
+        let before = queue.map(\.episode.id)
+        loadQueue()
+        if queue.map(\.episode.id) != before { transcripts?.prepareUpNext() }
+    }
+
     private func loadQueue() {
         let descriptor = FetchDescriptor<UpNextEntry>(sortBy: [SortDescriptor(\.order)])
         let entries = (try? context.fetch(descriptor)) ?? []
         let found = episodes(entries.map(\.episodeID))
+        var seen = Set<String>()
         queue = entries.compactMap { entry in
-            found[entry.episodeID].map { QueueItem(episode: $0.queueEpisode, source: entry.manual ? .manual : .auto) }
+            guard seen.insert(entry.episodeID).inserted else { return nil }
+            return found[entry.episodeID].map { QueueItem(episode: $0.queueEpisode, source: entry.manual ? .manual : .auto) }
         }
     }
 

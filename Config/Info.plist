@@ -8,6 +8,8 @@
 		<string>audio</string>
 		<string>processing</string>
 		<string>fetch</string>
+		<!-- Hear about changes from iCloud sync. -->
+		<string>remote-notification</string>
 	</array>
 	<!-- Overnight transcription while charging. -->
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
