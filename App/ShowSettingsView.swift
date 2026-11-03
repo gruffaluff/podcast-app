@@ -215,7 +215,7 @@ struct TopPriorityView: View {
             } header: {
                 DeckHeader(title: "Ads")
             } footer: {
-                Text("While a downloaded episode plays, Podspot checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
+                Text("While a downloaded episode plays, Poddeck checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
             }
             .listRowBackground(Theme.background)
 
@@ -271,8 +271,8 @@ struct TopPriorityView: View {
                 DeckHeader(title: "iCloud")
             } footer: {
                 Text(CloudSync.isSignedIn
-                     ? "Your shows, Up Next, progress, bookmarks and settings are saved to your iCloud, so they come back if you reinstall Podspot or get a new iPhone. Downloads and transcripts stay on this iPhone; downloads come back by themselves."
-                     : "Sign in to iCloud in the Settings app to keep your shows, Up Next and progress safe if you reinstall Podspot. Everything is still saved on this iPhone.")
+                     ? "Your shows, Up Next, progress, bookmarks and settings are saved to your iCloud, so they come back if you reinstall Poddeck or get a new iPhone. Downloads and transcripts stay on this iPhone; downloads come back by themselves."
+                     : "Sign in to iCloud in the Settings app to keep your shows, Up Next and progress safe if you reinstall Poddeck. Everything is still saved on this iPhone.")
             }
             .listRowBackground(Theme.background)
         }

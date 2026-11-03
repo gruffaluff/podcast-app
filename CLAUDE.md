@@ -7,11 +7,14 @@ original screen mockups are in `design/`.
 
 ## What this is
 
-**Podspot** (Paul's name; icon: a sound wave turning into headphones,
-off-white on terracotta, drawn by `design/icon/make_icon.py`. The first
-design looked too like an existing logo; Paul chose **option C**: a
-headband over a sound wave that runs between the ear cups. Options A–C in
-`design/icon/options.png`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
+**Poddeck** (Paul's name, Nov 2026, to fit the Tape Deck look; it was
+"Podspot", but "PodSpot: Find My Headphones" already exists on the App
+Store and app names must be unique. If "Poddeck" turns out to be taken in
+App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
+screen. Icon: **option D, a cassette** (ink shell, orange label, two lit
+reels on the grey panel), drawn by `design/icon/make_deck_icon.py`; options
+in `design/icon/deck_options.png`. Earlier Podspot icons: `make_icon.py`,
+`options.png`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
@@ -196,7 +199,7 @@ Function matters more than look to Paul.
 
 ## Website
 
-- Showcase page: `website/podspot.html`, published as a private claude.ai
+- Showcase page: `website/poddeck.html`, published as a private claude.ai
   page (https://claude.ai/artifact/AQnieLZr5m9vCoNU9GoWpn); republish from
   that file to keep the same link. Only Paul can open it until he shares it.
 - Same look as the app; feature sections with phone mock-ups, a live Up
@@ -329,6 +332,9 @@ Function matters more than look to Paul.
   `Config/Podcasts.entitlements`; OPML import/export (`PodcastCore/Feed/
   OPML.swift`, tested). iCloud only switches on in signed builds: needs the
   Apple account, then the one-off CloudKit steps in `docs/SETUP.md`.
+- Done (rename): app, website and docs say Poddeck; cassette icon (D) is
+  the app icon and the website's. The code project and bundle ID stay
+  `Podcasts` / `com.gruffaluff.podcasts` (invisible to Paul).
 - CI: GitHub's Apple-silicon Macs are sometimes unavailable ("job was not
   acquired by runner"). Manual runs can pick the machine: run the Build
   workflow with `runner=macos-15-intel` (worked 3 Nov 2026).
@@ -339,12 +345,6 @@ Function matters more than look to Paul.
 
 ## Open questions for Paul
 
-- **Name**: keep Podspot or change to **Poddeck** (fits Tape Deck)? Note
-  "PodSpot: Find My Headphones" already exists on the App Store, and App
-  Store Connect app names must be unique even for TestFlight-only apps.
-- **Icon**: the current icon (option C) is in the old terracotta colours.
-  Tape Deck options D (cassette), E (level meter) and G (option C in Tape
-  Deck colours) are in `design/icon/deck_options.png`
-  (`design/icon/make_deck_icon.py`).
-- Earlier ones all answered. (Answered: name Podspot + icon; Apple Podcasts has no export,
-  links supported instead; speaker labels added now, can be removed.)
+- None open. (Answered: name Poddeck + cassette icon D; earlier: Apple
+  Podcasts has no export, links supported instead; speaker labels added
+  now, can be removed.)
