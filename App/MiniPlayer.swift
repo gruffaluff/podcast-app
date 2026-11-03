@@ -1,4 +1,5 @@
 import SwiftUI
+import PodcastCore
 
 extension View {
     /// Shows the "now playing" bar at the bottom of a tab while something is loaded.
