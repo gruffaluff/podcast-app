@@ -119,7 +119,11 @@ struct ShowPreviewView: View {
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { expanded = isOpen ? nil : episode.guid } }
+        .onTapGesture {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { expanded = isOpen ? nil : episode.guid }
+        }
     }
 
     private func load() async {

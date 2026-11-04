@@ -184,6 +184,8 @@ struct EpisodeLights: View {
                 .frame(width: 7, height: 7)
             Text(text)
                 .font(Theme.mono(9, .semibold))
+                .lineLimit(1)
+                .fixedSize()
                 .foregroundStyle(state == .off ? (onDark ? Theme.displayDim : Theme.muted) : (onDark ? Theme.displayText : Theme.ink))
         }
     }

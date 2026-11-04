@@ -145,7 +145,10 @@ struct ShowView: View {
         return VStack(alignment: .leading, spacing: 10) {
             EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode), expanded: isOpen)
                 .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.2)) { expanded = isOpen ? nil : episode.episodeID }
+                    // No animation: List resizing rows animates jerkily.
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) { expanded = isOpen ? nil : episode.episodeID }
                 }
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint(isOpen ? "Hides the notes" : "Shows the notes and actions")
@@ -227,8 +230,8 @@ struct ShowView: View {
     }
 }
 
-/// The keys under an opened episode row.
-private struct EpisodeActions: View {
+/// The keys under an opened episode row (and on the episode page).
+struct EpisodeActions: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @Environment(DownloadManager.self) private var downloads
