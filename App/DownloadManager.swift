@@ -176,7 +176,17 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, @unc
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        // Pushes from iCloud when the alerts job finds a new episode.
+        application.registerForRemoteNotifications()
         return true
+    }
+
+    /// A push from the new-episode alerts job: check feeds now so Up Next and
+    /// downloads are ready (the push itself already showed any alert).
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {
+        guard RealtimeAlerts.isAlertsPush(userInfo) else { return .noData }
+        await AppServices.store?.refreshAll(postAlerts: false)
+        return .newData
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {

@@ -92,9 +92,21 @@ Function matters more than look to Paul.
   speakers). Later: smart lists, folders, extra Podcasting 2.0 tags.
   Off-phone transcription: not now (Groq-type services are pennies a
   month if ever wanted).
-- **Next (needs Paul's one-off setup)**: real-time new-episode alerts
-  (free: GitHub Actions on a timer + CloudKit public database push), and
-  Home/Lock Screen widgets + Control Centre button (needs an App Group).
+- **Real-time new-episode alerts** (free; Paul approved 4 Nov 2026):
+  `.github/workflows/alerts.yml` runs `scripts/new_episode_alerts.py`
+  every ~15 min on GitHub's Linux machines. It reads the shows Paul
+  follows from the "follows" record the app keeps in the CloudKit public
+  database (`App/RealtimeAlerts.swift`), remembers what it has seen
+  ("alert-state" record) and saves a PoddeckAlertEpisode (bell on:
+  visible "New from …" alert) or PoddeckQuietEpisode (silent push that
+  refreshes Up Next) record per new episode; the app subscribes to both.
+  CloudKit server-to-server key ID is in alerts.yml (not secret); the
+  private key is only in `.github/cloudkit-key.enc`, encrypted with the
+  CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the
+  Development CloudKit environment, like the app's builds; switch
+  CLOUDKIT_ENV to production with the entitlement.
+- **Next (needs Paul's one-off setup)**: Home/Lock Screen widgets +
+  Control Centre button (needs an App Group and a widget App ID).
 - Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
   subscription list, so there is no OPML import from it).
 - **Import & export** (Shows screen): import an OPML file from another

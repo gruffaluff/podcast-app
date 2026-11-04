@@ -212,7 +212,9 @@ final class LibraryStore {
     // MARK: Checking for new episodes
 
     /// Checks every followed show and adds fresh episodes to Up Next by the queue rules.
-    func refreshAll() async {
+    /// Checks every feed. `postAlerts: false` when an iCloud push already
+    /// showed the alert (see RealtimeAlerts).
+    func refreshAll(postAlerts: Bool = true) async {
         guard !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
@@ -249,8 +251,9 @@ final class LibraryStore {
         let freshEpisodes = episodes(fresh.map(\.id))
         let freshModels = fresh.compactMap { freshEpisodes[$0.id] }
         downloads?.autoDownload(freshModels)
-        NewEpisodeAlerts.post(for: freshModels, queue: queue)
+        if postAlerts { NewEpisodeAlerts.post(for: freshModels, queue: queue) }
         cleanUpPlayedDownloads()
+        await RealtimeAlerts.publishFollows(store: self)
         transcripts?.prepareUpNext()
     }
 
