@@ -60,8 +60,10 @@ Function matters more than look to Paul.
   Add a show opens its page (artwork, description, Follow, latest
   episodes with notes on tap; "Open show" once followed). Episodes can't
   be played until the show is followed.
-- **Show page**: FOLLOWING (tap to unfollow) and a settings key (showing
-  Off/Top/Bottom) sit under the show's title and tags. Tapping an episode
+- **Show page**: FOLLOWING (tap to unfollow), a settings key (showing
+  Off/Top/Bottom) and a bell key (new-episode alerts on/off, lit when on;
+  Paul wanted it on the page, not in a menu) sit under the show's title
+  and tags. Tapping an episode
   shows its keys, not its full notes: Play/Resume, Play next, Play last on
   one row; Download, TX (transcribe), Played and NOTES (opens the episode
   page) on the next. Tap again to close. Search box for the show's
