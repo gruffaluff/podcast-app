@@ -106,6 +106,15 @@ Function matters more than look to Paul.
   (not secret; the Development key is a3fe…, same key pair); the
   private key is only in `.github/cloudkit-key.enc`, encrypted with the
   CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the Production CloudKit environment (TestFlight builds always do).
+- **Subscriber (private) feeds** (Patreon, Supercast, Substack, Memberful,
+  Acast+ etc.): pasting the private RSS link in Add a show works (the key
+  is in the link). Feeds that need a username and password aren't
+  supported yet. Privacy (4 Nov 2026): the follows record is sealed to the
+  alerts job's key (P-256 ECDH + HKDF-SHA256 "poddeck-follows" + AES-GCM,
+  `RealtimeAlerts.seal` / `followed_feeds`), because public-database
+  records are readable by anyone using the app; the job's saved state and
+  alert records hold only fingerprints of feed links and GUIDs; the job's
+  logs (public repo) never print feed links or titles.
 - **Widgets** (Paul set up the App Group `group.com.gruffaluff.podcasts`
   and App ID `com.gruffaluff.podcasts.widgets`, 4 Nov 2026): extension
   `Widgets/` (target PoddeckWidgets). Up Next widget (small: what's
