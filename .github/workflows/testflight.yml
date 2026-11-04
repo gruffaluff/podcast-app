@@ -64,7 +64,12 @@ jobs:
           cp Config/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
           /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
 
-      - name: Build and sign (archive)
+      # The archive is only signed "to run locally" (which keeps the iCloud
+      # and push entitlements in it). Automatic signing at archive time would
+      # want a development profile, which needs a registered iPhone. The
+      # real App Store signing happens in the upload step, using Apple's
+      # cloud-managed distribution certificate through the API key.
+      - name: Build (archive)
         if: steps.secrets.outputs.ready == 'true'
         run: |
           xcodebuild archive \
@@ -73,12 +78,10 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/Podcasts.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY=- \
+            PROVISIONING_PROFILE_SPECIFIER= \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             > archive.log 2>&1 || {
               echo "---- last lines ----"; tail -60 archive.log
