@@ -86,7 +86,12 @@ document.getElementById('create').onclick = () => {
     firesOn: ['create'], notificationInfo: info,
   });
   db.saveSubscriptions([
-    subscription('new-episode-alerts', 'PoddeckAlertEpisode', { alertBody: 'New episode', soundName: 'default', shouldSendContentAvailable: true }),
+    // Exactly the fields App/RealtimeAlerts.swift sets (the live side only
+    // accepts notification fields the Development side has seen).
+    subscription('new-episode-alerts', 'PoddeckAlertEpisode', {
+      alertLocalizationKey: 'New from %1$@: %2$@', alertLocalizationArgs: ['showTitle', 'episodeTitle'],
+      soundName: 'default', shouldSendContentAvailable: true,
+    }),
     subscription('new-episode-updates', 'PoddeckQuietEpisode', { shouldSendContentAvailable: true }),
   ]).then((response) => {
     if (response.hasErrors) {
