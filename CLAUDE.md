@@ -402,6 +402,12 @@ Function matters more than look to Paul.
   one GitHub Mac build; if public-repo Mac builds run free, move the
   automatic uploads back to GitHub and keep Codemagic as the backup (and
   vice versa if not). Both use `scripts/ci_testflight.sh`-style steps.
+  Codemagic works: build 102 (4 Nov 2026) uploaded and processing; the
+  first Codemagic build caught a missing bracket that the blocked GitHub
+  check never saw. Changes touching only docs, website, design or
+  `.github` don't trigger a Codemagic build. To check what Apple has
+  without a Mac: run the GitHub TestFlight workflow by hand with
+  `status_only` and `runner=ubuntu-latest` (Linux runs free).
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.

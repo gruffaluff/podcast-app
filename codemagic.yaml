@@ -23,6 +23,14 @@ workflows:
         - pattern: main
           include: true
       cancel_previous_builds: true
+    # Don't spend free minutes on changes that don't touch the app.
+    when:
+      changeset:
+        excludes:
+          - '**/*.md'
+          - 'website/**'
+          - 'design/**'
+          - '.github/**'
     scripts:
       - name: Build, sign and upload to TestFlight
         script: |
