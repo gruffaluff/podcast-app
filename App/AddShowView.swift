@@ -29,10 +29,10 @@ struct AddShowView: View {
                     .foregroundStyle(Theme.accentText)
                     .listRowBackground(Theme.background)
                 }
+                // Tap a show for its page (description and episodes); the
+                // Follow key follows it straight away.
                 ForEach(results) { show in
-                    ResultRow(show: show, state: state(for: show)) {
-                        if let url = show.feedURL { follow(url) }
-                    }
+                    DirectoryItemRow(item: DirectoryItem(show))
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.hairline)
                 }
@@ -58,6 +58,8 @@ struct AddShowView: View {
                 ShowSettingsView(show: show, justFollowed: true)
             }
             .navigationTitle("ADD A SHOW")
+            .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
+            .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

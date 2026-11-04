@@ -15,6 +15,8 @@ struct ShowView: View {
     /// Select mode: tick episodes (or Select All), then mark them played/unplayed.
     @State private var selecting = false
     @State private var selection: Set<String> = []
+    /// The episode opened up to show its notes and keys (one at a time).
+    @State private var expanded: String?
 
     var body: some View {
         let allEpisodes = show.episodes.sorted { $0.published > $1.published }
@@ -106,8 +108,9 @@ struct ShowView: View {
             }
         }
         .sheet(isPresented: $showingSettings) { ShowSettingsView(show: show) }
-        .confirmationDialog("Mark all \(show.episodes.count) episodes as played?", isPresented: $confirmingMarkAll, titleVisibility: .visible) {
+        .alert("Mark all \(show.episodes.count) episodes as played?", isPresented: $confirmingMarkAll) {
             Button("Mark all as played") { store.markPlayed(show.episodes) }
+            Button("Cancel", role: .cancel) {}
         } message: {
             Text("They leave Up Next and stop showing as unplayed. You can undo this with Mark all as unplayed.")
         }
@@ -136,11 +139,21 @@ struct ShowView: View {
         EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode))
     }
 
+    /// Tap a row to open it (full notes and keys); tap again to close.
     private func episodeButton(_ episode: PodcastEpisode, allEpisodes: [PodcastEpisode]) -> some View {
-        Button { player.play(episode) } label: {
-            row(episode)
+        let isOpen = expanded == episode.episodeID
+        return VStack(alignment: .leading, spacing: 10) {
+            EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode), expanded: isOpen)
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) { expanded = isOpen ? nil : episode.episodeID }
+                }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(isOpen ? "Hides the notes" : "Shows the notes and actions")
+            if isOpen {
+                EpisodeActions(episode: episode)
+                    .padding(.bottom, 6)
+            }
         }
-        .buttonStyle(.plain)
         .contextMenu {
             EpisodeMenuItems(episode: episode)
             Button("Mark this and older as played", systemImage: "text.badge.checkmark") {
@@ -189,27 +202,78 @@ struct ShowView: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(4)
             }
-            VStack(alignment: .leading, spacing: 6) {
-                DeckHeader(title: "New episodes → Up Next")
-                DeckSwitch(options: [(label: "Off", value: AutoAddMode.off), (label: "Top", value: .top), (label: "Bottom", value: .bottom)], selection: autoAdd)
-                Text(autoAddExplanation)
-                    .font(.caption)
-                    .foregroundStyle(Theme.muted)
+            Button { showingSettings = true } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "slider.horizontal.3")
+                    Text("SHOW SETTINGS").font(Theme.mono(12, .bold))
+                    Spacer()
+                    Text("UP NEXT: \(modeName)").font(Theme.mono(11))
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 46)
             }
+            .buttonStyle(.key)
+            .padding(.bottom, 3)
         }
         .padding(.vertical, 8)
     }
 
-    private var autoAdd: Binding<AutoAddMode> {
-        Binding(get: { show.autoAdd }, set: { store.setAutoAdd($0, for: show) })
+    private var modeName: String {
+        switch show.autoAdd {
+        case .off: return "OFF"
+        case .top: return "TOP"
+        case .bottom: return "BOTTOM"
+        }
+    }
+}
+
+/// The keys under an opened episode row.
+private struct EpisodeActions: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @Environment(DownloadManager.self) private var downloads
+    @Environment(TranscriptService.self) private var transcripts
+    let episode: PodcastEpisode
+
+    var body: some View {
+        let queued = store.isQueued(episode)
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                key(episode.position > 30 && !episode.played ? "▶ RESUME" : "▶ PLAY", dark: true) { player.play(episode) }
+                key("PLAY NEXT") { store.playNext(episode) }
+                key(queued ? "IN UP NEXT" : "PLAY LAST") { store.playLast(episode) }
+                    .disabled(queued)
+            }
+            HStack(spacing: 8) {
+                if downloads.progress[episode.episodeID] != nil {
+                    key("STOP DL") { store.removeDownload(episode) }
+                } else if episode.downloadFile != nil {
+                    key("REMOVE DL") { store.removeDownload(episode) }
+                } else {
+                    key("↓ DOWNLOAD") { downloads.download(episode) }
+                }
+                if transcripts.canTranscribeNow(episode) {
+                    key("TRANSCRIBE") { transcripts.transcribeNow(episode) }
+                }
+                if episode.played {
+                    key("UNPLAYED") { store.markUnplayed(episode) }
+                } else {
+                    key("✓ PLAYED") { store.markPlayed(episode.episodeID) }
+                }
+            }
+        }
+        .padding(.bottom, 3)
     }
 
-    private var autoAddExplanation: String {
-        switch show.autoAdd {
-        case .off: return "New episodes stay here until you add them."
-        case .top: return "New episodes go near the top of Up Next, always in order, oldest first."
-        case .bottom: return "New episodes go to the end of Up Next, always in order, oldest first."
+    private func key(_ title: String, dark: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.mono(11, .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: 38)
         }
+        .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .plain, radius: 8))
     }
 }
 
@@ -218,6 +282,7 @@ private struct EpisodeRow: View {
     let episode: PodcastEpisode
     let isPlaying: Bool
     let isQueued: Bool
+    var expanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -233,9 +298,9 @@ private struct EpisodeRow: View {
                 .lineLimit(2)
             if !episode.summary.isEmpty {
                 Text(episode.summary)
-                    .font(.caption)
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(2)
+                    .font(expanded ? .subheadline : .caption)
+                    .foregroundStyle(expanded ? Theme.ink : Theme.muted)
+                    .lineLimit(expanded ? nil : 2)
             }
             HStack(spacing: 10) {
                 EpisodeLights(episode: episode)

@@ -37,11 +37,9 @@ Function matters more than look to Paul.
   Nothing calls Claude or any paid API at runtime.
 - Paul is not a developer. Explain changes in plain English, keep the build
   green, and tell him when a new TestFlight build is ready to try.
-- **After committing any change, ask Paul whether to update CLAUDE.md**
-  (e.g. Progress, decisions, open questions), and say what you'd change.
-  Don't skip this, even for small changes. Exception: when Paul says to
-  keep going through the steps, keep CLAUDE.md up to date yourself and
-  give him one summary (including what changed here) when the work is done.
+- **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
+  decisions, progress and open questions in the same change, without
+  asking first, and mention briefly what changed here in your reply.
 
 ## Features (decided)
 
@@ -55,6 +53,14 @@ Function matters more than look to Paul.
   Mark all as played (menu), "Mark this and older as played", swipe to mark
   played, and an Unplayed / All filter. The follow sheet offers "Mark
   older episodes as played" as a one-tap option.
+- **Show pages before following**: tapping a show in Discover, search or
+  Add a show opens its page (artwork, description, Follow, latest
+  episodes with notes on tap; "Open show" once followed). Episodes can't
+  be played until the show is followed.
+- **Show page**: Off/Top/Bottom lives in Show settings (a "Show settings"
+  key on the page, showing the current mode), not on the page itself.
+  Tapping an episode opens it (full notes plus Play/Resume, Play next,
+  Play last, Download, Transcribe, Played keys); tap again to close.
 - Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
   subscription list, so there is no OPML import from it).
 - **Import & export** (Shows screen): import an OPML file from another
@@ -290,6 +296,11 @@ Function matters more than look to Paul.
   by find-ads-while-listening (downloaded episodes) and from on-device
   transcripts, stored per episode (`syncAnchors`), plus "This is playing
   now" on any transcript line for a manual fix.
+- Done (second iPhone feedback, 4 Nov 2026): show preview pages
+  (`ShowPreviewView`) from Discover / Add a show; show page settings key
+  and expandable episodes (`EpisodeActions`); Mark all as played uses a
+  centred alert; Library cards: inset label strip, card edge shadow only
+  on the card shape (it outlined the artwork), play time on one line.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
