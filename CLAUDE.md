@@ -383,6 +383,14 @@ Function matters more than look to Paul.
 - Done (rename): app, website and docs say Poddeck; cassette icon (D) is
   the app icon and the website's. The code project and bundle ID stay
   `Podcasts` / `com.gruffaluff.podcasts` (invisible to Paul).
+- **GitHub Actions minutes (4 Nov 2026)**: the repo is private, so Mac
+  build time comes out of the free monthly allowance (about 200 Mac
+  minutes; Mac minutes count 10×). November used ~490 and the allowance
+  ran out: jobs now fail with "not acquired by runner". No paid running
+  costs allowed, so: build as little as possible (one Mac build per
+  change), and Paul is choosing between making the repo public (Actions
+  free, no limit), waiting for the monthly reset, or Xcode Cloud (25
+  free hours a month with the Apple Developer Program).
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.
