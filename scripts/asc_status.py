@@ -51,3 +51,26 @@ if "data" in builds:
         print("(none)")
 else:
     print(builds)
+
+print("== Build TestFlight states")
+details = get(f"/builds?filter[app]={app_id}&limit=10&sort=-uploadedDate&include=buildBetaDetail")
+for item in details.get("included", []):
+    if item["type"] == "buildBetaDetails":
+        print(json.dumps({"id": item["id"], **{k: item["attributes"].get(k) for k in ("internalBuildState", "externalBuildState", "autoNotifyEnabled")}}))
+for build in details.get("data", []):
+    print(build["attributes"].get("version"), "encryption:", build["attributes"].get("usesNonExemptEncryption"))
+
+print("== Beta groups and testers")
+groups = get(f"/apps/{app_id}/betaGroups")
+for group in groups.get("data", []):
+    a = group["attributes"]
+    testers = get(f"/betaGroups/{group['id']}/betaTesters")
+    print(json.dumps({"name": a.get("name"), "internal": a.get("isInternalGroup"), "allBuilds": a.get("hasAccessToAllBuilds"), "testers": len(testers.get("data", []))}))
+if not groups.get("data"):
+    print("(no tester groups yet)")
+
+print("== Distribution certificates")
+certs = get("/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION&limit=50")
+for cert in certs.get("data", []):
+    a = cert["attributes"]
+    print(json.dumps({"id": cert["id"], "name": a.get("name"), "type": a.get("certificateType"), "expires": a.get("expirationDate")}))
