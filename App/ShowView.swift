@@ -208,7 +208,6 @@ struct ShowView: View {
                     }
                     HStack(spacing: 6) {
                         DeckTag(text: "\(show.episodes.count) EPS")
-                        if show.notify { DeckTag(text: "BELL") }
                         if show.autoDownload { DeckTag(text: "AUTO DL") }
                     }
                     .padding(.top, 2)
@@ -233,6 +232,15 @@ struct ShowView: View {
                         }
                         .buttonStyle(KeyButtonStyle(radius: 8))
                         .accessibilityLabel("Show settings. New episodes: \(modeName)")
+                        Button { toggleAlerts() } label: {
+                            Image(systemName: show.notify ? "bell.fill" : "bell.slash")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(show.notify ? Theme.accentText : Theme.muted)
+                                .frame(width: 40, height: 36)
+                        }
+                        .buttonStyle(KeyButtonStyle(radius: 8))
+                        .accessibilityLabel(show.notify ? "New episode alerts on" : "New episode alerts off")
+                        .accessibilityHint("Turns alerts for this show on or off")
                     }
                     .padding(.top, 4)
                     .padding(.bottom, 3)
@@ -246,6 +254,14 @@ struct ShowView: View {
             }
         }
         .padding(.top, 8)
+    }
+
+    /// The bell: alerts when this show has a new episode.
+    private func toggleAlerts() {
+        show.notify.toggle()
+        store.save()
+        if show.notify { Task { await NewEpisodeAlerts.requestPermission() } }
+        Task { await RealtimeAlerts.publishFollows(store: store) }
     }
 
     private var modeName: String {
