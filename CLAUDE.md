@@ -269,8 +269,27 @@ Function matters more than look to Paul.
   TestFlight workflow (`.github/workflows/testflight.yml`) uploads on every
   merge to main; signing uses a distribution certificate and App Store
   profile issued per run through the API (`scripts/asc_signing.py`).
-  First upload: build 3. Next: Paul adds himself as an internal tester
-  (docs/SETUP.md step 7), then the one-off CloudKit schema deploy.
+  Build 3 was rejected (error 90129: bundle name "Podcasts" is Apple's own
+  app), so the bundle name is now Poddeck (`PRODUCT_NAME`; the Swift module
+  keeps `PRODUCT_MODULE_NAME: Podcasts`). Build 6 was the first accepted
+  build (valid, in internal testing); internal group "Me" has Paul, with
+  access to all builds. Each run revokes all but the newest older
+  distribution certificate, so Apple emails Paul "certificate revoked"
+  after builds: expected, not a problem. Check uploads, TestFlight states,
+  testers and certificates any time: run the TestFlight workflow with
+  "status_only" (`scripts/asc_status.py`). Next: the one-off CloudKit
+  schema deploy.
+- Done (first iPhone feedback, 4 Nov 2026; it runs on Paul's phone):
+  no now-playing panel on Up Next (the mini player covers it); empty Up
+  Next message is a row (the overlay overlapped the toggle); DL / TX
+  lights (`EpisodeLights`: downloaded or %, transcript ready or
+  transcribing) on Up Next, show pages, Library cards and the player
+  display; episode notes under the player keys and "Episode notes" in
+  episode menus (`EpisodeNotesView`); transcript sync past inserted ads
+  (`TranscriptAlign` in PodcastCore, tested): anchors from the words heard
+  by find-ads-while-listening (downloaded episodes) and from on-device
+  transcripts, stored per episode (`syncAnchors`), plus "This is playing
+  now" on any transcript line for a manual fix.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
@@ -341,7 +360,8 @@ Function matters more than look to Paul.
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.
-- To check on the phone first: Trim silences / Boost voices strength, ad
+- To check on the phone first: whether transcripts now stay in step
+  (streamed episodes rely on "This is playing now"), Trim silences / Boost voices strength, ad
   detection accuracy (rule-based; tune phrases), auto-chapter quality,
   Apple chart feeds (could not be reached from the build machine; Discover
   falls back to directory search).

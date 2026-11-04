@@ -93,6 +93,9 @@ struct RootView: View {
             NowPlayingView()
                 .presentationDragIndicator(.visible)
         }
+        .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
+            EpisodeNotesView(episode: episode)
+        }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
                 transcripts.scheduleBackgroundWork()

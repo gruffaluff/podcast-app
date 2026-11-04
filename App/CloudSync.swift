@@ -206,5 +206,6 @@ extension PodcastEpisode {
         dismissedAds = Array(Set(dismissedAds + other.dismissedAds)).sorted()
         adsChecked = adsChecked || other.adsChecked
         if autoChapters.isEmpty { autoChapters = other.autoChapters }
+        if syncAnchors.isEmpty { syncAnchors = other.syncAnchors }
     }
 }

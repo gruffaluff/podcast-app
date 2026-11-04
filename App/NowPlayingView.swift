@@ -28,6 +28,9 @@ struct NowPlayingView: View {
                         adKeys
                         modeKeys
                         bottomKeys
+                        if let episode = store.episode(item.episodeID) {
+                            EpisodeNotesText(episode: episode)
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 24)
@@ -89,6 +92,16 @@ struct NowPlayingView: View {
     private var display: some View {
         let shown = scrubTime ?? player.currentTime
         return DeckDisplay {
+            HStack {
+                if let episode = player.nowPlaying.flatMap({ store.episode($0.episodeID) }) {
+                    EpisodeLights(episode: episode, onDark: true)
+                }
+                Spacer()
+                Text(player.outputName.map { "ON: \($0.uppercased())" } ?? "ON: IPHONE")
+                    .font(Theme.mono(11))
+                    .foregroundStyle(Theme.displayDim)
+                    .lineLimit(1)
+            }
             HStack(alignment: .firstTextBaseline) {
                 Text(TimeFormat.clock(shown))
                     .font(Theme.mono(40, .bold))
@@ -108,8 +121,6 @@ struct NowPlayingView: View {
                     Text(PlayerOptions.speedLabel(player.speed) + (player.trimSilences ? " · TRIM" : "") + (player.boostVoices ? " · BOOST" : ""))
                 }
                 Spacer()
-                Text(player.outputName.map { "ON: \($0.uppercased())" } ?? "ON: IPHONE")
-                    .lineLimit(1)
             }
             .font(Theme.mono(11))
             .foregroundStyle(Theme.displayDim)

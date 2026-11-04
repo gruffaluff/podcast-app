@@ -237,9 +237,12 @@ private struct EpisodeRow: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(2)
             }
-            Text(meta.uppercased())
-                .font(Theme.mono(10))
-                .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
+            HStack(spacing: 10) {
+                EpisodeLights(episode: episode)
+                Text(meta.uppercased())
+                    .font(Theme.mono(10))
+                    .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
+            }
         }
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -139,6 +139,7 @@ private struct EpisodeCard: View {
                     .buttonStyle(.darkKey)
                     .accessibilityLabel("Play, \(playLabel)")
                     Spacer()
+                    EpisodeLights(episode: episode)
                     DownloadButton(episode: episode)
                     Menu {
                         EpisodeMenuItems(episode: episode)
@@ -209,6 +210,7 @@ struct EpisodeMenuItems: View {
 
     var body: some View {
         Button("Play", systemImage: "play") { player.play(episode) }
+        Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
         Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { store.playNext(episode) }
         Button("Play last", systemImage: "text.line.last.and.arrowtriangle.forward") { store.playLast(episode) }
         if downloads.progress[episode.episodeID] != nil {

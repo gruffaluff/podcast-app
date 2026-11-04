@@ -66,6 +66,7 @@ struct TranscriptView: View {
         }
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.adBreaksData) { load() }
+        .onChange(of: episode.syncAnchorsData) { load() }
     }
 
     private var subtitle: String {
@@ -76,7 +77,9 @@ struct TranscriptView: View {
     }
 
     private func load() {
-        transcript = transcripts.transcript(for: episode)
+        // Shown on the audio's clock: the show's transcript is shifted past
+        // the ads inserted into Paul's copy (see TranscriptAlign).
+        transcript = transcripts.transcript(for: episode).map { TranscriptAlign.aligned($0, anchors: episode.syncAnchors) }
         let ads = episode.adBreaks
         blocks = transcript.map { TranscriptLayout.blocks(for: $0, ads: ads) } ?? []
         // Publisher transcripts are just fetched; on-device ones follow the
@@ -170,6 +173,9 @@ struct TranscriptView: View {
             .onTapGesture { playFrom(line.start) }
             .contextMenu {
                 Button("Play from here", systemImage: "play") { playFrom(line.start) }
+                if isThisEpisodePlaying {
+                    Button("This is playing now", systemImage: "arrow.left.and.right.text.vertical") { syncHere(line) }
+                }
                 Button("Share clip", systemImage: "waveform") { clipLine = ClipRequest(line: line, quote: quote) }
                 Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = quote }
                 ShareLink(item: shareText(quote, at: line.start)) {
@@ -225,6 +231,16 @@ struct TranscriptView: View {
             if block.start > time { break }
         }
         return found
+    }
+
+    /// Out of step? Paul picks the line he's hearing; from there on the
+    /// transcript follows that timing.
+    private func syncHere(_ line: TranscriptLayout.Line) {
+        let anchors = episode.syncAnchors
+        let original = TranscriptAlign.transcriptTime(forAudio: line.start, anchors: anchors)
+        episode.syncAnchors = TranscriptAlign.adding(SyncAnchor(transcriptTime: original, offset: player.currentTime - original), to: anchors)
+        store.save()
+        follow = true
     }
 
     private func playFrom(_ time: TimeInterval) {

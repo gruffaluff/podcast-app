@@ -85,6 +85,9 @@ final class PodcastEpisode {
     var adScannedData: Data?
     /// Chapters made from the transcript (JSON `[Chapter]`).
     var autoChaptersData: Data?
+    /// Where the show's transcript lines up with Paul's audio (JSON
+    /// `[SyncAnchor]`): inserted ads shift everything after them.
+    var syncAnchorsData: Data?
     var chaptersURL: URL?
     /// Where playback stopped, in seconds.
     var position: TimeInterval = 0
@@ -128,6 +131,11 @@ final class PodcastEpisode {
     var dismissedAds: [TimeInterval] {
         get { dismissedAdsData.flatMap { try? JSONDecoder().decode([TimeInterval].self, from: $0) } ?? [] }
         set { dismissedAdsData = try? JSONEncoder().encode(newValue) }
+    }
+
+    var syncAnchors: [SyncAnchor] {
+        get { syncAnchorsData.flatMap { try? JSONDecoder().decode([SyncAnchor].self, from: $0) } ?? [] }
+        set { syncAnchorsData = try? JSONEncoder().encode(newValue) }
     }
 
     var autoChapters: [Chapter] {

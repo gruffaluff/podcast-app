@@ -258,6 +258,10 @@ final class TranscriptService {
             // and the timings of Paul's own download.
             saved = existing
             saved.music = transcript.music
+            // Our transcript has the download's real timings: line the
+            // show's up with it all the way through.
+            let anchors = TranscriptAlign.anchors(heard: transcript.segments, transcript: existing.segments)
+            if !anchors.isEmpty { episode.syncAnchors = anchors }
         }
         let name = TranscriptFiles.name(for: episode.episodeID)
         do {
