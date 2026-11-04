@@ -21,17 +21,23 @@ struct UpNextView: View {
                             }
                             .buttonStyle(.plain)
                             .swipeActions(edge: .trailing) {
-                                Button("Played") { store.markPlayed(episode.episodeID) }
-                                    .tint(Theme.ink)
-                                Button("Remove") { store.removeFromQueue(episode.episodeID) }
-                                    .tint(Theme.muted)
+                                Button("Played") {
+                                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                                }
+                                .tint(Theme.ink)
+                                Button("Remove") {
+                                    store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
+                                }
+                                .tint(Theme.muted)
                             }
                             .contextMenu {
                                 if transcripts.canTranscribeNow(episode) {
                                     Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
                                 }
                                 Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
-                                Button("Mark as played", systemImage: "checkmark.circle") { store.markPlayed(episode.episodeID) }
+                                Button("Mark as played", systemImage: "checkmark.circle") {
+                                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                                }
                                 Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
                             }
                         }

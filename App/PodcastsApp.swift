@@ -18,7 +18,10 @@ struct PodcastsApp: App {
         let store = LibraryStore(context: container.mainContext)
         self.container = container
         _store = State(initialValue: store)
-        _player = State(initialValue: PlayerModel(store: store))
+        let player = PlayerModel(store: store)
+        AppServices.store = store
+        AppServices.player = player
+        _player = State(initialValue: player)
         _downloads = State(initialValue: DownloadManager(store: store))
         let transcripts = TranscriptService(store: store)
         transcripts.registerBackgroundTask()
@@ -50,7 +53,7 @@ struct PodcastsApp: App {
     }
 
     private static func makeContainer() -> ModelContainer {
-        let schema = Schema([Podcast.self, PodcastEpisode.self, UpNextEntry.self, Bookmark.self])
+        let schema = Schema([Podcast.self, PodcastEpisode.self, UpNextEntry.self, Bookmark.self, ListeningLog.self])
         // `.automatic` syncs with iCloud when the app has the iCloud
         // entitlement (signed builds) and keeps everything on the phone
         // otherwise (e.g. the unsigned cloud test build).

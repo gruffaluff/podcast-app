@@ -35,6 +35,9 @@ Function matters more than look to Paul.
   and uploads it to TestFlight. See `docs/SETUP.md`.
 - **No server and no running costs.** All AI features run on the iPhone.
   Nothing calls Claude or any paid API at runtime.
+- **Warn about money up front** (Paul, 4 Nov 2026): if anything in any
+  project will or might charge Paul (services, plans, usage over a free
+  allowance, store fees), say so before doing it or when speccing it.
 - Paul is not a developer. Explain changes in plain English, keep the build
   green, and tell him when a new TestFlight build is ready to try.
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
@@ -57,10 +60,41 @@ Function matters more than look to Paul.
   Add a show opens its page (artwork, description, Follow, latest
   episodes with notes on tap; "Open show" once followed). Episodes can't
   be played until the show is followed.
-- **Show page**: Off/Top/Bottom lives in Show settings (a "Show settings"
-  key on the page, showing the current mode), not on the page itself.
-  Tapping an episode opens it (full notes plus Play/Resume, Play next,
-  Play last, Download, Transcribe, Played keys); tap again to close.
+- **Show page**: FOLLOWING (tap to unfollow) and a settings key (showing
+  Off/Top/Bottom) sit under the show's title and tags. Tapping an episode
+  shows its keys, not its full notes: Play/Resume, Play next, Play last on
+  one row; Download, TX (transcribe), Played and NOTES (opens the episode
+  page) on the next. Tap again to close. Search box for the show's
+  episodes (titles and notes).
+- **Per-show settings** (show settings sheet): speed for this show (else
+  the global speed; the player's SPEED key then says SHOW and changes the
+  show's speed), skip intro / skip outro (seconds), keep downloads (All /
+  Latest 1–10).
+- **Undo**: Played, Remove from Up Next, Mark all / this-and-older /
+  selected as played show an Undo bar above the mini player for 6 seconds.
+- **Library**: HISTORY (everything played, newest first) and STATS (this
+  week / 30 days / all time, last 7 days bars, top shows) keys; Continue
+  listening (started, unfinished) above New Episodes.
+- **Storage** (Shows screen): downloads per show with size, delete per
+  show or all, and the per-show keep-latest limit.
+- **Sleep timer extras**: sound fades out over the last 10 seconds; shake
+  the phone or choose "5 more minutes" to extend.
+- **Siri / Shortcuts / Action button**: Play Up Next, Pause, Play or
+  Pause, Skip forward/back, Set sleep timer (App Intents).
+- **CarPlay** (Paul listens in the car): Up Next and Shows tabs, standard
+  Now Playing with a speed button and Up Next. Needs Apple's CarPlay audio
+  entitlement (Paul applies; docs/SETUP.md), then add it to the
+  entitlements file.
+- **Decided against (Paul, 4 Nov 2026)**: bookmark from AirPods, episode
+  summaries, video podcasts, video clip cards (stay as they are, no new
+  work), Apple Watch (maybe later if others ask), speaker separation
+  (removed: battery not worth it; publisher transcripts still name
+  speakers). Later: smart lists, folders, extra Podcasting 2.0 tags.
+  Off-phone transcription: not now (Groq-type services are pennies a
+  month if ever wanted).
+- **Next (needs Paul's one-off setup)**: real-time new-episode alerts
+  (free: GitHub Actions on a timer + CloudKit public database push), and
+  Home/Lock Screen widgets + Control Centre button (needs an App Group).
 - Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
   subscription list, so there is no OPML import from it).
 - **Import & export** (Shows screen): import an OPML file from another
@@ -316,6 +350,15 @@ Function matters more than look to Paul.
   by side, and the Unplayed / All switch sits right under them (it was a
   list section header with a big gap); every confirmation is a centred
   alert with Cancel (no floating menus); Library spacing tightened.
+- Done (third iPhone feedback, 4 Nov 2026): everything in the Features
+  bullets above dated 4 Nov: keys under the show title, episode keys with
+  NOTES, show search, per-show speed / intro / outro / keep downloads,
+  Undo bar, history, continue listening, stats (`ListeningLog` model),
+  storage screen, sleep fade and shake, App Intents, CarPlay scene
+  (`App/CarPlay.swift`, scene in Config/Info.plist; inactive until the
+  entitlement), FluidAudio removed. New model fields: Podcast
+  speedOverride / skipIntro / skipOutro / downloadLimit, PodcastEpisode
+  lastPlayedAt.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
@@ -402,6 +445,12 @@ Function matters more than look to Paul.
   one GitHub Mac build; if public-repo Mac builds run free, move the
   automatic uploads back to GitHub and keep Codemagic as the backup (and
   vice versa if not). Both use `scripts/ci_testflight.sh`-style steps.
+  Codemagic works: build 102 (4 Nov 2026) uploaded and processing; the
+  first Codemagic build caught a missing bracket that the blocked GitHub
+  check never saw. Changes touching only docs, website, design or
+  `.github` don't trigger a Codemagic build. To check what Apple has
+  without a Mac: run the GitHub TestFlight workflow by hand with
+  `status_only` and `runner=ubuntu-latest` (Linux runs free).
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.

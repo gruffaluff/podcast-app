@@ -14,11 +14,14 @@ private struct MiniPlayerInset: ViewModifier {
 
     func body(content: Content) -> some View {
         content.safeAreaInset(edge: .bottom) {
-            if player.nowPlaying != nil {
-                MiniPlayer { showingPlayer = true }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 6)
+            VStack(spacing: 6) {
+                UndoBar()
+                if player.nowPlaying != nil {
+                    MiniPlayer { showingPlayer = true }
+                }
             }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 6)
         }
     }
 }

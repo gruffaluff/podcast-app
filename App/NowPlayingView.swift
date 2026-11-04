@@ -240,13 +240,13 @@ struct NowPlayingView: View {
     private var modeKeys: some View {
         HStack(spacing: 8) {
             Menu {
-                Picker("Speed", selection: Binding(get: { player.speed }, set: { player.setSpeed($0) })) {
+                Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: Binding(get: { player.speed }, set: { player.setSpeed($0) })) {
                     ForEach(PlayerOptions.speeds, id: \.self) { speed in
                         Text(PlayerOptions.speedLabel(speed)).tag(speed)
                     }
                 }
             } label: {
-                modeFace("SPEED", value: PlayerOptions.speedLabel(player.speed), lit: player.speed != 1)
+                modeFace(player.speedIsForShow ? "SHOW" : "SPEED", value: PlayerOptions.speedLabel(player.speed), lit: player.speed != 1)
             }
             .accessibilityLabel("Speed, \(PlayerOptions.speedLabel(player.speed))")
 
@@ -266,6 +266,7 @@ struct NowPlayingView: View {
 
             Menu {
                 if player.sleepTimer != nil {
+                    Button("5 more minutes", systemImage: "plus.circle") { player.extendSleepTimer() }
                     Button("Turn off timer", systemImage: "moon.zzz") { player.setSleepTimer(nil) }
                 }
                 ForEach(SleepTimerOption.all, id: \.self) { option in

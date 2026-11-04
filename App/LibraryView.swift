@@ -4,6 +4,8 @@ import PodcastCore
 
 struct LibraryView: View {
     @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @State private var continuing: [PodcastEpisode] = []
     @Query(sort: \Podcast.title) private var shows: [Podcast]
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
@@ -26,6 +28,27 @@ struct LibraryView: View {
                     if shows.isEmpty {
                         emptyState
                     } else {
+                        HStack(spacing: 8) {
+                            NavigationLink { HistoryView() } label: { libraryKey("HISTORY", icon: "clock.arrow.circlepath") }
+                            NavigationLink { StatsView() } label: { libraryKey("STATS", icon: "chart.bar") }
+                        }
+                        .buttonStyle(KeyButtonStyle(radius: 8))
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 3)
+
+                        if !continuing.isEmpty {
+                            sectionTitle("CONTINUE LISTENING", detail: "\(continuing.count) STARTED")
+                            VStack(spacing: 6) {
+                                ForEach(continuing) { episode in
+                                    Button { player.play(episode) } label: { HistoryRow(episode: episode) }
+                                        .buttonStyle(.plain)
+                                        .contextMenu { EpisodeMenuItems(episode: episode) }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 8)
+                        }
+
                         if !newEpisodes.isEmpty {
                             sectionTitle("NEW EPISODES", detail: "\(newEpisodes.count) UNPLAYED")
                             ScrollView(.horizontal, showsIndicators: false) {
@@ -56,6 +79,8 @@ struct LibraryView: View {
             }
             .background(Theme.background)
             .refreshable { await store.refreshAll() }
+            .onAppear { continuing = store.continueListening(excluding: player.nowPlaying?.episodeID, limit: 3) }
+            .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = store.continueListening(excluding: id, limit: 3) }
             .navigationTitle("LIBRARY")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .toolbar {
@@ -68,6 +93,14 @@ struct LibraryView: View {
             }
             .sheet(isPresented: $addingShow) { AddShowView() }
         }
+    }
+
+    private func libraryKey(_ title: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(title).font(Theme.mono(12, .bold))
+        }
+        .frame(maxWidth: .infinity, minHeight: 40)
     }
 
     private func sectionTitle(_ title: String, detail: String) -> some View {
@@ -241,7 +274,9 @@ struct EpisodeMenuItems: View {
         if episode.played {
             Button("Mark as unplayed", systemImage: "circle") { store.markUnplayed(episode) }
         } else {
-            Button("Mark as played", systemImage: "checkmark.circle") { store.markPlayed(episode.episodeID) }
+            Button("Mark as played", systemImage: "checkmark.circle") {
+                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+            }
         }
     }
 }

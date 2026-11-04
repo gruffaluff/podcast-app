@@ -8,11 +8,6 @@ options:
 packages:
   PodcastCore:
     path: Packages/PodcastCore
-  # Open-source (Apache 2.0) on-device speaker separation. Its models are
-  # downloaded once, free, on first use.
-  FluidAudio:
-    url: https://github.com/FluidInference/FluidAudio
-    exactVersion: 0.18.0
 targets:
   Podcasts:
     type: application
@@ -21,7 +16,6 @@ targets:
       - App
     dependencies:
       - package: PodcastCore
-      - package: FluidAudio
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.gruffaluff.podcasts

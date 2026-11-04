@@ -32,6 +32,13 @@ final class Podcast {
     var website: URL?
     var followedAt: Date = Date()
     var lastChecked: Date?
+    /// Per-show playback: a speed for this show (0 = use the global speed),
+    /// and seconds to skip at the start (intro) and end (outro) of episodes.
+    var speedOverride: Double = 0
+    var skipIntro: Double = 0
+    var skipOutro: Double = 0
+    /// Keep only this many of the show's newest downloads (0 = no limit).
+    var downloadLimit: Int = 0
     @Relationship(deleteRule: .cascade, inverse: \PodcastEpisode.podcast)
     var storedEpisodes: [PodcastEpisode]? = []
 
@@ -93,6 +100,8 @@ final class PodcastEpisode {
     var position: TimeInterval = 0
     var played: Bool = false
     var playedAt: Date?
+    /// Last time Paul listened to it (listening history, continue listening).
+    var lastPlayedAt: Date?
     /// File name in `DownloadFiles.directory` once downloaded. Synced, but
     /// the file itself stays on this iPhone (see `reconcileLocalFiles`).
     var downloadFile: String?
@@ -178,6 +187,22 @@ final class Bookmark {
         self.episodeID = episodeID
         self.time = time
         self.text = text
+    }
+}
+
+/// Time listened, per show per day (listening stats).
+@Model
+final class ListeningLog {
+    /// Start of the day (local time).
+    var day: Date = Date.distantPast
+    var feedURL: String = ""
+    var showTitle: String = ""
+    var seconds: Double = 0
+
+    init(day: Date, feedURL: String, showTitle: String) {
+        self.day = day
+        self.feedURL = feedURL
+        self.showTitle = showTitle
     }
 }
 

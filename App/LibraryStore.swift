@@ -15,6 +15,10 @@ final class LibraryStore {
     private(set) var isRefreshing = false
     /// The episode whose notes are open (any screen's menu can set it).
     var notesEpisode: PodcastEpisode?
+    /// The last change that can be undone (shown as an Undo bar for a few seconds).
+    var undoAction: UndoAction?
+    /// The episode playing now (set by PlayerModel), so its download is never trimmed.
+    @ObservationIgnored var playingEpisodeID: String?
     private(set) var lastChecked: Date? = nil {
         didSet { UserDefaults.standard.set(lastChecked, forKey: "lastChecked") }
     }
@@ -423,6 +427,7 @@ final class LibraryStore {
             return
         }
         episode.downloadFile = fileName
+        if let show = episode.podcast { applyDownloadLimit(to: show) }
         save()
         transcripts?.prepare(episode)
     }
@@ -433,7 +438,7 @@ final class LibraryStore {
         save()
     }
 
-    private func removeDownloadFile(of episode: PodcastEpisode) {
+    func removeDownloadFile(of episode: PodcastEpisode) {
         downloads?.cancel(episode.episodeID)
         if let name = episode.downloadFile {
             DownloadFiles.delete(name)
@@ -443,7 +448,7 @@ final class LibraryStore {
 
     // MARK: Saving
 
-    private func commit(_ newQueue: [QueueItem]) {
+    func commit(_ newQueue: [QueueItem]) {
         queue = newQueue
         let existing = (try? context.fetch(FetchDescriptor<UpNextEntry>())) ?? []
         // Rows for episodes not on this iPhone yet (still arriving from

@@ -15,13 +15,19 @@ struct ShowView: View {
     /// Select mode: tick episodes (or Select All), then mark them played/unplayed.
     @State private var selecting = false
     @State private var selection: Set<String> = []
-    /// The episode opened up to show its notes and keys (one at a time).
+    /// The episode opened up to show its keys (one at a time).
     @State private var expanded: String?
+    /// Search within this show's episodes (titles and notes).
+    @State private var search = ""
 
     var body: some View {
         let allEpisodes = show.episodes.sorted { $0.published > $1.published }
         let unplayedCount = allEpisodes.filter { !$0.played }.count
-        let episodes = showAll ? allEpisodes : allEpisodes.filter { !$0.played }
+        let term = search.trimmingCharacters(in: .whitespaces)
+        let filtered = showAll || !term.isEmpty ? allEpisodes : allEpisodes.filter { !$0.played }
+        let episodes = term.isEmpty ? filtered : filtered.filter {
+            $0.title.localizedCaseInsensitiveContains(term) || $0.summary.localizedCaseInsensitiveContains(term)
+        }
 
         List(selection: $selection) {
             Section {
@@ -34,7 +40,7 @@ struct ShowView: View {
                     .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 6, trailing: 16))
                     .selectionDisabled()
                 if episodes.isEmpty {
-                    Text(showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
+                    Text(!term.isEmpty ? "No episodes match “\(term)”." : showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
                         .font(.footnote)
                         .foregroundStyle(Theme.muted)
                         .listRowBackground(Theme.background)
@@ -55,6 +61,7 @@ struct ShowView: View {
                 .listRowSeparatorTint(Theme.hairline)
             }
         }
+        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search this show")
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -74,7 +81,8 @@ struct ShowView: View {
                 }
                 ToolbarItemGroup(placement: .bottomBar) {
                     Button("Mark as played") {
-                        store.markPlayed(allEpisodes.filter { selection.contains($0.episodeID) })
+                        let chosen = allEpisodes.filter { selection.contains($0.episodeID) }
+                        store.undoable("Marked \(chosen.count) played", episodes: chosen) { store.markPlayed(chosen) }
                         endSelecting()
                     }
                     .disabled(selection.isEmpty)
@@ -109,7 +117,10 @@ struct ShowView: View {
         }
         .sheet(isPresented: $showingSettings) { ShowSettingsView(show: show) }
         .alert("Mark all \(show.episodes.count) episodes as played?", isPresented: $confirmingMarkAll) {
-            Button("Mark all as played") { store.markPlayed(show.episodes) }
+            Button("Mark all as played") {
+                let all = show.episodes
+                store.undoable("Marked \(all.count) played", episodes: all) { store.markPlayed(all) }
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("They leave Up Next and stop showing as unplayed. You can undo this with Mark all as unplayed.")
@@ -144,7 +155,7 @@ struct ShowView: View {
     private func episodeButton(_ episode: PodcastEpisode, allEpisodes: [PodcastEpisode]) -> some View {
         let isOpen = expanded == episode.episodeID
         return VStack(alignment: .leading, spacing: 10) {
-            EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode), expanded: isOpen)
+            EpisodeRow(episode: episode, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, isQueued: store.isQueued(episode))
                 .onTapGesture {
                     // No animation: List resizing rows animates jerkily.
                     var transaction = Transaction()
@@ -152,23 +163,26 @@ struct ShowView: View {
                     withTransaction(transaction) { expanded = isOpen ? nil : episode.episodeID }
                 }
                 .accessibilityAddTraits(.isButton)
-                .accessibilityHint(isOpen ? "Hides the notes" : "Shows the notes and actions")
+                .accessibilityHint(isOpen ? "Hides the actions" : "Shows play, download, notes and more")
             if isOpen {
-                EpisodeActions(episode: episode)
+                EpisodeActions(episode: episode, showsNotesKey: true)
                     .padding(.bottom, 6)
             }
         }
         .contextMenu {
             EpisodeMenuItems(episode: episode)
             Button("Mark this and older as played", systemImage: "text.badge.checkmark") {
-                store.markPlayed(allEpisodes.filter { $0.published <= episode.published })
+                let older = allEpisodes.filter { $0.published <= episode.published }
+                store.undoable("Marked \(older.count) played", episodes: older) { store.markPlayed(older) }
             }
         }
         .swipeActions(edge: .trailing) {
             if episode.played {
                 Button("Unplayed") { store.markUnplayed(episode) }.tint(Theme.muted)
             } else {
-                Button("Played") { store.markPlayed(episode.episodeID) }.tint(Theme.accentFill)
+                Button("Played") {
+                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                }.tint(Theme.accentFill)
             }
         }
         .swipeActions(edge: .leading) {
@@ -198,6 +212,30 @@ struct ShowView: View {
                         if show.autoDownload { DeckTag(text: "AUTO DL") }
                     }
                     .padding(.top, 2)
+                    HStack(spacing: 6) {
+                        Button { confirmingUnfollow = true } label: {
+                            HStack(spacing: 5) {
+                                LED(on: true, color: Theme.accentFill)
+                                Text("FOLLOWING").font(Theme.mono(11, .bold))
+                            }
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 36)
+                        }
+                        .buttonStyle(KeyButtonStyle(kind: .dark, radius: 8))
+                        .accessibilityLabel("Following. Tap to unfollow")
+                        Button { showingSettings = true } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: "slider.horizontal.3")
+                                Text(modeName).font(Theme.mono(11, .bold))
+                            }
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 36)
+                        }
+                        .buttonStyle(KeyButtonStyle(radius: 8))
+                        .accessibilityLabel("Show settings. New episodes: \(modeName)")
+                    }
+                    .padding(.top, 4)
+                    .padding(.bottom, 3)
                 }
             }
             if !show.summary.isEmpty {
@@ -206,31 +244,6 @@ struct ShowView: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(4)
             }
-            HStack(spacing: 8) {
-                Button { confirmingUnfollow = true } label: {
-                    HStack(spacing: 6) {
-                        LED(on: true, color: Theme.accentFill)
-                        Text("FOLLOWING").font(Theme.mono(12, .bold))
-                    }
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 46)
-                }
-                .buttonStyle(.darkKey)
-                .accessibilityLabel("Following. Tap to unfollow")
-                Button { showingSettings = true } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "slider.horizontal.3")
-                        Text("SETTINGS").font(Theme.mono(12, .bold))
-                        Spacer(minLength: 4)
-                        Text(modeName).font(Theme.mono(11))
-                    }
-                    .padding(.horizontal, 12)
-                    .frame(maxWidth: .infinity, minHeight: 46)
-                }
-                .buttonStyle(.key)
-                .accessibilityLabel("Show settings. New episodes: \(modeName)")
-            }
-            .padding(.bottom, 3)
         }
         .padding(.top, 8)
     }
@@ -239,7 +252,7 @@ struct ShowView: View {
         switch show.autoAdd {
         case .off: return "OFF"
         case .top: return "TOP"
-        case .bottom: return "BTM"
+        case .bottom: return "BOTTOM"
         }
     }
 }
@@ -251,6 +264,8 @@ struct EpisodeActions: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
+    /// A NOTES key that opens the episode page (in lists, not on that page).
+    var showsNotesKey = false
 
     var body: some View {
         let queued = store.isQueued(episode)
@@ -265,17 +280,23 @@ struct EpisodeActions: View {
                 if downloads.progress[episode.episodeID] != nil {
                     key("STOP DL") { store.removeDownload(episode) }
                 } else if episode.downloadFile != nil {
-                    key("REMOVE DL") { store.removeDownload(episode) }
+                    key("DEL DL") { store.removeDownload(episode) }
                 } else {
-                    key("↓ DOWNLOAD") { downloads.download(episode) }
+                    key("↓ DL") { downloads.download(episode) }
                 }
                 if transcripts.canTranscribeNow(episode) {
-                    key("TRANSCRIBE") { transcripts.transcribeNow(episode) }
+                    key("TX") { transcripts.transcribeNow(episode) }
+                        .accessibilityLabel("Transcribe now")
                 }
                 if episode.played {
                     key("UNPLAYED") { store.markUnplayed(episode) }
                 } else {
-                    key("✓ PLAYED") { store.markPlayed(episode.episodeID) }
+                    key("✓ PLAYED") {
+                        store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                    }
+                }
+                if showsNotesKey {
+                    key("NOTES") { store.notesEpisode = episode }
                 }
             }
         }

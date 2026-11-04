@@ -6,6 +6,7 @@ import PodcastCore
 /// show page. Top show priority is on its own screen, linked last.
 struct ShowSettingsView: View {
     @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
     let show: Podcast
     /// True when shown right after following ("Following …" heading).
@@ -50,11 +51,37 @@ struct ShowSettingsView: View {
                         store.save()
                         if on { Task { await NewEpisodeAlerts.requestPermission() } }
                     }))
+                    Picker("Keep downloads", selection: Binding(get: { show.downloadLimit }, set: { store.setDownloadLimit($0, for: show) })) {
+                        Text("All").tag(0)
+                        ForEach([1, 2, 3, 5, 10], id: \.self) { Text("Latest \($0)").tag($0) }
+                    }
                 } footer: {
-                    Text("Downloads follow your Wi-Fi only setting. Alerts say where the episode went in Up Next.")
+                    Text("Downloads follow your Wi-Fi only setting. Keep downloads deletes this show's older downloads beyond the newest few. Alerts say where the episode went in Up Next.")
                 }
                 .listRowBackground(Theme.surface)
                 .tint(Theme.accentFill)
+
+                Section {
+                    Picker("Speed", selection: Binding(get: { show.speedOverride }, set: { value in
+                        show.speedOverride = value
+                        store.save()
+                        player.showSettingsChanged(show)
+                    })) {
+                        Text("Same as everything").tag(0.0)
+                        ForEach(PlayerOptions.speeds, id: \.self) { Text(PlayerOptions.speedLabel($0)).tag($0) }
+                    }
+                    Picker("Skip intro", selection: secondsBinding(\.skipIntro)) {
+                        ForEach(Self.skipChoices, id: \.self) { Text(Self.skipLabel($0)).tag($0) }
+                    }
+                    Picker("Skip outro", selection: secondsBinding(\.skipOutro)) {
+                        ForEach(Self.skipChoices, id: \.self) { Text(Self.skipLabel($0)).tag($0) }
+                    }
+                } header: {
+                    DeckHeader(title: "Playback for this show")
+                } footer: {
+                    Text("Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end.")
+                }
+                .listRowBackground(Theme.surface)
 
                 if justFollowed {
                     Section {
@@ -104,6 +131,24 @@ struct ShowSettingsView: View {
         Binding(get: { show.autoAdd }, set: { store.setAutoAdd($0, for: show) })
     }
 
+    static let skipChoices: [Double] = [0, 10, 15, 20, 30, 45, 60, 90, 120]
+
+    static func skipLabel(_ seconds: Double) -> String {
+        let whole = Int(seconds)
+        if whole == 0 { return "Off" }
+        if whole < 60 { return "\(whole)s" }
+        let rest = whole % 60
+        return rest == 0 ? "\(whole / 60)m" : "\(whole / 60)m \(rest)s"
+    }
+
+    private func secondsBinding(_ keyPath: ReferenceWritableKeyPath<Podcast, Double>) -> Binding<Double> {
+        Binding(get: { show[keyPath: keyPath] }, set: { value in
+            show[keyPath: keyPath] = value
+            store.save()
+            player.showSettingsChanged(show)
+        })
+    }
+
     private func binding(_ keyPath: ReferenceWritableKeyPath<Podcast, Bool>) -> Binding<Bool> {
         Binding(get: { show[keyPath: keyPath] }, set: { show[keyPath: keyPath] = $0; store.save() })
     }
@@ -131,8 +176,8 @@ struct TopPriorityView: View {
     @Query(sort: \Podcast.title) private var allShows: [Podcast]
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
-    @State private var labelSpeakers = SpeakerSeparation.isEnabled
     @State private var findAds = AdScanner.isEnabled
+    @State private var showingStorage = false
 
     var body: some View {
         @Bindable var store = store
@@ -233,14 +278,12 @@ struct TopPriorityView: View {
                     ForEach(TranscriptService.Schedule.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.menu)
-                Toggle("Label speakers", isOn: $labelSpeakers)
-                    .onChange(of: labelSpeakers) { _, on in SpeakerSeparation.isEnabled = on }
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
             } header: {
                 DeckHeader(title: "Transcripts")
             } footer: {
-                Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now. Label speakers works out who is talking (Speaker 1, Speaker 2…); it downloads a small model once.")
+                Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now.")
             }
             .listRowBackground(Theme.background)
             .tint(Theme.accentFill)
@@ -254,6 +297,17 @@ struct TopPriorityView: View {
                 DeckHeader(title: "Downloads")
             } footer: {
                 Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away.")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
+                // A button (this list stays in edit mode, where links can't be tapped).
+                Button { showingStorage = true } label: {
+                    Label("Storage", systemImage: "internaldrive")
+                        .foregroundStyle(Theme.ink)
+                }
+            } footer: {
+                Text("How much space downloads take, per show, with delete and \"keep latest\" limits.")
             }
             .listRowBackground(Theme.background)
 
@@ -280,6 +334,7 @@ struct TopPriorityView: View {
         .background(Theme.background)
         .environment(\.editMode, .constant(.active))
         .navigationTitle("SHOWS")
+        .navigationDestination(isPresented: $showingStorage) { StorageView() }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { shows = store.topShows }
     }
