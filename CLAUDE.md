@@ -104,9 +104,7 @@ Function matters more than look to Paul.
   refreshes Up Next) record per new episode; the app subscribes to both.
   CloudKit server-to-server key ID is in alerts.yml (not secret); the
   private key is only in `.github/cloudkit-key.enc`, encrypted with the
-  CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the
-  Development CloudKit environment, like the app's builds; switch
-  CLOUDKIT_ENV to production with the entitlement.
+  CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the Production CloudKit environment (TestFlight builds always do).
 - **Widgets** (Paul set up the App Group `group.com.gruffaluff.podcasts`
   and App ID `com.gruffaluff.podcasts.widgets`, 4 Nov 2026): extension
   `Widgets/` (target PoddeckWidgets). Up Next widget (small: what's

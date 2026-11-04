@@ -28,7 +28,7 @@ jobs:
       - name: Check feeds and send alerts
         env:
           CLOUDKIT_KEY_ID: a3fe8eead8809143f5fa658ddae13a54ac30af2a3b97a47555319cf6b9bbe355
-          CLOUDKIT_ENV: development
+          CLOUDKIT_ENV: production
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install --quiet cryptography
