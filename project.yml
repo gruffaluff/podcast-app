@@ -25,7 +25,10 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.gruffaluff.podcasts
-        PRODUCT_NAME: Podcasts
+        # The bundle name Apple checks must be unique: "Podcasts" is Apple's
+        # own app (upload error 90129). The Swift module keeps its old name.
+        PRODUCT_NAME: Poddeck
+        PRODUCT_MODULE_NAME: Podcasts
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.0"

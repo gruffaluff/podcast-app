@@ -12,6 +12,10 @@ on:
       runner:
         description: "Build machine (macos-15-intel is the reliable one)"
         default: macos-15-intel
+      status_only:
+        description: "Only report what App Store Connect has (no build)"
+        type: boolean
+        default: false
 
 concurrency:
   group: testflight
@@ -41,7 +45,7 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
 
       - name: Use the newest installed Xcode
-        if: steps.secrets.outputs.ready == 'true'
+        if: steps.secrets.outputs.ready == 'true' && !inputs.status_only
         run: |
           XC=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
           echo "Selecting $XC"
@@ -49,7 +53,7 @@ jobs:
           xcodebuild -version
 
       - name: Generate Xcode project
-        if: steps.secrets.outputs.ready == 'true'
+        if: steps.secrets.outputs.ready == 'true' && !inputs.status_only
         run: |
           brew install xcodegen
           xcodegen generate
@@ -67,7 +71,7 @@ jobs:
       # certificate and an App Store profile (scripts/asc_signing.py), and put
       # them in a throwaway keychain.
       - name: Get an App Store certificate and profile
-        if: steps.secrets.outputs.ready == 'true'
+        if: steps.secrets.outputs.ready == 'true' && !inputs.status_only
         env:
           BUNDLE_ID: com.gruffaluff.podcasts
         run: |
@@ -98,7 +102,7 @@ jobs:
           done
 
       - name: Build and sign (archive)
-        if: steps.secrets.outputs.ready == 'true'
+        if: steps.secrets.outputs.ready == 'true' && !inputs.status_only
         run: |
           xcodebuild archive \
             -project Podcasts.xcodeproj \
@@ -120,7 +124,7 @@ jobs:
           grep -E "ARCHIVE SUCCEEDED" archive.log
 
       - name: Upload to TestFlight
-        if: steps.secrets.outputs.ready == 'true'
+        if: steps.secrets.outputs.ready == 'true' && !inputs.status_only
         run: |
           set -o pipefail
           OPTS="$RUNNER_TEMP/ExportOptions.plist"
@@ -136,6 +140,14 @@ jobs:
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
           echo "::notice::Build ${{ github.run_number }} uploaded. Apple takes about 5–30 minutes to process it before it shows in TestFlight."
+
+      - name: What App Store Connect has
+        if: always() && steps.secrets.outputs.ready == 'true'
+        env:
+          BUNDLE_ID: com.gruffaluff.podcasts
+        run: |
+          [ -x "$RUNNER_TEMP/venv/bin/python" ] || { python3 -m venv "$RUNNER_TEMP/venv"; "$RUNNER_TEMP/venv/bin/pip" install --quiet pyjwt cryptography; }
+          "$RUNNER_TEMP/venv/bin/python" scripts/asc_status.py
 
       - name: Remove the keys
         if: always()
