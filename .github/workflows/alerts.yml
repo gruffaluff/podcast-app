@@ -8,6 +8,12 @@ on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "iCloud side to check (TestFlight builds use production)"
+        type: choice
+        options: [production, development]
+        default: production
 
 concurrency:
   group: alerts
@@ -27,8 +33,9 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in .github/cloudkit-key.enc -out "$RUNNER_TEMP/cloudkit.pem" -pass env:PASS
       - name: Check feeds and send alerts
         env:
-          CLOUDKIT_KEY_ID: c74f78588686d233596909193612de3008f68e903b3a10f46171b3814ecd23ec
-          CLOUDKIT_ENV: production
+          # The same key pair is registered on each side, with its own ID.
+          CLOUDKIT_KEY_ID: ${{ (inputs.environment || 'production') == 'development' && 'a3fe8eead8809143f5fa658ddae13a54ac30af2a3b97a47555319cf6b9bbe355' || 'c74f78588686d233596909193612de3008f68e903b3a10f46171b3814ecd23ec' }}
+          CLOUDKIT_ENV: ${{ inputs.environment || 'production' }}
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install --quiet cryptography
