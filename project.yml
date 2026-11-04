@@ -4,7 +4,7 @@ name: Podcasts
 options:
   bundleIdPrefix: com.gruffaluff
   deploymentTarget:
-    iOS: "27.0"
+    iOS: "26.0"
 packages:
   PodcastCore:
     path: Packages/PodcastCore

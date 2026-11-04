@@ -11,22 +11,48 @@ to TestFlight. Paul installs each build from the TestFlight app on his iPhone.
 - [ ] Connect GitHub to Claude so Claude Code can work on the repository.
 - [ ] Install TestFlight on the iPhone.
 
-## One-off Apple setup (Claude Code walks Paul through it)
+## One-off Apple setup (Paul, in a web browser, about 20 minutes)
 
-1. In App Store Connect, create the app record (name, bundle ID such as
-   `com.<paul>.podcasts`).
-2. Create an App Store Connect API key (Users and Access → Integrations),
-   with App Manager access. Note the Key ID and Issuer ID and download the
-   `.p8` file once.
-3. Let the CI create and manage signing using that API key (automatic
-   signing via `xcodebuild -allowProvisioningUpdates` with the API key, or
-   fastlane match). No Mac keychain needed.
-4. iCloud sync (`Config/Podcasts.entitlements`): in Certificates,
-   Identifiers & Profiles, turn on **iCloud** (with CloudKit) and **Push
-   Notifications** for the app ID `com.gruffaluff.podcasts`, and create the
-   iCloud container `iCloud.com.gruffaluff.podcasts`. Automatic signing
-   with `-allowProvisioningUpdates` can do this itself.
-5. CloudKit schema (no Mac needed): the entitlements start with
+Apple names used: bundle ID `com.gruffaluff.podcasts`, iCloud container
+`iCloud.com.gruffaluff.podcasts`, app name **Poddeck** (fallback
+"Poddeck Player" if taken).
+
+1. **Team ID**: developer.apple.com → Account → Membership details →
+   copy the 10-character **Team ID**.
+2. **iCloud container**: developer.apple.com → Certificates, Identifiers &
+   Profiles → Identifiers → **+** → iCloud Containers → description
+   "Poddeck", identifier `iCloud.com.gruffaluff.podcasts`.
+3. **App ID**: Identifiers → **+** → App IDs → App → description
+   "Poddeck", Bundle ID **Explicit** `com.gruffaluff.podcasts`. Under
+   Capabilities tick **iCloud** (choose "Include CloudKit support") and
+   **Push Notifications**. Save, then open it again, click **Configure**
+   next to iCloud, tick the container from step 2, save.
+4. **App record**: appstoreconnect.apple.com → Apps → **+** → New App →
+   iOS, name **Poddeck**, primary language English (U.K.), bundle ID from
+   step 3, SKU `poddeck`, user access Full Access.
+5. **API key**: App Store Connect → Users and Access → Integrations →
+   App Store Connect API → Team Keys → **+** → name "GitHub", access
+   **Admin** (needed so the build machine can make signing certificates).
+   Download the `.p8` file (only possible once) and note the **Key ID**
+   and the **Issuer ID** shown above the list.
+6. **GitHub secrets**: github.com/gruffaluff/podcast-app → Settings →
+   Secrets and variables → Actions → New repository secret, four times
+   (table below). For `ASC_KEY_P8` open the `.p8` file in a text editor
+   and paste everything, including the BEGIN/END lines.
+7. **TestFlight**: after the first upload has processed, App Store
+   Connect → Poddeck → TestFlight → Internal Testing → **+** → group
+   "Me", add yourself. Install the TestFlight app on the iPhone and
+   accept the invite.
+
+Signing is automatic: the TestFlight workflow signs with the API key
+(`xcodebuild -allowProvisioningUpdates`), so no Mac keychain or
+certificate files are needed.
+
+### After the first build: iCloud database (one-off)
+
+iCloud sync uses `Config/Podcasts.entitlements` (CloudKit container, push,
+key-value storage); steps 2–3 above set up the Apple side. CloudKit schema
+(no Mac needed): the entitlements start with
    `com.apple.developer.icloud-container-environment` = Development, so the
    first TestFlight build creates the record types (CD_Podcast,
    CD_PodcastEpisode, CD_UpNextEntry, CD_Bookmark) as it saves. Once Paul
@@ -54,12 +80,18 @@ Never commit any of these values to the repository.
 
 ## Pipeline
 
-- Workflow `.github/workflows/testflight.yml` on a `macos` runner:
-  checkout → select latest Xcode → resolve packages → run unit tests →
-  archive with automatic signing → export IPA → upload to TestFlight
-  (`xcrun altool` / `notarytool` successor or fastlane `pilot`).
-- Trigger: push to `main` (and manual "Run workflow").
-- Build number: use the GitHub run number.
+- `.github/workflows/testflight.yml` on `macos-15-intel` (the Apple-silicon
+  machines are often unavailable): newest Xcode → XcodeGen → archive with
+  automatic signing via the API key → export with
+  `Config/ExportOptions.plist` (method app-store-connect, destination
+  upload), which uploads straight to TestFlight.
+- Trigger: push to `main` (and manual "Run workflow"). Without the secrets
+  it stops with a note instead of failing.
+- Build number: the TestFlight workflow's run number; version 0.1.
+- Minimum iOS is 26.0 because the build machines have the iOS 26.2 SDK
+  (Apple accepts iOS 26 SDK builds); it runs on Paul's iOS 27.2 iPhone.
+- `App/PrivacyInfo.xcprivacy` declares no tracking and the UserDefaults
+  reason Apple requires.
 - Expect roughly 15–30 minutes from push to TestFlight availability.
 - macOS runner minutes count more heavily against GitHub's free allowance;
   keep builds to merges into `main`.
