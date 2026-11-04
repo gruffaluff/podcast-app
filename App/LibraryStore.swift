@@ -102,7 +102,7 @@ final class LibraryStore {
             feedURL: key,
             title: feed.title,
             author: feed.author ?? "",
-            summary: PlainText.fromHTML(feed.summary ?? ""),
+            summary: PlainText.notesFromHTML(feed.summary ?? ""),
             artworkURL: feed.artworkURL
         )
         // New shows start on Bottom; Paul picks settings right after following.
@@ -234,6 +234,8 @@ final class LibraryStore {
             show.author = feed.author ?? show.author
             show.artworkURL = feed.artworkURL ?? show.artworkURL
             show.website = feed.link ?? show.website
+            let showNotes = PlainText.notesFromHTML(feed.summary ?? "")
+            if !showNotes.isEmpty, showNotes != show.summary { show.summary = showNotes }
             fresh += apply(feed, to: show)
         }
         save()
@@ -254,6 +256,13 @@ final class LibraryStore {
         let newestKnown = show.episodes.map(\.published).max()
         let diff = FeedDiff.compare(feed.episodes, knownGUIDs: known, newestKnown: newestKnown)
         let freshGUIDs = Set(diff.fresh.map(\.guid))
+        // Notes for episodes already saved are tidied too (and kept current).
+        let saved = Dictionary(show.episodes.map { ($0.guid, $0) }, uniquingKeysWith: { first, _ in first })
+        for parsed in feed.episodes {
+            guard let episode = saved[parsed.guid] else { continue }
+            let notes = PlainText.notesFromHTML(parsed.summary ?? "")
+            if !notes.isEmpty, notes != episode.summary { episode.summary = notes }
+        }
         var fresh: [Episode] = []
 
         for parsed in diff.added {
@@ -261,7 +270,7 @@ final class LibraryStore {
                 episodeID: PodcastEpisode.makeID(feedURL: show.feedURL, guid: parsed.guid),
                 guid: parsed.guid,
                 title: parsed.title,
-                summary: PlainText.fromHTML(parsed.summary ?? ""),
+                summary: PlainText.notesFromHTML(parsed.summary ?? ""),
                 published: parsed.published ?? .distantPast,
                 audioURL: parsed.audioURL
             )

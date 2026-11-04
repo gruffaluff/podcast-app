@@ -305,6 +305,12 @@ Function matters more than look to Paul.
   Episodes cards smaller (220 wide) and tapping the artwork or title opens
   the episode page (`EpisodeNotesView`, now with the `EpisodeActions`
   keys); DL / TX lights never wrap and sit under the card's description.
+  Then: episode and show notes keep the show's formatting
+  (`PlainText.notesFromHTML`: paragraphs, line breaks, "• " lists, link
+  addresses), refreshed for saved episodes on the next feed check; links
+  and timestamps in notes are tappable (a timestamp plays from there); TX
+  light shows "TX WAIT" while a transcript is queued (Transcribe now
+  downloads first when the show has no transcript of its own).
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2

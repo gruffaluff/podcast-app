@@ -166,8 +166,8 @@ struct EpisodeLights: View {
             light(progress.map { $0 > 0 ? "DL \(Int($0 * 100))%" : "DL …" } ?? "DL",
                   state: episode.downloadFile != nil ? .on : (progress != nil ? .busy : .off),
                   color: onDark ? Theme.displayText : Theme.ink)
-            light(episode.transcriptState == .transcribing ? "TX …" : "TX",
-                  state: episode.transcriptState == .ready ? .on : (episode.transcriptState == .transcribing ? .busy : .off),
+            light(episode.transcriptState == .transcribing ? "TX …" : (episode.transcriptState == .waiting ? "TX WAIT" : "TX"),
+                  state: episode.transcriptState == .ready ? .on : (episode.transcriptState == .transcribing || episode.transcriptState == .waiting ? .busy : .off),
                   color: Theme.accentFill)
         }
         .accessibilityElement(children: .ignore)
@@ -195,6 +195,7 @@ struct EpisodeLights: View {
         let transcript: String = switch episode.transcriptState {
         case .ready: "transcript ready"
         case .transcribing: "transcribing"
+        case .waiting: "transcript waiting"
         default: "no transcript"
         }
         return "\(download), \(transcript)"
