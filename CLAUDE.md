@@ -390,8 +390,14 @@ Function matters more than look to Paul.
   charged (GitHub Free, $0 due). **Decided (Paul): make the repo public**
   so Actions is free with no limit. The repo is public from 4 Nov 2026:
   never commit secrets (Apple keys live only in GitHub secrets).
-  Build workflow runs on pull requests and by hand only (TestFlight
-  builds on merge), so each change builds about twice, not three times.
+  Build workflow runs on pull requests and by hand only. But GitHub kept
+  blocking Mac jobs even after the repo went public (account Actions
+  budget $0 "usage blocked"; lifting it needs a payment method, which
+  Paul won't add). **Decided (Paul): use Codemagic** for Mac builds
+  (free 500 Mac minutes a month, no card, stops at the limit):
+  `codemagic.yaml` + `scripts/ci_testflight.sh`, uploads on every merge
+  to main, build numbers 100+. GitHub's TestFlight workflow is manual
+  only now. Setup steps in `docs/SETUP.md`.
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.

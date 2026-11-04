@@ -83,6 +83,27 @@ Add these under Settings → Secrets and variables → Actions:
 
 Never commit any of these values to the repository.
 
+## Codemagic (the build machine since 4 Nov 2026)
+
+GitHub's free Mac build time ran out, so Codemagic builds and uploads
+instead (free: 500 Mac minutes a month; no card on file, so it stops at the
+limit rather than charging). One-off setup (Paul, ~10 minutes):
+
+1. codemagic.io → sign up with GitHub → add application → choose
+   `gruffaluff/podcast-app` → project type "iOS App" (it uses
+   `codemagic.yaml` from the repo).
+2. In the app's **Environment variables**, add four variables to a group
+   named `apple`, each with **Secure** ticked: `ASC_KEY_ID`,
+   `ASC_ISSUER_ID`, `ASC_KEY_P8` (the whole text of the .p8 file),
+   `APPLE_TEAM_ID`. Same values as the GitHub secrets.
+3. Start a build of `main` (workflow "TestFlight"). After that, every merge
+   into main builds and uploads automatically.
+
+Build numbers from Codemagic are 100 + its own counter, so they never clash
+with the GitHub builds (up to 12). `scripts/ci_testflight.sh` does the
+work: tests, XcodeGen, App Store certificate and profile via the API,
+archive, upload, then a status report.
+
 ## Pipeline
 
 - `.github/workflows/testflight.yml` on `macos-15-intel` (the Apple-silicon
