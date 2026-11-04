@@ -461,9 +461,12 @@ Function matters more than look to Paul.
   vice versa if not). Both use `scripts/ci_testflight.sh`-style steps.
   Codemagic works: build 102 (4 Nov 2026) uploaded and processing; the
   first Codemagic build caught a missing bracket that the blocked GitHub
-  check never saw. A "skip docs-only changes" filter (`when: changeset`)
-  wrongly skipped a real app change, so it was removed: every merge to
-  main builds. Batch doc-only edits with app changes to save minutes. To check what Apple has
+  check never saw. Merges didn't start builds at first: GitHub's webhook
+  to Codemagic was missing (Codemagic's Webhooks tab showed no
+  deliveries), not the "skip docs-only" filter we blamed and removed.
+  Paul pressed "update webhook" on 4 Nov 2026 to recreate it; if merges
+  stop building again, check that tab first. Every merge to main builds
+  (manual builds: ▶, branch main, workflow TestFlight). Batch doc-only edits with app changes to save minutes. To check what Apple has
   without a Mac: run the GitHub TestFlight workflow by hand with
   `status_only` and `runner=ubuntu-latest` (Linux runs free).
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
