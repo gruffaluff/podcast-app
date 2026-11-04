@@ -1,4 +1,5 @@
 import CloudKit
+import CryptoKit
 import Foundation
 
 /// Real-time new-episode alerts (free): a GitHub Actions job checks Paul's
@@ -20,7 +21,7 @@ enum RealtimeAlerts {
     // every record (a refusal comes back inside the result, not as a thrown
     // error), so they start again.
     private static let subscriptionsKey = "realtimeAlerts.subscriptions.v2"
-    private static let lastFollowsKey = "realtimeAlerts.lastFollows.v2"
+    private static let lastFollowsKey = "realtimeAlerts.lastFollows.v3"
 
     /// Tells the alerts job which shows to check (only when that changed),
     /// and makes sure the phone is subscribed to the pushes. Every outcome
@@ -38,10 +39,9 @@ enum RealtimeAlerts {
         let summary = "\(feeds.count) shows, \(alertFeeds.count) with the bell"
         if UserDefaults.standard.string(forKey: lastFollowsKey) != signature {
             let record = CKRecord(recordType: followsType, recordID: CKRecord.ID(recordName: "follows"))
-            record["feeds"] = feeds as CKRecordValue
-            record["alertFeeds"] = alertFeeds as CKRecordValue
             record["updated"] = Date() as CKRecordValue
             do {
+                record["feeds"] = try seal(["feeds": feeds, "alertFeeds": alertFeeds]) as CKRecordValue
                 let (results, _) = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys)
                 for (_, result) in results { _ = try result.get() }
                 UserDefaults.standard.set(signature, forKey: lastFollowsKey)
@@ -54,6 +54,31 @@ enum RealtimeAlerts {
         if await subscribeIfNeeded() {
             CloudSync.note(nil, in: "Alerts", detail: "\(summary) sent · alerts on")
         }
+    }
+
+    /// The alerts job's public key (the same key pair it signs its iCloud
+    /// requests with; only the job has the private half).
+    private static let jobKey = """
+        -----BEGIN PUBLIC KEY-----
+        MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAElnOedF9+VWnPSPg50QbnTXsfctXa
+        N1VauBxeBTEaIH1IEH2/zRbFG+WCOZTOt1nqk/MJq5GHmoWzgvkcdvWLkw==
+        -----END PUBLIC KEY-----
+        """
+
+    /// Records in the public database can be read by anyone using the app,
+    /// and subscriber feed links carry a private key, so the list is sealed
+    /// so only the alerts job can open it: ["sealed-v1", ephemeral public
+    /// key, AES-GCM box (nonce + ciphertext + tag)], base64. Matches
+    /// `followed_feeds` in scripts/new_episode_alerts.py.
+    private static func seal(_ lists: [String: [String]]) throws -> [String] {
+        let job = try P256.KeyAgreement.PublicKey(pemRepresentation: jobKey)
+        let ephemeral = P256.KeyAgreement.PrivateKey()
+        let shared = try ephemeral.sharedSecretFromKeyAgreement(with: job)
+        let key = shared.hkdfDerivedSymmetricKey(using: SHA256.self, salt: Data(),
+                                                 sharedInfo: Data("poddeck-follows".utf8), outputByteCount: 32)
+        let box = try AES.GCM.seal(try JSONEncoder().encode(lists), using: key)
+        guard let combined = box.combined else { throw CloudProblem(message: "Couldn't seal the list of shows") }
+        return ["sealed-v1", ephemeral.publicKey.x963Representation.base64EncodedString(), combined.base64EncodedString()]
     }
 
     /// One subscription per kind of record: visible alerts and silent

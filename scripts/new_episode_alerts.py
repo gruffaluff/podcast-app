@@ -23,11 +23,14 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 CONTAINER = "iCloud.com.gruffaluff.podcasts"
 ENVIRONMENT = os.environ.get("CLOUDKIT_ENV", "production")
@@ -79,7 +82,11 @@ def fetch_feed(url):
         with urllib.request.urlopen(request, timeout=30) as response:
             root = ET.fromstring(response.read())
     except Exception as error:  # noqa: BLE001 - one bad feed shouldn't stop the rest
-        print(f"  skipped {url}: {error}")
+        # The repo is public, so its logs are too: never print feed links
+        # (subscriber feeds carry a private key in the link) or titles.
+        host = urllib.parse.urlsplit(url).hostname or "?"
+        code = getattr(error, "code", None) or type(error).__name__
+        print(f"  skipped a feed on {host} ({code})")
         return None
     channel = root.find("channel")
     if channel is None:
@@ -105,15 +112,32 @@ def fetch_feed(url):
     return show, items
 
 
+def tag(text):
+    """A short one-way fingerprint, so saved state never holds feed links."""
+    return hashlib.sha256(text.encode()).hexdigest()[:20]
+
+
+def followed_feeds(record):
+    """The app seals the list of followed shows to this job's key (records in
+    the public database can be read by anyone using the app; subscriber feed
+    links carry a private key). "feeds" holds ["sealed-v1", ephemeral public
+    key, AES-GCM box], all base64. Returns (feeds, alert feeds)."""
+    sealed = field(record, "feeds", [])
+    if len(sealed) != 3 or sealed[0] != "sealed-v1":
+        return [], set()
+    peer = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), base64.b64decode(sealed[1]))
+    shared = KEY.exchange(ec.ECDH(), peer)
+    key = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b"poddeck-follows").derive(shared)
+    box = base64.b64decode(sealed[2])
+    data = json.loads(AESGCM(key).decrypt(box[:12], box[12:], None))
+    return data.get("feeds", []), set(data.get("alertFeeds", []))
+
+
 def main():
     follows = lookup("follows")
-    feeds = field(follows, "feeds", [])
-    alert_feeds = set(field(follows, "alertFeeds", []))
+    feeds, alert_feeds = followed_feeds(follows)
     if not feeds:
         print("No followed shows published yet (the app saves them after its next feed check).")
-        # Has the app written anything at all? (It saves these setup records once.)
-        found = [name for name in ("setup-PoddeckAlertEpisode", "setup-PoddeckAlertState") if lookup(name)]
-        print(f"  app setup records here: {', '.join(found) or 'none'}")
     state_record = lookup("alert-state")
     seen = json.loads(field(state_record, "json", "{}"))
     now = dt.datetime.now(dt.timezone.utc)
@@ -124,26 +148,27 @@ def main():
         if result is None:
             continue
         show, items = result
-        known = set(seen.get(url, []))
-        first_look = url not in seen
+        key = tag(url)
+        known = set(seen.get(key, []))
+        first_look = key not in seen
         for guid, title, published in items:
-            if guid in known or first_look:
+            if tag(guid) in known or first_look:
                 continue
             if published is None or now - published > FRESH_FOR:
                 continue
             kind = "PoddeckAlertEpisode" if url in alert_feeds else "PoddeckQuietEpisode"
-            print(f"  new: {show} - {title} ({kind})")
             new_records.append({"operationType": "create", "record": {"recordType": kind, "fields": {
-                "feedURL": {"value": url},
+                "feedURL": {"value": key},
                 "showTitle": {"value": show or "A show you follow"},
                 "episodeTitle": {"value": title or "New episode"},
-                "guid": {"value": guid},
+                "guid": {"value": tag(guid)},
             }}})
         # Remember the newest 300 per feed.
-        seen[url] = [guid for guid, _, _ in items[:300]]
+        seen[key] = [tag(guid) for guid, _, _ in items[:300]]
 
     # Forget unfollowed shows.
-    seen = {url: guids for url, guids in seen.items() if url in feeds}
+    followed = {tag(url) for url in feeds}
+    seen = {key: guids for key, guids in seen.items() if key in followed}
 
     operations = new_records + [{"operationType": "forceReplace", "record": {
         "recordName": "alert-state", "recordType": "PoddeckAlertState",
@@ -153,7 +178,8 @@ def main():
     failed = [r for r in result.get("records", []) if "serverErrorCode" in r]
     for record in failed:
         print(f"  CloudKit refused a record: {record.get('serverErrorCode')} {record.get('reason', '')}")
-    print(f"Checked {len(feeds)} shows; {len(new_records)} new episode(s).")
+    alerts = sum(1 for r in new_records if r["record"]["recordType"] == "PoddeckAlertEpisode")
+    print(f"Checked {len(feeds)} shows; {len(new_records)} new episode(s), {alerts} with an alert.")
     if failed and all("record_type" in r.get("reason", "") for r in failed):
         # The app creates the record types the first time a new build runs.
         print("Waiting for the app to set up its iCloud records (open Poddeck once on the new build).")
