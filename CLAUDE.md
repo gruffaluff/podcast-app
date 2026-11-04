@@ -283,7 +283,8 @@ Function matters more than look to Paul.
   distribution certificate, so Apple emails Paul "certificate revoked"
   after builds: expected, not a problem. Check uploads, TestFlight states,
   testers and certificates any time: run the TestFlight workflow with
-  "status_only" (`scripts/asc_status.py`). Next: the one-off CloudKit
+  "status_only" (`scripts/asc_status.py`). The status step has a 4-minute
+  limit and can't fail the run (it once hung after a good upload). Next: the one-off CloudKit
   schema deploy.
 - Done (first iPhone feedback, 4 Nov 2026; it runs on Paul's phone):
   no now-playing panel on Up Next (the mini player covers it); empty Up
