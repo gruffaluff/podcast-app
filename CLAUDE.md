@@ -269,8 +269,16 @@ Function matters more than look to Paul.
   TestFlight workflow (`.github/workflows/testflight.yml`) uploads on every
   merge to main; signing uses a distribution certificate and App Store
   profile issued per run through the API (`scripts/asc_signing.py`).
-  First upload: build 3. Next: Paul adds himself as an internal tester
-  (docs/SETUP.md step 7), then the one-off CloudKit schema deploy.
+  Build 3 was rejected (error 90129: bundle name "Podcasts" is Apple's own
+  app), so the bundle name is now Poddeck (`PRODUCT_NAME`; the Swift module
+  keeps `PRODUCT_MODULE_NAME: Podcasts`). Build 6 was the first accepted
+  build (valid, in internal testing); internal group "Me" has Paul, with
+  access to all builds. Each run revokes all but the newest older
+  distribution certificate, so Apple emails Paul "certificate revoked"
+  after builds: expected, not a problem. Check uploads, TestFlight states,
+  testers and certificates any time: run the TestFlight workflow with
+  "status_only" (`scripts/asc_status.py`). Next: the one-off CloudKit
+  schema deploy.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
