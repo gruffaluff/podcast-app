@@ -143,6 +143,8 @@ jobs:
 
       - name: What App Store Connect has
         if: always() && steps.secrets.outputs.ready == 'true'
+        timeout-minutes: 4
+        continue-on-error: true
         env:
           BUNDLE_ID: com.gruffaluff.podcasts
         run: |
