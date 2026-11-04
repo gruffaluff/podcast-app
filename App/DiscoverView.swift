@@ -39,6 +39,8 @@ struct DiscoverView: View {
             .task { await loadSuggestions() }
             .refreshable { await loadChart() }
             .navigationTitle("DISCOVER")
+            .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
+            .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
         }
     }
 
@@ -187,6 +189,8 @@ struct DirectoryItemRow: View {
                     .foregroundStyle(rank <= 3 ? Theme.accentText : Theme.muted)
                     .frame(width: 26)
             }
+            NavigationLink(value: item) {
+            HStack(spacing: 12) {
             ArtworkView(url: item.artworkURL, title: item.title, size: 52)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
@@ -199,6 +203,9 @@ struct DirectoryItemRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
+            }
+            }
+            .buttonStyle(.plain)
             FollowButton(item: item, follower: follower)
         }
         .padding(.vertical, 4)
@@ -212,11 +219,16 @@ private struct SuggestionCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ArtworkView(url: item.artworkURL, title: item.title, size: 132, radius: 10)
-            Text(item.title)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(2, reservesSpace: true)
+            NavigationLink(value: item) {
+                VStack(alignment: .leading, spacing: 6) {
+                    ArtworkView(url: item.artworkURL, title: item.title, size: 132, radius: 10)
+                    Text(item.title)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(2, reservesSpace: true)
+                }
+            }
+            .buttonStyle(.plain)
             FollowButton(item: item, follower: follower)
         }
         .frame(width: 132)

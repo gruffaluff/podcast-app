@@ -117,9 +117,10 @@ private struct EpisodeCard: View {
             }
             .font(Theme.mono(10, .semibold))
             .foregroundStyle(.white)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 10)
             .frame(height: 26)
-            .background(strip)
+            .background(strip, in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 12)
             VStack(alignment: .leading, spacing: 8) {
                 Text(episode.title)
                     .font(.system(size: 16, weight: .semibold))
@@ -133,7 +134,9 @@ private struct EpisodeCard: View {
                     Button { player.play(episode) } label: {
                         Text("▶ \(playLabel)")
                             .font(Theme.mono(12, .bold))
-                            .padding(.horizontal, 14)
+                            .lineLimit(1)
+                            .fixedSize()
+                            .padding(.horizontal, 12)
                             .frame(minHeight: 40)
                     }
                     .buttonStyle(.darkKey)
@@ -154,9 +157,14 @@ private struct EpisodeCard: View {
             .padding(12)
         }
         .frame(width: 260)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: Theme.controlBorder, radius: 0, x: 0, y: 3)
+        // The key-style edge goes on the card's shape only (a shadow on the
+        // whole card also outlined the artwork and keys in grey).
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Theme.surface)
+                .shadow(color: Theme.controlBorder, radius: 0, x: 0, y: 3)
+        )
+        .padding(.bottom, 3)
         .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
     }
 
