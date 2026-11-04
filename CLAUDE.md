@@ -496,8 +496,12 @@ Function matters more than look to Paul.
   _ckAsset, to-one relationship STRING) loaded into Development by the
   manual Codemagic workflow "iCloud schema" (`xcrun cktool import-schema`),
   then Paul deploys to Production (docs/SETUP.md). Entitlement now says
-  Production. The Shows screen's iCloud section shows the last iCloud error
-  per area (Sync / Alerts). Waiting on Paul: management token in Codemagic,
+  Production. Paul loaded the schema and deployed it (4 Nov 2026); the
+  alerts job reaches Production with its own key ID. But build 106 wrote
+  nothing to either side and showed no error, so the app skips silently
+  (likely the iCloud account check). The Shows screen's iCloud section now
+  shows ACCOUNT (CloudKit's account status in words), SYNC and ALERTS
+  (last OK time or the problem). Waiting on Paul: management token in Codemagic,
   run the workflow, deploy. If cktool rejects the file, fix and re-run.
 - Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added

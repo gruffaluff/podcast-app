@@ -321,12 +321,7 @@ struct TopPriorityView: View {
                         .foregroundStyle(Theme.ink)
                 }
                 .accessibilityElement(children: .combine)
-                ForEach(CloudSync.problems.sorted(by: { $0.key < $1.key }), id: \.key) { item in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(item.key.uppercased()) PROBLEM").font(Theme.mono(10, .bold)).foregroundStyle(Theme.accentText)
-                        Text(item.value).font(.system(size: 12)).foregroundStyle(Theme.muted).textSelection(.enabled)
-                    }
-                }
+                ICloudStatusRows()
             } header: {
                 DeckHeader(title: "iCloud")
             } footer: {
@@ -402,5 +397,32 @@ private struct AllShowsRow: View {
             }
             .accessibilityLabel("New episodes go to: \(show.autoAdd.rawValue)")
         }
+    }
+}
+
+/// Account, sync and alerts status lines for the iCloud section, so a
+/// problem is visible instead of silent.
+struct ICloudStatusRows: View {
+    @State private var account = "checking…"
+    @State private var status = CloudSync.status
+
+    var body: some View {
+        Group {
+            line("ACCOUNT", account, bad: account != "available")
+            line("SYNC", status["Sync"] ?? "nothing yet", bad: status["Sync"]?.hasPrefix("PROBLEM") ?? false)
+            line("ALERTS", status["Alerts"] ?? "nothing yet (pull down on Up Next)", bad: status["Alerts"]?.hasPrefix("PROBLEM") ?? false)
+        }
+        .task {
+            account = await CloudSync.accountDescription()
+            status = CloudSync.status
+        }
+    }
+
+    private func line(_ title: String, _ text: String, bad: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(Theme.mono(10, .bold)).foregroundStyle(bad ? Theme.accentText : Theme.muted)
+            Text(text).font(.system(size: 12)).foregroundStyle(Theme.ink).textSelection(.enabled)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
