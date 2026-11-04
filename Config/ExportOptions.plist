@@ -3,13 +3,15 @@
 <plist version="1.0">
 <dict>
 	<!-- Sign for App Store Connect and upload straight to TestFlight.
-	     teamID is added by the TestFlight workflow from the APPLE_TEAM_ID secret. -->
+	     teamID and provisioningProfiles are added by the TestFlight workflow. -->
 	<key>method</key>
 	<string>app-store-connect</string>
 	<key>destination</key>
 	<string>upload</string>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
 	<key>manageAppVersionAndBuildNumber</key>
 	<false/>
 	<key>uploadSymbols</key>

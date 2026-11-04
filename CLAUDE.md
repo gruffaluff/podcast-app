@@ -264,11 +264,13 @@ Function matters more than look to Paul.
   download buttons/status in Library, Up Next and show pages; "Keep playing
   new episodes". The per-show notification toggle is saved but does
   nothing until step 7.
-- Paul has his Apple Developer account (4 Nov 2026). TestFlight upload
-  workflow written (`.github/workflows/testflight.yml`, runs on merges to
-  main; signs automatically with an App Store Connect API key). Waiting on
-  Paul's one-off Apple setup and the four GitHub secrets
-  (`docs/SETUP.md`, steps 1–7).
+- Done (step 1, TestFlight, 4 Nov 2026): Paul's Apple account, App ID,
+  iCloud container, app record and GitHub secrets are set up. The
+  TestFlight workflow (`.github/workflows/testflight.yml`) uploads on every
+  merge to main; signing uses a distribution certificate and App Store
+  profile issued per run through the API (`scripts/asc_signing.py`).
+  First upload: build 3. Next: Paul adds himself as an internal tester
+  (docs/SETUP.md step 7), then the one-off CloudKit schema deploy.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
@@ -310,9 +312,7 @@ Function matters more than look to Paul.
   transcript line (quote card in the artwork colour, 5–30s with −5/+5 and a
   waveform, include audio cut on the iPhone, link to the moment via the
   episode/show web page, video card as mp4; shared clips saved to My clips).
-- All seven build steps are in place and the cloud build is green. Nothing
-  has run on a real iPhone yet: first TestFlight build needs Paul's Apple
-  Developer membership (then add signing + upload, docs/SETUP.md).
+- All seven build steps are in place and the cloud build is green.
 - Done (after Paul's answers): Podspot name and icon; follow = older
   played + newest downloaded; Unplayed/All filter and mark-all actions;
   Apple Podcasts links in Add a show; a fresh install follows Elis James

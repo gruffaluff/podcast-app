@@ -44,9 +44,14 @@ Apple names used: bundle ID `com.gruffaluff.podcasts`, iCloud container
    "Me", add yourself. Install the TestFlight app on the iPhone and
    accept the invite.
 
-Signing is automatic: the TestFlight workflow signs with the API key
-(`xcodebuild -allowProvisioningUpdates`), so no Mac keychain or
-certificate files are needed.
+Signing needs no Mac and no registered devices: on each run the TestFlight
+workflow makes a key and certificate request, and `scripts/asc_signing.py`
+uses the API key to have App Store Connect issue an Apple Distribution
+certificate (it revokes all but the newest older one, so at most two
+exist) and a fresh "Poddeck CI App Store" profile. They live in a
+throwaway keychain for that run only. (Automatic signing didn't work: it
+wants a development profile, which needs a registered iPhone, and ad hoc
+archives aren't allowed with the iOS 26 SDK.)
 
 ### After the first build: iCloud database (one-off)
 
@@ -81,10 +86,11 @@ Never commit any of these values to the repository.
 ## Pipeline
 
 - `.github/workflows/testflight.yml` on `macos-15-intel` (the Apple-silicon
-  machines are often unavailable): newest Xcode → XcodeGen → archive with
-  automatic signing via the API key → export with
-  `Config/ExportOptions.plist` (method app-store-connect, destination
-  upload), which uploads straight to TestFlight.
+  machines are often unavailable): newest Xcode → XcodeGen → certificate
+  and profile from App Store Connect → archive with manual signing → export
+  with `Config/ExportOptions.plist` (method app-store-connect, destination
+  upload), which uploads straight to TestFlight. First upload: build 3,
+  4 Nov 2026.
 - Trigger: push to `main` (and manual "Run workflow"). Without the secrets
   it stops with a note instead of failing.
 - Build number: the TestFlight workflow's run number; version 0.1.
