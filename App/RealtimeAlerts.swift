@@ -15,7 +15,9 @@ enum RealtimeAlerts {
     static let followsType = "PoddeckFollows"
     static let alertType = "PoddeckAlertEpisode"
     static let quietType = "PoddeckQuietEpisode"
+    static let stateType = "PoddeckAlertState"
     private static let subscriptionsKey = "realtimeAlerts.subscriptions.v1"
+    private static let typesKey = "realtimeAlerts.recordTypes.v1"
     private static let lastFollowsKey = "realtimeAlerts.lastFollows"
 
     /// Tells the alerts job which shows to check (only when that changed),
@@ -38,7 +40,33 @@ enum RealtimeAlerts {
                 // Tried again on the next feed check.
             }
         }
+        await createRecordTypesIfNeeded()
         await subscribeIfNeeded()
+    }
+
+    /// The alerts job can't create record types; saving one record of each
+    /// from the app does (iCloud's Development environment creates them on
+    /// first save).
+    private static func createRecordTypesIfNeeded() async {
+        guard !UserDefaults.standard.bool(forKey: typesKey) else { return }
+        var records: [CKRecord] = []
+        for type in [alertType, quietType] {
+            let record = CKRecord(recordType: type, recordID: CKRecord.ID(recordName: "setup-\(type)"))
+            record["feedURL"] = "" as CKRecordValue
+            record["showTitle"] = "" as CKRecordValue
+            record["episodeTitle"] = "" as CKRecordValue
+            record["guid"] = "setup" as CKRecordValue
+            records.append(record)
+        }
+        let state = CKRecord(recordType: stateType, recordID: CKRecord.ID(recordName: "setup-\(stateType)"))
+        state["json"] = "{}" as CKRecordValue
+        records.append(state)
+        do {
+            _ = try await database.modifyRecords(saving: records, deleting: [], savePolicy: .allKeys)
+            UserDefaults.standard.set(true, forKey: typesKey)
+        } catch {
+            // Tried again on the next feed check.
+        }
     }
 
     /// One subscription per kind of record: visible alerts and silent updates.
