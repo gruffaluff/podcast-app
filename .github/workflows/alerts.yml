@@ -1,0 +1,38 @@
+name: New-episode alerts
+
+# Every ~15 minutes (GitHub may run it a little late): checks the shows Paul
+# follows and, for new episodes, saves a record in Poddeck's iCloud public
+# database, which pushes an alert to his iPhone. Free (Linux, public repo).
+# See scripts/new_episode_alerts.py and App/RealtimeAlerts.swift.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: alerts
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unlock the CloudKit key
+        env:
+          PASS: ${{ secrets.CLOUDKIT_PASSPHRASE }}
+        run: |
+          umask 077
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in .github/cloudkit-key.enc -out "$RUNNER_TEMP/cloudkit.pem" -pass env:PASS
+      - name: Check feeds and send alerts
+        env:
+          CLOUDKIT_KEY_ID: a3fe8eead8809143f5fa658ddae13a54ac30af2a3b97a47555319cf6b9bbe355
+          CLOUDKIT_ENV: development
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet cryptography
+          CLOUDKIT_KEY_PATH="$RUNNER_TEMP/cloudkit.pem" "$RUNNER_TEMP/venv/bin/python" scripts/new_episode_alerts.py
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cloudkit.pem"
