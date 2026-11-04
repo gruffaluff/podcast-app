@@ -106,6 +106,22 @@ Function matters more than look to Paul.
   (not secret; the Development key is a3fe…, same key pair); the
   private key is only in `.github/cloudkit-key.enc`, encrypted with the
   CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the Production CloudKit environment (TestFlight builds always do).
+- **iCloud and alerts working (4 Nov 2026, build 112)**: Shows screen shows
+  SYNC OK and "ALERTS OK · 2 shows, 2 with the bell sent · alerts on".
+  How it got there (all needed again if the container is ever reset):
+  TestFlight uses CloudKit Production, which can't create record types or
+  new subscription fields. Record types come from
+  `Config/CloudKitSchema.ckdb` (Codemagic "iCloud schema" workflow, needs
+  CLOUDKIT_MANAGEMENT_TOKEN in the "apple" group, then Deploy in the
+  Console). Query subscriptions must first exist in Development:
+  `docs/cloudkit-subscribe.html` on GitHub Pages (CloudKit JS + a
+  Development API token), then Deploy; its notification fields must match
+  `RealtimeAlerts.subscribeIfNeeded` exactly (alert "New from %1$@: %2$@").
+  CloudKit's modify calls report per-record refusals in their results, so
+  always check them. Alerts job uses the Production server key (c74f…).
+  GitHub's 15-minute schedule actually runs much less often; Paul is fine
+  with that for now (a free outside timer such as cron-job.org could
+  trigger it if ever wanted).
 - **Subscriber (private) feeds** (Patreon, Supercast, Substack, Memberful,
   Acast+ etc.): pasting the private RSS link in Add a show works (the key
   is in the link). Feeds that need a username and password aren't
@@ -497,36 +513,6 @@ Function matters more than look to Paul.
 
 ## Open questions for Paul
 
-- **iCloud in TestFlight builds (found 4 Nov 2026)**: TestFlight apps use
-  CloudKit's Production side, which can't create record types; the Console
-  showed only "Users" in both Development and Production, so neither iCloud
-  sync of the library nor alerts had ever worked (the phone's own data is
-  fine). Fix: `Config/CloudKitSchema.ckdb` (written by hand from the models:
-  CD_<class> / CD_<property>, URL as STRING, Bool/Int INT64, Data BYTES +
-  _ckAsset, to-one relationship STRING) loaded into Development by the
-  manual Codemagic workflow "iCloud schema" (`xcrun cktool import-schema`),
-  then Paul deploys to Production (docs/SETUP.md). Entitlement now says
-  Production. Paul loaded the schema and deployed it (4 Nov 2026); the
-  alerts job reaches Production with its own key ID. Build 108 showed
-  SYNC OK (library syncing to iCloud now) but ALERTS never ran: CloudKit's
-  modifyRecords / modifySubscriptions report per-record refusals inside
-  the result, not as a thrown error, so builds 103/104 marked the follows
-  record and subscriptions as done while every one was refused, and later
-  builds skipped them. Fixed: results are checked, the done flags are v2,
-  and the setup-record step is gone (the schema file creates the types). The Shows screen's iCloud section now
-  shows ACCOUNT (CloudKit's account status in words), SYNC and ALERTS
-  (last OK time or the problem). Build 109/110: the follows record saves;
-  the subscriptions fail ("attempting to create a subscription in a
-  production container", CKError 12): Production only accepts a query
-  subscription after it was created once in Development and the schema
-  deployed (Apple DTS). Fix without a Mac: `docs/cloudkit-subscribe.html`
-  (CloudKit JS, signs in as Paul, creates both subscriptions in
-  Development) on GitHub Pages; steps in docs/SETUP.md. Paul ran it; the
-  next refusal named 'notif_alert_loc_arg_0': the live side only accepts
-  the notification fields the Development subscription had, so the app and
-  the page now set exactly the same ones (alert text "New from %1$@: %2$@"
-  with showTitle / episodeTitle, sound, content-available; no title, which
-  CloudKit JS can't set). Paul re-runs the page and deploys again.
-- Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
+- None open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added
   now, can be removed.)
