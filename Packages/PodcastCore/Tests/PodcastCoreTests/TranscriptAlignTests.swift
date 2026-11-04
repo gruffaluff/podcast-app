@@ -7,10 +7,17 @@ final class TranscriptAlignTests: XCTestCase {
     func transcript() -> [TranscriptSegment] {
         let words = ["harbour", "lantern", "pilot", "tide", "rope", "gull", "anchor", "chart", "fog", "keel",
                      "mast", "sail", "buoy", "reef", "crab", "net", "oar", "deck", "hull", "wake"]
-        return (0..<60).map { i in
-            let text = (0..<6).map { words[(i * 7 + $0 * 3) % words.count] + "\(i)" }.joined(separator: " ")
-            return TranscriptSegment(start: Double(i) * 10, end: Double(i) * 10 + 8, text: text)
+        var segments: [TranscriptSegment] = []
+        for i in 0..<60 {
+            var parts: [String] = []
+            for j in 0..<6 {
+                let index: Int = (i * 7 + j * 3) % words.count
+                parts.append(words[index] + String(i))
+            }
+            let start = Double(i) * 10
+            segments.append(TranscriptSegment(start: start, end: start + 8, text: parts.joined(separator: " ")))
         }
+        return segments
     }
 
     /// The same speech as heard in a download with a 90-second ad inserted at 200s.
