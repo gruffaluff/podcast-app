@@ -23,7 +23,7 @@ enum RealtimeAlerts {
     /// Tells the alerts job which shows to check (only when that changed),
     /// and makes sure the phone is subscribed to the pushes.
     static func publishFollows(store: LibraryStore) async {
-        guard CloudSync.isSignedIn else { return }
+        guard (try? await container.accountStatus()) == .available else { return }
         let shows = store.allShows
         let feeds = shows.map(\.feedURL).sorted()
         let alertFeeds = shows.filter(\.notify).map(\.feedURL).sorted()
@@ -36,8 +36,10 @@ enum RealtimeAlerts {
             do {
                 _ = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys)
                 UserDefaults.standard.set(signature, forKey: lastFollowsKey)
+                CloudSync.note(nil, in: "Alerts")
             } catch {
                 // Tried again on the next feed check.
+                CloudSync.note(error, in: "Alerts")
             }
         }
         await createRecordTypesIfNeeded()
@@ -66,6 +68,7 @@ enum RealtimeAlerts {
             UserDefaults.standard.set(true, forKey: typesKey)
         } catch {
             // Tried again on the next feed check.
+            CloudSync.note(error, in: "Alerts")
         }
     }
 
@@ -94,6 +97,7 @@ enum RealtimeAlerts {
             _ = try await database.modifySubscriptions(saving: [alerts, quiet], deleting: [])
             UserDefaults.standard.set(true, forKey: subscriptionsKey)
         } catch {
+            CloudSync.note(error, in: "Alerts")
             // Usually: the record types don't exist yet (the job creates them
             // on its first run). Tried again on the next feed check.
         }

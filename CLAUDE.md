@@ -489,18 +489,17 @@ Function matters more than look to Paul.
 ## Open questions for Paul
 
 - **iCloud in TestFlight builds (found 4 Nov 2026)**: TestFlight apps use
-  CloudKit's Production side whatever the entitlement says, and
-  Production can't create record types, so the plan "first build creates
-  them in Development" can't work. The alerts job still sees no
-  "follows" record after Paul opened build 103/104, and iCloud sync of
-  the library is probably not happening either (the phone's own data is
-  fine). Asked Paul to check the CloudKit Console (record types in
-  Development / Production, and Logs). Fix planned: write the schema
-  (CD_* SwiftData types + Poddeck* alert types) as a .ckdb file, load it
-  into Development with `xcrun cktool import-schema` on a one-off
-  Codemagic run (needs a CloudKit management token from Paul), then Paul
-  presses Deploy Schema Changes. Errors are currently swallowed; show
-  the last iCloud error on the Shows screen with the fix.
+  CloudKit's Production side, which can't create record types; the Console
+  showed only "Users" in both Development and Production, so neither iCloud
+  sync of the library nor alerts had ever worked (the phone's own data is
+  fine). Fix: `Config/CloudKitSchema.ckdb` (written by hand from the models:
+  CD_<class> / CD_<property>, URL as STRING, Bool/Int INT64, Data BYTES +
+  _ckAsset, to-one relationship STRING) loaded into Development by the
+  manual Codemagic workflow "iCloud schema" (`xcrun cktool import-schema`),
+  then Paul deploys to Production (docs/SETUP.md). Entitlement now says
+  Production. The Shows screen's iCloud section shows the last iCloud error
+  per area (Sync / Alerts). Waiting on Paul: management token in Codemagic,
+  run the workflow, deploy. If cktool rejects the file, fix and re-run.
 - Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added
   now, can be removed.)
