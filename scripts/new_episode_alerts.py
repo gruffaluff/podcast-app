@@ -141,20 +141,15 @@ def main():
         "recordName": "alert-state", "recordType": "PoddeckAlertState",
         "fields": {"json": {"value": json.dumps(seen)}},
     }}]
-    # First run: create one record of each kind so the app can subscribe.
-    if state_record is None:
-        for kind in ("PoddeckAlertEpisode", "PoddeckQuietEpisode"):
-            operations.append({"operationType": "forceReplace", "record": {
-                "recordName": f"setup-{kind}", "recordType": kind,
-                "fields": {"feedURL": {"value": ""}, "showTitle": {"value": ""},
-                           "episodeTitle": {"value": ""}, "guid": {"value": "setup"}},
-            }})
     result = cloudkit("records/modify", {"operations": operations})
     failed = [r for r in result.get("records", []) if "serverErrorCode" in r]
     for record in failed:
         print(f"  CloudKit refused a record: {record.get('serverErrorCode')} {record.get('reason', '')}")
     print(f"Checked {len(feeds)} shows; {len(new_records)} new episode(s).")
-    if failed:
+    if failed and all("record_type" in r.get("reason", "") for r in failed):
+        # The app creates the record types the first time a new build runs.
+        print("Waiting for the app to set up its iCloud records (open Poddeck once on the new build).")
+    elif failed:
         sys.exit(1)
 
 
