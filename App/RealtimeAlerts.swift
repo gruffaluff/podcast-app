@@ -20,7 +20,7 @@ enum RealtimeAlerts {
     // ".v2": earlier builds marked these done even when iCloud refused
     // every record (a refusal comes back inside the result, not as a thrown
     // error), so they start again.
-    private static let subscriptionsKey = "realtimeAlerts.subscriptions.v2"
+    private static let subscriptionsKey = "realtimeAlerts.subscriptions.v3"
     private static let lastFollowsKey = "realtimeAlerts.lastFollows.v3"
 
     /// Tells the alerts job which shows to check (only when that changed),
@@ -86,11 +86,12 @@ enum RealtimeAlerts {
     private static func subscribeIfNeeded() async -> Bool {
         guard !UserDefaults.standard.bool(forKey: subscriptionsKey) else { return true }
 
+        // Must match docs/cloudkit-subscribe.html exactly: iCloud's live side
+        // only accepts the notification fields the Development side has
+        // seen, and that page (CloudKit JS) can't set a title.
         let alertInfo = CKSubscription.NotificationInfo()
-        alertInfo.titleLocalizationKey = "New from %1$@"
-        alertInfo.titleLocalizationArgs = ["showTitle"]
-        alertInfo.alertLocalizationKey = "%1$@"
-        alertInfo.alertLocalizationArgs = ["episodeTitle"]
+        alertInfo.alertLocalizationKey = "New from %1$@: %2$@"
+        alertInfo.alertLocalizationArgs = ["showTitle", "episodeTitle"]
         alertInfo.soundName = "default"
         alertInfo.shouldSendContentAvailable = true
         let alerts = CKQuerySubscription(recordType: alertType, predicate: NSPredicate(value: true),

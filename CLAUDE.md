@@ -521,7 +521,12 @@ Function matters more than look to Paul.
   subscription after it was created once in Development and the schema
   deployed (Apple DTS). Fix without a Mac: `docs/cloudkit-subscribe.html`
   (CloudKit JS, signs in as Paul, creates both subscriptions in
-  Development) on GitHub Pages; steps in docs/SETUP.md. Waiting on Paul.
+  Development) on GitHub Pages; steps in docs/SETUP.md. Paul ran it; the
+  next refusal named 'notif_alert_loc_arg_0': the live side only accepts
+  the notification fields the Development subscription had, so the app and
+  the page now set exactly the same ones (alert text "New from %1$@: %2$@"
+  with showTitle / episodeTitle, sound, content-available; no title, which
+  CloudKit JS can't set). Paul re-runs the page and deploys again.
 - Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added
   now, can be removed.)
