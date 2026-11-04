@@ -223,8 +223,8 @@ Function matters more than look to Paul.
 - Chapter titles and ad detection: rule-based on the transcript first; consider
   Apple's on-device language model framework if available on Paul's iPhone.
 - Background refresh with BGTaskScheduler; local notifications only.
-- Target device: Paul's iPhone 17 Pro on iOS 27.2. Minimum iOS: 27 (personal
-  app, one device). Check Apple's current docs for iOS 27 speech, audio and
+- Target device: Paul's iPhone 17 Pro on iOS 27.2. Minimum iOS: 26.0 for
+  now (build machines only have the iOS 26 SDK; see Progress). Check Apple's current docs for iOS 27 speech, audio and
   on-device model APIs rather than relying on older knowledge.
 
 ## Build order (suggested)
@@ -264,12 +264,15 @@ Function matters more than look to Paul.
   download buttons/status in Library, Up Next and show pages; "Keep playing
   new episodes". The per-show notification toggle is saved but does
   nothing until step 7.
-- Waiting on Paul: Apple Developer Program membership (name correction with
-  Apple support in progress; earliest news the day after 29 Oct 2026). Then add signing + the TestFlight upload job
-  (see `docs/SETUP.md`) to finish step 1.
-- Waiting on GitHub: the macOS build machines only have Xcode 26.6 (iOS
-  26.5 SDK) while the app targets iOS 27. It compiles (with a warning), but
-  TestFlight uploads will need the iOS 27 SDK once GitHub adds it.
+- Paul has his Apple Developer account (4 Nov 2026). TestFlight upload
+  workflow written (`.github/workflows/testflight.yml`, runs on merges to
+  main; signs automatically with an App Store Connect API key). Waiting on
+  Paul's one-off Apple setup and the four GitHub secrets
+  (`docs/SETUP.md`, steps 1–7).
+- Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
+  reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
+  only; every API used exists in iOS 26, and it runs on his iOS 27.2
+  iPhone. Raise it again once GitHub's machines have the iOS 27 SDK.
 - Done (step 4): speed, sleep timer, separate skip lengths (settings +
   touch and hold), artwork-coloured player and New Episodes cards (4.5:1
   text), "Playing on …", chapters (feed JSON or embedded in the audio, with
@@ -335,9 +338,9 @@ Function matters more than look to Paul.
 - Done (rename): app, website and docs say Poddeck; cassette icon (D) is
   the app icon and the website's. The code project and bundle ID stay
   `Podcasts` / `com.gruffaluff.podcasts` (invisible to Paul).
-- CI: GitHub's Apple-silicon Macs are sometimes unavailable ("job was not
-  acquired by runner"). Manual runs can pick the machine: run the Build
-  workflow with `runner=macos-15-intel` (worked 3 Nov 2026).
+- CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
+  acquired by runner"), so Build and TestFlight now default to
+  `macos-15-intel`; manual runs can still pick `macos-latest`.
 - To check on the phone first: Trim silences / Boost voices strength, ad
   detection accuracy (rule-based; tune phrases), auto-chapter quality,
   Apple chart feeds (could not be reached from the build machine; Discover

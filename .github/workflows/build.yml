@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       runner:
-        description: "Build machine (try macos-15-intel when Apple-silicon Macs are busy)"
-        default: macos-latest
+        description: "Build machine (macos-15-intel is the reliable one; macos-latest is Apple silicon)"
+        default: macos-15-intel
 
 concurrency:
   group: build-${{ github.ref }}
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ${{ inputs.runner || 'macos-latest' }}
+    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
