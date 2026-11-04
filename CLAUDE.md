@@ -107,8 +107,16 @@ Function matters more than look to Paul.
   CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the
   Development CloudKit environment, like the app's builds; switch
   CLOUDKIT_ENV to production with the entitlement.
-- **Next (needs Paul's one-off setup)**: Home/Lock Screen widgets +
-  Control Centre button (needs an App Group and a widget App ID).
+- **Widgets** (Paul set up the App Group `group.com.gruffaluff.podcasts`
+  and App ID `com.gruffaluff.podcasts.widgets`, 4 Nov 2026): extension
+  `Widgets/` (target PoddeckWidgets). Up Next widget (small: what's
+  playing + play key; medium: + skip back / play / skip forward and the
+  next episode; large: + next 4) and Lock Screen (circular play key with
+  progress, rectangular, inline); a Control Centre / Lock Screen /
+  Action button play-pause control. The app writes what they show to the
+  shared folder (`App/WidgetSync.swift`, `Shared/WidgetShared.swift`,
+  artwork copied small); the keys run in the app (audio intents). Signing
+  makes a second profile ("Poddeck Widgets CI App Store").
 - Add a show accepts Apple Podcasts links (Apple Podcasts can't export a
   subscription list, so there is no OPML import from it).
 - **Import & export** (Shows screen): import an OPML file from another
@@ -480,6 +488,19 @@ Function matters more than look to Paul.
 
 ## Open questions for Paul
 
-- None open. (Answered: name Poddeck + cassette icon D; earlier: Apple
+- **iCloud in TestFlight builds (found 4 Nov 2026)**: TestFlight apps use
+  CloudKit's Production side whatever the entitlement says, and
+  Production can't create record types, so the plan "first build creates
+  them in Development" can't work. The alerts job still sees no
+  "follows" record after Paul opened build 103/104, and iCloud sync of
+  the library is probably not happening either (the phone's own data is
+  fine). Asked Paul to check the CloudKit Console (record types in
+  Development / Production, and Logs). Fix planned: write the schema
+  (CD_* SwiftData types + Poddeck* alert types) as a .ckdb file, load it
+  into Development with `xcrun cktool import-schema` on a one-off
+  Codemagic run (needs a CloudKit management token from Paul), then Paul
+  presses Deploy Schema Changes. Errors are currently swallowed; show
+  the last iCloud error on the Shows screen with the fix.
+- Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added
   now, can be removed.)
