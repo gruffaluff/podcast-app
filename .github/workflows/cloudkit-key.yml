@@ -1,0 +1,40 @@
+name: Make CloudKit key
+
+# One-off (Paul approved, 4 Nov 2026): makes the server key the new-episode
+# alerts job uses to write to Poddeck's iCloud (CloudKit public database).
+# The private key is stored only encrypted (.github/cloudkit-key.enc), locked
+# with the CLOUDKIT_PASSPHRASE secret Paul chose; the log shows only the
+# public key, for Paul to paste into CloudKit Console. Running it again just
+# shows the public key again.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make (once) and show the public key
+        env:
+          PASS: ${{ secrets.CLOUDKIT_PASSPHRASE }}
+        run: |
+          set -e
+          [ -n "$PASS" ] || { echo "::error::The CLOUDKIT_PASSPHRASE secret isn't set."; exit 1; }
+          umask 077
+          if [ ! -f .github/cloudkit-key.enc ]; then
+            openssl ecparam -name prime256v1 -genkey -noout -out "$RUNNER_TEMP/key.pem"
+            openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$RUNNER_TEMP/key.pem" -out .github/cloudkit-key.enc -pass env:PASS
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .github/cloudkit-key.enc
+            git commit -m "Encrypted CloudKit server key for new-episode alerts"
+            git push
+          fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in .github/cloudkit-key.enc -out "$RUNNER_TEMP/key.pem" -pass env:PASS
+          echo "===== PUBLIC KEY (paste into CloudKit Console) ====="
+          openssl ec -in "$RUNNER_TEMP/key.pem" -pubout 2>/dev/null
+          echo "===== END ====="
+          rm -f "$RUNNER_TEMP/key.pem"
