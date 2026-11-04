@@ -28,7 +28,10 @@ lights. Tokens in `App/Theme.swift`; shared pieces in `App/Deck.swift`.
 Function matters more than look to Paul. Exploring (4 Nov 2026, just
 for interest, nothing decided): three alternative directions, Minimal,
 Flashy and Abstract (Up Next, player, show page each), on the canvas
-https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d.
+https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d. Paul liked Flashy's
+layout (fills the space, big bold text) but not its colours, so the same
+canvas has "Bold" versions in calmer palettes: Paper (ink + navy),
+Graphite (dark + bone) and Olive (sand + olive), Up Next and player each.
 
 ## Constraints
 
