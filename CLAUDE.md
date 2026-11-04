@@ -447,8 +447,9 @@ Function matters more than look to Paul.
   vice versa if not). Both use `scripts/ci_testflight.sh`-style steps.
   Codemagic works: build 102 (4 Nov 2026) uploaded and processing; the
   first Codemagic build caught a missing bracket that the blocked GitHub
-  check never saw. Changes touching only docs, website, design or
-  `.github` don't trigger a Codemagic build. To check what Apple has
+  check never saw. A "skip docs-only changes" filter (`when: changeset`)
+  wrongly skipped a real app change, so it was removed: every merge to
+  main builds. Batch doc-only edits with app changes to save minutes. To check what Apple has
   without a Mac: run the GitHub TestFlight workflow by hand with
   `status_only` and `runner=ubuntu-latest` (Linux runs free).
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
