@@ -27,7 +27,7 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in .github/cloudkit-key.enc -out "$RUNNER_TEMP/cloudkit.pem" -pass env:PASS
       - name: Check feeds and send alerts
         env:
-          CLOUDKIT_KEY_ID: a3fe8eead8809143f5fa658ddae13a54ac30af2a3b97a47555319cf6b9bbe355
+          CLOUDKIT_KEY_ID: c74f78588686d233596909193612de3008f68e903b3a10f46171b3814ecd23ec
           CLOUDKIT_ENV: production
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"

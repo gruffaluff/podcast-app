@@ -102,7 +102,8 @@ Function matters more than look to Paul.
   ("alert-state" record) and saves a PoddeckAlertEpisode (bell on:
   visible "New from …" alert) or PoddeckQuietEpisode (silent push that
   refreshes Up Next) record per new episode; the app subscribes to both.
-  CloudKit server-to-server key ID is in alerts.yml (not secret); the
+  CloudKit server-to-server key ID (Production key, c74f…) is in alerts.yml
+  (not secret; the Development key is a3fe…, same key pair); the
   private key is only in `.github/cloudkit-key.enc`, encrypted with the
   CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the Production CloudKit environment (TestFlight builds always do).
 - **Widgets** (Paul set up the App Group `group.com.gruffaluff.podcasts`
