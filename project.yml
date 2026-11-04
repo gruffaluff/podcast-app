@@ -36,6 +36,9 @@ targets:
         # iCloud sync. Only used by signed builds; the unsigned test build
         # ignores it and keeps everything on the device.
         CODE_SIGN_ENTITLEMENTS: Config/Podcasts.entitlements
+        # Set only by the TestFlight workflow (empty otherwise). Kept on this
+        # target so package resource bundles aren't given a profile.
+        PROVISIONING_PROFILE_SPECIFIER: $(PODDECK_PROFILE)
         INFOPLIST_KEY_CFBundleDisplayName: Poddeck
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
