@@ -12,7 +12,8 @@ repository, and Poddeck's own iCloud (CloudKit) public database.
    "PoddeckQuietEpisode" for the rest (a silent push that updates Up Next).
 
 Needs CLOUDKIT_KEY_ID, CLOUDKIT_KEY_PATH (the server-to-server private key,
-PEM) and optionally CLOUDKIT_ENV (development by default).
+PEM) and optionally CLOUDKIT_ENV (production by default; TestFlight
+builds use Production).
 """
 import base64
 import datetime as dt
@@ -29,7 +30,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
 CONTAINER = "iCloud.com.gruffaluff.podcasts"
-ENVIRONMENT = os.environ.get("CLOUDKIT_ENV", "development")
+ENVIRONMENT = os.environ.get("CLOUDKIT_ENV", "production")
 KEY_ID = os.environ["CLOUDKIT_KEY_ID"]
 KEY = serialization.load_pem_private_key(open(os.environ["CLOUDKIT_KEY_PATH"], "rb").read(), password=None)
 BASE = "https://api.apple-cloudkit.com"
