@@ -4,7 +4,6 @@ import PodcastCore
 /// An episode's notes (its description from the feed), with play and the
 /// download / transcript lights. Opened from "Episode notes" in episode menus.
 struct EpisodeNotesView: View {
-    @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
     let episode: PodcastEpisode
 
@@ -24,16 +23,7 @@ struct EpisodeNotesView: View {
                             EpisodeLights(episode: episode)
                         }
                     }
-                    Button {
-                        player.play(episode)
-                        dismiss()
-                    } label: {
-                        Text("▶ PLAY" + (episode.timeLeft.map { " · \(TimeFormat.clock($0))" } ?? ""))
-                            .font(Theme.mono(13, .bold))
-                            .frame(maxWidth: .infinity, minHeight: 46)
-                    }
-                    .buttonStyle(.darkKey)
-                    .padding(.bottom, 3)
+                    EpisodeActions(episode: episode)
                     EpisodeNotesText(episode: episode)
                 }
                 .padding(16)

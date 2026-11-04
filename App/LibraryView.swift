@@ -102,14 +102,17 @@ struct LibraryView: View {
 /// strip in the show's own colour, then the details and keys.
 private struct EpisodeCard: View {
     @Environment(PlayerModel.self) private var player
+    @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
 
     var body: some View {
         let strip = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
 
         VStack(alignment: .leading, spacing: 0) {
-            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 236, radius: 10)
+            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 196, radius: 10)
                 .padding(12)
+                .contentShape(Rectangle())
+                .onTapGesture { store.notesEpisode = episode }
             HStack {
                 Text((episode.podcast?.title ?? "").uppercased()).lineLimit(1)
                 Spacer(minLength: 8)
@@ -123,13 +126,16 @@ private struct EpisodeCard: View {
             .padding(.horizontal, 12)
             VStack(alignment: .leading, spacing: 8) {
                 Text(episode.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2, reservesSpace: true)
+                    .contentShape(Rectangle())
+                    .onTapGesture { store.notesEpisode = episode }
                 Text(episode.summary)
                     .font(.caption)
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
+                EpisodeLights(episode: episode)
                 HStack(spacing: 6) {
                     Button { player.play(episode) } label: {
                         Text("▶ \(playLabel)")
@@ -142,7 +148,6 @@ private struct EpisodeCard: View {
                     .buttonStyle(.darkKey)
                     .accessibilityLabel("Play, \(playLabel)")
                     Spacer()
-                    EpisodeLights(episode: episode)
                     DownloadButton(episode: episode)
                     Menu {
                         EpisodeMenuItems(episode: episode)
@@ -156,7 +161,7 @@ private struct EpisodeCard: View {
             }
             .padding(12)
         }
-        .frame(width: 260)
+        .frame(width: 220)
         // The key-style edge goes on the card's shape only (a shadow on the
         // whole card also outlined the artwork and keys in grey).
         .background(

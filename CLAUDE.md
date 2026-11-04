@@ -301,6 +301,10 @@ Function matters more than look to Paul.
   and expandable episodes (`EpisodeActions`); Mark all as played uses a
   centred alert; Library cards: inset label strip, card edge shadow only
   on the card shape (it outlined the artwork), play time on one line.
+  Then: episodes open instantly (List row animation looked jerky); New
+  Episodes cards smaller (220 wide) and tapping the artwork or title opens
+  the episode page (`EpisodeNotesView`, now with the `EpisodeActions`
+  keys); DL / TX lights never wrap and sit under the card's description.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
