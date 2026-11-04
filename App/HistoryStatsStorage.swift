@@ -1,0 +1,266 @@
+import SwiftUI
+import PodcastCore
+
+/// A slim progress line (how far through an episode).
+struct ProgressLine: View {
+    let fraction: Double
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.hairline)
+                Capsule().fill(Theme.accentFill)
+                    .frame(width: max(4, geometry.size.width * min(1, max(0, fraction))))
+            }
+        }
+        .frame(height: 4)
+        .accessibilityHidden(true)
+    }
+}
+
+/// One episode in Continue listening / History.
+struct HistoryRow: View {
+    let episode: PodcastEpisode
+    var showsProgress = true
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 48, radius: 8)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(episode.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(2)
+                Text(detail.uppercased())
+                    .font(Theme.mono(10))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+                if showsProgress, !episode.played, let duration = episode.duration, duration > 0 {
+                    ProgressLine(fraction: episode.position / duration)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+    }
+
+    private var detail: String {
+        var parts = [episode.podcast?.title ?? ""]
+        if episode.played {
+            parts.append("Played")
+        } else if let left = episode.timeLeft, left > 0 {
+            parts.append("\(TimeFormat.length(left)) left")
+        }
+        if let when = episode.lastPlayedAt { parts.append(TimeFormat.ago(when)) }
+        return parts.filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+}
+
+/// Everything Paul has listened to, most recent first.
+struct HistoryView: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @State private var episodes: [PodcastEpisode] = []
+
+    var body: some View {
+        List {
+            if episodes.isEmpty {
+                Text("Episodes you play will appear here.")
+                    .foregroundStyle(Theme.muted)
+                    .listRowBackground(Theme.background)
+            }
+            ForEach(episodes) { episode in
+                Button { player.play(episode) } label: { HistoryRow(episode: episode) }
+                    .buttonStyle(.plain)
+                    .contextMenu { EpisodeMenuItems(episode: episode) }
+                    .listRowBackground(Theme.background)
+                    .listRowSeparatorTint(Theme.hairline)
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Theme.background)
+        .navigationTitle("HISTORY")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { episodes = store.listeningHistory() }
+    }
+}
+
+/// How much Paul listens: this week, this month, all time, top shows.
+struct StatsView: View {
+    @Environment(LibraryStore.self) private var store
+    @State private var stats = LibraryStore.ListeningStats()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                DeckDisplay {
+                    Text("LISTENED").font(Theme.mono(11)).foregroundStyle(Theme.displayDim)
+                    HStack(alignment: .firstTextBaseline, spacing: 18) {
+                        figure(stats.week, "THIS WEEK")
+                        figure(stats.month, "30 DAYS")
+                        figure(stats.allTime, "ALL TIME")
+                    }
+                    weekBars
+                }
+                DeckHeader(title: "Top shows", detail: "\(stats.finishedThisMonth) finished in 30 days")
+                if stats.topShows.isEmpty {
+                    Text("Listen to something and your top shows will show up here.")
+                        .foregroundStyle(Theme.muted)
+                }
+                ForEach(Array(stats.topShows.enumerated()), id: \.offset) { index, show in
+                    HStack {
+                        Text(String(format: "%02d", index + 1))
+                            .font(Theme.mono(14, .bold))
+                            .foregroundStyle(index == 0 ? Theme.accentText : Theme.muted)
+                            .frame(width: 28, alignment: .leading)
+                        Text(show.title).foregroundStyle(Theme.ink).lineLimit(1)
+                        Spacer()
+                        Text(Self.hours(show.seconds))
+                            .font(Theme.mono(12))
+                            .foregroundStyle(Theme.muted)
+                    }
+                    .padding(.vertical, 2)
+                }
+                Text("Counts time actually playing, at whatever speed you listen.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.muted)
+            }
+            .padding(16)
+        }
+        .background(Theme.background)
+        .navigationTitle("STATS")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { stats = store.listeningStats() }
+    }
+
+    private func figure(_ seconds: TimeInterval, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(Self.hours(seconds)).font(Theme.mono(22, .bold))
+            Text(label).font(Theme.mono(9)).foregroundStyle(Theme.displayDim)
+        }
+    }
+
+    /// The last 7 days as a row of bars.
+    private var weekBars: some View {
+        let peak = max(stats.lastSevenDays.map(\.seconds).max() ?? 0, 1)
+        return HStack(alignment: .bottom, spacing: 6) {
+            ForEach(Array(stats.lastSevenDays.enumerated()), id: \.offset) { _, day in
+                VStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(day.seconds > 0 ? Theme.displayText : Theme.displayTrack)
+                        .frame(height: max(3, 50 * day.seconds / peak))
+                    Text(day.day.formatted(.dateTime.weekday(.narrow)))
+                        .font(Theme.mono(9))
+                        .foregroundStyle(Theme.displayDim)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .frame(height: 70, alignment: .bottom)
+        .accessibilityElement()
+        .accessibilityLabel("Listening each day this week")
+    }
+
+    static func hours(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        return minutes < 60 ? "\(minutes)M" : "\(minutes / 60)H \(minutes % 60)M"
+    }
+}
+
+/// Space used by downloads, per show, with delete and per-show limits.
+struct StorageView: View {
+    @Environment(LibraryStore.self) private var store
+    @State private var rows: [LibraryStore.ShowStorage] = []
+    @State private var transcriptBytes: Int64 = 0
+    @State private var confirmingDeleteAll = false
+
+    var body: some View {
+        List {
+            Section {
+                HStack {
+                    Text("Downloads").foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text(Self.size(rows.reduce(0) { $0 + $1.bytes })).font(Theme.mono(13)).foregroundStyle(Theme.ink)
+                }
+                HStack {
+                    Text("Transcripts").foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text(Self.size(transcriptBytes)).font(Theme.mono(13)).foregroundStyle(Theme.muted)
+                }
+                Button("Delete all downloads", role: .destructive) { confirmingDeleteAll = true }
+                    .disabled(rows.isEmpty)
+            } header: {
+                DeckHeader(title: "On this iPhone")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
+                if rows.isEmpty {
+                    Text("Nothing downloaded.").foregroundStyle(Theme.muted)
+                }
+                ForEach(rows) { row in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 12) {
+                            ArtworkView(url: row.show.artworkURL, title: row.show.title, size: 40, radius: 6)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(row.show.title).foregroundStyle(Theme.ink).lineLimit(1)
+                                Text("\(row.count) EPISODE\(row.count == 1 ? "" : "S") · \(Self.size(row.bytes))")
+                                    .font(Theme.mono(10))
+                                    .foregroundStyle(Theme.muted)
+                            }
+                            Spacer()
+                            Menu {
+                                Picker("Keep downloads", selection: Binding(get: { row.show.downloadLimit }, set: { store.setDownloadLimit($0, for: row.show); reload() })) {
+                                    Text("Keep all").tag(0)
+                                    ForEach([1, 2, 3, 5, 10], id: \.self) { Text("Keep latest \($0)").tag($0) }
+                                }
+                                Button("Delete these downloads", systemImage: "trash", role: .destructive) {
+                                    store.removeDownloads(of: row.show)
+                                    reload()
+                                }
+                            } label: {
+                                Text(row.show.downloadLimit == 0 ? "ALL ▾" : "LATEST \(row.show.downloadLimit) ▾")
+                                    .font(Theme.mono(10, .bold))
+                                    .foregroundStyle(Theme.ink)
+                                    .padding(.horizontal, 8)
+                                    .frame(minHeight: 32)
+                                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                    }
+                    .listRowBackground(Theme.background)
+                    .listRowSeparatorTint(Theme.hairline)
+                }
+            } header: {
+                DeckHeader(title: "By show")
+            } footer: {
+                Text("Played episodes' downloads are deleted automatically (straight away, or after 24 hours if you chose that). \"Latest 3\" keeps only a show's three newest downloads.")
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Theme.background)
+        .navigationTitle("STORAGE")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { reload() }
+        .alert("Delete all downloads?", isPresented: $confirmingDeleteAll) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete all", role: .destructive) {
+                store.removeAllDownloads()
+                reload()
+            }
+        } message: {
+            Text("Episodes stay in your library and Up Next; you can download them again.")
+        }
+    }
+
+    private func reload() {
+        rows = store.storageByShow()
+        transcriptBytes = store.transcriptBytes()
+    }
+
+    static func size(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file).uppercased()
+    }
+}

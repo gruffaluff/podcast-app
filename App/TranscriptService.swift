@@ -349,11 +349,11 @@ enum OnDeviceTranscriber {
 
     static func transcribe(_ audio: URL) async throws -> Transcript {
         async let music = MusicDetector.spans(in: audio)
+        // Words grouped into lines; no speaker labels (Paul dropped speaker
+        // separation as not worth the battery). Shows' own transcripts still
+        // name their speakers.
         let words = try await speech(in: audio)
-        // Then who spoke when (one job at a time keeps the phone cool).
-        let turns = await SpeakerSeparation.turns(in: audio)
-        let segments = SpeakerLabels.assign(turns, to: words)
-        return Transcript(source: .onDevice, segments: segments, music: await music)
+        return Transcript(source: .onDevice, segments: words, music: await music)
     }
 
     /// A transcriber with word timings (so words can be matched to speakers),

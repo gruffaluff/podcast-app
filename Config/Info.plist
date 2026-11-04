@@ -17,6 +17,27 @@
 		<string>com.gruffaluff.podcasts.transcribe</string>
 		<string>com.gruffaluff.podcasts.refresh</string>
 	</array>
+	<!-- CarPlay (CarPlaySceneDelegate). It only shows up in cars once Apple
+	     grants the CarPlay audio entitlement (see docs/SETUP.md). -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>CPTemplateApplicationSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>CPTemplateApplicationScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>CarPlay</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).CarPlaySceneDelegate</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<!-- OPML show lists, for Import & export on the Shows screen. -->
 	<key>UTImportedTypeDeclarations</key>
 	<array>

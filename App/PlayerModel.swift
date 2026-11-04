@@ -31,8 +31,11 @@ final class PlayerModel {
     var skipBack: TimeInterval { TimeInterval(skipBackSeconds) }
     var skipForward: TimeInterval { TimeInterval(skipForwardSeconds) }
 
-    /// Playback speed, 1.0× to 2.0×.
+    /// Playback speed, 1.0× to 2.0×: the show's own speed when it has one,
+    /// otherwise the global speed.
     private(set) var speed: Double = 1.0
+    /// True when the playing show has its own speed (SPEED then changes that).
+    private(set) var speedIsForShow = false
 
     private(set) var sleepTimer: SleepTimerOption?
     /// When a timed sleep timer will pause playback.
@@ -89,6 +92,14 @@ final class PlayerModel {
     @ObservationIgnored private var allowedAds: Set<TimeInterval> = []
     @ObservationIgnored private var skippedNoteTask: Task<Void, Never>?
     @ObservationIgnored private let adScanner: AdScanner
+    /// The playing episode's show, for per-show speed, outro skipping and stats.
+    @ObservationIgnored private var currentShowFeed: String?
+    @ObservationIgnored private var currentShowTitle = ""
+    @ObservationIgnored private var outroSeconds: TimeInterval = 0
+    @ObservationIgnored private var finishingEarly = false
+    /// Listening time not yet added to the stats.
+    @ObservationIgnored private var unloggedSeconds: TimeInterval = 0
+    @ObservationIgnored private var lastListenTick: Date?
 
     init(store: LibraryStore) {
         self.store = store
@@ -130,7 +141,18 @@ final class PlayerModel {
             audioURL: episode.audioURL
         )
         duration = episode.duration ?? 0
-        let start = episode.played ? 0 : episode.position
+        flushListening()
+        store.playingEpisodeID = episode.episodeID
+        episode.lastPlayedAt = Date()
+        let show = episode.podcast
+        currentShowFeed = show?.feedURL
+        currentShowTitle = show?.title ?? ""
+        applySpeed(for: show)
+        // Skip the show's intro (only when starting from the beginning).
+        var start = episode.played ? 0 : episode.position
+        if let intro = show?.skipIntro, intro > 0, start < intro { start = intro }
+        outroSeconds = show?.skipOutro ?? 0
+        finishingEarly = false
         currentTime = start
         lastSavedTime = start
         artwork = nil
@@ -180,7 +202,35 @@ final class PlayerModel {
 
     func setSpeed(_ newSpeed: Double) {
         speed = min(2, max(1, newSpeed))
-        UserDefaults.standard.set(speed, forKey: "speed")
+        if speedIsForShow, let feed = currentShowFeed, let show = store.podcast(feedURL: feed) {
+            show.speedOverride = speed
+            store.save()
+        } else {
+            UserDefaults.standard.set(speed, forKey: "speed")
+        }
+        applyRate()
+    }
+
+    /// The show's own speed if it has one, otherwise the global speed.
+    private func applySpeed(for show: Podcast?) {
+        if let override = show?.speedOverride, override > 0 {
+            speed = min(2, max(1, override))
+            speedIsForShow = true
+        } else {
+            speed = min(2, max(1, UserDefaults.standard.object(forKey: "speed") as? Double ?? 1))
+            speedIsForShow = false
+        }
+        applyRate()
+    }
+
+    /// Called when a show's settings change, so the playing episode follows them.
+    func showSettingsChanged(_ show: Podcast) {
+        guard show.feedURL == currentShowFeed else { return }
+        applySpeed(for: show)
+        outroSeconds = show.skipOutro
+    }
+
+    private func applyRate() {
         player.defaultRate = Float(speed)
         if player.timeControlStatus != .paused {
             player.rate = Float(hurrying ? SilenceDetector.trimRate(forSpeed: speed) : speed)
@@ -244,15 +294,44 @@ final class PlayerModel {
     func setSleepTimer(_ option: SleepTimerOption?) {
         sleepTask?.cancel()
         sleepTask = nil
+        player.volume = 1
         sleepTimer = option
         sleepEndsAt = nil
         guard case .minutes(let minutes)? = option else { return }
-        let ends = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        startSleepCountdown(until: Date().addingTimeInterval(TimeInterval(minutes * 60)))
+    }
+
+    /// Five more minutes (shake the phone, or the +5 in the sleep menu).
+    func extendSleepTimer(minutes: Int = 5) {
+        guard sleepTimer != nil else { return }
+        if sleepTimer == .endOfEpisode {
+            setSleepTimer(.minutes(minutes))
+            return
+        }
+        let base = max(sleepEndsAt ?? Date(), Date())
+        sleepTask?.cancel()
+        player.volume = 1
+        startSleepCountdown(until: base.addingTimeInterval(TimeInterval(minutes * 60)))
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    /// Counts down, fades the sound out over the last 10 seconds, then pauses.
+    private func startSleepCountdown(until ends: Date) {
         sleepEndsAt = ends
         sleepTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(ends.timeIntervalSinceNow))
+            let fade: TimeInterval = 10
+            try? await Task.sleep(for: .seconds(max(0, ends.timeIntervalSinceNow - fade)))
             guard !Task.isCancelled, let self else { return }
+            for step in 1...20 {
+                try? await Task.sleep(for: .seconds(fade / 20))
+                guard !Task.isCancelled else {
+                    self.player.volume = 1
+                    return
+                }
+                self.player.volume = Float(1 - Double(step) / 20)
+            }
             self.pause()
+            self.player.volume = 1
             self.sleepTimer = nil
             self.sleepEndsAt = nil
         }
@@ -274,6 +353,8 @@ final class PlayerModel {
 
     func stop() {
         saveProgress()
+        flushListening()
+        store.playingEpisodeID = nil
         player.replaceCurrentItem(with: nil)
         adScanner.stop()
         currentAd = nil
@@ -309,6 +390,31 @@ final class PlayerModel {
         if abs(seconds - lastSavedTime) >= 15 {
             saveProgress()
         }
+        countListening()
+        // Skip the show's outro: finish early.
+        if outroSeconds > 0, duration > outroSeconds + 60, seconds >= duration - outroSeconds, !finishingEarly {
+            finishingEarly = true
+            didFinish()
+        }
+    }
+
+    /// Adds real listening time (not paused, not scrubbing) to the stats.
+    private func countListening() {
+        let now = Date()
+        if player.timeControlStatus == .playing, let last = lastListenTick {
+            unloggedSeconds += min(now.timeIntervalSince(last), 2)
+        }
+        lastListenTick = player.timeControlStatus == .playing ? now : nil
+        if unloggedSeconds >= 30 { flushListening() }
+    }
+
+    private func flushListening() {
+        guard unloggedSeconds > 0, let feed = currentShowFeed else {
+            unloggedSeconds = 0
+            return
+        }
+        store.logListening(unloggedSeconds, feedURL: feed, showTitle: currentShowTitle)
+        unloggedSeconds = 0
     }
 
     private func saveProgress() {
@@ -374,6 +480,10 @@ final class PlayerModel {
                 self.adBreaks = episode.adBreaks
                 self.autoChapters = episode.autoChapters
             }
+        })
+        // Shake to add 5 minutes while the sleep timer is on.
+        notificationTokens.append(center.addObserver(forName: .deviceShaken, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.extendSleepTimer() }
         })
         notificationTokens.append(center.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.updateRoute() }

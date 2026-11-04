@@ -30,7 +30,7 @@ final class SettingsSync {
         "findAdsWhileListening", "checkIntervalHours", "downloadWifiOnly",
         "keepShowOrder", "keepPlayingNew", "keepPlayedDownloads",
         "speed", "trimSilences", "boostVoices", "skipBack", "skipForward",
-        "skipAds", "labelSpeakers", "transcriptSchedule",
+        "skipAds", "transcriptSchedule",
         // So a reinstall doesn't follow the test show again.
         "starterShowFollowed",
     ]

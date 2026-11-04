@@ -104,6 +104,20 @@ with the GitHub builds (up to 12). `scripts/ci_testflight.sh` does the
 work: tests, XcodeGen, App Store certificate and profile via the API,
 archive, upload, then a status report.
 
+## CarPlay (one-off)
+
+1. Paul applies at developer.apple.com/contact/carplay (signed in with
+   the developer account): choose **CarPlay audio app**, app name
+   Poddeck, bundle ID `com.gruffaluff.podcasts`, a sentence on what it
+   does ("personal podcast player: Up Next queue, shows, now playing").
+   Free; Apple replies by email, usually within days to a few weeks.
+2. Once approved: in Certificates, Identifiers & Profiles, open the App
+   ID and tick the CarPlay capability if it isn't already, then add
+   `com.apple.developer.carplay-audio` = true to
+   `Config/Podcasts.entitlements`. The next build includes it (the
+   profile is made fresh each build). The CarPlay screens are already
+   built (`App/CarPlay.swift`).
+
 ## Pipeline
 
 - `.github/workflows/testflight.yml` on `macos-15-intel` (the Apple-silicon
