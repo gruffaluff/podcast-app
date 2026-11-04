@@ -38,19 +38,34 @@ struct EpisodeNotesView: View {
     }
 }
 
-/// The notes panel itself, shared with the player.
+/// The notes panel itself, shared with the player: paragraphs as the show
+/// wrote them, web links tappable, and timestamps ("12:34") that play the
+/// episode from that moment.
 struct EpisodeNotesText: View {
+    @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             DeckHeader(title: "Episode notes", detail: detail)
-            Text(episode.summary.isEmpty ? "This episode has no notes." : episode.summary)
-                .font(.subheadline)
-                .foregroundStyle(episode.summary.isEmpty ? Theme.muted : Theme.ink)
-                .lineSpacing(3)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            if episode.summary.isEmpty {
+                Text("This episode has no notes.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.muted)
+            } else {
+                Text(Self.linked(episode.summary))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.ink)
+                    .tint(Theme.accentText)
+                    .lineSpacing(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .environment(\.openURL, OpenURLAction { url in
+                        guard url.scheme == "poddeck-seek", let seconds = TimeInterval(url.host() ?? "") else { return .systemAction }
+                        if player.nowPlaying?.episodeID != episode.episodeID { player.play(episode) }
+                        player.seek(to: seconds)
+                        return .handled
+                    })
+            }
         }
         .padding(14)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
@@ -60,5 +75,33 @@ struct EpisodeNotesText: View {
         var parts = [episode.published.formatted(date: .abbreviated, time: .omitted)]
         if let duration = episode.duration, duration > 0 { parts.append(TimeFormat.clock(duration)) }
         return parts.joined(separator: " · ")
+    }
+
+    /// Links for web addresses and timestamps.
+    static func linked(_ text: String) -> AttributedString {
+        var result = AttributedString(text)
+        let whole = NSRange(text.startIndex..., in: text)
+        if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
+            for match in detector.matches(in: text, range: whole) {
+                guard let url = match.url, let range = Range(match.range, in: text),
+                      let attributed = Range(range, in: result) else { continue }
+                result[attributed].link = url
+                result[attributed].underlineStyle = .single
+            }
+        }
+        if let stamps = try? NSRegularExpression(pattern: "\\b(?:(\\d{1,2}):)?([0-5]?\\d):([0-5]\\d)\\b") {
+            for match in stamps.matches(in: text, range: whole) {
+                func number(_ i: Int) -> Int {
+                    Range(match.range(at: i), in: text).flatMap { Int(text[$0]) } ?? 0
+                }
+                let seconds = number(1) * 3600 + number(2) * 60 + number(3)
+                guard let range = Range(match.range, in: text), let attributed = Range(range, in: result),
+                      result[attributed].link == nil,
+                      let url = URL(string: "poddeck-seek://\(seconds)") else { continue }
+                result[attributed].link = url
+                result[attributed].font = Theme.mono(14, .semibold)
+            }
+        }
+        return result
     }
 }

@@ -93,6 +93,15 @@ final class TextFormatTests: XCTestCase {
         XCTAssertEqual(TimeFormat.ago(now.addingTimeInterval(-3 * 86_400), now: now), "3d ago")
     }
 
+    func testNotesKeepParagraphsListsAndLinks() {
+        let html = "<p>Stories from the <b>coast</b>.</p><p>This week:<br>tides</p><ul><li>One</li><li>Two</li></ul><p>More at <a href=\"https://example.com/x\">our site</a> and <a href='https://e.com'>https://e.com</a></p>"
+        XCTAssertEqual(PlainText.notesFromHTML(html), "Stories from the coast.\n\nThis week:\ntides\n\n• One\n• Two\n\nMore at our site (https://example.com/x) and https://e.com")
+    }
+
+    func testPlainTextNotesKeepTheirLineBreaks() {
+        XCTAssertEqual(PlainText.notesFromHTML("Line one\r\n\r\n\r\nLine   two &amp; more\n"), "Line one\n\nLine two & more")
+    }
+
     func testPlainTextFromHTML() {
         XCTAssertEqual(PlainText.fromHTML("<p>Stories from the <b>coast</b>.</p><p>Every week.</p>"), "Stories from the coast. Every week.")
         XCTAssertEqual(PlainText.fromHTML("Fish &amp; chips &#8211; &#x2014; &rsquo;"), "Fish & chips – — ’")

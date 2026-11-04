@@ -67,7 +67,7 @@ struct ShowPreviewView: View {
                     if let genre = item.genre { DeckTag(text: genre.uppercased()) }
                 }
             }
-            if let summary = feed?.summary.map(PlainText.fromHTML), !summary.isEmpty {
+            if let summary = feed?.summary.map(PlainText.notesFromHTML), !summary.isEmpty {
                 Text(summary)
                     .font(.subheadline)
                     .foregroundStyle(Theme.muted)
@@ -99,7 +99,7 @@ struct ShowPreviewView: View {
 
     private func episodeRow(_ episode: ParsedEpisode) -> some View {
         let isOpen = expanded == episode.guid
-        let summary = PlainText.fromHTML(episode.summary ?? "")
+        let summary = PlainText.notesFromHTML(episode.summary ?? "")
         let meta = [episode.published.map { $0.formatted(date: .abbreviated, time: .omitted) },
                     episode.duration.map { TimeFormat.clock($0) }].compactMap { $0 }.joined(separator: " · ")
         return VStack(alignment: .leading, spacing: 4) {

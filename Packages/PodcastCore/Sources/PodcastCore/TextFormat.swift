@@ -61,6 +61,41 @@ public enum PlainText {
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Show notes as readable text: paragraphs and line breaks kept, list
+    /// items as "• ", links' web addresses kept so they can be tapped,
+    /// spaces tidied. Plain-text notes keep their own line breaks.
+    public static func notesFromHTML(_ html: String) -> String {
+        var text = html.replacingOccurrences(of: "\r\n?", with: "\n", options: .regularExpression)
+        let isHTML = text.range(of: "<[a-zA-Z/][^>]*>", options: .regularExpression) != nil
+        if isHTML {
+            // In HTML, line breaks in the source are just spaces.
+            text = text.replacingOccurrences(of: "\n", with: " ")
+            // A link whose text differs from its address: keep the address.
+            text = text.replacingOccurrences(
+                of: "<a\\s[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>",
+                with: "$2 ($1)", options: [.regularExpression, .caseInsensitive])
+            text = text.replacingOccurrences(of: "<br\\s*/?>", with: "\n", options: [.regularExpression, .caseInsensitive])
+            text = text.replacingOccurrences(of: "<li[^>]*>", with: "\n• ", options: [.regularExpression, .caseInsensitive])
+            text = text.replacingOccurrences(of: "</(p|div|h[1-6]|ul|ol|blockquote)>", with: "\n\n", options: [.regularExpression, .caseInsensitive])
+            text = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        }
+        text = decodeEntities(text)
+        // "word (word)" when a link's text was its own address.
+        text = text.replacingOccurrences(of: "(https?://\\S+) \\(\\1\\)", with: "$1", options: .regularExpression)
+        let lines = text.components(separatedBy: "\n").map {
+            $0.replacingOccurrences(of: "[ \t\u{00A0}]+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+        }
+        // At most one blank line between paragraphs.
+        var result: [String] = []
+        for line in lines {
+            if line.isEmpty && (result.last?.isEmpty ?? true) { continue }
+            result.append(line)
+        }
+        while result.last?.isEmpty == true { result.removeLast() }
+        return result.joined(separator: "\n")
+    }
+
     private static let named: [String: String] = [
         "quot": "\"", "apos": "'", "lt": "<", "gt": ">", "nbsp": " ",
         "ndash": "–", "mdash": "—", "hellip": "…", "rsquo": "’", "lsquo": "‘",
