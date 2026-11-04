@@ -49,11 +49,21 @@ final class AdScanner {
             guard let self else { return }
             self.task = nil
             guard !Task.isCancelled, self.episodeID == id else { return }
+            self.syncTranscript(id, heard: words)
             // Marked as checked even if it failed, so it isn't retried endlessly.
             self.scanned = AdScanPlan.adding(slice, to: self.scanned)
             let all = self.store.addAdBreaks(breaks, scanned: slice, to: id)
             self.onUpdate?(id, all)
         }
+    }
+
+    /// The same words line the show's transcript up with this audio.
+    private func syncTranscript(_ id: String, heard words: [TranscriptSegment]) {
+        guard let episode = store.episode(id), let file = episode.transcriptFile,
+              let transcript = TranscriptFiles.load(file), transcript.source == .publisher,
+              let anchor = TranscriptAlign.anchor(heard: words, transcript: transcript.segments) else { return }
+        episode.syncAnchors = TranscriptAlign.adding(anchor, to: episode.syncAnchors)
+        store.save()
     }
 
     func stop() {

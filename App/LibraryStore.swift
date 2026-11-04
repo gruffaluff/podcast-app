@@ -13,6 +13,8 @@ final class LibraryStore {
     /// Up Next, in order.
     private(set) var queue: [QueueItem] = []
     private(set) var isRefreshing = false
+    /// The episode whose notes are open (any screen's menu can set it).
+    var notesEpisode: PodcastEpisode?
     private(set) var lastChecked: Date? = nil {
         didSet { UserDefaults.standard.set(lastChecked, forKey: "lastChecked") }
     }

@@ -151,3 +151,50 @@ struct DeckSwitch<Value: Hashable>: View {
         .padding(.bottom, 3)
     }
 }
+
+/// Two labelled lights for an episode: DL (downloaded; shows % while
+/// downloading) and TX (transcript ready; blinks while transcribing).
+struct EpisodeLights: View {
+    @Environment(DownloadManager.self) private var downloads
+    let episode: PodcastEpisode
+    /// On the dark display panel.
+    var onDark = false
+
+    var body: some View {
+        let progress = downloads.progress[episode.episodeID]
+        HStack(spacing: 8) {
+            light(progress.map { $0 > 0 ? "DL \(Int($0 * 100))%" : "DL …" } ?? "DL",
+                  state: episode.downloadFile != nil ? .on : (progress != nil ? .busy : .off),
+                  color: onDark ? Theme.displayText : Theme.ink)
+            light(episode.transcriptState == .transcribing ? "TX …" : "TX",
+                  state: episode.transcriptState == .ready ? .on : (episode.transcriptState == .transcribing ? .busy : .off),
+                  color: Theme.accentFill)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label(progress: progress))
+    }
+
+    private enum LightState { case on, busy, off }
+
+    private func light(_ text: String, state: LightState, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Circle()
+                .fill(state == .off ? (onDark ? Theme.displayTrack : Theme.controlBorder) : color)
+                .opacity(state == .busy ? 0.5 : 1)
+                .frame(width: 7, height: 7)
+            Text(text)
+                .font(Theme.mono(9, .semibold))
+                .foregroundStyle(state == .off ? (onDark ? Theme.displayDim : Theme.muted) : (onDark ? Theme.displayText : Theme.ink))
+        }
+    }
+
+    private func label(progress: Double?) -> String {
+        let download = episode.downloadFile != nil ? "Downloaded" : (progress.map { "Downloading, \(Int($0 * 100)) percent" } ?? "Not downloaded")
+        let transcript: String = switch episode.transcriptState {
+        case .ready: "transcript ready"
+        case .transcribing: "transcribing"
+        default: "no transcript"
+        }
+        return "\(download), \(transcript)"
+    }
+}

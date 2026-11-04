@@ -13,14 +13,6 @@ struct UpNextView: View {
 
         NavigationStack {
             List {
-                if player.nowPlaying != nil {
-                    Section {
-                        NowPlayingDeck()
-                            .listRowBackground(Theme.background)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 14, bottom: 8, trailing: 14))
-                    }
-                }
                 Section {
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
@@ -38,6 +30,7 @@ struct UpNextView: View {
                                 if transcripts.canTranscribeNow(episode) {
                                     Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
                                 }
+                                Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
                                 Button("Mark as played", systemImage: "checkmark.circle") { store.markPlayed(episode.episodeID) }
                                 Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
                             }
@@ -46,6 +39,19 @@ struct UpNextView: View {
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
                     .listRowBackground(Theme.surface)
                     .listRowSeparatorTint(Theme.hairline)
+                    if store.queue.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("UP NEXT IS EMPTY")
+                                .font(Theme.mono(13, .bold))
+                                .foregroundStyle(Theme.ink)
+                            Text("Set shows to Top or Bottom (Library → a show → Off / Top / Bottom), or use Play next on any episode.")
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.muted)
+                        }
+                        .padding(.vertical, 10)
+                        .listRowBackground(Theme.background)
+                        .listRowSeparator(.hidden)
+                    }
                 } header: {
                     header(episodes: episodes)
                 }
@@ -68,17 +74,6 @@ struct UpNextView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .overlay {
-                if store.queue.isEmpty {
-                    ContentUnavailableView(
-                        "Up Next is empty",
-                        systemImage: "list.bullet",
-                        description: Text("Follow shows in Library and set them to Top or Bottom, or use Play next on any episode.")
-                    )
-                    .foregroundStyle(Theme.muted)
-                    .allowsHitTesting(false)
-                }
-            }
             .refreshable { await store.refreshAll() }
             .navigationTitle("UP NEXT")
             .toolbar {
@@ -124,64 +119,6 @@ struct UpNextView: View {
     }
 }
 
-/// The display panel at the top of Up Next: what's playing, segmented
-/// progress (ads in amber), and a Skip ad key while an ad plays.
-private struct NowPlayingDeck: View {
-    @Environment(PlayerModel.self) private var player
-
-    var body: some View {
-        if let item = player.nowPlaying {
-            DeckDisplay {
-                HStack {
-                    Text("NOW ▸ \(item.showTitle.uppercased())").lineLimit(1)
-                    Spacer()
-                    Text(modes)
-                }
-                .font(Theme.mono(11))
-                .foregroundStyle(Theme.displayDim)
-                Text(item.title.uppercased())
-                    .font(Theme.mono(15, .semibold))
-                    .lineLimit(1)
-                SegmentBar(progress: progress, ads: adFractions, count: 24)
-                HStack {
-                    Text("\(TimeFormat.clock(player.currentTime)) / \(TimeFormat.clock(player.duration))")
-                        .monospacedDigit()
-                    Spacer()
-                    if player.currentAd != nil {
-                        Button { player.skipCurrentAd() } label: {
-                            Text("SKIP AD ▸▸").font(Theme.mono(12, .bold)).padding(.horizontal, 12).frame(minHeight: 36)
-                        }
-                        .buttonStyle(.accentKey)
-                    } else {
-                        Button { player.togglePlayPause() } label: {
-                            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                                .frame(width: 44, height: 36)
-                        }
-                        .buttonStyle(.key)
-                        .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-                    }
-                }
-            }
-        }
-    }
-
-    private var progress: Double {
-        player.duration > 0 ? min(1, player.currentTime / player.duration) : 0
-    }
-
-    private var adFractions: [ClosedRange<Double>] {
-        guard player.duration > 0 else { return [] }
-        return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
-    }
-
-    private var modes: String {
-        var parts = [PlayerOptions.speedLabel(player.speed)]
-        if player.trimSilences { parts.append("TRIM") }
-        if player.boostVoices { parts.append("BOOST") }
-        return parts.joined(separator: " · ")
-    }
-}
-
 private struct QueueRow: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
@@ -221,12 +158,7 @@ private struct QueueRow: View {
                     .font(Theme.mono(12))
                     .monospacedDigit()
                     .foregroundStyle(Theme.ink)
-                HStack(spacing: 3) {
-                    LED(on: episode.downloadFile != nil)
-                    LED(on: episode.transcriptState == .ready, color: Theme.accentFill)
-                }
-                .accessibilityElement()
-                .accessibilityLabel(lightsLabel)
+                EpisodeLights(episode: episode)
             }
         }
         .padding(.vertical, 4)
@@ -262,9 +194,4 @@ private struct QueueRow: View {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
-    private var lightsLabel: String {
-        let downloaded = episode.downloadFile != nil ? "Downloaded" : "Not downloaded"
-        let transcript = episode.transcriptState == .ready ? "transcript ready" : "no transcript"
-        return "\(downloaded), \(transcript)"
-    }
 }
