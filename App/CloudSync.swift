@@ -1,4 +1,5 @@
 import Foundation
+import CloudKit
 import CoreData
 import SwiftData
 
@@ -14,6 +15,26 @@ enum CloudSync {
 
     /// True when the iPhone is signed in to iCloud.
     static var isSignedIn: Bool { FileManager.default.ubiquityIdentityToken != nil }
+
+    private static let problemsKey = "cloud.problems"
+
+    /// The last iCloud error for each area ("Sync", "Alerts"), shown on the
+    /// Shows screen so problems aren't invisible. Cleared when that area
+    /// next works.
+    static var problems: [String: String] {
+        UserDefaults.standard.dictionary(forKey: problemsKey) as? [String: String] ?? [:]
+    }
+
+    static func note(_ error: Error?, in area: String) {
+        var all = problems
+        if let error {
+            let detail = (error as? CKError).map { "\($0.code) (\($0.code.rawValue))" } ?? ""
+            all[area] = "\(error.localizedDescription) \(detail)".trimmingCharacters(in: .whitespaces)
+        } else {
+            all[area] = nil
+        }
+        UserDefaults.standard.set(all, forKey: problemsKey)
+    }
 }
 
 /// Mirrors settings between UserDefaults and iCloud key-value storage, so a
@@ -93,8 +114,12 @@ extension LibraryStore {
     func observeCloudChanges() {
         let names: [Notification.Name] = [.NSPersistentStoreRemoteChange, NSPersistentCloudKitContainer.eventChangedNotification]
         for name in names {
-            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.scheduleCloudTidy() }
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+                let event = note.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey] as? NSPersistentCloudKitContainer.Event
+                MainActor.assumeIsolated {
+                    if let event, event.endDate != nil { CloudSync.note(event.succeeded ? nil : event.error, in: "Sync") }
+                    self?.scheduleCloudTidy()
+                }
             }
         }
     }

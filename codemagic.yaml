@@ -30,3 +30,26 @@ workflows:
           # has builds up to 12 from GitHub, so stay well clear of those.
           export BUILD_NUMBER=$((100 + ${BUILD_NUMBER:-0}))
           RUN_TESTS=1 scripts/ci_testflight.sh
+
+  # One-off (start it by hand): loads Config/CloudKitSchema.ckdb into the
+  # iCloud Development environment with Apple's cktool. Needs the
+  # CLOUDKIT_MANAGEMENT_TOKEN variable (CloudKit Console → Settings →
+  # Tokens) in the "apple" group. Afterwards: Deploy Schema Changes to
+  # Production in the CloudKit Console. A few free Mac minutes.
+  cloudkit-schema:
+    name: iCloud schema
+    instance_type: mac_mini_m2
+    max_build_duration: 10
+    environment:
+      xcode: latest
+      groups:
+        - apple
+    scripts:
+      - name: Load the iCloud schema into Development
+        script: |
+          set -e
+          [ -n "${CLOUDKIT_MANAGEMENT_TOKEN:-}" ] || { echo "Add CLOUDKIT_MANAGEMENT_TOKEN to the apple group first."; exit 1; }
+          ARGS="--team-id $APPLE_TEAM_ID --container-id iCloud.com.gruffaluff.podcasts --environment development"
+          xcrun cktool import-schema $ARGS --file Config/CloudKitSchema.ckdb
+          echo "== Development schema now"
+          xcrun cktool export-schema $ARGS | grep "RECORD TYPE"

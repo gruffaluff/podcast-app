@@ -321,6 +321,12 @@ struct TopPriorityView: View {
                         .foregroundStyle(Theme.ink)
                 }
                 .accessibilityElement(children: .combine)
+                ForEach(CloudSync.problems.sorted(by: { $0.key < $1.key }), id: \.key) { item in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(item.key.uppercased()) PROBLEM").font(Theme.mono(10, .bold)).foregroundStyle(Theme.accentText)
+                        Text(item.value).font(.system(size: 12)).foregroundStyle(Theme.muted).textSelection(.enabled)
+                    }
+                }
             } header: {
                 DeckHeader(title: "iCloud")
             } footer: {

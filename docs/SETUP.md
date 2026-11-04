@@ -56,19 +56,28 @@ archives aren't allowed with the iOS 26 SDK.)
 ### After the first build: iCloud database (one-off)
 
 iCloud sync uses `Config/Podcasts.entitlements` (CloudKit container, push,
-key-value storage); steps 2–3 above set up the Apple side. CloudKit schema
-(no Mac needed): the entitlements start with
-   `com.apple.developer.icloud-container-environment` = Development, so the
-   first TestFlight build creates the record types (CD_Podcast,
-   CD_PodcastEpisode, CD_UpNextEntry, CD_Bookmark) as it saves. Once Paul
-   has used it a little, sign in to the CloudKit Console
-   (icloud.developer.apple.com), check the record types exist, and
-   **Deploy Schema Changes** to Production. Then change the entitlement to
-   Production and ship the next build. Do this again (deploy first) after
-   any change to the SwiftData models in `App/Models.swift`. Note: data
-   saved while on Development doesn't move to Production by itself; after
-   switching, check in the CloudKit Console that the phone's library has
-   arrived in Production.
+key-value storage, App Group); steps 2–3 above set up the Apple side.
+
+**CloudKit schema (no Mac needed).** TestFlight and App Store builds always
+use iCloud's Production side, which can't create record types by itself
+(found 4 Nov 2026: both sides only had "Users"). The record types are
+written out in `Config/CloudKitSchema.ckdb` (SwiftData's CD_* types and the
+Poddeck* alert types) and loaded like this:
+1. CloudKit Console (icloud.developer.apple.com) → your name/menu →
+   **Settings** → **Tokens** (Management Tokens) → **+** → name it
+   "Codemagic", copy the token.
+2. Codemagic → Teams/Personal settings → Environment variables → group
+   **apple** → add `CLOUDKIT_MANAGEMENT_TOKEN` (tick Secret).
+3. Codemagic → Poddeck → ▶ → branch main → workflow **iCloud schema**.
+   Its log ends with the record types now in Development.
+4. CloudKit Console → container → **Development** → **Deploy Schema
+   Changes…** → Deploy. Production now has the types.
+5. Open Poddeck and pull down on Up Next; the Shows screen's iCloud
+   section lists any remaining iCloud problem.
+
+After any change to the SwiftData models (`App/Models.swift`) or the alert
+records, update `Config/CloudKitSchema.ckdb` and repeat steps 3–4 before
+(or with) the build that uses them.
 
 ## GitHub repository secrets
 
