@@ -83,8 +83,8 @@ Function matters more than look to Paul.
   Pause, Skip forward/back, Set sleep timer (App Intents).
 - **CarPlay** (Paul listens in the car): Up Next and Shows tabs, standard
   Now Playing with a speed button and Up Next. Needs Apple's CarPlay audio
-  entitlement (Paul applies; docs/SETUP.md), then add it to the
-  entitlements file.
+  entitlement: Paul applied (Audio) on 4 Nov 2026 and is waiting for
+  Apple's email; then add it to the entitlements file (docs/SETUP.md).
 - **Decided against (Paul, 4 Nov 2026)**: bookmark from AirPods, episode
   summaries, video podcasts, video clip cards (stay as they are, no new
   work), Apple Watch (maybe later if others ask), speaker separation
