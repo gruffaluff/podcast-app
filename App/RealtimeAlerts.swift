@@ -16,12 +16,15 @@ enum RealtimeAlerts {
     static let alertType = "PoddeckAlertEpisode"
     static let quietType = "PoddeckQuietEpisode"
     static let stateType = "PoddeckAlertState"
-    private static let subscriptionsKey = "realtimeAlerts.subscriptions.v1"
-    private static let typesKey = "realtimeAlerts.recordTypes.v1"
-    private static let lastFollowsKey = "realtimeAlerts.lastFollows"
+    // ".v2": earlier builds marked these done even when iCloud refused
+    // every record (a refusal comes back inside the result, not as a thrown
+    // error), so they start again.
+    private static let subscriptionsKey = "realtimeAlerts.subscriptions.v2"
+    private static let lastFollowsKey = "realtimeAlerts.lastFollows.v2"
 
     /// Tells the alerts job which shows to check (only when that changed),
-    /// and makes sure the phone is subscribed to the pushes.
+    /// and makes sure the phone is subscribed to the pushes. Every outcome
+    /// is shown in the Shows screen's iCloud section.
     static func publishFollows(store: LibraryStore) async {
         guard (try? await container.accountStatus()) == .available else {
             let account = await CloudSync.accountDescription()
@@ -32,53 +35,31 @@ enum RealtimeAlerts {
         let feeds = shows.map(\.feedURL).sorted()
         let alertFeeds = shows.filter(\.notify).map(\.feedURL).sorted()
         let signature = (feeds + ["|"] + alertFeeds).joined(separator: "\n")
+        let summary = "\(feeds.count) shows, \(alertFeeds.count) with the bell"
         if UserDefaults.standard.string(forKey: lastFollowsKey) != signature {
             let record = CKRecord(recordType: followsType, recordID: CKRecord.ID(recordName: "follows"))
             record["feeds"] = feeds as CKRecordValue
             record["alertFeeds"] = alertFeeds as CKRecordValue
             record["updated"] = Date() as CKRecordValue
             do {
-                _ = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys)
+                let (results, _) = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys)
+                for (_, result) in results { _ = try result.get() }
                 UserDefaults.standard.set(signature, forKey: lastFollowsKey)
-                CloudSync.note(nil, in: "Alerts", detail: "\(feeds.count) shows sent, \(alertFeeds.count) with the bell")
             } catch {
                 // Tried again on the next feed check.
                 CloudSync.note(error, in: "Alerts")
+                return
             }
         }
-        await createRecordTypesIfNeeded()
-        await subscribeIfNeeded()
-    }
-
-    /// The alerts job can't create record types; saving one record of each
-    /// from the app does (iCloud's Development environment creates them on
-    /// first save).
-    private static func createRecordTypesIfNeeded() async {
-        guard !UserDefaults.standard.bool(forKey: typesKey) else { return }
-        var records: [CKRecord] = []
-        for type in [alertType, quietType] {
-            let record = CKRecord(recordType: type, recordID: CKRecord.ID(recordName: "setup-\(type)"))
-            record["feedURL"] = "" as CKRecordValue
-            record["showTitle"] = "" as CKRecordValue
-            record["episodeTitle"] = "" as CKRecordValue
-            record["guid"] = "setup" as CKRecordValue
-            records.append(record)
-        }
-        let state = CKRecord(recordType: stateType, recordID: CKRecord.ID(recordName: "setup-\(stateType)"))
-        state["json"] = "{}" as CKRecordValue
-        records.append(state)
-        do {
-            _ = try await database.modifyRecords(saving: records, deleting: [], savePolicy: .allKeys)
-            UserDefaults.standard.set(true, forKey: typesKey)
-        } catch {
-            // Tried again on the next feed check.
-            CloudSync.note(error, in: "Alerts")
+        if await subscribeIfNeeded() {
+            CloudSync.note(nil, in: "Alerts", detail: "\(summary) sent · alerts on")
         }
     }
 
-    /// One subscription per kind of record: visible alerts and silent updates.
-    private static func subscribeIfNeeded() async {
-        guard !UserDefaults.standard.bool(forKey: subscriptionsKey) else { return }
+    /// One subscription per kind of record: visible alerts and silent
+    /// updates. True when the phone is subscribed.
+    private static func subscribeIfNeeded() async -> Bool {
+        guard !UserDefaults.standard.bool(forKey: subscriptionsKey) else { return true }
 
         let alertInfo = CKSubscription.NotificationInfo()
         alertInfo.titleLocalizationKey = "New from %1$@"
@@ -98,12 +79,14 @@ enum RealtimeAlerts {
         quiet.notificationInfo = quietInfo
 
         do {
-            _ = try await database.modifySubscriptions(saving: [alerts, quiet], deleting: [])
+            let (results, _) = try await database.modifySubscriptions(saving: [alerts, quiet], deleting: [])
+            for (_, result) in results { _ = try result.get() }
             UserDefaults.standard.set(true, forKey: subscriptionsKey)
+            return true
         } catch {
+            // Tried again on the next feed check.
             CloudSync.note(error, in: "Alerts")
-            // Usually: the record types don't exist yet (the job creates them
-            // on its first run). Tried again on the next feed check.
+            return false
         }
     }
 

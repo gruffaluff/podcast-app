@@ -497,9 +497,13 @@ Function matters more than look to Paul.
   manual Codemagic workflow "iCloud schema" (`xcrun cktool import-schema`),
   then Paul deploys to Production (docs/SETUP.md). Entitlement now says
   Production. Paul loaded the schema and deployed it (4 Nov 2026); the
-  alerts job reaches Production with its own key ID. But build 106 wrote
-  nothing to either side and showed no error, so the app skips silently
-  (likely the iCloud account check). The Shows screen's iCloud section now
+  alerts job reaches Production with its own key ID. Build 108 showed
+  SYNC OK (library syncing to iCloud now) but ALERTS never ran: CloudKit's
+  modifyRecords / modifySubscriptions report per-record refusals inside
+  the result, not as a thrown error, so builds 103/104 marked the follows
+  record and subscriptions as done while every one was refused, and later
+  builds skipped them. Fixed: results are checked, the done flags are v2,
+  and the setup-record step is gone (the schema file creates the types). The Shows screen's iCloud section now
   shows ACCOUNT (CloudKit's account status in words), SYNC and ALERTS
   (last OK time or the problem). Waiting on Paul: management token in Codemagic,
   run the workflow, deploy. If cktool rejects the file, fix and re-run.
