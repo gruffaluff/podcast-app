@@ -74,6 +74,7 @@ jobs:
         if: steps.secrets.outputs.ready == 'true' && !inputs.status_only
         env:
           BUNDLE_ID: com.gruffaluff.podcasts
+          WIDGETS_BUNDLE_ID: com.gruffaluff.podcasts.widgets
         run: |
           set -e
           S="$RUNNER_TEMP/keys"
@@ -95,10 +96,12 @@ jobs:
           security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
           security find-identity -v -p codesigning "$KC"
 
-          UUID=$(grep PROFILE_UUID "$GITHUB_ENV" | tail -1 | cut -d= -f2)
+          UUID=$(grep '^PROFILE_UUID=' "$GITHUB_ENV" | tail -1 | cut -d= -f2)
+          WUUID=$(grep '^WIDGETS_PROFILE_UUID=' "$GITHUB_ENV" | tail -1 | cut -d= -f2)
           for DIR in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
             mkdir -p "$DIR"
             cp "$S/profile.mobileprovision" "$DIR/$UUID.mobileprovision"
+            cp "$S/widgets.mobileprovision" "$DIR/$WUUID.mobileprovision"
           done
 
       - name: Build and sign (archive)
@@ -114,6 +117,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PODDECK_PROFILE="$PROFILE_NAME" \
+            PODDECK_WIDGETS_PROFILE="$WIDGETS_PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/signing.keychain-db" \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             > archive.log 2>&1 || {
@@ -132,6 +136,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$OPTS"
           /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" "$OPTS"
           /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.gruffaluff.podcasts string $PROFILE_NAME" "$OPTS"
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.gruffaluff.podcasts.widgets string $WIDGETS_PROFILE_NAME" "$OPTS"
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Podcasts.xcarchive" \
             -exportOptionsPlist "$OPTS" \

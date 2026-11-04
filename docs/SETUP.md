@@ -104,6 +104,18 @@ with the GitHub builds (up to 12). `scripts/ci_testflight.sh` does the
 work: tests, XcodeGen, App Store certificate and profile via the API,
 archive, upload, then a status report.
 
+## Widgets (one-off, done 4 Nov 2026)
+
+In Certificates, Identifiers & Profiles → Identifiers:
+1. App Groups → + → `group.com.gruffaluff.podcasts` ("Poddeck shared").
+2. App ID `com.gruffaluff.podcasts` → tick App Groups → Configure → that group.
+3. New App ID `com.gruffaluff.podcasts.widgets` ("Poddeck Widgets") with
+   App Groups → the same group.
+
+The build makes a second App Store profile for the widgets itself
+(`scripts/asc_signing.py`, WIDGETS_BUNDLE_ID). The status run
+(`scripts/asc_status.py`) lists both App IDs and their capabilities.
+
 ## CarPlay (one-off)
 
 1. Paul applies at developer.apple.com/contact/carplay (signed in with

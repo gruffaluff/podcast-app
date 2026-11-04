@@ -74,3 +74,13 @@ certs = get("/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION
 for cert in certs.get("data", []):
     a = cert["attributes"]
     print(json.dumps({"id": cert["id"], "name": a.get("name"), "type": a.get("certificateType"), "expires": a.get("expirationDate")}))
+
+print("== App IDs and their capabilities")
+for identifier in (bundle_id, bundle_id + ".widgets"):
+    found = [b for b in get(f"/bundleIds?filter[identifier]={urllib.parse.quote(identifier)}&limit=20").get("data", [])
+             if b["attributes"]["identifier"] == identifier]
+    if not found:
+        print(f"{identifier}: MISSING")
+        continue
+    caps = get(f"/bundleIds/{found[0]['id']}/bundleIdCapabilities").get("data", [])
+    print(f"{identifier}: " + ", ".join(sorted(c["attributes"].get("capabilityType", "?") for c in caps)))

@@ -9,6 +9,7 @@ set -euo pipefail
 
 : "${ASC_KEY_ID:?}" "${ASC_ISSUER_ID:?}" "${ASC_KEY_P8:?}" "${APPLE_TEAM_ID:?}" "${BUILD_NUMBER:?}"
 export BUNDLE_ID=com.gruffaluff.podcasts
+export WIDGETS_BUNDLE_ID=com.gruffaluff.podcasts.widgets
 WORK="$(mktemp -d)"
 KEYS="$WORK/keys"; mkdir -p "$KEYS"
 KC="$WORK/signing.keychain-db"
@@ -40,6 +41,8 @@ python3 -m venv "$WORK/venv"
 "$WORK/venv/bin/python" scripts/asc_signing.py prepare "$KEYS/signing.csr" "$KEYS" > "$WORK/signing.env"
 PROFILE_NAME=$(grep '^PROFILE_NAME=' "$WORK/signing.env" | cut -d= -f2-)
 PROFILE_UUID=$(grep '^PROFILE_UUID=' "$WORK/signing.env" | cut -d= -f2-)
+WIDGETS_PROFILE_NAME=$(grep '^WIDGETS_PROFILE_NAME=' "$WORK/signing.env" | cut -d= -f2-)
+WIDGETS_PROFILE_UUID=$(grep '^WIDGETS_PROFILE_UUID=' "$WORK/signing.env" | cut -d= -f2-)
 
 /usr/bin/openssl x509 -inform DER -in "$KEYS/distribution.cer" -out "$KEYS/distribution.pem"
 /usr/bin/openssl pkcs12 -export -inkey "$KEYS/signing.key" -in "$KEYS/distribution.pem" -out "$KEYS/signing.p12" -passout pass:ci
@@ -53,6 +56,7 @@ security find-identity -v -p codesigning "$KC"
 for DIR in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
   mkdir -p "$DIR"
   cp "$KEYS/profile.mobileprovision" "$DIR/$PROFILE_UUID.mobileprovision"
+  cp "$KEYS/widgets.mobileprovision" "$DIR/$WIDGETS_PROFILE_UUID.mobileprovision"
 done
 
 echo "== Archive (build $BUILD_NUMBER)"
@@ -66,6 +70,7 @@ xcodebuild archive \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="Apple Distribution" \
   PODDECK_PROFILE="$PROFILE_NAME" \
+  PODDECK_WIDGETS_PROFILE="$WIDGETS_PROFILE_NAME" \
   OTHER_CODE_SIGN_FLAGS="--keychain $KC" \
   CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
   > "$WORK/archive.log" 2>&1 || {
@@ -81,6 +86,7 @@ cp Config/ExportOptions.plist "$OPTS"
 /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$OPTS"
 /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" "$OPTS"
 /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:$BUNDLE_ID string $PROFILE_NAME" "$OPTS"
+/usr/libexec/PlistBuddy -c "Add :provisioningProfiles:$WIDGETS_BUNDLE_ID string $WIDGETS_PROFILE_NAME" "$OPTS"
 xcodebuild -exportArchive \
   -archivePath "$WORK/Podcasts.xcarchive" \
   -exportOptionsPlist "$OPTS" \

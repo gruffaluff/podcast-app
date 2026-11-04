@@ -14,8 +14,10 @@ targets:
     platform: iOS
     sources:
       - App
+      - Shared
     dependencies:
       - package: PodcastCore
+      - target: PoddeckWidgets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.gruffaluff.podcasts
@@ -41,6 +43,31 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+  # Home / Lock Screen widgets and the Control Centre button. They show
+  # what the app saves in the shared App Group folder (Shared/).
+  PoddeckWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widgets
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gruffaluff.podcasts.widgets
+        PRODUCT_NAME: PoddeckWidgets
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Config/Widgets-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Poddeck
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        CODE_SIGN_ENTITLEMENTS: Config/Widgets.entitlements
+        # Set only by the TestFlight build (empty otherwise).
+        PROVISIONING_PROFILE_SPECIFIER: $(PODDECK_WIDGETS_PROFILE)
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
 schemes:
   Podcasts:
     build:

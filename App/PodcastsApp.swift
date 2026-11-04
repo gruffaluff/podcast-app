@@ -22,6 +22,7 @@ struct PodcastsApp: App {
         AppServices.store = store
         AppServices.player = player
         _player = State(initialValue: player)
+        WidgetSync.shared.start(player: player, store: store)
         _downloads = State(initialValue: DownloadManager(store: store))
         let transcripts = TranscriptService(store: store)
         transcripts.registerBackgroundTask()
@@ -101,6 +102,7 @@ struct RootView: View {
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
+                WidgetSync.shared.flush()
                 transcripts.scheduleBackgroundWork()
                 BackgroundRefresh.schedule()
             }

@@ -5,12 +5,14 @@ Connect API (no Mac, no registered devices).
     asc_signing.py prepare <csr.pem> <out_dir>
         Revokes older distribution certificates (keeping the newest one, so
         the last build can finish processing), creates a new one from the
-        CSR, and makes a fresh App Store provisioning profile with it.
+        CSR, and makes fresh App Store provisioning profiles with it: one
+        for the app and, when WIDGETS_BUNDLE_ID is set, one for the widgets.
         Writes <out_dir>/distribution.cer, <out_dir>/profile.mobileprovision
-        and prints PROFILE_NAME / PROFILE_UUID / CERT_ID lines for $GITHUB_ENV.
+        (and widgets.mobileprovision) and prints PROFILE_NAME / PROFILE_UUID /
+        WIDGETS_PROFILE_NAME / WIDGETS_PROFILE_UUID / CERT_ID lines.
 
 Needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH and BUNDLE_ID in the
-environment, and the PyJWT + cryptography packages.
+environment (WIDGETS_BUNDLE_ID optional), and PyJWT + cryptography.
 """
 import base64
 import json
@@ -26,6 +28,7 @@ import jwt
 
 API = "https://api.appstoreconnect.apple.com/v1"
 PROFILE_NAME = "Poddeck CI App Store"
+WIDGETS_PROFILE_NAME = "Poddeck Widgets CI App Store"
 
 
 def token():
@@ -51,16 +54,40 @@ def call(method, path, body=None):
         sys.exit(f"App Store Connect said {error.code} to {method} {path}:\n{detail}")
 
 
+def bundle_record(identifier):
+    """The App ID record made in the developer portal."""
+    found = call("GET", f"/bundleIds?filter[identifier]={identifier}&limit=50")["data"]
+    matches = [b for b in found if b["attributes"]["identifier"] == identifier]
+    if not matches:
+        sys.exit(f"No App ID for {identifier}. Create it in Certificates, Identifiers & Profiles (docs/SETUP.md).")
+    return matches[0]["id"]
+
+
+def make_profile(name, bundle, cert_id, path):
+    """A fresh App Store profile (old ones with this name go)."""
+    for profile in call("GET", f"/profiles?filter[name]={urllib.parse.quote(name)}&limit=50")["data"]:
+        call("DELETE", f"/profiles/{profile['id']}")
+    profile = call("POST", "/profiles", {
+        "data": {
+            "type": "profiles",
+            "attributes": {"name": name, "profileType": "IOS_APP_STORE"},
+            "relationships": {
+                "bundleId": {"data": {"type": "bundleIds", "id": bundle}},
+                "certificates": {"data": [{"type": "certificates", "id": cert_id}]},
+            },
+        }
+    })["data"]
+    path.write_bytes(base64.b64decode(profile["attributes"]["profileContent"]))
+    return profile["attributes"]["uuid"]
+
+
 def prepare(csr_path, out_dir):
     out = pathlib.Path(out_dir)
-    bundle_id = os.environ["BUNDLE_ID"]
 
-    # 1. The app's bundle ID record (made in the developer portal).
-    found = call("GET", f"/bundleIds?filter[identifier]={bundle_id}&limit=50")["data"]
-    matches = [b for b in found if b["attributes"]["identifier"] == bundle_id]
-    if not matches:
-        sys.exit(f"No App ID for {bundle_id}. Create it in Certificates, Identifiers & Profiles (docs/SETUP.md step 3).")
-    bundle = matches[0]["id"]
+    # 1. The App ID records (made in the developer portal).
+    bundle = bundle_record(os.environ["BUNDLE_ID"])
+    widgets_id = os.environ.get("WIDGETS_BUNDLE_ID")
+    widgets = bundle_record(widgets_id) if widgets_id else None
 
     # 2. Keep at most two distribution certificates: revoke all but the newest.
     certs = call("GET", "/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION&limit=50")["data"]
@@ -76,23 +103,14 @@ def prepare(csr_path, out_dir):
     })["data"]
     (out / "distribution.cer").write_bytes(base64.b64decode(cert["attributes"]["certificateContent"]))
 
-    # 4. A fresh App Store profile using it (old ones with this name go).
-    for profile in call("GET", f"/profiles?filter[name]={urllib.parse.quote(PROFILE_NAME)}&limit=50")["data"]:
-        call("DELETE", f"/profiles/{profile['id']}")
-    profile = call("POST", "/profiles", {
-        "data": {
-            "type": "profiles",
-            "attributes": {"name": PROFILE_NAME, "profileType": "IOS_APP_STORE"},
-            "relationships": {
-                "bundleId": {"data": {"type": "bundleIds", "id": bundle}},
-                "certificates": {"data": [{"type": "certificates", "id": cert["id"]}]},
-            },
-        }
-    })["data"]
-    (out / "profile.mobileprovision").write_bytes(base64.b64decode(profile["attributes"]["profileContent"]))
-
+    # 4. Fresh App Store profiles using it.
+    uuid = make_profile(PROFILE_NAME, bundle, cert["id"], out / "profile.mobileprovision")
     print(f"PROFILE_NAME={PROFILE_NAME}")
-    print(f"PROFILE_UUID={profile['attributes']['uuid']}")
+    print(f"PROFILE_UUID={uuid}")
+    if widgets:
+        widgets_uuid = make_profile(WIDGETS_PROFILE_NAME, widgets, cert["id"], out / "widgets.mobileprovision")
+        print(f"WIDGETS_PROFILE_NAME={WIDGETS_PROFILE_NAME}")
+        print(f"WIDGETS_PROFILE_UUID={widgets_uuid}")
     print(f"CERT_ID={cert['id']}")
 
 
