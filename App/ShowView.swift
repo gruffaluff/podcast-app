@@ -53,6 +53,7 @@ struct ShowView: View {
                 }
                 .listRowBackground(Theme.background)
                 .listRowSeparatorTint(Theme.hairline)
+            }
         }
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)

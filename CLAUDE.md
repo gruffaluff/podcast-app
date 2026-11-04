@@ -397,7 +397,11 @@ Function matters more than look to Paul.
   (free 500 Mac minutes a month, no card, stops at the limit):
   `codemagic.yaml` + `scripts/ci_testflight.sh`, uploads on every merge
   to main, build numbers 100+. GitHub's TestFlight workflow is manual
-  only now. Setup steps in `docs/SETUP.md`.
+  only now. Setup steps in `docs/SETUP.md`. Plan (Paul agreed): only one
+  service uploads automatically. After GitHub's reset on 1 Dec 2026, try
+  one GitHub Mac build; if public-repo Mac builds run free, move the
+  automatic uploads back to GitHub and keep Codemagic as the backup (and
+  vice versa if not). Both use `scripts/ci_testflight.sh`-style steps.
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.
