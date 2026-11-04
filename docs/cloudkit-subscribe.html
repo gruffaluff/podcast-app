@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poddeck iCloud setup</title>
+<!--
+  One-off helper (no Mac needed). Apple only lets an app create alert
+  subscriptions on iCloud's live (Production) side after the same kind of
+  subscription has been created once on the Development side and the
+  schema deployed. This page signs in to iCloud (Development) and creates
+  the two subscriptions Poddeck uses. The API token is typed in here and
+  never stored in the repository. See docs/SETUP.md.
+-->
+<style>
+  :root { --panel:#E8E6E1; --ink:#1B1B1A; --muted:#5F5C55; --accent:#F05A1A; --display:#22231F; --displayText:#E6EDD7; }
+  body { margin:0; background:var(--panel); color:var(--ink); font:16px/1.45 -apple-system, system-ui, sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font:700 22px ui-monospace, "SF Mono", Menlo, monospace; letter-spacing:.02em; }
+  ol { padding-left:20px; }
+  input { width:100%; box-sizing:border-box; font:14px ui-monospace, Menlo, monospace; padding:10px; border:1px solid #C9C6BE; border-radius:8px; background:#F4F3EF; }
+  button { font:700 14px ui-monospace, Menlo, monospace; letter-spacing:.04em; padding:12px 16px; border:0; border-radius:8px; background:var(--accent); color:#fff; margin-top:10px; }
+  button:disabled { opacity:.4; }
+  pre { background:var(--display); color:var(--displayText); padding:12px; border-radius:10px; white-space:pre-wrap; font:13px ui-monospace, Menlo, monospace; min-height:3em; }
+  .muted { color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PODDECK · ICLOUD ALERTS SETUP</h1>
+  <p class="muted">One-off. Creates Poddeck's two alert subscriptions on iCloud's Development side, so the live side accepts them after you deploy.</p>
+  <ol>
+    <li>Paste the <b>API token</b> from the CloudKit Console (Development).</li>
+    <li>Press <b>Start</b>, then sign in with your Apple Account.</li>
+    <li>Press <b>Create subscriptions</b>.</li>
+  </ol>
+  <input id="token" placeholder="API token" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button id="start">START</button>
+  <div id="apple-sign-in-button" style="margin-top:12px"></div>
+  <div id="apple-sign-out-button" style="display:none"></div>
+  <button id="create" disabled>CREATE SUBSCRIPTIONS</button>
+  <pre id="log">Waiting for the token…</pre>
+</main>
+<script>
+const log = (text) => { document.getElementById('log').textContent = text; };
+const container = 'iCloud.com.gruffaluff.podcasts';
+let db = null;
+
+document.getElementById('start').onclick = () => {
+  const token = document.getElementById('token').value.trim();
+  if (!token) { log('Paste the API token first.'); return; }
+  log('Loading Apple\'s CloudKit script…');
+  const script = document.createElement('script');
+  script.src = 'https://cdn.apple-cloudkit.com/ck/2/cloudkit.js';
+  script.onerror = () => log('Couldn\'t load Apple\'s CloudKit script.');
+  script.onload = () => setUp(token);
+  document.head.appendChild(script);
+};
+
+function setUp(token) {
+  try {
+    CloudKit.configure({ containers: [{
+      containerIdentifier: container,
+      apiTokenAuth: { apiToken: token, persist: false, signInButton: { id: 'apple-sign-in-button', theme: 'black' } },
+      environment: 'development',
+    }] });
+  } catch (error) { log('CloudKit setup failed: ' + error); return; }
+  const ck = CloudKit.getDefaultContainer();
+  db = ck.publicCloudDatabase;
+  ck.setUpAuth().then((user) => {
+    if (user) { signedIn(); return; }
+    log('Press the Sign in with Apple button above.');
+    ck.whenUserSignsIn().then(signedIn).catch((e) => log('Sign-in failed: ' + e));
+  }).catch((e) => log('Couldn\'t start sign-in (check the token and its allowed origins): ' + (e.reason || e)));
+}
+
+function signedIn() {
+  log('Signed in. Now press CREATE SUBSCRIPTIONS.');
+  document.getElementById('create').disabled = false;
+}
+
+document.getElementById('create').onclick = () => {
+  log('Creating…');
+  const subscription = (id, recordType, info) => ({
+    subscriptionID: id, subscriptionType: 'query', query: { recordType },
+    firesOn: ['create'], notificationInfo: info,
+  });
+  db.saveSubscriptions([
+    subscription('new-episode-alerts', 'PoddeckAlertEpisode', { alertBody: 'New episode', soundName: 'default', shouldSendContentAvailable: true }),
+    subscription('new-episode-updates', 'PoddeckQuietEpisode', { shouldSendContentAvailable: true }),
+  ]).then((response) => {
+    if (response.hasErrors) {
+      log('iCloud refused: ' + response.errors.map((e) => (e.serverErrorCode || '') + ' ' + (e.reason || e)).join('\n'));
+    } else {
+      log('Done: both subscriptions exist on the Development side.\n\nNext: CloudKit Console → Development → Deploy Schema Changes → Deploy. Then pull down on Up Next in Poddeck.');
+    }
+  }).catch((e) => log('Failed: ' + (e.reason || e)));
+};
+</script>
+</body>
+</html>
