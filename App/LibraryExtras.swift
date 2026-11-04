@@ -27,7 +27,8 @@ extension LibraryStore {
                 episode.playedAt = playedAt
                 episode.position = position
             }
-            self.commit(queueBefore.filter { saved[$0.episode.id] != nil })
+            let present = self.episodes(queueBefore.map(\.episode.id))
+            self.commit(queueBefore.filter { present[$0.episode.id] != nil })
             self.undoAction = nil
         }
     }
