@@ -30,7 +30,7 @@ Function matters more than look to Paul.
 ## Constraints
 
 - **iOS only.** Native app in Swift and SwiftUI.
-- **No Mac.** Paul has no personal Mac and must not use his work Mac. All
+- **No Mac.** Paul has no Mac to build on. All
   building happens in the cloud: GitHub Actions (macOS runners) builds the app
   and uploads it to TestFlight. See `docs/SETUP.md`.
 - **No server and no running costs.** All AI features run on the iPhone.
@@ -248,8 +248,8 @@ Function matters more than look to Paul.
 - Done (step 1, minus TestFlight): Up Next ordering rules in
   `Packages/PodcastCore` (`QueueEngine`) with unit tests; SwiftUI app
   (`App/`, project generated from `project.yml` by XcodeGen); GitHub Actions
-  `Build` workflow (tests + unsigned simulator build). It runs on pushes to
-  `main` and PRs; for other branches, start it by hand ("Run workflow").
+  `Build` workflow (tests + unsigned simulator build). It runs on PRs; for
+  other branches, start it by hand ("Run workflow").
 - Done (step 2): feed reader (RSS + iTunes + Podcasting 2.0 transcript and
   chapter links), new-episode detection that never floods Up Next with
   back-filled episodes, Apple directory search, all unit-tested in
@@ -385,12 +385,13 @@ Function matters more than look to Paul.
   `Podcasts` / `com.gruffaluff.podcasts` (invisible to Paul).
 - **GitHub Actions minutes (4 Nov 2026)**: the repo is private, so Mac
   build time comes out of the free monthly allowance (about 200 Mac
-  minutes; Mac minutes count 10×). November used ~490 and the allowance
-  ran out: jobs now fail with "not acquired by runner". No paid running
-  costs allowed, so: build as little as possible (one Mac build per
-  change), and Paul is choosing between making the repo public (Actions
-  free, no limit), waiting for the monthly reset, or Xcode Cloud (25
-  free hours a month with the Apple Developer Program).
+  minutes; Mac minutes count 10×). November used ~$19 of the $12 free
+  compute and builds stopped ("not acquired by runner"); nothing was
+  charged (GitHub Free, $0 due). **Decided (Paul): make the repo public**
+  so Actions is free with no limit. The repo is public from 4 Nov 2026:
+  never commit secrets (Apple keys live only in GitHub secrets).
+  Build workflow runs on pull requests and by hand only (TestFlight
+  builds on merge), so each change builds about twice, not three times.
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.
