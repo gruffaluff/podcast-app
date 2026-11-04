@@ -43,7 +43,7 @@ def call(method, path, body=None):
         headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"},
     )
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:
             raw = response.read()
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as error:

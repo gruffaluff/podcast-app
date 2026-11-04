@@ -1,0 +1,32 @@
+# Codemagic (codemagic.io) builds Poddeck and uploads it to TestFlight.
+# Used because GitHub's free Mac build time ran out (Nov 2026). Free plan:
+# 500 Mac minutes a month; with no card on file, builds stop at the limit
+# instead of being charged.
+#
+# Needs an environment variable group "apple" in Codemagic (app settings →
+# Environment variables), all marked Secure: ASC_KEY_ID, ASC_ISSUER_ID,
+# ASC_KEY_P8 (the .p8 file's whole text) and APPLE_TEAM_ID — the same
+# values as the GitHub secrets. See docs/SETUP.md.
+workflows:
+  testflight:
+    name: TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      xcode: latest
+      groups:
+        - apple
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Build, sign and upload to TestFlight
+        script: |
+          # Codemagic's build counter starts at 1; App Store Connect already
+          # has builds up to 12 from GitHub, so stay well clear of those.
+          export BUILD_NUMBER=$((100 + ${BUILD_NUMBER:-0}))
+          RUN_TESTS=1 scripts/ci_testflight.sh

@@ -4,9 +4,9 @@ name: TestFlight
 # merge into main, or by hand ("Run workflow"). Needs the four Apple secrets
 # described in docs/SETUP.md; without them it stops with a note and no error.
 
+# Codemagic (codemagic.yaml) now does the automatic uploads on merges to
+# main; this workflow is kept for running by hand (and status_only checks).
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       runner:
@@ -143,6 +143,8 @@ jobs:
 
       - name: What App Store Connect has
         if: always() && steps.secrets.outputs.ready == 'true'
+        timeout-minutes: 4
+        continue-on-error: true
         env:
           BUNDLE_ID: com.gruffaluff.podcasts
         run: |

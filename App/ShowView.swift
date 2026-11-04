@@ -28,8 +28,19 @@ struct ShowView: View {
                 header
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
-            }
-            Section {
+                DeckSwitch(options: [(label: "Unplayed \(unplayedCount)", value: false), (label: "All \(allEpisodes.count)", value: true)], selection: $showAll)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 6, trailing: 16))
+                    .selectionDisabled()
+                if episodes.isEmpty {
+                    Text(showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.muted)
+                        .listRowBackground(Theme.background)
+                        .listRowSeparator(.hidden)
+                        .selectionDisabled()
+                }
                 ForEach(episodes) { episode in
                     Group {
                         if selecting {
@@ -42,18 +53,6 @@ struct ShowView: View {
                 }
                 .listRowBackground(Theme.background)
                 .listRowSeparatorTint(Theme.hairline)
-            } header: {
-                DeckSwitch(options: [(label: "Unplayed \(unplayedCount)", value: false), (label: "All \(allEpisodes.count)", value: true)], selection: $showAll)
-                    .textCase(nil)
-                    .padding(.vertical, 6)
-                    .background(Theme.background)
-            } footer: {
-                if episodes.isEmpty {
-                    Text(showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.muted)
-                }
-            }
         }
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)
@@ -114,7 +113,8 @@ struct ShowView: View {
         } message: {
             Text("They leave Up Next and stop showing as unplayed. You can undo this with Mark all as unplayed.")
         }
-        .confirmationDialog("Unfollow \(show.title)?", isPresented: $confirmingUnfollow, titleVisibility: .visible) {
+        .alert("Unfollow \(show.title)?", isPresented: $confirmingUnfollow) {
+            Button("Cancel", role: .cancel) {}
             Button("Unfollow", role: .destructive) {
                 player.stopIfPlaying(showFeedURL: show.feedURL)
                 dismiss()
@@ -205,27 +205,40 @@ struct ShowView: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(4)
             }
-            Button { showingSettings = true } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "slider.horizontal.3")
-                    Text("SHOW SETTINGS").font(Theme.mono(12, .bold))
-                    Spacer()
-                    Text("UP NEXT: \(modeName)").font(Theme.mono(11))
+            HStack(spacing: 8) {
+                Button { confirmingUnfollow = true } label: {
+                    HStack(spacing: 6) {
+                        LED(on: true, color: Theme.accentFill)
+                        Text("FOLLOWING").font(Theme.mono(12, .bold))
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 46)
                 }
-                .padding(.horizontal, 14)
-                .frame(minHeight: 46)
+                .buttonStyle(.darkKey)
+                .accessibilityLabel("Following. Tap to unfollow")
+                Button { showingSettings = true } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "slider.horizontal.3")
+                        Text("SETTINGS").font(Theme.mono(12, .bold))
+                        Spacer(minLength: 4)
+                        Text(modeName).font(Theme.mono(11))
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity, minHeight: 46)
+                }
+                .buttonStyle(.key)
+                .accessibilityLabel("Show settings. New episodes: \(modeName)")
             }
-            .buttonStyle(.key)
             .padding(.bottom, 3)
         }
-        .padding(.vertical, 8)
+        .padding(.top, 8)
     }
 
     private var modeName: String {
         switch show.autoAdd {
         case .off: return "OFF"
         case .top: return "TOP"
-        case .bottom: return "BOTTOM"
+        case .bottom: return "BTM"
         }
     }
 }

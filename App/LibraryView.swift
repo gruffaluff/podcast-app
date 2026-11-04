@@ -22,7 +22,7 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 10) {
                     if shows.isEmpty {
                         emptyState
                     } else {
@@ -39,7 +39,8 @@ struct LibraryView: View {
                         }
 
                         sectionTitle("YOUR SHOWS", detail: "\(shows.count) FOLLOWED")
-                        LazyVGrid(columns: columns, alignment: .leading, spacing: 20) {
+                            .padding(.top, 14)
+                        LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
                             ForEach(shows) { show in
                                 NavigationLink(value: show) {
                                     ShowTile(show: show)
@@ -50,7 +51,8 @@ struct LibraryView: View {
                         .padding(.horizontal, 20)
                     }
                 }
-                .padding(.vertical, 12)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
             }
             .background(Theme.background)
             .refreshable { await store.refreshAll() }

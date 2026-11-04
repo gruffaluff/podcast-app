@@ -30,7 +30,7 @@ Function matters more than look to Paul.
 ## Constraints
 
 - **iOS only.** Native app in Swift and SwiftUI.
-- **No Mac.** Paul has no personal Mac and must not use his work Mac. All
+- **No Mac.** Paul has no Mac to build on. All
   building happens in the cloud: GitHub Actions (macOS runners) builds the app
   and uploads it to TestFlight. See `docs/SETUP.md`.
 - **No server and no running costs.** All AI features run on the iPhone.
@@ -248,8 +248,8 @@ Function matters more than look to Paul.
 - Done (step 1, minus TestFlight): Up Next ordering rules in
   `Packages/PodcastCore` (`QueueEngine`) with unit tests; SwiftUI app
   (`App/`, project generated from `project.yml` by XcodeGen); GitHub Actions
-  `Build` workflow (tests + unsigned simulator build). It runs on pushes to
-  `main` and PRs; for other branches, start it by hand ("Run workflow").
+  `Build` workflow (tests + unsigned simulator build). It runs on PRs; for
+  other branches, start it by hand ("Run workflow").
 - Done (step 2): feed reader (RSS + iTunes + Podcasting 2.0 transcript and
   chapter links), new-episode detection that never floods Up Next with
   back-filled episodes, Apple directory search, all unit-tested in
@@ -283,7 +283,8 @@ Function matters more than look to Paul.
   distribution certificate, so Apple emails Paul "certificate revoked"
   after builds: expected, not a problem. Check uploads, TestFlight states,
   testers and certificates any time: run the TestFlight workflow with
-  "status_only" (`scripts/asc_status.py`). Next: the one-off CloudKit
+  "status_only" (`scripts/asc_status.py`). The status step has a 4-minute
+  limit and can't fail the run (it once hung after a good upload). Next: the one-off CloudKit
   schema deploy.
 - Done (first iPhone feedback, 4 Nov 2026; it runs on Paul's phone):
   no now-playing panel on Up Next (the mini player covers it); empty Up
@@ -311,6 +312,10 @@ Function matters more than look to Paul.
   and timestamps in notes are tappable (a timestamp plays from there); TX
   light shows "TX WAIT" while a transcript is queued (Transcribe now
   downloads first when the show has no transcript of its own).
+  Then: show page has FOLLOWING (tap to unfollow) and SETTINGS keys side
+  by side, and the Unplayed / All switch sits right under them (it was a
+  list section header with a big gap); every confirmation is a centred
+  alert with Cancel (no floating menus); Library spacing tightened.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
@@ -378,6 +383,21 @@ Function matters more than look to Paul.
 - Done (rename): app, website and docs say Poddeck; cassette icon (D) is
   the app icon and the website's. The code project and bundle ID stay
   `Podcasts` / `com.gruffaluff.podcasts` (invisible to Paul).
+- **GitHub Actions minutes (4 Nov 2026)**: the repo is private, so Mac
+  build time comes out of the free monthly allowance (about 200 Mac
+  minutes; Mac minutes count 10×). November used ~$19 of the $12 free
+  compute and builds stopped ("not acquired by runner"); nothing was
+  charged (GitHub Free, $0 due). **Decided (Paul): make the repo public**
+  so Actions is free with no limit. The repo is public from 4 Nov 2026:
+  never commit secrets (Apple keys live only in GitHub secrets).
+  Build workflow runs on pull requests and by hand only. But GitHub kept
+  blocking Mac jobs even after the repo went public (account Actions
+  budget $0 "usage blocked"; lifting it needs a payment method, which
+  Paul won't add). **Decided (Paul): use Codemagic** for Mac builds
+  (free 500 Mac minutes a month, no card, stops at the limit):
+  `codemagic.yaml` + `scripts/ci_testflight.sh`, uploads on every merge
+  to main, build numbers 100+. GitHub's TestFlight workflow is manual
+  only now. Setup steps in `docs/SETUP.md`.
 - CI: GitHub's Apple-silicon Macs are often unavailable ("job was not
   acquired by runner"), so Build and TestFlight now default to
   `macos-15-intel`; manual runs can still pick `macos-latest`.

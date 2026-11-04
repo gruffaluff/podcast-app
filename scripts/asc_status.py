@@ -19,7 +19,7 @@ import urllib.request  # noqa: E402
 def get(path):
     request = urllib.request.Request(API + path, headers={"Authorization": f"Bearer {token()}"})
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=30) as response:
             return json.loads(response.read())
     except urllib.error.HTTPError as error:
         return {"error": error.code, "detail": error.read().decode(errors="replace")[:800]}
