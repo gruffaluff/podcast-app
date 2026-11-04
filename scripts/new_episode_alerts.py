@@ -61,7 +61,11 @@ def cloudkit(operation, body):
 def lookup(record_name):
     result = cloudkit("records/lookup", {"records": [{"recordName": record_name}]})
     record = (result.get("records") or [{}])[0]
-    return None if "serverErrorCode" in record else record
+    if "serverErrorCode" in record:
+        if record["serverErrorCode"] != "NOT_FOUND":
+            print(f"  lookup {record_name}: {record['serverErrorCode']} {record.get('reason', '')}")
+        return None
+    return record
 
 
 def field(record, name, default):
@@ -107,6 +111,9 @@ def main():
     alert_feeds = set(field(follows, "alertFeeds", []))
     if not feeds:
         print("No followed shows published yet (the app saves them after its next feed check).")
+        # Has the app written anything at all? (It saves these setup records once.)
+        found = [name for name in ("setup-PoddeckAlertEpisode", "setup-PoddeckAlertState") if lookup(name)]
+        print(f"  app setup records here: {', '.join(found) or 'none'}")
     state_record = lookup("alert-state")
     seen = json.loads(field(state_record, "json", "{}"))
     now = dt.datetime.now(dt.timezone.utc)
