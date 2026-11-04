@@ -25,7 +25,10 @@ ink black, one orange accent for keys, monospaced titles, labels and times
 (iOS's SF Mono, no bundled fonts), a dark display panel for what's playing,
 segmented progress bars (ads in amber), chunky keys that press down, status
 lights. Tokens in `App/Theme.swift`; shared pieces in `App/Deck.swift`.
-Function matters more than look to Paul.
+Function matters more than look to Paul. Exploring (4 Nov 2026, just
+for interest, nothing decided): three alternative directions, Minimal,
+Flashy and Abstract (Up Next, player, show page each), on the canvas
+https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d.
 
 ## Constraints
 
