@@ -279,7 +279,8 @@ Function matters more than look to Paul.
   public invite link.
 - Show and episode names on the page are made-up examples (footer says so).
 - Hosting it at its own address (e.g. GitHub Pages) is possible later;
-  may need a paid GitHub plan because the repo is private.
+  free now that the repo is public (Pages serves `docs/` once Paul turns
+  it on).
 
 ## Proposed technical approach (confirm with Paul before big changes)
 
@@ -514,8 +515,13 @@ Function matters more than look to Paul.
   builds skipped them. Fixed: results are checked, the done flags are v2,
   and the setup-record step is gone (the schema file creates the types). The Shows screen's iCloud section now
   shows ACCOUNT (CloudKit's account status in words), SYNC and ALERTS
-  (last OK time or the problem). Waiting on Paul: management token in Codemagic,
-  run the workflow, deploy. If cktool rejects the file, fix and re-run.
+  (last OK time or the problem). Build 109/110: the follows record saves;
+  the subscriptions fail ("attempting to create a subscription in a
+  production container", CKError 12): Production only accepts a query
+  subscription after it was created once in Development and the schema
+  deployed (Apple DTS). Fix without a Mac: `docs/cloudkit-subscribe.html`
+  (CloudKit JS, signs in as Paul, creates both subscriptions in
+  Development) on GitHub Pages; steps in docs/SETUP.md. Waiting on Paul.
 - Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added
   now, can be removed.)

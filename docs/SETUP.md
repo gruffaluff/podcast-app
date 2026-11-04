@@ -75,6 +75,24 @@ Poddeck* alert types) and loaded like this:
 5. Open Poddeck and pull down on Up Next; the Shows screen's iCloud
    section lists any remaining iCloud problem.
 
+**Alert subscriptions (one-off, no Mac).** Production refuses a
+CKQuerySubscription ("attempting to create a subscription in a production
+container", CKError 12) until the same subscription has been created once
+in Development and the schema deployed (Apple DTS, developer forums thread
+853177). `docs/cloudkit-subscribe.html` does that from a browser:
+1. CloudKit Console → container → **Development** → **Tokens & Keys** →
+   **API Tokens** → **+**: name "Subscribe page", Sign In Callback
+   **postMessage**, Allowed Origins **Any domain** (or
+   `gruffaluff.github.io`). Copy the token.
+2. GitHub → repo **Settings → Pages** → Source "Deploy from a branch",
+   branch **main**, folder **/docs** → Save (free: the repo is public).
+3. Open https://gruffaluff.github.io/podcast-app/cloudkit-subscribe.html,
+   paste the token, START, sign in, CREATE SUBSCRIPTIONS.
+4. CloudKit Console → **Development** → **Deploy Schema Changes** → Deploy
+   (it may say "no changes"; deploy anyway).
+5. Poddeck: pull down on Up Next; the Shows screen's ALERTS line should say
+   "… sent · alerts on". The API token can be deleted afterwards.
+
 After any change to the SwiftData models (`App/Models.swift`) or the alert
 records, update `Config/CloudKitSchema.ckdb` and repeat steps 3–4 before
 (or with) the build that uses them.
