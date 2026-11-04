@@ -312,6 +312,10 @@ Function matters more than look to Paul.
   and timestamps in notes are tappable (a timestamp plays from there); TX
   light shows "TX WAIT" while a transcript is queued (Transcribe now
   downloads first when the show has no transcript of its own).
+  Then: show page has FOLLOWING (tap to unfollow) and SETTINGS keys side
+  by side, and the Unplayed / All switch sits right under them (it was a
+  list section header with a big gap); every confirmation is a centred
+  alert with Cancel (no floating menus); Library spacing tightened.
 - Minimum iOS lowered to 26.0 (Paul's call to unblock TestFlight): the
   reliable build machine (macos-15-intel) has Xcode 26.3 / iOS 26.2 SDK
   only; every API used exists in iOS 26, and it runs on his iOS 27.2
