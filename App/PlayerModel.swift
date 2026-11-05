@@ -402,6 +402,14 @@ final class PlayerModel {
         }
     }
 
+    /// "Mark as played" from the player: finish now, as if it had ended
+    /// (marks played, deletes the download, moves on to Up Next).
+    func finishEarly() {
+        guard nowPlaying != nil, !finishingEarly else { return }
+        finishingEarly = true
+        didFinish()
+    }
+
     /// Adds real listening time (not paused, not scrubbing) to the stats.
     private func countListening() {
         let now = Date()

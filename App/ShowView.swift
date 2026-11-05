@@ -214,6 +214,7 @@ struct ShowView: View {
                 .font(Theme.big(44))
                 .lineLimit(3)
                 .minimumScaleFactor(0.5)
+                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 .accessibilityAddTraits(.isHeader)
             Text([show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · "))
                 .font(.system(size: 13))
@@ -275,6 +276,7 @@ struct ShowView: View {
                             .offset(x: 40, y: -10)
                     )
                     .accessibilityHidden(true)
+                LinearGradient(colors: [tint.opacity(0), tint.opacity(0.6), tint.opacity(0.95)], startPoint: .top, endPoint: .bottom)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 30))
@@ -368,7 +370,7 @@ private struct EpisodeRow: View {
     var expanded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
                 if isPlaying { LED(on: true, color: Theme.accentFill) }
                 Text(episode.published.formatted(date: .abbreviated, time: .omitted).uppercased())
@@ -383,7 +385,7 @@ private struct EpisodeRow: View {
                 Text(episode.summary)
                     .font(expanded ? .subheadline : .caption)
                     .foregroundStyle(expanded ? Theme.ink : Theme.muted)
-                    .lineLimit(expanded ? nil : 2)
+                    .lineLimit(expanded ? nil : 1)
             }
             HStack(spacing: 10) {
                 EpisodeLights(episode: episode)
@@ -392,7 +394,7 @@ private struct EpisodeRow: View {
                     .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
     }

@@ -19,23 +19,23 @@ private struct MiniPlayerInset: ViewModifier {
     @State private var keyboardUp = false
 
     func body(content: Content) -> some View {
-        content.safeAreaInset(edge: .bottom) {
+        content.safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 6) {
                 UndoBar()
+                    .padding(.horizontal, 12)
                 if showsPlayer && player.nowPlaying != nil && !keyboardUp {
                     MiniPlayer { showingPlayer = true }
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 6)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
     }
 }
 
-/// The "now playing" bar: a rounded panel in the colour of the episode's
-/// artwork, above the tabs.
+/// The "now playing" bar: the top of the player card peeking up above the
+/// tabs, full width with curved top corners, in the colour of the
+/// episode's artwork. Tap (or swipe up) to open the player.
 struct MiniPlayer: View {
     @Environment(PlayerModel.self) private var player
     let open: () -> Void
@@ -43,12 +43,13 @@ struct MiniPlayer: View {
     var body: some View {
         if let item = player.nowPlaying {
             let tint = ArtworkColors.shared.background(for: item.artworkURL) ?? Theme.display
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
+                Capsule().fill(Theme.displayText.opacity(0.45)).frame(width: 34, height: 4)
                 HStack(spacing: 10) {
                     Button(action: open) {
                         HStack(spacing: 10) {
-                            ArtworkView(url: item.artworkURL, title: item.showTitle, size: 42, radius: 10)
-                            VStack(alignment: .leading, spacing: 2) {
+                            ArtworkView(url: item.artworkURL, title: item.showTitle, size: 38, radius: 8)
+                            VStack(alignment: .leading, spacing: 1) {
                                 Text(item.title)
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundStyle(Theme.displayText)
@@ -72,32 +73,40 @@ struct MiniPlayer: View {
                                 .font(Theme.mono(11, .bold))
                                 .foregroundStyle(Theme.adText)
                                 .padding(.horizontal, 10)
-                                .frame(minHeight: 34)
+                                .frame(minHeight: 32)
                                 .background(Theme.highlight, in: Capsule())
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Skip ad")
                     }
-                    SkipButton(direction: .back)
-                        .foregroundStyle(Theme.displayText)
                     Button { player.togglePlayPause() } label: {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.body)
+                            .font(.system(size: 16))
                             .foregroundStyle(tint)
-                            .frame(width: 44, height: 44)
+                            .frame(width: 40, height: 40)
                             .background(Theme.displayText, in: Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-                    SkipButton(direction: .forward)
+                    SkipButton(direction: .forward, iconSize: 16, frame: 40)
                         .foregroundStyle(Theme.displayText)
                 }
-                SegmentBar(progress: progress, ads: adFractions, count: 40, height: 3)
+                GeometryReader { geometry in
+                    Capsule().fill(Theme.displayText.opacity(0.25))
+                        .overlay(alignment: .leading) {
+                            Capsule().fill(Theme.displayText).frame(width: geometry.size.width * progress)
+                        }
+                }
+                .frame(height: 3)
             }
             .tint(Theme.displayText)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 9)
-            .background(tint, in: RoundedRectangle(cornerRadius: 22))
+            .padding(.horizontal, 16)
+            .padding(.top, 6)
+            .padding(.bottom, 10)
+            .background(tint, in: UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
+            .gesture(DragGesture(minimumDistance: 20).onEnded { value in
+                if value.translation.height < -20 { open() }
+            })
             .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
         }
     }

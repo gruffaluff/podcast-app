@@ -217,8 +217,8 @@ struct LibraryView: View {
     }
 }
 
-/// A card in the New Episodes carousel, like a cassette: artwork, a label
-/// strip in the show's own colour, then the details and keys.
+/// A card in the New Episodes carousel: the show's colour with the artwork
+/// on top, then a paper card sliding over it with the details and keys.
 private struct EpisodeCard: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -228,21 +228,26 @@ private struct EpisodeCard: View {
         let strip = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
 
         VStack(alignment: .leading, spacing: 0) {
-            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 196, radius: 10)
-                .padding(12)
-                .contentShape(Rectangle())
-                .onTapGesture { store.notesEpisode = episode }
-            HStack {
-                Text((episode.podcast?.title ?? "").uppercased()).lineLimit(1)
-                Spacer(minLength: 8)
-                Text(TimeFormat.ago(episode.published).uppercased())
+            // Top: the show's colour with the artwork, like the player.
+            VStack(spacing: 10) {
+                HStack {
+                    Text((episode.podcast?.title ?? "").uppercased()).lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text(TimeFormat.ago(episode.published).uppercased())
+                }
+                .font(Theme.mono(10, .bold))
+                .foregroundStyle(.white)
+                ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 168, radius: 10)
+                    .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
             }
-            .font(Theme.mono(10, .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .frame(height: 26)
-            .background(strip, in: RoundedRectangle(cornerRadius: 6))
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 14)
+            .padding(.top, 12)
+            .padding(.bottom, 28)
+            .frame(maxWidth: .infinity)
+            .background(strip)
+            .contentShape(Rectangle())
+            .onTapGesture { store.notesEpisode = episode }
+            // Bottom: a paper card sliding up over the colour.
             VStack(alignment: .leading, spacing: 8) {
                 Text(episode.title)
                     .font(.system(size: 15, weight: .semibold))
@@ -255,40 +260,38 @@ private struct EpisodeCard: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
                 EpisodeLights(episode: episode)
-                HStack(spacing: 6) {
+                HStack(spacing: 12) {
                     Button { player.play(episode) } label: {
                         Text("▶ \(playLabel)")
                             .font(Theme.mono(12, .bold))
                             .lineLimit(1)
                             .fixedSize()
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, 14)
                             .frame(minHeight: 40)
                     }
                     .buttonStyle(.darkKey)
                     .accessibilityLabel("Play, \(playLabel)")
-                    Spacer()
+                    Spacer(minLength: 4)
                     DownloadButton(episode: episode)
                     Menu {
                         EpisodeMenuItems(episode: episode)
                     } label: {
                         Image(systemName: "ellipsis")
-                            .frame(width: 44, height: 44)
+                            .frame(width: 40, height: 40)
                             .foregroundStyle(Theme.ink)
                     }
                     .accessibilityLabel("More")
                 }
+                .padding(.top, 2)
             }
-            .padding(12)
+            .padding(14)
+            .background(Theme.surface, in: UnevenRoundedRectangle(topLeadingRadius: 18, topTrailingRadius: 18))
+            .padding(.top, -18)
         }
         .frame(width: 220)
-        // The key-style edge goes on the card's shape only (a shadow on the
-        // whole card also outlined the artwork and keys in grey).
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Theme.surface)
-                .shadow(color: Theme.controlBorder, radius: 0, x: 0, y: 3)
-        )
-        .padding(.bottom, 3)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+        .padding(.bottom, 6)
         .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
     }
 

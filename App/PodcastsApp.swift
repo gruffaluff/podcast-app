@@ -84,7 +84,7 @@ struct RootView: View {
     var body: some View {
         TabView {
             UpNextView()
-                .miniPlayer($showingPlayer, showsPlayer: false)
+                .miniPlayer($showingPlayer)
                 .tabItem { Label("Up Next", systemImage: "list.bullet") }
             LibraryView()
                 .miniPlayer($showingPlayer)

@@ -13,12 +13,6 @@ struct UpNextView: View {
 
         NavigationStack {
             List {
-                if player.nowPlaying != nil {
-                    NowPlayingHeader()
-                        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 10, trailing: 12))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                }
                 Section {
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
@@ -65,6 +59,10 @@ struct UpNextView: View {
                         .padding(.vertical, 10)
                         .listRowBackground(Theme.background)
                         .listRowSeparator(.hidden)
+                        EmptyQueueSuggestions()
+                            .listRowBackground(Theme.background)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
                 } header: {
                     header(episodes: episodes)

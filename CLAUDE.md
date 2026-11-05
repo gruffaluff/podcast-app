@@ -11,10 +11,13 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon: **option D, a cassette** (ink shell, orange label, two lit
-reels on the grey panel), drawn by `design/icon/make_deck_icon.py`; options
-in `design/icon/deck_options.png`. Earlier Podspot icons: `make_icon.py`,
-`options.png`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
+screen. Icon (Paul, 5 Nov 2026): **middle-ground cassette "D"** (sand
+shell, olive label, deep-olive reels), `design/icon/middle_D.png` from
+`make_middle_icons.py`; also on the website. Other options looked at:
+`middle_options.png` (A–D), `tape_options.png` (reel-to-reel E, big reel
+F, tilted G, ink H), `mic_options.png` (reel-to-reel + microphone I–L),
+may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
+`deck_options.png`); Podspot icons `make_icon.py`, `options.png`). A personal iOS podcast app for Paul's own iPhone, delivered through TestFlight.
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
@@ -533,6 +536,32 @@ to Nowhere / Top / Bottom" on the show page.
 ## Queued for the next app build
 
 - (empty: Paul adds with "FNB")
+- **FNB notes also live in Notion** (Personal / Poddeck / FNB, page id
+  40f7d696-6c51-80d4-898d-ef27b486ce92). Read only what is below the last
+  "✅ Claude read everything above on …" line, then add a new such line
+  (date and time) at the end so Paul knows where to add new notes.
+
+## Done from the Notion FNB notes (5 Nov 2026)
+
+Player: one top row (device, find, mark played ✓, ⋯), so the transcript
+gets the room (the "transcribed on this iPhone" line is gone); the device
+button is now a real AirPlay picker under the label (it did nothing);
+scrubbing only by dragging the bold outlined handle on the bar; a
+darkening gradient + shadow under white titles over artwork (player and
+show header); Undo bar in the player. Mini player: full width, curved top
+corners, the player card peeking up (swipe up or tap to open), smaller;
+Up Next has the mini player again (now-playing header removed) and, when
+empty, suggestions from the charts. Library New Episodes cards: show
+colour with artwork on top, paper card sliding over it, keys spaced out.
+Tighter rows in Discover and show episode lists. TOP/BTM shadow toned
+down in settings. Recent searches on Search (Clear). "Refresh artwork" in
+settings (clears the artwork and colour caches). Nothing from the
+previous player was lost: Transcript is the ARTWORK / TRANSCRIPT switch,
+Chapters / Episode notes / Full transcript are in ⋯ (and the chapter
+chip), AirPlay is the device button, Play ad / Not an ad are on the ad
+bar. To check on the phone: whether lists still scroll back behind the
+mini player (it is now a bottom safe-area inset, so lists should stop
+above it).
 
 ## Done in the "middle ground" build (5 Nov 2026)
 

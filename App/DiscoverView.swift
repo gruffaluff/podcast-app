@@ -30,6 +30,8 @@ struct DiscoverView: View {
                 }
             }
             .listStyle(.plain)
+            .environment(\.defaultMinListRowHeight, 0)
+            .listRowSpacing(0)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Shows, people, topics")
@@ -191,7 +193,7 @@ struct DirectoryItemRow: View {
             }
             NavigationLink(value: item) {
             HStack(spacing: 12) {
-            ArtworkView(url: item.artworkURL, title: item.title, size: 52)
+            ArtworkView(url: item.artworkURL, title: item.title, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                     .font(.body.weight(.medium))
@@ -208,7 +210,6 @@ struct DirectoryItemRow: View {
             .buttonStyle(.plain)
             FollowButton(item: item, follower: follower)
         }
-        .padding(.vertical, 4)
         .sheet(item: $follower.justFollowed) { ShowSettingsView(show: $0, justFollowed: true) }
     }
 }

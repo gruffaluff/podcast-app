@@ -16,6 +16,10 @@ final class ArtworkColors {
     private var colors: [URL: RGB] = [:]
     @ObservationIgnored private var loading: Set<URL> = []
 
+    func clear() {
+        colors.removeAll()
+    }
+
     func background(for url: URL?) -> Color? {
         url.flatMap { colors[$0] }.map(Color.init(rgb:))
     }
