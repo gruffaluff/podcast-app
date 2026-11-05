@@ -576,7 +576,9 @@ opens the full list over the player again, with a handle, "ALL n" and
 swipe up. Transcript stats show times only (no episode titles). New
 setting (Shows screen): "After an episode, play: Top of Up Next (default)
 / Next in the list" (`afterEpisode`). Mark as played from the player
-keeps the place for "Next in the list". Swipe buttons left as iOS draws
+keeps the place for "Next in the list". Library New Episodes cards: the
+artwork fills the top edge to edge (no coloured frame), and the show name
+and "25M AGO" sit in the paper part above the title (Paul). Swipe buttons left as iOS draws
 them (Paul: leave it for now; options were icons/colours/full swipe, or a
 hand-made full-row swipe). Before merging: wait for GitHub's free Build
 check on the PR (it runs on PRs), so Codemagic minutes only go on builds
