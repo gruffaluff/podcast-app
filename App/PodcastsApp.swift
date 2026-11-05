@@ -97,9 +97,10 @@ struct RootView: View {
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
         }
         .tint(Theme.ink)
-        .sheet(isPresented: $showingPlayer) {
+        // The player fills the whole screen (Paul: no page showing through
+        // at the top); close with its ⌄ key or a swipe down on the top area.
+        .fullScreenCover(isPresented: $showingPlayer) {
             NowPlayingView()
-                .presentationDragIndicator(.visible)
         }
         .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)

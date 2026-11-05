@@ -563,6 +563,27 @@ bar. To check on the phone: whether lists still scroll back behind the
 mini player (it is now a bottom safe-area inset, so lists should stop
 above it).
 
+## Done from the second Notion FNB batch (5 Nov 2026, after build 115)
+
+Build 115 confirmed: device button opens the output list, handle-only
+scrubbing works. Then: player opens full screen (fullScreenCover, not a
+sheet: nothing shows through at the top), with a ⌄ close key and swipe
+down on the top area; top keys darker (`NowPlayingView.keyFill`) so they
+stand out on artwork; scrub handle smaller (12×38). Transcript panel: the
+find box floats over the top of the lines instead of pushing them down,
+lines fill from the top (one before, the line now, three after), Back to
+now floats at the bottom. Mini player floats over the page with its
+colour running down behind the tab bar; lists get bottom room via
+`.contentMargins` (the safe-area inset didn't stop them scrolling back
+behind it). Up Next rows show episode artwork instead of 01, 02 (ring
+when playing); the YOU tag is gone (only TOP1/BTM for auto-added); no
+text animation when tapping a row; empty-queue suggestions are separate
+rows (several links in one row opened them all, and showed two arrows).
+Show page and Discover preview share one header (`ShowHeroBackground`:
+artwork filling the card, fading into its colour); FOLLOWING and settings
+keys stretch across, bell smaller. Not done: swipe actions as full-row
+blocks (iOS 26 draws them as rounded keys; would need a hand-made swipe).
+
 ## Done in the "middle ground" build (5 Nov 2026)
 
 New look (above) plus Paul's FNB list: find in transcripts (player panel

@@ -18,16 +18,23 @@ private struct MiniPlayerInset: ViewModifier {
     /// their play keys are never hidden under it.
     @State private var keyboardUp = false
 
+    private var showing: Bool { showsPlayer && player.nowPlaying != nil && !keyboardUp }
+
     func body(content: Content) -> some View {
-        content.safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 6) {
-                UndoBar()
-                    .padding(.horizontal, 12)
-                if showsPlayer && player.nowPlaying != nil && !keyboardUp {
-                    MiniPlayer { showingPlayer = true }
+        // The bar floats over the page and its colour runs down behind the
+        // tab bar. Lists get extra room at the bottom (content margins reach
+        // every list inside), so their last rows scroll clear of it.
+        content
+            .contentMargins(.bottom, showing ? MiniPlayer.height + 8 : 0, for: .scrollContent)
+            .overlay(alignment: .bottom) {
+                VStack(spacing: 6) {
+                    UndoBar()
+                        .padding(.horizontal, 12)
+                    if showing {
+                        MiniPlayer { showingPlayer = true }
+                    }
                 }
             }
-        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
     }
@@ -39,6 +46,8 @@ private struct MiniPlayerInset: ViewModifier {
 struct MiniPlayer: View {
     @Environment(PlayerModel.self) private var player
     let open: () -> Void
+    /// The bar's height above the tab bar.
+    static let height: CGFloat = 76
 
     var body: some View {
         if let item = player.nowPlaying {
@@ -103,7 +112,15 @@ struct MiniPlayer: View {
             .padding(.horizontal, 16)
             .padding(.top, 6)
             .padding(.bottom, 10)
-            .background(tint, in: UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
+            .frame(height: MiniPlayer.height, alignment: .top)
+            // The card runs down behind the tab bar, like the player card
+            // peeking up from below.
+            .background {
+                UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26)
+                    .fill(tint)
+                    .ignoresSafeArea(edges: .bottom)
+                    .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
+            }
             .gesture(DragGesture(minimumDistance: 20).onEnded { value in
                 if value.translation.height < -20 { open() }
             })

@@ -22,15 +22,21 @@ struct PlayerTranscriptPanel: View {
     private var isPlayingThis: Bool { player.nowPlaying?.episodeID == episode.episodeID }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if searching { searchRow }
+        // The find box floats over the top of the lines (it doesn't push
+        // them down); the lines fill the area from the top.
+        ZStack(alignment: .top) {
             if lines.isEmpty {
                 TranscriptStatusView(episode: episode, onDark: true)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 window
+                    .padding(.top, searching ? 52 : 0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .clipped()
             }
+            if searching { searchRow }
         }
+        .overlay(alignment: .bottom) { backToNow }
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.syncAnchorsData) { load() }
         .onChange(of: query) { matchIndex = 0 }
@@ -75,7 +81,7 @@ struct PlayerTranscriptPanel: View {
             }
             .padding(.horizontal, 12)
             .frame(height: 40)
-            .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 12))
+            .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 12))
             roundKey("chevron.up", label: "Previous match") { step(-1) }.disabled(found.isEmpty)
             roundKey("chevron.down", label: "Next match") { step(1) }.disabled(found.isEmpty)
             roundKey("xmark", label: "Close find") {
@@ -91,7 +97,7 @@ struct PlayerTranscriptPanel: View {
             Image(systemName: symbol)
                 .font(.system(size: 14, weight: .bold))
                 .frame(width: 40, height: 40)
-                .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 12))
+                .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -122,14 +128,21 @@ struct PlayerTranscriptPanel: View {
     private var window: some View {
         let focus = focusIndex
         return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 0)
             if let focus {
-                let shown = searching ? [focus - 1, focus] : [focus - 1, focus, focus + 1]
+                // One line before, then the line now (or the match) and what
+                // follows; whatever doesn't fit is cut off at the bottom.
+                let shown = searching ? [focus, focus + 1, focus + 2] : [focus - 1, focus, focus + 1, focus + 2, focus + 3]
                 ForEach(shown.filter { lines.indices.contains($0) }, id: \.self) { index in
                     lineView(lines[index], isFocus: index == focus)
                 }
             }
-            if searching, focus != nowIndex, let now = nowIndex {
+        }
+    }
+
+    /// While finding away from the line playing: a key back to it, floating
+    /// at the bottom of the area.
+    @ViewBuilder private var backToNow: some View {
+        if searching, focusIndex != nowIndex, let now = nowIndex {
                 HStack {
                     Spacer()
                     Button {
@@ -148,7 +161,6 @@ struct PlayerTranscriptPanel: View {
                     .buttonStyle(.plain)
                     Spacer()
                 }
-            }
         }
     }
 
