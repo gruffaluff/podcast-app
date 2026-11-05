@@ -51,50 +51,59 @@ struct ShowPreviewView: View {
         return item.feedURL.flatMap { store.podcast(feedURL: $0.absoluteString) }
     }
 
+    /// Same look as a followed show's page: the artwork filling the card,
+    /// fading into its colour, big title, then Follow (or Open show).
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                ArtworkView(url: feed?.artworkURL ?? item.artworkURL, title: item.title, size: 110, radius: 10)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text((feed?.title ?? item.title).uppercased())
-                        .font(Theme.mono(19, .bold))
-                        .foregroundStyle(Theme.ink)
-                    if let author = feed?.author ?? item.artist {
-                        Text(author.uppercased())
-                            .font(Theme.mono(11))
-                            .foregroundStyle(Theme.muted)
-                    }
-                    if let genre = item.genre { DeckTag(text: genre.uppercased()) }
-                }
-            }
-            if let summary = feed?.summary.map(PlainText.notesFromHTML), !summary.isEmpty {
-                Text(summary)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
-            }
+        let art = feed?.artworkURL ?? item.artworkURL
+        let tint = ArtworkColors.shared.background(for: art) ?? Theme.display
+        return VStack(alignment: .leading, spacing: 12) {
+            Spacer(minLength: 150)
+            Text((feed?.title ?? item.title).uppercased())
+                .font(Theme.big(44))
+                .lineLimit(3)
+                .minimumScaleFactor(0.5)
+                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
+                .accessibilityAddTraits(.isHeader)
+            Text([feed?.author ?? item.artist, item.genre, feed.map { "\($0.episodes.count) episodes" }].compactMap { $0 }.joined(separator: " · "))
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.displayDim)
             if let show = followedShow {
                 NavigationLink(value: show) {
                     Text("✓ FOLLOWING · OPEN SHOW ▸")
                         .font(Theme.mono(12, .bold))
-                        .frame(maxWidth: .infinity, minHeight: 46)
+                        .foregroundStyle(tint)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
                 }
-                .buttonStyle(.key)
-                .padding(.bottom, 3)
+                .buttonStyle(.plain)
             } else {
                 Button {
                     Task { await follower.follow(item, store: store) }
                 } label: {
                     Group {
-                        if follower.busy { ProgressView() } else { Text(follower.failed ? "TRY AGAIN" : "+ FOLLOW").font(Theme.mono(13, .bold)) }
+                        if follower.busy { ProgressView().tint(tint) } else { Text(follower.failed ? "TRY AGAIN" : "+ FOLLOW").font(Theme.mono(13, .bold)) }
                     }
-                    .frame(maxWidth: .infinity, minHeight: 46)
+                    .foregroundStyle(tint)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
                 }
-                .buttonStyle(.accentKey)
+                .buttonStyle(.plain)
                 .disabled(follower.busy)
-                .padding(.bottom, 3)
+            }
+            if let summary = feed?.summary.map(PlainText.notesFromHTML), !summary.isEmpty {
+                Text(summary)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.displayDim)
+                    .lineLimit(4)
             }
         }
-        .padding(.vertical, 8)
+        .foregroundStyle(Theme.displayText)
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background { ShowHeroBackground(url: art, tint: tint) }
+        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .task(id: art) { await ArtworkColors.shared.load(art) }
+        .padding(.top, 4)
     }
 
     private func episodeRow(_ episode: ParsedEpisode) -> some View {

@@ -203,13 +203,13 @@ struct ShowView: View {
         }
     }
 
-    /// The show's header in its artwork's colour, the artwork fading in on
-    /// the right, with Following, settings (where new episodes go) and the
-    /// alerts bell.
+    /// The show's header: the artwork filling the card, fading into its
+    /// colour behind the text, with Following, settings (where new episodes
+    /// go) and the alerts bell across the width.
     private var header: some View {
         let tint = ArtworkColors.shared.background(for: show.artworkURL) ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 40)
+            Spacer(minLength: 150)
             Text(show.title.uppercased())
                 .font(Theme.big(44))
                 .lineLimit(3)
@@ -226,8 +226,8 @@ struct ShowView: View {
                         Text("FOLLOWING").font(Theme.mono(12, .bold))
                     }
                     .foregroundStyle(tint)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 42)
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: 42)
                     .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
@@ -237,9 +237,9 @@ struct ShowView: View {
                         Image(systemName: "slider.horizontal.3")
                         Text(modeName).font(Theme.mono(12, .bold))
                     }
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 42)
-                    .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 13))
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: 42)
+                    .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Show settings. New episodes: \(modeName)")
@@ -247,8 +247,8 @@ struct ShowView: View {
                     Image(systemName: show.notify ? "bell.fill" : "bell.slash")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(show.notify ? Theme.ink : Theme.displayText)
-                        .frame(width: 46, height: 42)
-                        .background(show.notify ? Theme.highlight : Color.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 13))
+                        .frame(width: 42, height: 42)
+                        .background(show.notify ? Theme.highlight : NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(show.notify ? "New episode alerts on" : "New episode alerts off")
@@ -264,21 +264,7 @@ struct ShowView: View {
         .foregroundStyle(Theme.displayText)
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            ZStack(alignment: .topTrailing) {
-                tint
-                CachedImage(url: show.artworkURL) { Color.clear }
-                    .frame(width: 240, height: 240)
-                    .offset(x: 40, y: -10)
-                    .mask(
-                        RadialGradient(colors: [.black, .black.opacity(0)], center: UnitPoint(x: 0.6, y: 0.45), startRadius: 50, endRadius: 160)
-                            .frame(width: 240, height: 240)
-                            .offset(x: 40, y: -10)
-                    )
-                    .accessibilityHidden(true)
-                LinearGradient(colors: [tint.opacity(0), tint.opacity(0.6), tint.opacity(0.95)], startPoint: .top, endPoint: .bottom)
-            }
-        }
+        .background { ShowHeroBackground(url: show.artworkURL, tint: tint) }
         .clipShape(RoundedRectangle(cornerRadius: 30))
         .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }
         .padding(.top, 4)
@@ -410,5 +396,30 @@ private struct EpisodeRow: View {
         if isQueued { parts.append("In Up Next") }
         if !episode.played, let download = downloads.status(for: episode) { parts.append(download) }
         return parts.joined(separator: " · ")
+    }
+}
+
+/// Behind a show's header (show page and Discover preview): the artwork
+/// filling the card from the top, fading into its colour so the white text
+/// below stays readable.
+struct ShowHeroBackground: View {
+    let url: URL?
+    let tint: Color
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            tint
+            GeometryReader { geometry in
+                CachedImage(url: url) { Color.clear }
+                    .frame(width: geometry.size.width, height: geometry.size.width)
+                    .clipped()
+            }
+            .accessibilityHidden(true)
+            LinearGradient(stops: [.init(color: tint.opacity(0), location: 0),
+                                   .init(color: tint.opacity(0.15), location: 0.25),
+                                   .init(color: tint.opacity(0.85), location: 0.55),
+                                   .init(color: tint, location: 0.8)],
+                           startPoint: .top, endPoint: .bottom)
+        }
     }
 }

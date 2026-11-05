@@ -31,9 +31,10 @@ struct NowPlayingView: View {
         Group {
             if let item = player.nowPlaying {
                 let tint = ArtworkColors.shared.background(for: item.artworkURL) ?? Theme.display
+                GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 0) {
-                        hero(item, tint: tint)
+                        hero(item, tint: tint, top: geometry.safeAreaInsets.top)
                         VStack(spacing: 14) {
                             clock
                             scrubBar(tint: tint)
@@ -53,6 +54,7 @@ struct NowPlayingView: View {
                 .safeAreaInset(edge: .bottom) { UndoBar().padding(.horizontal, 12) }
                 .scrollBounceBehavior(.basedOnSize)
                 .ignoresSafeArea(edges: .top)
+                }
                 .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
             } else {
                 Text("Nothing playing")
@@ -78,10 +80,13 @@ struct NowPlayingView: View {
 
     // MARK: Top area
 
-    private func hero(_ item: PlayerModel.NowPlaying, tint: Color) -> some View {
+    /// `top` is the status bar's height: the player fills the screen to the
+    /// top edge, so the keys start below it.
+    private func hero(_ item: PlayerModel.NowPlaying, tint: Color, top: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            // One row: device, then (transcript) find, mark played, more.
+            // One row: close, device, then (transcript) find, mark played, more.
             HStack(spacing: 8) {
+                roundButton("chevron.down", label: "Close player") { dismiss() }
                 deviceButton
                 Spacer(minLength: 4)
                 if showsTranscript {
@@ -103,9 +108,9 @@ struct NowPlayingView: View {
         }
         .foregroundStyle(Theme.displayText)
         .padding(.horizontal, 20)
-        .padding(.top, 18)
+        .padding(.top, top + 8)
         .padding(.bottom, 16)
-        .frame(height: 430)
+        .frame(height: 430 + top)
         .frame(maxWidth: .infinity)
         .background {
             ZStack(alignment: .topTrailing) {
@@ -125,6 +130,10 @@ struct NowPlayingView: View {
             }
         }
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 40, bottomTrailingRadius: 40))
+        // Swipe down on the top area to close (the player fills the screen).
+        .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { value in
+            if value.translation.height > 90, abs(value.translation.width) < 80 { dismiss() }
+        })
         .environment(\.heroTint, tint)
     }
 
@@ -178,7 +187,7 @@ struct NowPlayingView: View {
         .font(Theme.mono(12, .bold))
         .padding(.horizontal, 14)
         .frame(height: 40)
-        .background(.black.opacity(0.22), in: Capsule())
+        .background(Self.keyFill, in: Capsule())
         .allowsHitTesting(false)
         .background(RoutePicker(tint: .clear))
         .accessibilityElement(children: .ignore)
@@ -186,12 +195,15 @@ struct NowPlayingView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    /// The top keys' fill: dark enough to stand out on any artwork.
+    static let keyFill = Color.black.opacity(0.45)
+
     private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 16, weight: .bold))
                 .frame(width: 40, height: 40)
-                .background(.black.opacity(0.22), in: Circle())
+                .background(Self.keyFill, in: Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -215,7 +227,7 @@ struct NowPlayingView: View {
             Image(systemName: "ellipsis")
                 .font(.system(size: 18, weight: .bold))
                 .frame(width: 40, height: 40)
-                .background(.black.opacity(0.22), in: Circle())
+                .background(Self.keyFill, in: Circle())
         }
         .accessibilityLabel("More")
     }
@@ -312,10 +324,10 @@ struct NowPlayingView: View {
             let x = min(width, max(0, shown / duration * width))
             ZStack(alignment: .leading) {
                 SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline)
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 4)
                     .fill(Theme.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.ink, lineWidth: 3))
-                    .frame(width: 18, height: 46)
+                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.ink, lineWidth: 2.5))
+                    .frame(width: 12, height: 38)
                     .shadow(color: .black.opacity(scrubTime == nil ? 0.1 : 0.3), radius: 4, y: 2)
                     .scaleEffect(scrubTime == nil ? 1 : 1.15)
                     // A finger-sized touch area, centred on the handle and
@@ -336,7 +348,7 @@ struct NowPlayingView: View {
             }
             .coordinateSpace(name: "scrub")
         }
-        .frame(height: 46)
+        .frame(height: 40)
         .accessibilityElement()
         .accessibilityLabel("Position")
         .accessibilityValue(TimeFormat.clock(shown))

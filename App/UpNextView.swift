@@ -6,6 +6,8 @@ struct UpNextView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @State private var showingPriority = false
+    /// Shows from the chart, offered when Up Next is empty.
+    @State private var suggestions: [DirectoryItem] = []
 
     var body: some View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
@@ -59,10 +61,25 @@ struct UpNextView: View {
                         .padding(.vertical, 10)
                         .listRowBackground(Theme.background)
                         .listRowSeparator(.hidden)
-                        EmptyQueueSuggestions()
-                            .listRowBackground(Theme.background)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        // Each suggestion is its own row (several links in one
+                        // row all opened at once).
+                        if !suggestions.isEmpty {
+                            Text("SOMETHING NEW TO TRY")
+                                .font(Theme.mono(11, .bold))
+                                .tracking(1.4)
+                                .foregroundStyle(Theme.muted)
+                                .listRowBackground(Theme.background)
+                                .listRowSeparator(.hidden)
+                            ForEach(suggestions) { item in
+                                NavigationLink {
+                                    ShowPreviewView(item: item)
+                                } label: {
+                                    SuggestionRow(item: item)
+                                }
+                                .listRowBackground(Theme.background)
+                                .listRowSeparatorTint(Theme.hairline)
+                            }
+                        }
                     }
                 } header: {
                     header(episodes: episodes)
@@ -87,7 +104,13 @@ struct UpNextView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .refreshable { await store.refreshAll() }
+            .task(id: store.queue.isEmpty) {
+                if store.queue.isEmpty, suggestions.isEmpty {
+                    suggestions = await SuggestionRow.load(store: store)
+                }
+            }
             .navigationTitle("UP NEXT")
+            .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { showingPriority = true } label: {
@@ -142,17 +165,20 @@ private struct QueueRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            Text(number < 10 ? "0\(number)" : "\(number)")
-                .font(Theme.mono(15, .bold))
-                .foregroundStyle(isPlaying ? Theme.accentText : Theme.ink)
-                .frame(width: 30, alignment: .leading)
+            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 46, radius: 8)
+                .overlay {
+                    if isPlaying {
+                        RoundedRectangle(cornerRadius: 8).stroke(Theme.accentFill, lineWidth: 3)
+                    }
+                }
+                .accessibilityLabel("Number \(number)")
             VStack(alignment: .leading, spacing: 3) {
                 Text(episode.title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2)
                 HStack(spacing: 6) {
-                    DeckTag(text: tag)
+                    if let tag { DeckTag(text: tag) }
                     Text(episode.podcast?.title ?? "")
                         .lineLimit(1)
                 }
@@ -175,12 +201,16 @@ private struct QueueRow: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+        // Tapping plays it, which adds the PLAYING line; without this the
+        // title slid about while the row grew.
+        .transaction { $0.animation = nil }
     }
 
-    /// TOP1 / TOP2 (rank), BTM, or YOU for episodes Paul added.
-    private var tag: String {
+    /// TOP1 / TOP2 (rank) or BTM for episodes added by a show's setting;
+    /// none for episodes Paul added himself.
+    private var tag: String? {
         switch item.source {
-        case .manual: return "YOU"
+        case .manual: return nil
         case .auto:
             switch settings.mode(for: item.episode.showID) {
             case .top:
