@@ -107,8 +107,8 @@ to Nowhere / Top / Bottom" on the show page.
   Pause, Skip forward/back, Set sleep timer (App Intents).
 - **CarPlay** (Paul listens in the car): Up Next and Shows tabs, standard
   Now Playing with a speed button and Up Next. Needs Apple's CarPlay audio
-  entitlement: Paul applied (Audio) on 4 Nov 2026 and is waiting for
-  Apple's email; then add it to the entitlements file (docs/SETUP.md).
+  entitlement: Paul applied (Audio) on 4 Nov 2026; Apple granted it
+  5 Nov 2026 (goes into the next build, see the queue below).
 - **Decided against (Paul, 4 Nov 2026)**: bookmark from AirPods, episode
   summaries, video podcasts, video clip cards (stay as they are, no new
   work), Apple Watch (maybe later if others ask), speaker separation
@@ -536,7 +536,14 @@ to Nowhere / Top / Bottom" on the show page.
 ## Queued for the next app build
 
 - Bedtime sleep timer off by default (done on the branch, PR #39, not
-  merged). Build only when Paul says; nothing runs automatically on
+  merged).
+- CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
+  The entitlement is added to `Config/Podcasts.entitlements` on the PR #39
+  branch. Before merging, Paul ticks CarPlay on the App ID
+  (developer.apple.com → Certificates, Identifiers & Profiles →
+  Identifiers → com.gruffaluff.podcasts → Additional Capabilities); check
+  with a status_only run that the App ID's capabilities list shows
+  CarPlay, or the signed build fails. Build only when Paul says; nothing runs automatically on
   Monday (Paul, 5 Nov 2026).
 - **FNB notes also live in Notion** (Personal / Poddeck / FNB, page id
   40f7d696-6c51-80d4-898d-ef27b486ce92). Read only what is below the last
