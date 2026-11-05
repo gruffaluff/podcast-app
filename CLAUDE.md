@@ -38,8 +38,16 @@ in the top half, episode page, show page, Library, plus the made-up show
 artwork). Paul's asks: keep the big-text approach but show episode/show
 artwork somewhere; keep the player's overlapping top card so the app feels
 like one flowing page of cards; try the transcript in the player's top
-half (ARTWORK / TRANSCRIPT switch on the card). Still exploring: the app
-stays Tape Deck until Paul decides.
+half (ARTWORK / TRANSCRIPT switch on the card). Then: the player's top
+area runs edge to edge from the top of the screen with only its bottom
+corners rounded (Paul preferred that to a floating card), and a row
+compares theming the player from the show's artwork: Olive (artwork as a
+tilted tile), Middle ground (top area in the artwork's colour with the
+artwork fading into it, rest of the page stays sand) and Fully themed
+(whole screen tinted from the artwork, artwork full width at the top
+fading into the colour). In the app the colours would come from the
+artwork itself (the app already picks artwork colours). Still exploring:
+the app stays Tape Deck until Paul decides.
 
 ## Constraints
 
