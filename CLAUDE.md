@@ -533,6 +533,19 @@ the app stays Tape Deck until Paul decides.
   Apple chart feeds (could not be reached from the build machine; Discover
   falls back to directory search).
 
+## Queued for the next app build (Paul, 5 Nov 2026; not started)
+
+- **Search inside a transcript**: a find box on the transcript screen
+  (`App/TranscriptView.swift`) that highlights matches and steps
+  between them (next / previous), jumping the transcript to each.
+- **Bug: Search tab results hide behind the mini player.** With a search
+  open (keyboard up), the last results sit under the mini player and
+  can't be scrolled into view, so their play keys can't be tapped. The
+  mini player is added with `safeAreaInset` (`App/MiniPlayer.swift`);
+  the active-search results list doesn't seem to get that inset. Fix so
+  every result can scroll clear of the mini player (check the other
+  tabs' search results too).
+
 ## Open questions for Paul
 
 - None open. (Answered: name Poddeck + cassette icon D; earlier: Apple
