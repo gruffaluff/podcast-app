@@ -105,7 +105,7 @@ struct RootView: View {
         .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)
         }
-        .transcribeExplainer()
+        .transcribeExplainer(enabled: !showingPlayer)
         .onChange(of: player.openPlayerRequests) { showingPlayer = true }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {

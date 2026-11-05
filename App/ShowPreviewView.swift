@@ -17,6 +17,7 @@ struct ShowPreviewView: View {
             header
                 .listRowBackground(Theme.background)
                 .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
             Section {
                 if let feed {
                     ForEach(feed.episodes.prefix(30), id: \.guid) { episode in
@@ -39,6 +40,7 @@ struct ShowPreviewView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .ignoresSafeArea(edges: .top)
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
@@ -57,7 +59,7 @@ struct ShowPreviewView: View {
         let art = feed?.artworkURL ?? item.artworkURL
         let tint = ArtworkColors.shared.background(for: art) ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 150)
+            Spacer(minLength: 250)
             Text((feed?.title ?? item.title).uppercased())
                 .font(Theme.big(44))
                 .lineLimit(3)
@@ -98,12 +100,12 @@ struct ShowPreviewView: View {
             }
         }
         .foregroundStyle(Theme.displayText)
-        .padding(18)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background { ShowHeroBackground(url: art, tint: tint) }
-        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 36, bottomTrailingRadius: 36))
         .task(id: art) { await ArtworkColors.shared.load(art) }
-        .padding(.top, 4)
     }
 
     private func episodeRow(_ episode: ParsedEpisode) -> some View {

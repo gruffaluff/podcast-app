@@ -31,19 +31,32 @@ struct ShowView: View {
 
         List(selection: $selection) {
             Section {
+                // Edge to edge, up under the status bar, rounded at the bottom.
                 header
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("NEW EPISODES GO TO")
-                        .font(Theme.mono(11, .bold))
-                        .tracking(1.4)
-                        .foregroundStyle(Theme.muted)
-                    DeckSwitch(options: [(label: "Nowhere", value: AutoAddMode.off), (label: "Top", value: .top), (label: "Bottom", value: .bottom)],
-                               selection: Binding(get: { show.autoAdd }, set: { store.setAutoAdd($0, for: show) }))
+                    .listRowInsets(EdgeInsets())
+                    .selectionDisabled()
+                // Search this show (a field here: the header runs up to the
+                // top of the screen, where the bar's search would sit).
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(Theme.muted)
+                    TextField("Search this show", text: $search)
+                        .textInputAutocapitalization(.never)
+                        .foregroundStyle(Theme.ink)
+                    if !search.isEmpty {
+                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.muted) }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Clear search")
+                    }
                 }
+                .padding(.horizontal, 12)
+                .frame(minHeight: 40)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
                 .listRowBackground(Theme.background)
                 .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 4, trailing: 16))
+                .selectionDisabled()
                 DeckSwitch(options: [(label: "Unplayed \(unplayedCount)", value: false), (label: "All \(allEpisodes.count)", value: true)], selection: $showAll)
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
@@ -71,10 +84,10 @@ struct ShowView: View {
                 .listRowSeparatorTint(Theme.hairline)
             }
         }
-        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search this show")
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .ignoresSafeArea(edges: .top)
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(selecting)
@@ -209,7 +222,7 @@ struct ShowView: View {
     private var header: some View {
         let tint = ArtworkColors.shared.background(for: show.artworkURL) ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 150)
+            Spacer(minLength: 250)
             Text(show.title.uppercased())
                 .font(Theme.big(44))
                 .lineLimit(3)
@@ -262,12 +275,12 @@ struct ShowView: View {
             }
         }
         .foregroundStyle(Theme.displayText)
-        .padding(18)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background { ShowHeroBackground(url: show.artworkURL, tint: tint) }
-        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 36, bottomTrailingRadius: 36))
         .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }
-        .padding(.top, 4)
     }
 
     /// The bell: alerts when this show has a new episode.
