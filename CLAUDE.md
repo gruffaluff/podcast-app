@@ -32,6 +32,14 @@ https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d. Paul liked Flashy's
 layout (fills the space, big bold text) but not its colours, so the same
 canvas has "Bold" versions in calmer palettes: Paper (ink + navy),
 Graphite (dark + bone) and Olive (sand + olive), Up Next and player each.
+Then (5 Nov 2026) Paul picked Olive to develop: "Olive, refined" row on
+the canvas (Up Next, player with artwork, player with the live transcript
+in the top half, episode page, show page, Library, plus the made-up show
+artwork). Paul's asks: keep the big-text approach but show episode/show
+artwork somewhere; keep the player's overlapping top card so the app feels
+like one flowing page of cards; try the transcript in the player's top
+half (ARTWORK / TRANSCRIPT switch on the card). Still exploring: the app
+stays Tape Deck until Paul decides.
 
 ## Constraints
 
