@@ -317,8 +317,15 @@ to Nowhere / Top / Bottom" on the show page.
 - Showcase page: `website/poddeck.html`, published as a private claude.ai
   page (https://claude.ai/artifact/AQnieLZr5m9vCoNU9GoWpn); republish from
   that file to keep the same link. Only Paul can open it until he shares it.
-- Same look as the app; feature sections with phone mock-ups, a live Up
-  Next demo using the app's ordering rules, privacy note, download section.
+- Rebuilt 5 Nov 2026 (Paul: focus on features, how they work, and an
+  experience you control with no subscription or hidden costs). Middle
+  ground look. Sections: hero ("A podcast app you run, not rent"), a £0
+  monthly "receipt", six features each with "How it works" steps and the
+  settings you hold (Up Next with a live demo of the real queue rules,
+  transcripts, ad skipping, player tools, new-episode alerts with honest
+  timing, iCloud sync / OPML / widgets / CarPlay), "Where your data goes"
+  table, first-open defaults, a "Fair questions" FAQ and download.
+  Keep its claims in step with the app's defaults when they change.
 - The download button says "Coming soon to TestFlight" until
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
