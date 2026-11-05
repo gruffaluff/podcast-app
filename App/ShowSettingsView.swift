@@ -280,6 +280,11 @@ struct TopPriorityView: View {
                 .pickerStyle(.menu)
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
+                Button("Refresh artwork") {
+                    ArtworkImageCache.shared.clear()
+                    ArtworkColors.shared.clear()
+                }
+                .foregroundStyle(Theme.accentText)
                 if transcripts.isBusy {
                     Button("Stop all transcribing", role: .destructive) { transcripts.stopAll() }
                 }
@@ -395,8 +400,7 @@ private struct AllShowsRow: View {
                     .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 10)
                     .frame(minWidth: 64, minHeight: 32)
-                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
-                    .shadow(color: Theme.controlBorder, radius: 0, x: 0, y: 2)
+                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
             }
             .accessibilityLabel("New episodes go to: \(show.autoAdd.rawValue)")
         }

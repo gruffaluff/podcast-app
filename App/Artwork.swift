@@ -76,6 +76,14 @@ final class ArtworkImageCache {
         memory.countLimit = 300
     }
 
+    /// "Refresh artwork": forget every saved picture; each is fetched again
+    /// the next time it's shown (shows that changed their artwork update).
+    func clear() {
+        memory.removeAllObjects()
+        try? FileManager.default.removeItem(at: directory)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    }
+
     func cached(_ url: URL) -> UIImage? {
         memory.object(forKey: url as NSURL)
     }

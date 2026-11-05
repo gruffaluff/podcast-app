@@ -21,6 +21,15 @@ struct SearchView: View {
     @State private var scope: Scope = .transcripts
     @State private var transcriptResults: [TranscriptIndex.Result] = []
     @State private var searching = false
+    /// Recent searches, newest first (on this iPhone).
+    @AppStorage("recentSearches") private var recentText = ""
+    private var recents: [String] { recentText.split(separator: "\n").map(String.init) }
+
+    private func remember(_ term: String) {
+        let trimmed = term.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 2 else { return }
+        recentText = ([trimmed] + recents.filter { $0.caseInsensitiveCompare(trimmed) != .orderedSame }).prefix(10).joined(separator: "\n")
+    }
 
     var body: some View {
         NavigationStack {
@@ -29,19 +38,46 @@ struct SearchView: View {
                 .listRowBackground(Theme.background)
                 .listRowSeparator(.hidden)
 
-                switch scope {
-                case .transcripts: transcriptRows
-                case .shows: showRows
-                case .clips: clipRows
+                if query.isEmpty && !recents.isEmpty {
+                    recentRows
+                } else {
+                    switch scope {
+                    case .transcripts: transcriptRows
+                    case .shows: showRows
+                    case .clips: clipRows
+                    }
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Words, people, shows")
+            .onSubmit(of: .search) { remember(query) }
             .navigationTitle("SEARCH")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .task(id: query) { await searchTranscripts() }
+        }
+    }
+
+    // MARK: Recent
+
+    @ViewBuilder private var recentRows: some View {
+        HStack {
+            Text("RECENT SEARCHES").font(Theme.mono(11, .bold)).tracking(1.4).foregroundStyle(Theme.muted)
+            Spacer()
+            Button("Clear") { recentText = "" }
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Theme.accentText)
+                .buttonStyle(.plain)
+        }
+        .listRowBackground(Theme.background)
+        .listRowSeparator(.hidden)
+        ForEach(recents, id: \.self) { term in
+            Button { query = term } label: {
+                Label(term, systemImage: "clock.arrow.circlepath")
+                    .foregroundStyle(Theme.ink)
+            }
+            .listRowBackground(Theme.background)
         }
     }
 

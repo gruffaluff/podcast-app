@@ -20,6 +20,7 @@ struct NowPlayingView: View {
     @State private var showingNotes = false
     @State private var transcriptEpisode: PodcastEpisode?
     @State private var showingQueue = false
+    @State private var searchingTranscript = false
     @AppStorage("playerShowsTranscript") private var showsTranscript = false
 
     private var currentEpisode: PodcastEpisode? {
@@ -49,6 +50,7 @@ struct NowPlayingView: View {
                         .padding(.bottom, 30)
                     }
                 }
+                .safeAreaInset(edge: .bottom) { UndoBar().padding(.horizontal, 12) }
                 .scrollBounceBehavior(.basedOnSize)
                 .ignoresSafeArea(edges: .top)
                 .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
@@ -78,14 +80,19 @@ struct NowPlayingView: View {
 
     private func hero(_ item: PlayerModel.NowPlaying, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
+            // One row: device, then (transcript) find, mark played, more.
+            HStack(spacing: 8) {
                 deviceButton
-                Spacer()
+                Spacer(minLength: 4)
+                if showsTranscript {
+                    roundButton("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
+                }
+                roundButton("checkmark", label: "Mark as played") { markPlayed() }
                 moreMenu
             }
             Group {
                 if showsTranscript, let episode = currentEpisode {
-                    PlayerTranscriptPanel(episode: episode)
+                    PlayerTranscriptPanel(episode: episode, searching: $searchingTranscript)
                 } else {
                     artworkContent(item)
                 }
@@ -96,9 +103,9 @@ struct NowPlayingView: View {
         }
         .foregroundStyle(Theme.displayText)
         .padding(.horizontal, 20)
-        .padding(.top, 30)
-        .padding(.bottom, 18)
-        .frame(height: 450)
+        .padding(.top, 18)
+        .padding(.bottom, 16)
+        .frame(height: 430)
         .frame(maxWidth: .infinity)
         .background {
             ZStack(alignment: .topTrailing) {
@@ -113,6 +120,8 @@ struct NowPlayingView: View {
                             .offset(x: 50, y: 20)
                     )
                     .accessibilityHidden(true)
+                // Keeps the big white titles readable over light artwork.
+                LinearGradient(colors: [tint.opacity(0), tint.opacity(0.55), tint.opacity(0.95)], startPoint: .top, endPoint: .bottom)
             }
         }
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 40, bottomTrailingRadius: 40))
@@ -126,6 +135,7 @@ struct NowPlayingView: View {
                 .font(Theme.big(58))
                 .lineLimit(3)
                 .minimumScaleFactor(0.45)
+                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 .accessibilityAddTraits(.isHeader)
             Button { showingNotes = true } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -169,10 +179,29 @@ struct NowPlayingView: View {
         .padding(.horizontal, 14)
         .frame(height: 40)
         .background(.black.opacity(0.22), in: Capsule())
-        .overlay(RoutePicker(tint: .clear).opacity(0.02))
+        .allowsHitTesting(false)
+        .background(RoutePicker(tint: .clear))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Playing on \(player.outputName ?? "iPhone"). Choose another device")
         .accessibilityAddTraits(.isButton)
+    }
+
+    private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 16, weight: .bold))
+                .frame(width: 40, height: 40)
+                .background(.black.opacity(0.22), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    /// Marked played (with Undo); the player moves on as when an episode ends.
+    private func markPlayed() {
+        guard let episode = currentEpisode else { return }
+        store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+        player.finishEarly()
     }
 
     private var moreMenu: some View {
@@ -185,7 +214,7 @@ struct NowPlayingView: View {
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 18, weight: .bold))
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .background(.black.opacity(0.22), in: Circle())
         }
         .accessibilityLabel("More")
@@ -273,26 +302,41 @@ struct NowPlayingView: View {
         }
     }
 
-    /// The wave progress bar; drag along it to scrub.
+    /// The wave progress bar. Only the outlined handle at the current
+    /// position moves it (drag it), so a stray touch never jumps the episode.
     private func scrubBar(tint: Color) -> some View {
         let shown = scrubTime ?? player.currentTime
         let duration = max(player.duration, 1)
         return GeometryReader { geometry in
-            SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            let fraction = min(1, max(0, value.location.x / max(1, geometry.size.width)))
-                            scrubTime = fraction * duration
-                        }
-                        .onEnded { _ in
-                            if let target = scrubTime { player.seek(to: target) }
-                            scrubTime = nil
-                        }
-                )
+            let width = max(1, geometry.size.width)
+            let x = min(width, max(0, shown / duration * width))
+            ZStack(alignment: .leading) {
+                SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline)
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Theme.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.ink, lineWidth: 3))
+                    .frame(width: 18, height: 46)
+                    .shadow(color: .black.opacity(scrubTime == nil ? 0.1 : 0.3), radius: 4, y: 2)
+                    .scaleEffect(scrubTime == nil ? 1 : 1.15)
+                    // A finger-sized touch area, centred on the handle and
+                    // moving with it.
+                    .frame(width: 44, height: 56)
+                    .contentShape(Rectangle())
+                    .offset(x: x - 22)
+                    .gesture(
+                        DragGesture(minimumDistance: 0, coordinateSpace: .named("scrub"))
+                            .onChanged { value in
+                                scrubTime = min(1, max(0, value.location.x / width)) * duration
+                            }
+                            .onEnded { _ in
+                                if let target = scrubTime { player.seek(to: target) }
+                                scrubTime = nil
+                            }
+                    )
+            }
+            .coordinateSpace(name: "scrub")
         }
-        .frame(height: 34)
+        .frame(height: 46)
         .accessibilityElement()
         .accessibilityLabel("Position")
         .accessibilityValue(TimeFormat.clock(shown))

@@ -4,15 +4,17 @@ import PodcastCore
 /// The player's TRANSCRIPT view: the line playing now (large), with the
 /// lines before and after. A find box steps through matches ("2 of 5");
 /// "Back to now" returns to the line playing. Tap a line to play from it.
+/// Find opens from the magnifier in the player's top row.
 /// Lives in the coloured top area, so it uses the light text colours.
 struct PlayerTranscriptPanel: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
+    /// Find is opened from the magnifier in the player's top row.
+    @Binding var searching: Bool
 
     @State private var lines: [TranscriptLayout.Line] = []
-    @State private var searching = false
     @State private var query = ""
     @State private var matchIndex = 0
     @FocusState private var fieldFocused: Bool
@@ -21,7 +23,7 @@ struct PlayerTranscriptPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if searching { searchRow } else { headerRow }
+            if searching { searchRow }
             if lines.isEmpty {
                 TranscriptStatusView(episode: episode, onDark: true)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -32,6 +34,10 @@ struct PlayerTranscriptPanel: View {
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.syncAnchorsData) { load() }
         .onChange(of: query) { matchIndex = 0 }
+        .onChange(of: searching) { _, on in
+            fieldFocused = on
+            if !on { query = "" }
+        }
     }
 
     private func load() {
@@ -49,33 +55,6 @@ struct PlayerTranscriptPanel: View {
     private var matches: [Int] {
         guard !trimmedQuery.isEmpty else { return [] }
         return lines.indices.filter { lines[$0].text.localizedCaseInsensitiveContains(trimmedQuery) }
-    }
-
-    private var headerRow: some View {
-        HStack {
-            Text(transcriptSource.uppercased())
-                .font(Theme.mono(11, .bold))
-                .tracking(1)
-                .opacity(0.8)
-            Spacer()
-            Button {
-                searching = true
-                fieldFocused = true
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(width: 40, height: 40)
-                    .background(.black.opacity(0.22), in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Find in transcript")
-            .disabled(lines.isEmpty)
-        }
-    }
-
-    private var transcriptSource: String {
-        guard !lines.isEmpty else { return "Transcript" }
-        return transcripts.transcript(for: episode)?.source == .publisher ? "Transcript from the show" : "Transcribed on this iPhone"
     }
 
     private var searchRow: some View {

@@ -282,3 +282,45 @@ struct EpisodeStatusRows: View {
         return "\(n)\(suffix)"
     }
 }
+
+/// When Up Next is empty: a few popular shows from Apple's UK chart to try,
+/// each opening its preview page (Follow from there).
+struct EmptyQueueSuggestions: View {
+    @Environment(LibraryStore.self) private var store
+    @State private var items: [DirectoryItem] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !items.isEmpty {
+                Text("SOMETHING NEW TO TRY")
+                    .font(Theme.mono(11, .bold))
+                    .tracking(1.4)
+                    .foregroundStyle(Theme.muted)
+                ForEach(items) { item in
+                    NavigationLink {
+                        ShowPreviewView(item: item)
+                    } label: {
+                        HStack(spacing: 12) {
+                            ArtworkView(url: item.artworkURL, title: item.title, size: 46, radius: 10)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(item.title).font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.ink).lineLimit(1)
+                                Text(item.artist ?? item.genre ?? "").font(.system(size: 12)).foregroundStyle(Theme.muted).lineLimit(1)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").font(.footnote.weight(.bold)).foregroundStyle(Theme.muted)
+                        }
+                        .padding(8)
+                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .task {
+            guard items.isEmpty else { return }
+            let followed = Set(store.allShows.map(\.feedURL))
+            let chart = (try? await FeedClient.topChart()) ?? []
+            items = Array(chart.filter { $0.feedURL.map { !followed.contains($0.absoluteString) } ?? true }.prefix(5))
+        }
+    }
+}
