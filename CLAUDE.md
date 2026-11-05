@@ -549,6 +549,11 @@ the app stays Tape Deck until Paul decides.
   the active-search results list doesn't seem to get that inset. Fix so
   every result can scroll clear of the mini player (check the other
   tabs' search results too).
+- **Display options for "Your shows"** (Library): a switch between
+  **Large cards** (big artwork tiles), **Small card + description**
+  (artwork thumbnail with the show's title and a line or two of its
+  description) and **Description only** (a text list, no artwork).
+  Remember the choice (synced setting).
 
 ## Open questions for Paul
 
