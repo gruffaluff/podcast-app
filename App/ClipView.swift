@@ -4,7 +4,7 @@ import UIKit
 import PodcastCore
 
 /// "Share a clip": a quote card for a transcript line, 5–30 seconds long,
-/// optionally with the audio, a link to the moment, or as a video card.
+/// optionally with the audio or a link to the moment.
 struct ClipView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(\.modelContext) private var context
@@ -16,7 +16,6 @@ struct ClipView: View {
     @State private var length: TimeInterval = 15
     @State private var includeAudio = true
     @State private var includeLink = true
-    @State private var videoCard = false
     @State private var bars: [Double] = Array(repeating: 0.3, count: 40)
     @State private var artwork: UIImage?
     @State private var working = false
@@ -55,7 +54,6 @@ struct ClipView: View {
                 Section {
                     Toggle("Include audio", isOn: $includeAudio).disabled(audioFile == nil)
                     Toggle("Link to the moment", isOn: $includeLink).disabled(linkTarget == nil)
-                    Toggle("Video card (for messages and social)", isOn: $videoCard).disabled(audioFile == nil)
                 } footer: {
                     Text(audioFile == nil ? "Download the episode to include its audio." : "The clip is cut on your iPhone from the downloaded episode.")
                 }
@@ -134,14 +132,10 @@ struct ClipView: View {
         guard let image = renderCard() else { failure = "Couldn't make the card."; return }
 
         do {
-            if let audioFile, includeAudio || videoCard {
+            if let audioFile, includeAudio {
                 let audio = try await ClipExporter.audio(from: audioFile, range: range)
-                if videoCard {
-                    items.append(try await ClipExporter.video(image: image, audio: audio, duration: range.upperBound - range.lowerBound))
-                } else {
-                    items.append(image)
-                    items.append(audio)
-                }
+                items.append(image)
+                items.append(audio)
             } else {
                 items.append(image)
             }
@@ -227,7 +221,7 @@ struct ActivityView: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
-/// Cuts audio clips and makes video cards on the iPhone.
+/// Cuts audio clips on the iPhone.
 enum ClipExporter {
     enum Failure: LocalizedError {
         case cannotExport
@@ -252,71 +246,6 @@ enum ClipExporter {
         let output = temporaryURL("Podcast clip.m4a")
         try await session.export(to: output, as: .m4a)
         return output
-    }
-
-    /// The card as a still video with the clip's audio.
-    static func video(image: UIImage, audio: URL, duration: TimeInterval) async throws -> URL {
-        let still = temporaryURL("card.mov")
-        try await writeStill(image, to: still, duration: duration)
-
-        let composition = AVMutableComposition()
-        guard let videoTrack = try await AVURLAsset(url: still).loadTracks(withMediaType: .video).first,
-              let audioTrack = try await AVURLAsset(url: audio).loadTracks(withMediaType: .audio).first,
-              let videoOut = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid),
-              let audioOut = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw Failure.cannotExport
-        }
-        let videoRange = try await videoTrack.load(.timeRange)
-        let audioRange = try await audioTrack.load(.timeRange)
-        try videoOut.insertTimeRange(videoRange, of: videoTrack, at: .zero)
-        try audioOut.insertTimeRange(audioRange, of: audioTrack, at: .zero)
-
-        guard let session = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else { throw Failure.cannotExport }
-        let output = temporaryURL("Podcast clip.mp4")
-        try await session.export(to: output, as: .mp4)
-        return output
-    }
-
-    private static func writeStill(_ image: UIImage, to url: URL, duration: TimeInterval) async throws {
-        let side = 1080
-        let writer = try AVAssetWriter(outputURL: url, fileType: .mov)
-        let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
-            AVVideoCodecKey: AVVideoCodecType.h264,
-            AVVideoWidthKey: side,
-            AVVideoHeightKey: side
-        ])
-        let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB,
-            kCVPixelBufferWidthKey as String: side,
-            kCVPixelBufferHeightKey as String: side
-        ])
-        writer.add(input)
-        guard writer.startWriting(), let buffer = pixelBuffer(from: image, side: side) else { throw Failure.cannotExport }
-        writer.startSession(atSourceTime: .zero)
-        var second: TimeInterval = 0
-        while second < duration {
-            while !input.isReadyForMoreMediaData { try await Task.sleep(for: .milliseconds(10)) }
-            adaptor.append(buffer, withPresentationTime: CMTime(seconds: second, preferredTimescale: 600))
-            second += 1
-        }
-        input.markAsFinished()
-        writer.endSession(atSourceTime: CMTime(seconds: duration, preferredTimescale: 600))
-        await writer.finishWriting()
-        guard writer.status == .completed else { throw writer.error ?? Failure.cannotExport }
-    }
-
-    private static func pixelBuffer(from image: UIImage, side: Int) -> CVPixelBuffer? {
-        var buffer: CVPixelBuffer?
-        let attributes = [kCVPixelBufferCGImageCompatibilityKey: true, kCVPixelBufferCGBitmapContextCompatibilityKey: true] as CFDictionary
-        guard CVPixelBufferCreate(kCFAllocatorDefault, side, side, kCVPixelFormatType_32ARGB, attributes, &buffer) == kCVReturnSuccess,
-              let buffer, let cgImage = image.cgImage else { return nil }
-        CVPixelBufferLockBaseAddress(buffer, [])
-        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
-        guard let context = CGContext(data: CVPixelBufferGetBaseAddress(buffer), width: side, height: side, bitsPerComponent: 8,
-                                      bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue) else { return nil }
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: side, height: side))
-        return buffer
     }
 
     /// Mono samples for the waveform, starting at `start`.

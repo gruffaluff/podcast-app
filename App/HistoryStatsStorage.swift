@@ -91,6 +91,34 @@ struct StatsView: View {
     @Environment(LibraryStore.self) private var store
     @State private var stats = LibraryStore.ListeningStats()
     @State private var runs: [TranscriptionLog.Run] = TranscriptionLog.all
+    @State private var week = WeekStats.current
+
+    /// This week at a glance: listened, saved by speed and trims, ads skipped.
+    private var weekSummary: some View {
+        HStack(alignment: .top, spacing: 10) {
+            weekFigure(Self.hours(week.listened), "LISTENED")
+            weekFigure(Self.hours(week.saved), "SAVED BY SPEED & TRIMS")
+            weekFigure(week.adsSkipped == 0 ? "0" : "\(week.adsSkipped) · \(Self.hours(week.adSeconds))", "ADS SKIPPED")
+        }
+    }
+
+    private func weekFigure(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(Theme.big(24))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(label)
+                .font(Theme.mono(9, .bold))
+                .tracking(0.8)
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
+    }
 
     /// How long transcripts take on this iPhone.
     @ViewBuilder private var transcriptStats: some View {
@@ -138,6 +166,8 @@ struct StatsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                DeckHeader(title: "This week", detail: nil)
+                weekSummary
                 DeckDisplay {
                     Text("LISTENED").font(Theme.mono(11)).foregroundStyle(Theme.displayDim)
                     HStack(alignment: .firstTextBaseline, spacing: 18) {

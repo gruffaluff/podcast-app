@@ -121,16 +121,6 @@ final class LibraryStore {
         return show
     }
 
-    /// For testing: on a fresh install, follow Elis James and John Robins
-    /// (Paul's pick) so there's something to play straight away.
-    func followStarterShowIfNeeded() async {
-        let key = "starterShowFollowed"
-        guard !UserDefaults.standard.bool(forKey: key), !SettingsSync.starterShowFollowedInCloud, allPodcasts.isEmpty else { return }
-        guard let feedURL = try? await FeedClient.lookup(appleID: "1465290044")?.feedURL,
-              (try? await follow(feedURL: feedURL)) != nil else { return }
-        UserDefaults.standard.set(true, forKey: key)
-    }
-
     /// Follows every show in an OPML file from another app. Shows already
     /// followed are skipped; nothing downloads (that could be dozens of
     /// episodes at once), and nothing is added to Up Next until new
@@ -431,6 +421,7 @@ final class LibraryStore {
         }
         episode.downloadFile = fileName
         if let show = episode.podcast { applyDownloadLimit(to: show) }
+        applyStorageCap()
         save()
         transcripts?.prepare(episode)
     }

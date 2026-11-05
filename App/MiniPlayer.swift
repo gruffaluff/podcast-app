@@ -99,6 +99,17 @@ struct MiniPlayer: View {
                     .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
                     SkipButton(direction: .forward, iconSize: 16, frame: 40)
                         .foregroundStyle(Theme.displayText)
+                    // Next chapter, when the episode has chapters.
+                    if !player.chapters.isEmpty {
+                        Button { player.nextChapter() } label: {
+                            Image(systemName: "forward.end.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Theme.displayText)
+                                .frame(width: 32, height: 40)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Next chapter")
+                    }
                 }
                 GeometryReader { geometry in
                     Capsule().fill(Theme.displayText.opacity(0.25))

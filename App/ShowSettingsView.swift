@@ -175,6 +175,8 @@ struct TopPriorityView: View {
     @Environment(TranscriptService.self) private var transcripts
     @Query(sort: \Podcast.title) private var allShows: [Podcast]
     @AppStorage("afterEpisode") private var afterEpisode = "top"  // PlayerModel.afterEpisodeKey
+    @AppStorage("downloadCapGB") private var downloadCapGB = 0  // LibraryStore.downloadCapKey
+    @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = true  // PlayerModel.bedtimeKey
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
     @State private var findAds = AdScanner.isEnabled
@@ -274,6 +276,14 @@ struct TopPriorityView: View {
             .listRowBackground(Theme.background)
 
             Section {
+                Toggle("Bedtime sleep timer", isOn: $bedtimeTimer)
+                    .tint(Theme.accentFill)
+            } footer: {
+                Text("Starting an episode between 10pm and 5am sets the sleep timer to the one you last chose (end of episode at first).")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
                 Picker("After an episode, play", selection: $afterEpisode) {
                     Text("Top of Up Next").tag("top")
                     Text("Next in the list").tag("next")
@@ -313,10 +323,18 @@ struct TopPriorityView: View {
                     .tint(Theme.accentFill)
                 Toggle("Keep played downloads for 24 hours", isOn: $store.keepPlayedDownloads)
                     .tint(Theme.accentFill)
+                Picker("Keep downloads under", selection: $downloadCapGB) {
+                    Text("No limit").tag(0)
+                    ForEach([2, 5, 10, 20], id: \.self) { gb in
+                        Text("\(gb) GB").tag(gb)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: downloadCapGB) { store.applyStorageCap() }
             } header: {
                 DeckHeader(title: "Downloads")
             } footer: {
-                Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away.")
+                Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away. Over the limit, the oldest go first: played ones, then ones not in Up Next, then the end of Up Next (never what's playing).")
             }
             .listRowBackground(Theme.background)
 

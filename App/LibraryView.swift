@@ -58,8 +58,11 @@ struct LibraryView: View {
                                         EpisodeCard(episode: episode)
                                     }
                                 }
+                                .scrollTargetLayout()
                                 .padding(.horizontal, 20)
                             }
+                            // Settles on a card after a swipe, like Apple Podcasts.
+                            .scrollTargetBehavior(.viewAligned)
                         }
 
                         HStack(alignment: .center) {
@@ -217,86 +220,89 @@ struct LibraryView: View {
     }
 }
 
-/// A card in the New Episodes carousel: the artwork filling the top, then
-/// a paper card sliding over it with the show, how long ago, the details
-/// and keys.
+/// A card in the New Episodes carousel, like Apple Podcasts': the artwork
+/// fills the card and fades into its own colour, with the time ago, title,
+/// description and keys in white over the colour.
 private struct EpisodeCard: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
 
-    var body: some View {
-        let strip = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
+    private static let width: CGFloat = 300
+    private static let height: CGFloat = 300
 
-        VStack(alignment: .leading, spacing: 0) {
-            // Top: the artwork filling the card edge to edge.
-            CachedImage(url: episode.artwork) {
-                ArtworkView(url: nil, title: episode.podcast?.title ?? episode.title, size: 220, radius: 0)
-            }
-            .frame(width: 220, height: 210)
-            .clipped()
-            .contentShape(Rectangle())
-            .onTapGesture { store.notesEpisode = episode }
-            .accessibilityHidden(true)
-            // Bottom: a paper card sliding up over the artwork, with the
-            // show and how long ago at the top.
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    Text((episode.podcast?.title ?? "").uppercased()).lineLimit(1)
-                    Spacer(minLength: 6)
-                    Text(TimeFormat.ago(episode.published).uppercased()).fixedSize()
-                }
-                .font(Theme.mono(10, .bold))
-                .tracking(0.6)
-                .foregroundStyle(Theme.muted)
-                Text(episode.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2, reservesSpace: true)
-                    .contentShape(Rectangle())
-                    .onTapGesture { store.notesEpisode = episode }
-                Text(episode.summary)
-                    .font(.caption)
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
-                EpisodeLights(episode: episode)
-                HStack(spacing: 12) {
-                    Button { player.play(episode) } label: {
-                        Text("▶ \(playLabel)")
-                            .font(Theme.mono(12, .bold))
-                            .lineLimit(1)
-                            .fixedSize()
-                            .padding(.horizontal, 14)
-                            .frame(minHeight: 40)
-                    }
-                    .buttonStyle(.darkKey)
-                    .accessibilityLabel("Play, \(playLabel)")
-                    Spacer(minLength: 4)
-                    DownloadButton(episode: episode)
-                    Menu {
-                        EpisodeMenuItems(episode: episode)
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .frame(width: 40, height: 40)
-                            .foregroundStyle(Theme.ink)
-                    }
-                    .accessibilityLabel("More")
-                }
-                .padding(.top, 2)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.surface, in: UnevenRoundedRectangle(topLeadingRadius: 18, topTrailingRadius: 18))
-            .padding(.top, -18)
+    var body: some View {
+        let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
+
+        ZStack(alignment: .bottomLeading) {
+            tint
+            // The artwork across the top, fading into the colour.
+            CachedImage(url: episode.artwork) { Color.clear }
+                .frame(width: Self.width, height: Self.width)
+                .clipped()
+                .frame(maxHeight: .infinity, alignment: .top)
+                .accessibilityHidden(true)
+            LinearGradient(stops: [.init(color: tint.opacity(0), location: 0.3),
+                                   .init(color: tint.opacity(0.85), location: 0.55),
+                                   .init(color: tint, location: 0.7)],
+                           startPoint: .top, endPoint: .bottom)
+            details(tint: tint)
         }
-        .frame(width: 220)
-        // The show's colour behind the whole card, so the top always runs
-        // to both edges (it fell short on the right).
-        .background(strip)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+        .frame(width: Self.width, height: Self.height)
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .contentShape(RoundedRectangle(cornerRadius: 22))
+        .onTapGesture { store.notesEpisode = episode }
+        .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
         .padding(.bottom, 6)
         .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
+    }
+
+    private func details(tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\((episode.podcast?.title ?? "").uppercased()) · \(TimeFormat.ago(episode.published).uppercased())")
+                .font(Theme.mono(10, .bold))
+                .tracking(0.6)
+                .foregroundStyle(Theme.displayText.opacity(0.75))
+                .lineLimit(1)
+            Text(episode.title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(Theme.displayText)
+                .lineLimit(2)
+            Text(episode.summary)
+                .font(.footnote)
+                .foregroundStyle(Theme.displayText.opacity(0.8))
+                .lineLimit(1)
+            HStack(spacing: 14) {
+                Button { player.play(episode) } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "play.fill")
+                        Text(playLabel).monospacedDigit()
+                    }
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.displayText)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 36)
+                    .background(.white.opacity(0.22), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Play, \(playLabel)")
+                Spacer(minLength: 4)
+                DownloadButton(episode: episode, tint: Theme.displayText)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Theme.displayText)
+                Menu {
+                    EpisodeMenuItems(episode: episode)
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(Theme.displayText)
+                        .frame(width: 32, height: 36)
+                }
+                .accessibilityLabel("More")
+            }
+            .padding(.top, 6)
+        }
+        .padding(16)
     }
 
     private var playLabel: String {

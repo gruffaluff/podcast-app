@@ -131,6 +131,43 @@ extension LibraryStore {
         }
     }
 
+    static let downloadCapKey = "downloadCapGB"
+
+    /// "Keep downloads under" (Shows screen): deletes the oldest downloads
+    /// until the total fits: played ones first, then ones not in Up Next,
+    /// then from the end of Up Next. Never the episode playing.
+    func applyStorageCap() {
+        let gigabytes = UserDefaults.standard.integer(forKey: Self.downloadCapKey)
+        guard gigabytes > 0 else { return }
+        let cap = Int64(gigabytes) * 1_000_000_000
+        let descriptor = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.downloadFile != nil })
+        let downloaded = ((try? context.fetch(descriptor)) ?? []).filter { $0.episodeID != playingEpisodeID }
+        var sizes: [String: Int64] = [:]
+        var total: Int64 = 0
+        for episode in downloaded {
+            guard let name = episode.downloadFile else { continue }
+            let size = Self.fileSize(DownloadFiles.url(for: name))
+            sizes[episode.episodeID] = size
+            total += size
+        }
+        if let playing = playingEpisodeID, let episode = self.episode(playing), let name = episode.downloadFile {
+            total += Self.fileSize(DownloadFiles.url(for: name))
+        }
+        guard total > cap else { return }
+
+        let queuePosition = Dictionary(queue.enumerated().map { ($0.element.episode.id, $0.offset) }, uniquingKeysWith: { first, _ in first })
+        let played = downloaded.filter(\.played).sorted { ($0.playedAt ?? .distantPast) < ($1.playedAt ?? .distantPast) }
+        let loose = downloaded.filter { !$0.played && queuePosition[$0.episodeID] == nil }.sorted { $0.published < $1.published }
+        let queued = downloaded.filter { !$0.played && queuePosition[$0.episodeID] != nil }
+            .sorted { (queuePosition[$0.episodeID] ?? 0) > (queuePosition[$1.episodeID] ?? 0) }
+        for episode in played + loose + queued {
+            guard total > cap else { break }
+            total -= sizes[episode.episodeID] ?? 0
+            removeDownloadFile(of: episode)
+        }
+        save()
+    }
+
     func setDownloadLimit(_ limit: Int, for show: Podcast) {
         show.downloadLimit = max(0, limit)
         applyDownloadLimit(to: show)

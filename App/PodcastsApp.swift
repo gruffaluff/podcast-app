@@ -75,26 +75,53 @@ struct PodcastsApp: App {
 }
 
 struct RootView: View {
+    /// Touch and hold the app icon (see QuickActions).
+    private func handleQuickAction(_ action: String) {
+        switch action {
+        case QuickActions.playUpNext:
+            tab = 0
+            if let first = store.queue.first, let episode = store.episode(first.episode.id) {
+                player.play(episode)
+                showingPlayer = true
+            }
+        case QuickActions.search:
+            tab = 3
+        default:
+            tab = 0
+        }
+    }
+
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingPlayer = false
+    @State private var tab = 0
+    @State private var quickActions = QuickActions.shared
 
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             UpNextView()
                 .miniPlayer($showingPlayer)
                 .tabItem { Label("Up Next", systemImage: "list.bullet") }
+                .tag(0)
             LibraryView()
                 .miniPlayer($showingPlayer)
                 .tabItem { Label("Library", systemImage: "square.grid.2x2") }
+                .tag(1)
             DiscoverView()
                 .miniPlayer($showingPlayer)
                 .tabItem { Label("Discover", systemImage: "safari") }
+                .tag(2)
             SearchView()
                 .miniPlayer($showingPlayer)
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                .tag(3)
+        }
+        .onChange(of: quickActions.pending, initial: true) { _, action in
+            guard let action else { return }
+            quickActions.pending = nil
+            handleQuickAction(action)
         }
         .tint(Theme.ink)
         // The player fills the whole screen (Paul: no page showing through
@@ -119,7 +146,6 @@ struct RootView: View {
             store.cleanUpPlayedDownloads()
             transcripts.prepareUpNext()
             Task {
-                await store.followStarterShowIfNeeded()
                 if store.lastChecked.map({ Date().timeIntervalSince($0) > 3600 }) ?? true {
                     await store.refreshAll()
                 }
