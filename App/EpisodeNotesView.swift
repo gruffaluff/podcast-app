@@ -35,6 +35,7 @@ struct EpisodeNotesView: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
+        .transcribeExplainer()
     }
 }
 

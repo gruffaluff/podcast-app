@@ -1,4 +1,5 @@
 import CoreImage
+import UIKit
 import CoreImage.CIFilterBuiltins
 import Observation
 import SwiftUI
@@ -23,7 +24,8 @@ final class ArtworkColors {
         guard let url, colors[url] == nil, !loading.contains(url) else { return }
         loading.insert(url)
         defer { loading.remove(url) }
-        guard let data = try? await URLSession.shared.data(from: url).0 else { return }
+        // From the artwork cache, so the picture isn't downloaded twice.
+        guard let image = await ArtworkImageCache.shared.image(for: url), let data = image.jpegData(compressionQuality: 0.8) else { return }
         let average = await Task.detached(priority: .utility) { ArtworkColors.averageColor(of: data) }.value
         if let average {
             colors[url] = ColorContrast.themedBackground(from: average)

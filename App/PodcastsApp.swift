@@ -13,6 +13,9 @@ struct PodcastsApp: App {
 
     init() {
         Self.styleSystemBars()
+        // A roomier web cache for feeds and images (artwork has its own
+        // cache too; see ArtworkImageCache).
+        URLCache.shared = URLCache(memoryCapacity: 30 * 1024 * 1024, diskCapacity: 200 * 1024 * 1024)
         SettingsSync.shared.start()
         let container = Self.makeContainer()
         let store = LibraryStore(context: container.mainContext)
@@ -41,16 +44,16 @@ struct PodcastsApp: App {
         .modelContainer(container)
     }
 
-    /// Tape Deck type for navigation titles and tab labels.
+    /// Big heavy condensed titles and plain tab labels.
     private static func styleSystemBars() {
         let ink = UIColor(Theme.ink)
         UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont.monospacedSystemFont(ofSize: 28, weight: .bold), .foregroundColor: ink
+            .font: UIFont.systemFont(ofSize: 40, weight: .black, width: .condensed), .foregroundColor: ink
         ]
         UINavigationBar.appearance().titleTextAttributes = [
-            .font: UIFont.monospacedSystemFont(ofSize: 15, weight: .bold), .foregroundColor: ink
+            .font: UIFont.systemFont(ofSize: 17, weight: .heavy, width: .condensed), .foregroundColor: ink
         ]
-        UITabBarItem.appearance().setTitleTextAttributes([.font: UIFont.monospacedSystemFont(ofSize: 10, weight: .semibold)], for: .normal)
+        UITabBarItem.appearance().setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 10, weight: .semibold)], for: .normal)
     }
 
     private static func makeContainer() -> ModelContainer {
@@ -72,6 +75,7 @@ struct PodcastsApp: App {
 }
 
 struct RootView: View {
+
     @Environment(LibraryStore.self) private var store
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
@@ -100,6 +104,7 @@ struct RootView: View {
         .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)
         }
+        .transcribeExplainer()
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
                 WidgetSync.shared.flush()

@@ -23,6 +23,32 @@ struct TranscriptView: View {
     @State private var clipLine: ClipRequest?
     /// Ad bands Paul expanded with Show.
     @State private var shownAds: Set<TimeInterval> = []
+    /// Find in transcript.
+    @State private var query = ""
+    @State private var matchCursor = 0
+    @State private var scrollTarget: TimeInterval?
+
+    private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
+
+    /// Starts of the lines containing the find text.
+    private var matchStarts: [TimeInterval] {
+        guard !trimmedQuery.isEmpty else { return [] }
+        var starts: [TimeInterval] = []
+        for block in blocks {
+            for case .line(let line) in block.rows where line.text.localizedCaseInsensitiveContains(trimmedQuery) {
+                starts.append(line.start)
+            }
+        }
+        return starts
+    }
+
+    private func jumpToMatch(_ by: Int) {
+        let starts = matchStarts
+        guard !starts.isEmpty else { return }
+        matchCursor = ((matchCursor + by) % starts.count + starts.count) % starts.count
+        follow = false
+        scrollTarget = starts[matchCursor]
+    }
 
     private var isThisEpisodePlaying: Bool { player.nowPlaying?.episodeID == episode.episodeID }
 
@@ -54,6 +80,12 @@ struct TranscriptView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Find in transcript")
+            .onSubmit(of: .search) { jumpToMatch(1) }
+            .onChange(of: query) {
+                matchCursor = -1
+                jumpToMatch(1)
+            }
             .safeAreaInset(edge: .bottom) { footer }
             .sheet(item: $clipLine) { request in
                 ClipView(episode: episode, line: request.line, quote: request.quote)
@@ -64,6 +96,7 @@ struct TranscriptView: View {
                 }
             }
         }
+        .transcribeExplainer()
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.adBreaksData) { load() }
         .onChange(of: episode.syncAnchorsData) { load() }
@@ -130,6 +163,10 @@ struct TranscriptView: View {
                 guard follow, let start else { return }
                 withAnimation(.easeInOut(duration: 0.35)) { proxy.scrollTo(start, anchor: .center) }
             }
+            .onChange(of: scrollTarget) { _, target in
+                guard let target else { return }
+                withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(target, anchor: .center) }
+            }
             .onChange(of: follow) { _, on in
                 if on, let current { withAnimation { proxy.scrollTo(current, anchor: .center) } }
             }
@@ -141,6 +178,8 @@ struct TranscriptView: View {
 
     private func lineView(_ line: TranscriptLayout.Line, speakers: [String], names: [String: String], current: TimeInterval?) -> some View {
         let isCurrent = current == line.start
+        let isMatch = !trimmedQuery.isEmpty && line.text.localizedCaseInsensitiveContains(trimmedQuery)
+        let isFocusedMatch = isMatch && scrollTarget == line.start
         let isPast = isThisEpisodePlaying && !isCurrent && line.end <= player.currentTime
         let speakerIndex = line.speaker.flatMap { speakers.firstIndex(of: $0) }
         let speakerName = line.speaker.map { names[$0] ?? $0 }
@@ -168,7 +207,10 @@ struct TranscriptView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, isCurrent ? 8 : 0)
             .padding(.horizontal, isCurrent ? 10 : 0)
-            .background(isCurrent ? Theme.highlight : .clear, in: RoundedRectangle(cornerRadius: 8))
+            .padding(.vertical, isMatch && !isCurrent ? 6 : 0)
+            .padding(.horizontal, isMatch && !isCurrent ? 8 : 0)
+            .background(isMatch ? Theme.highlight : (isCurrent ? Theme.surface : .clear), in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isFocusedMatch ? Theme.adText : .clear, lineWidth: 2))
             .contentShape(Rectangle())
             .onTapGesture { playFrom(line.start) }
             .contextMenu {
@@ -274,7 +316,10 @@ struct TranscriptView: View {
                 ProgressView()
                 Text("Transcribing on your iPhone…")
                     .foregroundStyle(Theme.ink)
-                Text("This takes a few minutes for a long episode. You can close this and come back.")
+                Text("This takes a few minutes for a long episode. You can close this and come back, or stop it if the phone gets warm or slow.")
+                Button("Stop transcribing") { transcripts.stop(episode) }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.ink)
             case .failed:
                 Image(systemName: "exclamationmark.bubble")
                     .font(.title)
@@ -333,7 +378,18 @@ struct TranscriptView: View {
                 }
             }
             Spacer()
-            if transcript != nil {
+            if !trimmedQuery.isEmpty {
+                let count = matchStarts.count
+                Text(count == 0 ? "No matches" : "\(min(max(matchCursor, 0), count - 1) + 1) of \(count)")
+                    .font(.footnote.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Theme.muted)
+                Button { jumpToMatch(-1) } label: { Image(systemName: "chevron.up").frame(width: 36, height: 36) }
+                    .disabled(count == 0)
+                    .accessibilityLabel("Previous match")
+                Button { jumpToMatch(1) } label: { Image(systemName: "chevron.down").frame(width: 36, height: 36) }
+                    .disabled(count == 0)
+                    .accessibilityLabel("Next match")
+            } else if transcript != nil {
                 Toggle("Follow along", isOn: $follow)
                     .toggleStyle(.button)
                     .font(.footnote.weight(.medium))

@@ -193,67 +193,83 @@ struct ShowView: View {
         }
     }
 
+    /// The show's header in its artwork's colour, the artwork fading in on
+    /// the right, with Following, settings (where new episodes go) and the
+    /// alerts bell.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                ArtworkView(url: show.artworkURL, title: show.title, size: 110, radius: 10)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(show.title.uppercased())
-                        .font(Theme.mono(19, .bold))
-                        .foregroundStyle(Theme.ink)
-                    if !show.author.isEmpty {
-                        Text(show.author.uppercased())
-                            .font(Theme.mono(11))
-                            .foregroundStyle(Theme.muted)
+        let tint = ArtworkColors.shared.background(for: show.artworkURL) ?? Theme.display
+        return VStack(alignment: .leading, spacing: 12) {
+            Spacer(minLength: 40)
+            Text(show.title.uppercased())
+                .font(Theme.big(44))
+                .lineLimit(3)
+                .minimumScaleFactor(0.5)
+                .accessibilityAddTraits(.isHeader)
+            Text([show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · "))
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.displayDim)
+            HStack(spacing: 8) {
+                Button { confirmingUnfollow = true } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark").font(.system(size: 12, weight: .heavy))
+                        Text("FOLLOWING").font(Theme.mono(12, .bold))
                     }
-                    HStack(spacing: 6) {
-                        DeckTag(text: "\(show.episodes.count) EPS")
-                        if show.autoDownload { DeckTag(text: "AUTO DL") }
-                    }
-                    .padding(.top, 2)
-                    HStack(spacing: 6) {
-                        Button { confirmingUnfollow = true } label: {
-                            HStack(spacing: 5) {
-                                LED(on: true, color: Theme.accentFill)
-                                Text("FOLLOWING").font(Theme.mono(11, .bold))
-                            }
-                            .padding(.horizontal, 10)
-                            .frame(minHeight: 36)
-                        }
-                        .buttonStyle(KeyButtonStyle(kind: .dark, radius: 8))
-                        .accessibilityLabel("Following. Tap to unfollow")
-                        Button { showingSettings = true } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: "slider.horizontal.3")
-                                Text(modeName).font(Theme.mono(11, .bold))
-                            }
-                            .padding(.horizontal, 10)
-                            .frame(minHeight: 36)
-                        }
-                        .buttonStyle(KeyButtonStyle(radius: 8))
-                        .accessibilityLabel("Show settings. New episodes: \(modeName)")
-                        Button { toggleAlerts() } label: {
-                            Image(systemName: show.notify ? "bell.fill" : "bell.slash")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(show.notify ? Theme.accentText : Theme.muted)
-                                .frame(width: 40, height: 36)
-                        }
-                        .buttonStyle(KeyButtonStyle(radius: 8))
-                        .accessibilityLabel(show.notify ? "New episode alerts on" : "New episode alerts off")
-                        .accessibilityHint("Turns alerts for this show on or off")
-                    }
-                    .padding(.top, 4)
-                    .padding(.bottom, 3)
+                    .foregroundStyle(tint)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 42)
+                    .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Following. Tap to unfollow")
+                Button { showingSettings = true } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "slider.horizontal.3")
+                        Text(modeName).font(Theme.mono(12, .bold))
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 42)
+                    .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 13))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show settings. New episodes: \(modeName)")
+                Button { toggleAlerts() } label: {
+                    Image(systemName: show.notify ? "bell.fill" : "bell.slash")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(show.notify ? Theme.ink : Theme.displayText)
+                        .frame(width: 46, height: 42)
+                        .background(show.notify ? Theme.highlight : Color.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 13))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(show.notify ? "New episode alerts on" : "New episode alerts off")
+                .accessibilityHint("Turns alerts for this show on or off")
             }
             if !show.summary.isEmpty {
                 Text(show.summary)
                     .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(4)
+                    .foregroundStyle(Theme.displayDim)
+                    .lineLimit(3)
             }
         }
-        .padding(.top, 8)
+        .foregroundStyle(Theme.displayText)
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            ZStack(alignment: .topTrailing) {
+                tint
+                CachedImage(url: show.artworkURL) { Color.clear }
+                    .frame(width: 240, height: 240)
+                    .offset(x: 40, y: -10)
+                    .mask(
+                        RadialGradient(colors: [.black, .black.opacity(0)], center: UnitPoint(x: 0.6, y: 0.45), startRadius: 50, endRadius: 160)
+                            .frame(width: 240, height: 240)
+                            .offset(x: 40, y: -10)
+                    )
+                    .accessibilityHidden(true)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }
+        .padding(.top, 4)
     }
 
     /// The bell: alerts when this show has a new episode.
@@ -300,7 +316,10 @@ struct EpisodeActions: View {
                 } else {
                     key("↓ DL") { downloads.download(episode) }
                 }
-                if transcripts.canTranscribeNow(episode) {
+                if transcripts.isQueued(episode) {
+                    key("STOP TX") { transcripts.stop(episode) }
+                        .accessibilityLabel("Stop transcribing")
+                } else if transcripts.canTranscribeNow(episode) {
                     key("TX") { transcripts.transcribeNow(episode) }
                         .accessibilityLabel("Transcribe now")
                 }

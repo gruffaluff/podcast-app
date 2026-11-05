@@ -18,50 +18,25 @@ in `design/icon/deck_options.png`. Earlier Podspot icons: `make_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Tape Deck"** (Paul's pick, Nov 2026, from three redesigns on the
-canvas https://claude.ai/artifact/RgNB6YCQMCdk9XdPfpiaTL; replaces the
-original warm off-white / serif / terracotta look). Warm grey device panels,
-ink black, one orange accent for keys, monospaced titles, labels and times
-(iOS's SF Mono, no bundled fonts), a dark display panel for what's playing,
-segmented progress bars (ads in amber), chunky keys that press down, status
-lights. Tokens in `App/Theme.swift`; shared pieces in `App/Deck.swift`.
-Function matters more than look to Paul. Exploring (4 Nov 2026, just
-for interest, nothing decided): three alternative directions, Minimal,
-Flashy and Abstract (Up Next, player, show page each), on the canvas
-https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d. Paul liked Flashy's
-layout (fills the space, big bold text) but not its colours, so the same
-canvas has "Bold" versions in calmer palettes: Paper (ink + navy),
-Graphite (dark + bone) and Olive (sand + olive), Up Next and player each.
-Then (5 Nov 2026) Paul picked Olive to develop: "Olive, refined" row on
-the canvas (Up Next, player with artwork, player with the live transcript
-in the top half, episode page, show page, Library, plus the made-up show
-artwork). Paul's asks: keep the big-text approach but show episode/show
-artwork somewhere; keep the player's overlapping top card so the app feels
-like one flowing page of cards; try the transcript in the player's top
-half (ARTWORK / TRANSCRIPT switch on the card). Then: the player's top
-area runs edge to edge from the top of the screen with only its bottom
-corners rounded (Paul preferred that to a floating card), and a row
-compares theming the player from the show's artwork: Olive (artwork as a
-tilted tile), Middle ground (top area in the artwork's colour with the
-artwork fading into it, rest of the page stays sand) and Fully themed
-(whole screen tinted from the artwork, artwork full width at the top
-fading into the colour). In the app the colours would come from the
-artwork itself (the app already picks artwork colours). Paul likes the
-**middle ground**; developed (5 Nov 2026) as the row "Middle ground,
-developed" (MG* boards): Up Next (now-playing top area in the show's
-colour with play / skip keys, queue below with small artwork, swipe for
-Played / Remove), player (drag-down handle, device button, show name →
-show page, episode title → episode page, chapter chip, in-context SKIP
-AD bar with "Not an ad", ARTWORK / TRANSCRIPT, Up Next peek → queue),
-transcript (find box with match count and next / previous, match marks
-above the progress bar, "Back to now"), Up Next pulled up over the
-player (drag to reorder, time at current speed, Keep playing new
-episodes), episode page (Play now; "In Up Next · 1st" instead of Play
-next / last when already queued; download and transcript status rows
-with Delete / Stop), show page (Following, Alerts, "New episodes go to"
-Nowhere / Top / Bottom on the page, quick play per episode, … for the
-rest), Library (Your shows layout switch: large / card + description /
-list). Still exploring: the app stays Tape Deck until Paul decides.
+**Look: "Middle ground"** (Paul's pick, 5 Nov 2026; replaced Tape Deck,
+which he loved but this won). Developed on the canvas
+https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d (rows "Middle ground,
+developed" and "Transcript, same height as artwork"). Warm sand page
+(#E9E3D5), paper cards (#F6F2E9), ink text, one olive accent (#45543A);
+big titles in heavy condensed capitals (system font, `Theme.big`); what's
+playing is shown in its artwork's colour (`ArtworkColors`) with the artwork
+fading into it. Player: top area edge to edge with rounded bottom corners,
+fixed height, ARTWORK / TRANSCRIPT switch (transcript = live lines + find),
+ad breaks as a floating bar inside the top area (so nothing below moves),
+then counter, wave progress bar, transport, SPEED / TRIM / BOOST / SLEEP
+tiles, Up Next peek, notes. Mini player and show header are tinted from
+the artwork too. Tokens keep their Tape Deck names in `App/Theme.swift`;
+shared pieces in `App/Deck.swift`. Earlier explorations (Minimal, Flashy,
+Abstract, Bold palettes, Olive) are on the same canvas. Function matters
+more than look to Paul.
+Not yet in the app from the mock-ups: the Up Next now-playing header, the
+Up Next sheet pulled up over the player, the episode page's status rows,
+the show page's on-page Nowhere / Top / Bottom switch.
 
 ## Constraints
 
@@ -551,42 +526,27 @@ list). Still exploring: the app stays Tape Deck until Paul decides.
   Apple chart feeds (could not be reached from the build machine; Discover
   falls back to directory search).
 
-## Queued for the next app build (Paul, 5 Nov 2026; not started)
+## Queued for the next app build
 
-- **Search inside a transcript**: a find box on the transcript screen
-  (`App/TranscriptView.swift`) that highlights matches and steps
-  between them (next / previous), jumping the transcript to each.
-- **Bug: Search tab results hide behind the mini player.** With a search
-  open (keyboard up), the last results sit under the mini player and
-  can't be scrolled into view, so their play keys can't be tapped. The
-  mini player is added with `safeAreaInset` (`App/MiniPlayer.swift`);
-  the active-search results list doesn't seem to get that inset. Fix so
-  every result can scroll clear of the mini player (check the other
-  tabs' search results too).
-- **Display options for "Your shows"** (Library): a switch between
-  **Large cards** (big artwork tiles), **Small card + description**
-  (artwork thumbnail with the show's title and a line or two of its
-  description) and **Description only** (a text list, no artwork).
-  Remember the choice (synced setting).
-- **First-time transcribe explainer**: the first time Paul taps
-  Transcribe (any Transcribe / TX key or Transcribe now), show a one-off
-  pop-up before starting: transcripts are made on the iPhone from the
-  downloaded audio (nothing leaves the phone), roughly how long one
-  takes (from the timings below once there are some, else a typical
-  figure per hour of audio), that older iPhones are slower and it can
-  use battery and slow the phone while running, and that "While
-  charging" is gentler. Buttons: Transcribe / Cancel. Shown once.
-- **Transcription timings in Stats**: record each on-device
-  transcription (episode, audio length, time taken, date, finished or
-  stopped). Stats page gets a Transcripts section: number made, total
-  time spent, average time per hour of audio, longest and shortest
-  (with the episode), and the latest one.
-- **Stop a transcription**: a Stop key wherever a transcript is in
-  progress (transcript screen, TX light / episode keys, Up Next row
-  menu), plus "Stop all transcribing" in settings. Stopping ends the
-  on-device work straight away, keeps nothing half-made, takes the
-  episode out of the waiting list (so the schedule doesn't restart it)
-  and counts as "stopped" in the Stats timings.
+- (empty: Paul adds with "FNB")
+
+## Done in the "middle ground" build (5 Nov 2026)
+
+New look (above) plus Paul's FNB list: find in transcripts (player panel
+and transcript screen: highlights, n of m, next / previous); mini player
+steps aside while the keyboard is up (search results were hidden under
+it); "Your shows" layout switch (large / card + description / list,
+synced `showsLayout`); first-time Transcribe explainer
+(`.transcribeExplainer()`, on root and sheets; estimate from this
+iPhone's timings); transcription timings (`TranscriptionLog`, on the
+iPhone in UserDefaults) in Stats (count, total, per hour of audio,
+longest, shortest, latest, stopped); Stop a transcription (`stop` /
+`stopAll` in TranscriptService; stopped episodes stay out of the schedule
+until Transcribe now; Stop on the transcript screens, STOP TX key, Up
+Next and Library menus, "Stop all transcribing" in settings). Also
+artwork caching (`ArtworkImageCache`: memory + Caches folder, images at
+most 600 points; `CachedImage`) and a bigger URLCache. Built without a
+compiler: check the Codemagic log first if the build fails.
 
 ## Open questions for Paul
 

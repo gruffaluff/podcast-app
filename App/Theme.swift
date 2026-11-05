@@ -1,32 +1,40 @@
 import SwiftUI
 
-/// Colours and type: the "Tape Deck" look (Paul's pick, Nov 2026). Warm grey
-/// device panels, ink keys, one orange accent, monospaced labels and times,
-/// and a dark display panel for what's playing. See docs/DESIGN.md.
+/// Colours and type: the "middle ground" look (Paul's pick, 5 Nov 2026;
+/// replaced Tape Deck). Warm sand page, paper cards, ink text, one olive
+/// accent; what's playing is shown in its artwork's colour (see
+/// `ArtworkColors`, `ThemedHero`). Big titles are heavy condensed
+/// capitals. Mock-ups: https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d
+/// ("Middle ground, developed"). The token names are kept from Tape Deck so
+/// every screen picks the new look up.
 enum Theme {
-    /// The device face behind everything.
-    static let background = Color(hex: 0xE8E6E1)
-    /// Raised panels and keys.
-    static let surface = Color(hex: 0xF4F3EF)
-    static let hairline = Color(hex: 0xDCD9D2)
-    /// The shadow under a key (and outline buttons).
-    static let controlBorder = Color(hex: 0xC9C6BE)
-    static let ink = Color(hex: 0x1B1B1A)
-    /// Secondary text (5.6:1 on the background).
-    static let muted = Color(hex: 0x5F5C55)
-    /// Orange keys and switches; text on it is ink.
-    static let accentFill = Color(hex: 0xF05A1A)
-    static let accentShadow = Color(hex: 0xB8410E)
-    /// Orange text on light panels (5:1).
-    static let accentText = Color(hex: 0xB03A0A)
-    static let highlight = Color(hex: 0xFCD9C1)
-    static let adMarker = Color(hex: 0xFFB000)
+    /// The sand page behind everything.
+    static let background = Color(hex: 0xE9E3D5)
+    /// Paper cards and keys.
+    static let surface = Color(hex: 0xF6F2E9)
+    static let hairline = Color(hex: 0xD6CEBD)
+    /// Outline buttons and quiet borders.
+    static let controlBorder = Color(hex: 0xC9C2B4)
+    static let ink = Color(hex: 0x1F1D19)
+    /// Secondary text (6:1 on the page).
+    static let muted = Color(hex: 0x5C5547)
+    /// Olive: keys that are on, switches; text on it is paper.
+    static let accentFill = Color(hex: 0x45543A)
+    static let accentShadow = Color(hex: 0x2F3A27)
+    /// Olive text on light panels (7:1).
+    static let accentText = Color(hex: 0x45543A)
+    static let onAccent = Color(hex: 0xF6F2E9)
+    /// Search matches and highlighted lines.
+    static let highlight = Color(hex: 0xF2DFB8)
+    /// Ad breaks (amber).
+    static let adMarker = Color(hex: 0xD9A441)
+    static let adText = Color(hex: 0x6E4A12)
 
-    // The dark display panel.
-    static let display = Color(hex: 0x22231F)
-    static let displayText = Color(hex: 0xE6EDD7)
-    static let displayDim = Color(hex: 0x9DA690)
-    static let displayTrack = Color(hex: 0x3A3C35)
+    // The coloured "now playing" area when the artwork has no colour yet.
+    static let display = Color(hex: 0x2F3A27)
+    static let displayText = Color(hex: 0xF6F2E9)
+    static let displayDim = Color(hex: 0xD4D7C6)
+    static let displayTrack = Color.white.opacity(0.25)
 
     /// Muted tones for artwork placeholders.
     static let placeholders: [Color] = ([0x3D5A80, 0x2F6B5E, 0x7A3F66, 0x8A6A2F, 0x5B5750, 0x6A5E86] as [UInt32]).map { Color(hex: $0) }
@@ -43,14 +51,20 @@ enum Theme {
         return String(words.prefix(2).compactMap(\.first)).uppercased()
     }
 
-    /// Screen and section titles: monospaced, bold.
-    static func screenTitle(_ size: CGFloat = 34) -> Font {
-        .system(size: size * 0.72, weight: .bold, design: .monospaced)
+    /// Big titles: heavy condensed capitals (pass uppercased text).
+    static func big(_ size: CGFloat) -> Font {
+        .system(size: size, weight: .black).width(.condensed)
     }
 
-    /// Labels, times and counters.
+    /// Screen and section titles.
+    static func screenTitle(_ size: CGFloat = 34) -> Font {
+        big(size)
+    }
+
+    /// Labels, times and counters (the name is from Tape Deck; the new look
+    /// uses the regular system font, with `.monospacedDigit()` for times).
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        .system(size: size, weight: weight)
     }
 }
 

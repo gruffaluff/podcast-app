@@ -31,7 +31,9 @@ struct UpNextView: View {
                                 .tint(Theme.muted)
                             }
                             .contextMenu {
-                                if transcripts.canTranscribeNow(episode) {
+                                if transcripts.isQueued(episode) {
+                                    Button("Stop transcribing", systemImage: "stop.circle") { transcripts.stop(episode) }
+                                } else if transcripts.canTranscribeNow(episode) {
                                     Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
                                 }
                                 Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
