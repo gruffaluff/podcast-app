@@ -46,8 +46,22 @@ tilted tile), Middle ground (top area in the artwork's colour with the
 artwork fading into it, rest of the page stays sand) and Fully themed
 (whole screen tinted from the artwork, artwork full width at the top
 fading into the colour). In the app the colours would come from the
-artwork itself (the app already picks artwork colours). Still exploring:
-the app stays Tape Deck until Paul decides.
+artwork itself (the app already picks artwork colours). Paul likes the
+**middle ground**; developed (5 Nov 2026) as the row "Middle ground,
+developed" (MG* boards): Up Next (now-playing top area in the show's
+colour with play / skip keys, queue below with small artwork, swipe for
+Played / Remove), player (drag-down handle, device button, show name →
+show page, episode title → episode page, chapter chip, in-context SKIP
+AD bar with "Not an ad", ARTWORK / TRANSCRIPT, Up Next peek → queue),
+transcript (find box with match count and next / previous, match marks
+above the progress bar, "Back to now"), Up Next pulled up over the
+player (drag to reorder, time at current speed, Keep playing new
+episodes), episode page (Play now; "In Up Next · 1st" instead of Play
+next / last when already queued; download and transcript status rows
+with Delete / Stop), show page (Following, Alerts, "New episodes go to"
+Nowhere / Top / Bottom on the page, quick play per episode, … for the
+rest), Library (Your shows layout switch: large / card + description /
+list). Still exploring: the app stays Tape Deck until Paul decides.
 
 ## Constraints
 
