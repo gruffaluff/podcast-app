@@ -78,6 +78,23 @@ final class PlayerModel {
     var currentChapterIndex: Int? { Chapters.index(at: currentTime, in: chapters) }
     var currentChapter: Chapter? { currentChapterIndex.map { chapters[$0] } }
 
+    /// Next chapter (mini player, lock screen, headphones' next-track).
+    func nextChapter() {
+        guard !chapters.isEmpty else { skipForwardBy(); return }
+        let next = (currentChapterIndex ?? -1) + 1
+        if next < chapters.count { seek(to: chapters[next].start) }
+    }
+
+    /// Back to the start of this chapter, or the one before if it only just
+    /// began.
+    func previousChapter() {
+        guard !chapters.isEmpty else { skipBackward(); return }
+        guard let index = currentChapterIndex else { seek(to: 0); return }
+        let start = chapters[index].start
+        let target = currentTime - start > 3 || index == 0 ? start : chapters[index - 1].start
+        seek(to: target)
+    }
+
     /// Name of the AirPlay / Bluetooth device when not playing on the phone.
     private(set) var outputName: String?
 
@@ -104,6 +121,9 @@ final class PlayerModel {
     /// Listening time not yet added to the stats.
     @ObservationIgnored private var unloggedSeconds: TimeInterval = 0
     @ObservationIgnored private var lastListenTick: Date?
+    /// Episode time covered while playing (for "saved by speed & trims").
+    @ObservationIgnored private var unloggedAdvanced: TimeInterval = 0
+    @ObservationIgnored private var lastContentTime: TimeInterval?
 
     init(store: LibraryStore) {
         self.store = store
@@ -173,6 +193,7 @@ final class PlayerModel {
             player.seek(to: CMTime(seconds: start, preferredTimescale: 600))
         }
         resume()
+        startBedtimeTimerIfNeeded()
         loadArtwork(episode.artwork)
         showChapters = []
         chapterSource = .show
@@ -292,6 +313,30 @@ final class PlayerModel {
         skipForwardSeconds = PlayerOptions.validSkip(seconds)
         UserDefaults.standard.set(skipForwardSeconds, forKey: "skipForward")
         MPRemoteCommandCenter.shared().skipForwardCommand.preferredIntervals = [NSNumber(value: skipForward)]
+    }
+
+    static let lastSleepKey = "lastSleepChoice"
+
+    /// Paul picked a sleep time in the menu: remembered for bedtime.
+    func chooseSleepTimer(_ option: SleepTimerOption) {
+        switch option {
+        case .minutes(let minutes): UserDefaults.standard.set(minutes, forKey: Self.lastSleepKey)
+        case .endOfEpisode: UserDefaults.standard.set(0, forKey: Self.lastSleepKey)
+        }
+        setSleepTimer(option)
+    }
+    static let bedtimeKey = "bedtimeSleepTimer"
+
+    /// Bedtime sleep timer (on by default): starting an episode between
+    /// 10pm and 5am sets the sleep timer to the last one used (end of
+    /// episode the first time), unless one is already running.
+    private func startBedtimeTimerIfNeeded() {
+        let defaults = UserDefaults.standard
+        let on = defaults.object(forKey: Self.bedtimeKey) as? Bool ?? true
+        let hour = Calendar.current.component(.hour, from: Date())
+        guard on, sleepTimer == nil, hour >= 22 || hour < 5 else { return }
+        let minutes = defaults.object(forKey: Self.lastSleepKey) as? Int ?? 0
+        setSleepTimer(minutes > 0 ? .minutes(minutes) : .endOfEpisode)
     }
 
     /// Starts (or with nil, cancels) the sleep timer.
@@ -420,12 +465,22 @@ final class PlayerModel {
         let now = Date()
         if player.timeControlStatus == .playing, let last = lastListenTick {
             unloggedSeconds += min(now.timeIntervalSince(last), 2)
+            // Episode time covered since the last tick (ignoring jumps).
+            if let previous = lastContentTime {
+                let moved = currentTime - previous
+                if moved > 0, moved < 10 { unloggedAdvanced += moved }
+            }
         }
         lastListenTick = player.timeControlStatus == .playing ? now : nil
+        lastContentTime = player.timeControlStatus == .playing ? currentTime : nil
         if unloggedSeconds >= 30 { flushListening() }
     }
 
     private func flushListening() {
+        if unloggedSeconds > 0 {
+            WeekStats.addListening(real: unloggedSeconds, episodeTime: max(unloggedAdvanced, unloggedSeconds))
+        }
+        unloggedAdvanced = 0
         guard unloggedSeconds > 0, let feed = currentShowFeed else {
             unloggedSeconds = 0
             return
@@ -564,12 +619,28 @@ final class PlayerModel {
             Task { @MainActor in self?.seek(to: position) }
             return .success
         }
+        // Next / previous track move between chapters (when the episode has
+        // them); headphones' double / triple press and the car use these.
+        commands.nextTrackCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.nextChapter() }
+            return .success
+        }
+        commands.previousTrackCommand.addTarget { [weak self] _ in
+            Task { @MainActor in self?.previousChapter() }
+            return .success
+        }
         commands.nextTrackCommand.isEnabled = false
         commands.previousTrackCommand.isEnabled = false
     }
 
     private func updateNowPlayingInfo() {
         guard let nowPlaying else { return }
+        let hasChapters = !chapters.isEmpty
+        let commands = MPRemoteCommandCenter.shared()
+        if commands.nextTrackCommand.isEnabled != hasChapters {
+            commands.nextTrackCommand.isEnabled = hasChapters
+            commands.previousTrackCommand.isEnabled = hasChapters
+        }
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: nowPlaying.title,
             MPMediaItemPropertyArtist: nowPlaying.showTitle,
@@ -605,6 +676,7 @@ final class PlayerModel {
     }
 
     private func skip(_ adBreak: AdBreak) {
+        WeekStats.addSkippedAd(seconds: max(0, adBreak.end - max(currentTime, adBreak.start)))
         seek(to: adBreak.end)
         currentAd = nil
         lastSkippedAd = adBreak

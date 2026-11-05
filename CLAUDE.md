@@ -212,12 +212,14 @@ to Nowhere / Top / Bottom" on the show page.
   set separately (5, 10, 15, 30 or 60s) in settings, and touch-and-hold a skip
   button to change it on the spot. Lock screen and headphone controls use the
   same lengths.
-- **Player is a tape deck** (replaces the artwork-coloured player, Paul's
-  call with the Tape Deck look): artwork tile and title, a dark display
-  with a big counter and a segmented progress bar (drag to scrub, ads in
-  amber), transport keys, a SKIP AD key during ads, SPEED / TRIM / BOOST /
-  SLEEP keys with lights, Transcript / Chapters / AirPlay keys. Library's
-  New Episodes cards keep the show's colour on a cassette-style label strip.
+- **Player (middle ground, Nov 2026)**: full screen. Top area in the
+  artwork's colour: ⌄ close, device (AirPlay picker), find (transcript
+  mode), notes (scrolls to the episode notes), mark played; ARTWORK /
+  TRANSCRIPT switch with Full transcript and download keys; chapter chip;
+  ad bar. Below: played / left / ENDS time with level bars following the
+  sound, wave progress line (real loudness once downloaded; drag only the
+  handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
+  (opens the list), episode notes. Pull down past the top to close.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
   player shows "Playing on …" when not on the phone.
@@ -229,11 +231,11 @@ to Nowhere / Top / Bottom" on the show page.
     by touching and holding a skip button.
 
 ### Library and new episode cards
-- Library tab opens with a **New Episodes** carousel of large cards like Apple
-  Podcasts, styled as cassettes: episode artwork on top, a label strip in
-  the artwork's colour with the show and "4H AGO", title, one-line
-  description, a play key showing the time left, a download button and a
-  more menu. Below: "Your shows" grid.
+- Library tab opens with a **New Episodes** carousel of cards like Apple
+  Podcasts': 300×300, the artwork filling the card and fading into its
+  own colour, white SHOW · 4H AGO, title, one line of description, a play
+  pill with the time left, download and ⋯; it snaps card to card. Above it
+  Continue listening; below "Your shows" (large / card / list).
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -245,11 +247,9 @@ to Nowhere / Top / Bottom" on the show page.
   now" in settings) skips the schedule and downloads the episode first if
   needed. Transcripts are made only from downloaded audio and kept after
   the episode is played (for search and bookmarks).
-- **Speakers**: identify who is speaking (on-device speaker separation with
-  the open-source FluidAudio library, Apache 2.0; its ~30 MB of models
-  download once, free) and label each line "Speaker 1", "Speaker 2"…
-  ("Label speakers" setting, default on) Use real names when the publisher's transcript has them; Paul
-  can tap "Name speakers" to rename, and names stick for that show.
+- **Speakers**: on-device speaker separation was removed (Paul: not worth
+  the battery). Publishers' transcripts still name speakers; "Name
+  speakers" renames them, and names stick for that show.
 - **Layout**: lines grouped under a timestamp every ~20 seconds or at each pause,
   e.g. `1m 20s` then `Speaker 1 — Hi` / `Speaker 2 — Hi too`.
 - **Music**: detect music on-device (Apple's SoundAnalysis built-in sound
@@ -261,8 +261,8 @@ to Nowhere / Top / Bottom" on the show page.
 
 ### Clip sharing
 - Quote card with the line, show, episode and timestamp; adjustable length
-  (5–30s); options to include audio, link to the moment, or make a captioned
-  video card.
+  (5–30s); options to include audio or link to the moment. (Video cards
+  removed, Paul 5 Nov 2026: no interest in video for now.)
 
 ### Ad skipping
 - Detect ad breaks from the transcript (sponsor-read language, promo codes,
@@ -472,8 +472,8 @@ to Nowhere / Top / Bottom" on the show page.
 - All seven build steps are in place and the cloud build is green.
 - Done (after Paul's answers): Podspot name and icon; follow = older
   played + newest downloaded; Unplayed/All filter and mark-all actions;
-  Apple Podcasts links in Add a show; a fresh install follows Elis James
-  and John Robins for testing (remove later); transcription default While
+  Apple Podcasts links in Add a show; (removed 5 Nov: a fresh install followed Elis James
+  and John Robins for testing); transcription default While
   charging; speaker labels on on-device transcripts (word timings from
   SpeechTranscriber matched to FluidAudio speaker turns).
 - Done (second round of answers): Skip ad button + find ads while
@@ -562,6 +562,46 @@ chip), AirPlay is the device button, Play ad / Not an ad are on the ad
 bar. To check on the phone: whether lists still scroll back behind the
 mini player (it is now a bottom safe-area inset, so lists should stop
 above it).
+
+## Done in the review batch (5 Nov 2026, after build 119)
+
+From Claude's app review plus Paul's Notion notes after 16:55:
+- Removed the test auto-follow of Elis James and John Robins on a fresh
+  install.
+- Text follows the iPhone's text size (Dynamic Type) for `Theme.mono` /
+  `Theme.big` text, up to +35% (+20% for big titles), never smaller.
+  Text set with plain `.system(size:)` doesn't scale yet.
+- Tidy-up: removed unused `NowPlayingHeader`, `PlaceholderView`,
+  AddShowView's `ResultRow`, the video clip card (`ClipExporter.video`).
+- Player top row: close, device, find, NOTES (scrolls to the notes),
+  mark played; download moved beside Full transcript.
+- Up Next: reordering only while Edit is on (a long press no longer drags
+  a row); the pulled-up list has no numbers, a small NEXT tag instead.
+  Its ≡ handles are iOS's own size (can't be made bigger without a
+  hand-made reorder).
+- Bedtime sleep timer (Shows screen, on by default): starting an episode
+  10pm–5am sets the sleep timer to the last one chosen in the menu (end
+  of episode at first).
+- Chapters: next / previous chapter for headphones, car and lock screen
+  (next/previous-track commands, only when the episode has chapters, so
+  on those episodes the lock screen may show track arrows instead of
+  10-second skips); a next-chapter key in the mini player.
+- "Keep downloads under: No limit / 2 / 5 / 10 / 20 GB" (Shows screen):
+  oldest go first: played, then not in Up Next, then the end of Up Next;
+  never the one playing (`applyStorageCap`).
+- Stats "This week": listened, saved by speed & trims, ads skipped
+  (`WeekStats`, on the iPhone, current week only).
+- Touch and hold the app icon: Play Up Next, Up Next, Search
+  (`QuickActions`; Info.plist `UIApplicationShortcutItems`; the window
+  scene uses `QuickActionSceneDelegate`, CarPlay keeps its Info.plist
+  configuration).
+- Apple-style New Episodes cards (PR #38) go out in this build.
+- Paul asked whether progress saves on TestFlight: yes. TestFlight uses
+  the same iCloud (CloudKit Production) as a released app; progress,
+  Up Next and settings sync on their own (SYNC OK on the Shows screen).
+  No Sync now button needed.
+- Paul: dark mode not now; holds further changes until Monday unless
+  something is game-breaking.
 
 ## Done from the fourth Notion FNB batch (5 Nov 2026)
 

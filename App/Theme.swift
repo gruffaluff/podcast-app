@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Colours and type: the "middle ground" look (Paul's pick, 5 Nov 2026;
 /// replaced Tape Deck). Warm sand page, paper cards, ink text, one olive
@@ -53,7 +54,15 @@ enum Theme {
 
     /// Big titles: heavy condensed capitals (pass uppercased text).
     static func big(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .black).width(.condensed)
+        .system(size: scaled(size, max: 1.2), weight: .black).width(.condensed)
+    }
+
+    /// Follows the iPhone's text size setting (Dynamic Type), within limits
+    /// so the layouts still fit: up to 35% bigger for small text, 20% for
+    /// the big titles; never smaller than designed.
+    static func scaled(_ size: CGFloat, max factor: CGFloat = 1.35) -> CGFloat {
+        let wanted = UIFontMetrics.default.scaledValue(for: size)
+        return min(Swift.max(wanted, size), size * factor)
     }
 
     /// Screen and section titles.
@@ -64,7 +73,7 @@ enum Theme {
     /// Labels, times and counters (the name is from Tape Deck; the new look
     /// uses the regular system font, with `.monospacedDigit()` for times).
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight)
+        .system(size: scaled(size), weight: weight)
     }
 }
 

@@ -181,6 +181,19 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
+    /// The window uses QuickActionSceneDelegate (for touch-and-hold icon
+    /// actions); CarPlay keeps its own configuration from Info.plist.
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        guard connectingSceneSession.role == .windowApplication else {
+            return UISceneConfiguration(name: "CarPlay", sessionRole: connectingSceneSession.role)
+        }
+        // Opened from a quick action while the app wasn't running.
+        if let item = options.shortcutItem { QuickActions.shared.pending = item.type }
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = QuickActionSceneDelegate.self
+        return configuration
+    }
+
     /// A push from the new-episode alerts job: check feeds now so Up Next and
     /// downloads are ready (the push itself already showed any alert).
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {

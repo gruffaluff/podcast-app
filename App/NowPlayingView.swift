@@ -22,6 +22,8 @@ struct NowPlayingView: View {
     @State private var transcriptEpisode: PodcastEpisode?
     @State private var showingQueue = false
     @State private var searchingTranscript = false
+    /// Bumped by the notes key: scrolls down to the episode notes.
+    @State private var notesJump = 0
     /// The downloaded episode's real loudness, for the progress line.
     @State private var waveform: [CGFloat]?
     @State private var closing = false
@@ -36,6 +38,7 @@ struct NowPlayingView: View {
             if let item = player.nowPlaying {
                 let tint = ArtworkColors.shared.background(for: item.artworkURL) ?? Theme.display
                 GeometryReader { geometry in
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
                         hero(item, tint: tint, top: geometry.safeAreaInsets.top)
@@ -48,6 +51,7 @@ struct NowPlayingView: View {
                             if let episode = currentEpisode {
                                 EpisodeNotesText(episode: episode)
                                     .padding(.top, 6)
+                                    .id("notes")
                             }
                         }
                         .padding(.horizontal, 18)
@@ -56,6 +60,9 @@ struct NowPlayingView: View {
                     }
                 }
                 .safeAreaInset(edge: .bottom) { UndoBar().padding(.horizontal, 12) }
+                .onChange(of: notesJump) {
+                    withAnimation(.easeInOut) { proxy.scrollTo("notes", anchor: .top) }
+                }
                 // Pull down past the top to close the player.
                 .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y + $0.contentInsets.top } action: { _, offset in
                     if offset < -100, !closing {
@@ -64,6 +71,7 @@ struct NowPlayingView: View {
                     }
                 }
                 .ignoresSafeArea(edges: .top)
+                }
                 }
                 .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
                 // The real shape of the episode, once it's downloaded.
@@ -109,7 +117,7 @@ struct NowPlayingView: View {
                 if showsTranscript {
                     roundButton("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
                 }
-                if let episode = currentEpisode { downloadKey(episode) }
+                roundButton("doc.text", label: "Episode notes") { notesJump += 1 }
                 roundButton("checkmark", label: "Mark as played") { markPlayed() }
             }
             Group {
@@ -125,6 +133,7 @@ struct NowPlayingView: View {
             HStack(spacing: 8) {
                 modeSwitch(tint: tint)
                 roundButton("arrow.up.left.and.arrow.down.right", label: "Full transcript") { transcriptEpisode = currentEpisode }
+                if let episode = currentEpisode { downloadKey(episode) }
             }
         }
         .foregroundStyle(Theme.displayText)
@@ -488,7 +497,7 @@ struct NowPlayingView: View {
                     Button("Turn off timer", systemImage: "moon.zzz") { player.setSleepTimer(nil) }
                 }
                 ForEach(SleepTimerOption.all, id: \.self) { option in
-                    Button(option.label) { player.setSleepTimer(option) }
+                    Button(option.label) { player.chooseSleepTimer(option) }
                 }
             } label: {
                 sleepTile(tint: tint)

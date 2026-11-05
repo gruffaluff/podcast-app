@@ -6,6 +6,9 @@ struct UpNextView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @State private var showingPriority = false
+    /// Reordering only while Edit is on (by the ≡ handles), so a long
+    /// press on a row never starts dragging it by accident.
+    @State private var editing = false
     /// Shows from the chart, offered when Up Next is empty.
     @State private var suggestions: [DirectoryItem] = []
 
@@ -48,7 +51,7 @@ struct UpNextView: View {
                             }
                         }
                     }
-                    .onMove { from, to in store.moveQueue(from: from, to: to) }
+                    .onMove(perform: editing ? { from, to in store.moveQueue(from: from, to: to) } : nil)
                     .listRowBackground(Theme.surface)
                     .listRowSeparatorTint(Theme.hairline)
                     if store.queue.isEmpty {
@@ -102,6 +105,7 @@ struct UpNextView: View {
                     .listRowSeparator(.hidden)
                 }
             }
+            .environment(\.editMode, .constant(editing ? .active : .inactive))
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
@@ -120,7 +124,12 @@ struct UpNextView: View {
                     }
                     .accessibilityLabel("Top show priority")
                 }
-                ToolbarItem(placement: .topBarTrailing) { EditButton() }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(editing ? "Done" : "Edit") {
+                        withAnimation { editing.toggle() }
+                    }
+                    .fontWeight(editing ? .semibold : .regular)
+                }
             }
             .sheet(isPresented: $showingPriority) {
                 NavigationStack {

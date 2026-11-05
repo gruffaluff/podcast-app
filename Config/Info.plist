@@ -19,6 +19,34 @@
 	</array>
 	<!-- CarPlay (CarPlaySceneDelegate). It only shows up in cars once Apple
 	     grants the CarPlay audio entitlement (see docs/SETUP.md). -->
+	<!-- Touch and hold the app icon (App/QuickActions.swift). -->
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.gruffaluff.podcasts.playUpNext</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Play Up Next</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>play.fill</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.gruffaluff.podcasts.upNext</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Up Next</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>list.bullet</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.gruffaluff.podcasts.search</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Search</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>magnifyingglass</string>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -117,11 +117,6 @@ final class SettingsSync {
         guard let a = a as? NSObject, let b = b as? NSObject else { return a == nil && b == nil }
         return a.isEqual(b)
     }
-
-    /// Whether this Apple account already had the test show followed.
-    static var starterShowFollowedInCloud: Bool {
-        NSUbiquitousKeyValueStore.default.bool(forKey: "starterShowFollowed")
-    }
 }
 
 // MARK: - Tidying up after a sync
