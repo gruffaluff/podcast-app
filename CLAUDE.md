@@ -535,7 +535,9 @@ to Nowhere / Top / Bottom" on the show page.
 
 ## Queued for the next app build
 
-- (empty: Paul adds with "FNB")
+- Bedtime sleep timer off by default (done on the branch, PR #39, not
+  merged). Build only when Paul says; nothing runs automatically on
+  Monday (Paul, 5 Nov 2026).
 - **FNB notes also live in Notion** (Personal / Poddeck / FNB, page id
   40f7d696-6c51-80d4-898d-ef27b486ce92). Read only what is below the last
   "✅ Claude read everything above on …" line, then add a new such line
