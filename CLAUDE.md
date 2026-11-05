@@ -144,6 +144,13 @@ to Nowhere / Top / Bottom" on the show page.
   GitHub's 15-minute schedule actually runs much less often; Paul is fine
   with that for now (a free outside timer such as cron-job.org could
   trigger it if ever wanted).
+  Known limits (told Paul 5 Nov 2026): GitHub turns off scheduled jobs in
+  a repo with no commits for 60 days (it emails first; re-enable in the
+  Actions tab, or any commit keeps it alive); the quiet "refresh Up
+  Next" pushes are best-effort and iOS may drop or delay them (Low Power
+  Mode, app force-quit); visible bell alerts are dependable once sent;
+  timing is "within an hour or so", not instant. All free: public-repo
+  Linux minutes, CloudKit public database and Apple's push service.
 - **Subscriber (private) feeds** (Patreon, Supercast, Substack, Memberful,
   Acast+ etc.): pasting the private RSS link in Add a show works (the key
   is in the link). Feeds that need a username and password aren't
