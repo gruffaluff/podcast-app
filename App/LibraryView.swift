@@ -285,10 +285,14 @@ private struct EpisodeCard: View {
                 .padding(.top, 2)
             }
             .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.surface, in: UnevenRoundedRectangle(topLeadingRadius: 18, topTrailingRadius: 18))
             .padding(.top, -18)
         }
         .frame(width: 220)
+        // The show's colour behind the whole card, so the top always runs
+        // to both edges (it fell short on the right).
+        .background(strip)
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
         .padding(.bottom, 6)
