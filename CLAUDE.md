@@ -533,10 +533,29 @@ to Nowhere / Top / Bottom" on the show page.
   Apple chart feeds (could not be reached from the build machine; Discover
   falls back to directory search).
 
+## Done in the Friday batch (5 Nov 2026, evening, build 121)
+
+From the queue and the Notion notes after 18:10:
+- New Episodes cards option E: 248×330 with a 12-point gap (Apple's
+  proportions; Paul measured Apple Podcasts at ~247×330). Paul wants to
+  live with it and be asked again next time he says to check Notion.
+- Play next goes straight after the episode playing now (it was going
+  above it, at the very top).
+- Up Next: long press and drag to reorder any time; the reorder key
+  (arrows icon, where Edit was) shows handles and delete buttons;
+  settings moved to the right.
+- Following a show: its latest episode goes into Up Next too (by the
+  show's rule; new shows start on Bottom), as well as downloading.
+- Find ads while listening is off by default (Paul: battery).
+- Tab titles sit on the same line as the bar's buttons (`tabTitle`),
+  so content starts higher, on Up Next, Library, Discover and Search.
+- Discover tighter: smaller gaps around the category chips and section
+  headers, smaller suggestion cards.
+- Bedtime sleep timer off by default; CarPlay entitlement included.
+
 ## Queued for the next app build
 
-- Bedtime sleep timer off by default (done on the branch, PR #39, not
-  merged).
+- (Bedtime timer default and CarPlay went out in the Friday batch.)
 - CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
   The entitlement is added to `Config/Podcasts.entitlements` on the PR #39
   branch. Before merging, Paul ticks CarPlay on the App ID
