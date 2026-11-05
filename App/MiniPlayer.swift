@@ -5,14 +5,15 @@ import PodcastCore
 
 extension View {
     /// Shows the "now playing" bar at the bottom of a tab while something is loaded.
-    func miniPlayer(_ showingPlayer: Binding<Bool>) -> some View {
-        modifier(MiniPlayerInset(showingPlayer: showingPlayer))
+    func miniPlayer(_ showingPlayer: Binding<Bool>, showsPlayer: Bool = true) -> some View {
+        modifier(MiniPlayerInset(showingPlayer: showingPlayer, showsPlayer: showsPlayer))
     }
 }
 
 private struct MiniPlayerInset: ViewModifier {
     @Environment(PlayerModel.self) private var player
     @Binding var showingPlayer: Bool
+    var showsPlayer = true
     /// The mini player steps aside while typing, so search results and
     /// their play keys are never hidden under it.
     @State private var keyboardUp = false
@@ -21,7 +22,7 @@ private struct MiniPlayerInset: ViewModifier {
         content.safeAreaInset(edge: .bottom) {
             VStack(spacing: 6) {
                 UndoBar()
-                if player.nowPlaying != nil && !keyboardUp {
+                if showsPlayer && player.nowPlaying != nil && !keyboardUp {
                     MiniPlayer { showingPlayer = true }
                 }
             }

@@ -13,6 +13,12 @@ struct UpNextView: View {
 
         NavigationStack {
             List {
+                if player.nowPlaying != nil {
+                    NowPlayingHeader()
+                        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 10, trailing: 12))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
                 Section {
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {

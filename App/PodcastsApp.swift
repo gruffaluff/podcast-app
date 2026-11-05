@@ -75,8 +75,8 @@ struct PodcastsApp: App {
 }
 
 struct RootView: View {
-
     @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingPlayer = false
@@ -84,7 +84,7 @@ struct RootView: View {
     var body: some View {
         TabView {
             UpNextView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, showsPlayer: false)
                 .tabItem { Label("Up Next", systemImage: "list.bullet") }
             LibraryView()
                 .miniPlayer($showingPlayer)
@@ -105,6 +105,7 @@ struct RootView: View {
             EpisodeNotesView(episode: episode)
         }
         .transcribeExplainer()
+        .onChange(of: player.openPlayerRequests) { showingPlayer = true }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
                 WidgetSync.shared.flush()

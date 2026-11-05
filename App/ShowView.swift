@@ -34,6 +34,16 @@ struct ShowView: View {
                 header
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("NEW EPISODES GO TO")
+                        .font(Theme.mono(11, .bold))
+                        .tracking(1.4)
+                        .foregroundStyle(Theme.muted)
+                    DeckSwitch(options: [(label: "Nowhere", value: AutoAddMode.off), (label: "Top", value: .top), (label: "Bottom", value: .bottom)],
+                               selection: Binding(get: { show.autoAdd }, set: { store.setAutoAdd($0, for: show) }))
+                }
+                .listRowBackground(Theme.background)
+                .listRowSeparator(.hidden)
                 DeckSwitch(options: [(label: "Unplayed \(unplayedCount)", value: false), (label: "All \(allEpisodes.count)", value: true)], selection: $showAll)
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)

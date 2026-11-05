@@ -34,9 +34,13 @@ the artwork too. Tokens keep their Tape Deck names in `App/Theme.swift`;
 shared pieces in `App/Deck.swift`. Earlier explorations (Minimal, Flashy,
 Abstract, Bold palettes, Olive) are on the same canvas. Function matters
 more than look to Paul.
-Not yet in the app from the mock-ups: the Up Next now-playing header, the
-Up Next sheet pulled up over the player, the episode page's status rows,
-the show page's on-page Nowhere / Top / Bottom switch.
+Also built (5 Nov 2026, second middle-ground build): Up Next's
+now-playing header (`NowPlayingHeader`; the mini player is left off that
+tab), Up Next pulled up over the player (`UpNextSheet`, from the player's
+"Up next" row: reorder, swipe to remove, time at speed, Keep playing new
+episodes), the episode page's status rows (`EpisodeStatusRows`: place in
+Up Next, download, transcript, each with its key), and "New episodes go
+to Nowhere / Top / Bottom" on the show page.
 
 ## Constraints
 
