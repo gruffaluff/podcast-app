@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import Combine
 import PodcastCore
 
 extension View {
@@ -11,42 +13,50 @@ extension View {
 private struct MiniPlayerInset: ViewModifier {
     @Environment(PlayerModel.self) private var player
     @Binding var showingPlayer: Bool
+    /// The mini player steps aside while typing, so search results and
+    /// their play keys are never hidden under it.
+    @State private var keyboardUp = false
 
     func body(content: Content) -> some View {
         content.safeAreaInset(edge: .bottom) {
             VStack(spacing: 6) {
                 UndoBar()
-                if player.nowPlaying != nil {
+                if player.nowPlaying != nil && !keyboardUp {
                     MiniPlayer { showingPlayer = true }
                 }
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 6)
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
     }
 }
 
-/// The "now playing" strip: a small deck display above the tabs.
+/// The "now playing" bar: a rounded panel in the colour of the episode's
+/// artwork, above the tabs.
 struct MiniPlayer: View {
     @Environment(PlayerModel.self) private var player
     let open: () -> Void
 
     var body: some View {
         if let item = player.nowPlaying {
+            let tint = ArtworkColors.shared.background(for: item.artworkURL) ?? Theme.display
             VStack(spacing: 8) {
                 HStack(spacing: 10) {
                     Button(action: open) {
                         HStack(spacing: 10) {
-                            ArtworkView(url: item.artworkURL, title: item.showTitle, size: 38, radius: 6)
+                            ArtworkView(url: item.artworkURL, title: item.showTitle, size: 42, radius: 10)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(item.title.uppercased())
-                                    .font(Theme.mono(12, .semibold))
+                                Text(item.title)
+                                    .font(.system(size: 14, weight: .bold))
                                     .foregroundStyle(Theme.displayText)
                                     .lineLimit(1)
-                                Text("\(TimeFormat.clock(player.currentTime)) / \(TimeFormat.clock(player.duration))")
-                                    .font(Theme.mono(11))
+                                Text(player.duration > 0 ? "\(item.showTitle) · \(TimeFormat.clock(max(0, player.duration - player.currentTime))) left" : item.showTitle)
+                                    .font(.system(size: 12))
                                     .monospacedDigit()
                                     .foregroundStyle(Theme.displayDim)
+                                    .lineLimit(1)
                             }
                             Spacer(minLength: 0)
                         }
@@ -59,10 +69,12 @@ struct MiniPlayer: View {
                         Button { player.skipCurrentAd() } label: {
                             Text("SKIP AD")
                                 .font(Theme.mono(11, .bold))
+                                .foregroundStyle(Theme.adText)
                                 .padding(.horizontal, 10)
-                                .frame(minHeight: 36)
+                                .frame(minHeight: 34)
+                                .background(Theme.highlight, in: Capsule())
                         }
-                        .buttonStyle(.accentKey)
+                        .buttonStyle(.plain)
                         .accessibilityLabel("Skip ad")
                     }
                     SkipButton(direction: .back)
@@ -70,19 +82,22 @@ struct MiniPlayer: View {
                     Button { player.togglePlayPause() } label: {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                             .font(.body)
-                            .frame(width: 44, height: 40)
+                            .foregroundStyle(tint)
+                            .frame(width: 44, height: 44)
+                            .background(Theme.displayText, in: Circle())
                     }
-                    .buttonStyle(.key)
+                    .buttonStyle(.plain)
                     .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
                     SkipButton(direction: .forward)
                         .foregroundStyle(Theme.displayText)
                 }
-                SegmentBar(progress: progress, ads: adFractions, count: 32, height: 4)
+                SegmentBar(progress: progress, ads: adFractions, count: 40, height: 3)
             }
             .tint(Theme.displayText)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Theme.display, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .background(tint, in: RoundedRectangle(cornerRadius: 22))
+            .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
         }
     }
 

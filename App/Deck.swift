@@ -1,28 +1,26 @@
 import SwiftUI
 
-/// A chunky physical key: a raised panel that presses down when tapped.
+/// A rounded key: paper (plain), ink (dark) or olive (accent, "on").
+/// Presses in slightly when tapped.
 struct KeyButtonStyle: ButtonStyle {
     enum Kind { case plain, dark, accent }
     var kind: Kind = .plain
-    var radius: CGFloat = 10
+    var radius: CGFloat = 14
 
     func makeBody(configuration: Configuration) -> some View {
-        let (fill, shadow, text): (Color, Color, Color) = {
+        let (fill, text): (Color, Color) = {
             switch kind {
-            case .plain: return (Theme.surface, Theme.controlBorder, Theme.ink)
-            case .dark: return (Theme.ink, .black, Theme.background)
-            case .accent: return (Theme.accentFill, Theme.accentShadow, Theme.ink)
+            case .plain: return (Theme.surface, Theme.ink)
+            case .dark: return (Theme.ink, Theme.surface)
+            case .accent: return (Theme.accentFill, Theme.onAccent)
             }
         }()
         let pressed = configuration.isPressed
         return configuration.label
             .foregroundStyle(text)
-            .background(
-                RoundedRectangle(cornerRadius: radius)
-                    .fill(fill)
-                    .shadow(color: shadow, radius: 0, x: 0, y: pressed ? 1 : 3)
-            )
-            .offset(y: pressed ? 2 : 0)
+            .background(RoundedRectangle(cornerRadius: radius).fill(fill))
+            .scaleEffect(pressed ? 0.97 : 1)
+            .opacity(pressed ? 0.85 : 1)
             .animation(.easeOut(duration: 0.08), value: pressed)
     }
 }
@@ -43,11 +41,28 @@ struct DeckDisplay<Content: View>: View {
             .foregroundStyle(Theme.displayText)
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.display, in: RoundedRectangle(cornerRadius: 14))
+            .background(tint ?? Theme.display, in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    @Environment(\.heroTint) private var tint
+}
+
+private struct HeroTintKey: EnvironmentKey {
+    static let defaultValue: Color? = nil
+}
+
+extension EnvironmentValues {
+    /// The colour of the episode playing (from its artwork), for coloured
+    /// panels; nil uses the default olive.
+    var heroTint: Color? {
+        get { self[HeroTintKey.self] }
+        set { self[HeroTintKey.self] = newValue }
     }
 }
 
-/// Progress as a row of segments, played ones lit, ad breaks in amber.
+/// Progress as a row of bars of varying height (a sound wave), played ones
+/// lit, ad breaks in amber. `played` / `track` default to the colours for a
+/// coloured panel.
 struct SegmentBar: View {
     /// 0...1
     let progress: Double
@@ -55,22 +70,31 @@ struct SegmentBar: View {
     var ads: [ClosedRange<Double>] = []
     var count = 28
     var height: CGFloat = 12
+    var played: Color = Theme.displayText
+    var track: Color = Theme.displayTrack
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(alignment: .center, spacing: 2) {
             ForEach(0..<count, id: \.self) { index in
                 let start = Double(index) / Double(count)
                 let end = Double(index + 1) / Double(count)
                 let isAd = ads.contains { $0.lowerBound < end && $0.upperBound > start }
-                let played = (start + end) / 2 <= progress
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(isAd ? Theme.adMarker : (played ? Theme.displayText : Theme.displayTrack))
+                let isPlayed = (start + end) / 2 <= progress
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(isAd ? Theme.adMarker : (isPlayed ? played : track))
+                    .frame(height: height < 10 ? height : height * Self.wave(index))
             }
         }
         .frame(height: height)
         .accessibilityElement()
         .accessibilityLabel("Progress")
         .accessibilityValue("\(Int(progress * 100)) percent")
+    }
+
+    /// A fixed, natural-looking pattern of bar heights (0.35...1).
+    static func wave(_ index: Int) -> CGFloat {
+        let pattern: [CGFloat] = [0.45, 0.7, 0.95, 0.6, 1, 0.8, 0.5, 0.9, 0.65, 0.95, 0.75, 0.55, 0.85, 0.4, 0.7, 0.95, 0.6, 0.8, 0.45, 0.9]
+        return pattern[index % pattern.count]
     }
 }
 
@@ -92,10 +116,11 @@ struct DeckTag: View {
 
     var body: some View {
         Text(text)
-            .font(Theme.mono(10, .semibold))
-            .foregroundStyle(Theme.ink)
-            .padding(.horizontal, 4)
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.ink, lineWidth: 1))
+            .font(Theme.mono(10, .bold))
+            .foregroundStyle(Theme.accentText)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .overlay(Capsule().stroke(Theme.accentText, lineWidth: 1.5))
     }
 }
 
@@ -107,8 +132,9 @@ struct DeckHeader: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title.uppercased())
-                .font(Theme.mono(14, .bold))
-                .foregroundStyle(Theme.ink)
+                .font(Theme.mono(11, .bold))
+                .tracking(1.4)
+                .foregroundStyle(Theme.muted)
             Spacer(minLength: 8)
             if let detail {
                 Text(detail.uppercased())
@@ -129,26 +155,27 @@ struct DeckSwitch<Value: Hashable>: View {
     @Binding var selection: Value
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 4) {
             ForEach(options.indices, id: \.self) { index in
                 let option = options[index]
                 let selected = option.value == selection
                 Button { selection = option.value } label: {
-                    HStack(spacing: 6) {
-                        LED(on: selected, color: Theme.accentFill)
-                        Text(option.label.uppercased())
-                            .font(Theme.mono(12, .bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 40)
+                    Text(option.label.uppercased())
+                        .font(Theme.mono(12, .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .foregroundStyle(selected ? Theme.onAccent : Theme.ink)
+                        .background(selected ? Theme.accentFill : .clear, in: RoundedRectangle(cornerRadius: 11))
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(KeyButtonStyle(kind: selected ? .dark : .plain))
+                .buttonStyle(.plain)
                 .accessibilityLabel(option.label)
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
-        .padding(.bottom, 3)
+        .padding(4)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 15))
     }
 }
 
@@ -168,7 +195,7 @@ struct EpisodeLights: View {
                   color: onDark ? Theme.displayText : Theme.ink)
             light(episode.transcriptState == .transcribing ? "TX …" : (episode.transcriptState == .waiting ? "TX WAIT" : "TX"),
                   state: episode.transcriptState == .ready ? .on : (episode.transcriptState == .transcribing || episode.transcriptState == .waiting ? .busy : .off),
-                  color: Theme.accentFill)
+                  color: onDark ? Theme.adMarker : Theme.accentFill)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label(progress: progress))

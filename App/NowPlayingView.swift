@@ -2,10 +2,13 @@ import AVKit
 import SwiftUI
 import PodcastCore
 
-/// The full player, styled as a tape deck: artwork tile and title, a dark
-/// display with a big counter and segmented progress (ads in amber, drag to
-/// scrub), chunky transport keys, a Skip ad key while an ad plays, and mode
-/// keys with lights for speed, Trim silences, Boost voices and the sleep timer.
+/// The full player ("middle ground" look). The top area runs edge to edge in
+/// the colour of the episode's artwork, with the artwork fading into it, and
+/// switches between ARTWORK (big show name, episode title, chapter) and
+/// TRANSCRIPT (live lines with find). Ad breaks show as a floating bar in
+/// that area, so nothing below it moves. Below, on the sand page: the
+/// counter, the wave progress bar (drag to scrub), transport keys, speed /
+/// trim / boost / sleep tiles, what's next, and the episode notes.
 struct NowPlayingView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -14,72 +17,134 @@ struct NowPlayingView: View {
     /// While dragging along the progress bar, where it would play from.
     @State private var scrubTime: TimeInterval?
     @State private var showingChapters = false
+    @State private var showingNotes = false
     @State private var transcriptEpisode: PodcastEpisode?
+    @AppStorage("playerShowsTranscript") private var showsTranscript = false
+
+    private var currentEpisode: PodcastEpisode? {
+        player.nowPlaying.flatMap { store.episode($0.episodeID) }
+    }
 
     var body: some View {
-        ZStack {
-            Theme.background.ignoresSafeArea()
+        Group {
             if let item = player.nowPlaying {
+                let tint = ArtworkColors.shared.background(for: item.artworkURL) ?? Theme.display
                 ScrollView {
-                    VStack(spacing: 14) {
-                        heading(item)
-                        display
-                        transport
-                        adKeys
-                        modeKeys
-                        bottomKeys
-                        if let episode = store.episode(item.episodeID) {
-                            EpisodeNotesText(episode: episode)
+                    VStack(spacing: 0) {
+                        hero(item, tint: tint)
+                        VStack(spacing: 14) {
+                            clock
+                            scrubBar(tint: tint)
+                            transport(tint: tint)
+                            modeKeys(tint: tint)
+                            nextUp
+                            if let episode = currentEpisode {
+                                EpisodeNotesText(episode: episode)
+                                    .padding(.top, 6)
+                            }
                         }
+                        .padding(.horizontal, 18)
+                        .padding(.top, 14)
+                        .padding(.bottom, 30)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 24)
-                    .padding(.bottom, 24)
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                .ignoresSafeArea(edges: .top)
+                .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
             } else {
-                Text("NOTHING PLAYING")
-                    .font(Theme.mono(13))
+                Text("Nothing playing")
                     .foregroundStyle(Theme.muted)
                     .onAppear { dismiss() }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.background.ignoresSafeArea())
         .tint(Theme.ink)
         .sheet(isPresented: $showingChapters) { ChaptersView() }
+        .sheet(isPresented: $showingNotes) {
+            if let episode = currentEpisode { EpisodeNotesView(episode: episode) }
+        }
         .sheet(item: $transcriptEpisode) { TranscriptView(episode: $0) }
+        .transcribeExplainer()
     }
 
-    // MARK: Heading
+    // MARK: Top area
 
-    private func heading(_ item: PlayerModel.NowPlaying) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            // Chapter artwork when the show provides it.
-            ArtworkView(url: player.currentChapter?.imageURL ?? item.artworkURL, title: item.showTitle, size: 120, radius: 12)
-            VStack(alignment: .leading, spacing: 8) {
-                Text(item.showTitle.uppercased())
-                    .font(Theme.mono(11))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
-                Text(item.title)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(3)
-                chapterLink
+    private func hero(_ item: PlayerModel.NowPlaying, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                deviceButton
+                Spacer()
+                moreMenu
             }
+            Group {
+                if showsTranscript, let episode = currentEpisode {
+                    PlayerTranscriptPanel(episode: episode)
+                } else {
+                    artworkContent(item)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            adBar
+            modeSwitch(tint: tint)
+        }
+        .foregroundStyle(Theme.displayText)
+        .padding(.horizontal, 20)
+        .padding(.top, 30)
+        .padding(.bottom, 18)
+        .frame(height: 450)
+        .frame(maxWidth: .infinity)
+        .background {
+            ZStack(alignment: .topTrailing) {
+                tint
+                CachedImage(url: item.artworkURL) { Color.clear }
+                    .frame(width: 300, height: 300)
+                    .offset(x: 50, y: 20)
+                    .opacity(showsTranscript ? 0.15 : 1)
+                    .mask(
+                        RadialGradient(colors: [.black, .black.opacity(0)], center: UnitPoint(x: 0.6, y: 0.42), startRadius: 70, endRadius: 200)
+                            .frame(width: 300, height: 300)
+                            .offset(x: 50, y: 20)
+                    )
+                    .accessibilityHidden(true)
+            }
+        }
+        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 40, bottomTrailingRadius: 40))
+        .environment(\.heroTint, tint)
+    }
+
+    private func artworkContent(_ item: PlayerModel.NowPlaying) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             Spacer(minLength: 0)
+            Text(item.showTitle.uppercased())
+                .font(Theme.big(58))
+                .lineLimit(3)
+                .minimumScaleFactor(0.45)
+                .accessibilityAddTraits(.isHeader)
+            Button { showingNotes = true } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(item.title)
+                        .font(.system(size: 18, weight: .bold))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Image(systemName: "chevron.right").font(.footnote.weight(.bold))
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the episode notes")
+            chapterChip
         }
     }
 
-    /// Current chapter; tap for the list.
-    @ViewBuilder private var chapterLink: some View {
+    @ViewBuilder private var chapterChip: some View {
         if let index = player.currentChapterIndex {
             Button { showingChapters = true } label: {
-                Text("CH \(index + 1)/\(player.chapters.count) · \(player.chapters[index].title.uppercased()) ▸")
-                    .font(Theme.mono(11, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .frame(minHeight: 32, alignment: .leading)
+                Text("CH \(index + 1) OF \(player.chapters.count) · \(player.chapters[index].title.uppercased()) ›")
+                    .font(Theme.mono(11, .bold))
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .frame(minHeight: 30)
+                    .background(.black.opacity(0.22), in: Capsule())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Chapter \(index + 1) of \(player.chapters.count), \(player.chapters[index].title)")
@@ -87,61 +152,127 @@ struct NowPlayingView: View {
         }
     }
 
-    // MARK: Display
+    /// Where the sound is going; tap for the system device picker.
+    private var deviceButton: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "airplayaudio")
+            Text((player.outputName ?? "iPhone").uppercased())
+                .lineLimit(1)
+        }
+        .font(Theme.mono(12, .bold))
+        .padding(.horizontal, 14)
+        .frame(height: 40)
+        .background(.black.opacity(0.22), in: Capsule())
+        .overlay(RoutePicker(tint: .clear).opacity(0.02))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Playing on \(player.outputName ?? "iPhone"). Choose another device")
+        .accessibilityAddTraits(.isButton)
+    }
 
-    private var display: some View {
-        let shown = scrubTime ?? player.currentTime
-        return DeckDisplay {
-            HStack {
-                if let episode = player.nowPlaying.flatMap({ store.episode($0.episodeID) }) {
-                    EpisodeLights(episode: episode, onDark: true)
+    private var moreMenu: some View {
+        Menu {
+            Button("Episode notes", systemImage: "doc.text") { showingNotes = true }
+            if !player.chapters.isEmpty {
+                Button("Chapters", systemImage: "list.number") { showingChapters = true }
+            }
+            Button("Full transcript", systemImage: "text.quote") { transcriptEpisode = currentEpisode }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 18, weight: .bold))
+                .frame(width: 44, height: 44)
+                .background(.black.opacity(0.22), in: Circle())
+        }
+        .accessibilityLabel("More")
+    }
+
+    /// While an ad plays: a floating bar with Skip ad and Not an ad. Just
+    /// after a skip: Play ad / Not an ad.
+    @ViewBuilder private var adBar: some View {
+        if let adBreak = player.currentAd {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("AD BREAK").font(Theme.mono(11, .bold)).tracking(1)
+                    Text("Show resumes at \(TimeFormat.clock(adBreak.end))").font(Theme.mono(12))
                 }
-                Spacer()
-                Text(player.outputName.map { "ON: \($0.uppercased())" } ?? "ON: IPHONE")
-                    .font(Theme.mono(11))
-                    .foregroundStyle(Theme.displayDim)
-                    .lineLimit(1)
-            }
-            HStack(alignment: .firstTextBaseline) {
-                Text(TimeFormat.clock(shown))
-                    .font(Theme.mono(40, .bold))
-                    .monospacedDigit()
-                Spacer()
-                Text(player.duration > 0 ? "−" + TimeFormat.clock(max(0, player.duration - shown)) : "")
-                    .font(Theme.mono(14))
-                    .monospacedDigit()
-                    .foregroundStyle(Theme.displayDim)
-            }
-            scrubBar
-            HStack {
-                if let first = player.adBreaks.first {
-                    Text("■").foregroundStyle(Theme.adMarker)
-                        + Text(" AD \(TimeFormat.clock(first.start))–\(TimeFormat.clock(first.end))\(player.adBreaks.count > 1 ? " +\(player.adBreaks.count - 1)" : "")")
-                } else {
-                    Text(PlayerOptions.speedLabel(player.speed) + (player.trimSilences ? " · TRIM" : "") + (player.boostVoices ? " · BOOST" : ""))
+                Spacer(minLength: 4)
+                Button("Not an ad") { player.notAnAd(adBreak, transcripts: transcripts) }
+                    .font(Theme.mono(12, .bold))
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                Button { player.skipCurrentAd() } label: {
+                    Text("SKIP AD").font(Theme.mono(13, .bold)).padding(.horizontal, 14).frame(minHeight: 40)
                 }
-                Spacer()
+                .buttonStyle(KeyButtonStyle(kind: .dark, radius: 20))
+                .accessibilityLabel("Skip ad")
             }
-            .font(Theme.mono(11))
-            .foregroundStyle(Theme.displayDim)
-            if let adBreak = player.currentAd {
-                Text("▸ AD PLAYING · \(TimeFormat.clock(max(0, adBreak.end - player.currentTime))) LEFT")
-                    .font(Theme.mono(12))
-                    .foregroundStyle(Theme.adMarker)
-            } else if let adBreak = player.lastSkippedAd {
-                Text("▸ AD SKIPPED AT \(TimeFormat.clock(adBreak.start))")
-                    .font(Theme.mono(12))
-                    .foregroundStyle(Theme.adMarker)
+            .foregroundStyle(Theme.adText)
+            .padding(.leading, 16)
+            .padding(.trailing, 5)
+            .padding(.vertical, 5)
+            .background(Theme.highlight, in: Capsule())
+            .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+        } else if let adBreak = player.lastSkippedAd {
+            HStack(spacing: 8) {
+                Text("Ad skipped at \(TimeFormat.clock(adBreak.start))").font(Theme.mono(12, .bold))
+                Spacer(minLength: 4)
+                Button("Play ad") { player.playAd(adBreak) }
+                    .font(Theme.mono(12, .bold)).buttonStyle(.plain).frame(minHeight: 40)
+                Button("Not an ad") { player.notAnAd(adBreak, transcripts: transcripts) }
+                    .font(Theme.mono(12, .bold)).buttonStyle(.plain).frame(minHeight: 40)
             }
+            .foregroundStyle(Theme.adText)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 3)
+            .background(Theme.highlight, in: Capsule())
         }
     }
 
-    /// The segmented progress bar; drag along it to scrub.
-    private var scrubBar: some View {
+    private func modeSwitch(tint: Color) -> some View {
+        HStack(spacing: 4) {
+            switchKey("ARTWORK", on: !showsTranscript, tint: tint) { showsTranscript = false }
+            switchKey("TRANSCRIPT", on: showsTranscript, tint: tint) { showsTranscript = true }
+        }
+        .padding(4)
+        .background(.black.opacity(0.22), in: Capsule())
+    }
+
+    private func switchKey(_ title: String, on: Bool, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.mono(12, .bold))
+                .tracking(1)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .foregroundStyle(on ? tint : Theme.displayText)
+                .background(on ? Theme.displayText : .clear, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    // MARK: Below
+
+    private var clock: some View {
+        let shown = scrubTime ?? player.currentTime
+        return HStack(alignment: .firstTextBaseline) {
+            Text(TimeFormat.clock(shown))
+                .font(Theme.big(46))
+                .monospacedDigit()
+                .foregroundStyle(Theme.ink)
+            Spacer()
+            Text(player.duration > 0 ? "−" + TimeFormat.clock(max(0, player.duration - shown)) : "")
+                .font(Theme.mono(15, .bold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.muted)
+        }
+    }
+
+    /// The wave progress bar; drag along it to scrub.
+    private func scrubBar(tint: Color) -> some View {
         let shown = scrubTime ?? player.currentTime
         let duration = max(player.duration, 1)
         return GeometryReader { geometry in
-            SegmentBar(progress: shown / duration, ads: adFractions, count: 32, height: 24)
+            SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline)
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 0)
@@ -155,7 +286,7 @@ struct NowPlayingView: View {
                         }
                 )
         }
-        .frame(height: 24)
+        .frame(height: 34)
         .accessibilityElement()
         .accessibilityLabel("Position")
         .accessibilityValue(TimeFormat.clock(shown))
@@ -173,71 +304,32 @@ struct NowPlayingView: View {
         return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
     }
 
-    // MARK: Keys
-
-    private var transport: some View {
-        HStack(spacing: 8) {
-            SkipButton(direction: .back, iconSize: 24, frame: 72)
-                .frame(maxWidth: .infinity)
-                .background(keyFace)
+    private func transport(tint: Color) -> some View {
+        HStack {
+            SkipButton(direction: .back, iconSize: 24, frame: 60)
+                .foregroundStyle(Theme.ink)
+                .overlay(Circle().stroke(Theme.ink, lineWidth: 2))
+            Spacer()
             Button { player.togglePlayPause() } label: {
                 Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 26))
-                    .frame(maxWidth: .infinity, minHeight: 72)
+                    .font(.system(size: 30))
+                    .foregroundStyle(Theme.displayText)
+                    .frame(width: 86, height: 86)
+                    .background(tint, in: Circle())
             }
-            .buttonStyle(.darkKey)
+            .buttonStyle(.plain)
             .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-            SkipButton(direction: .forward, iconSize: 24, frame: 72)
-                .frame(maxWidth: .infinity)
-                .background(keyFace)
+            Spacer()
+            SkipButton(direction: .forward, iconSize: 24, frame: 60)
+                .foregroundStyle(Theme.ink)
+                .overlay(Circle().stroke(Theme.ink, lineWidth: 2))
         }
         .tint(Theme.ink)
+        .padding(.horizontal, 18)
     }
 
-    /// A key's raised face (for the skip menus, which can't take a button style).
-    private var keyFace: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .fill(Theme.surface)
-            .shadow(color: Theme.controlBorder, radius: 0, x: 0, y: 3)
-    }
-
-    /// While an ad plays: a big Skip ad key (like Spotify's). After a skip:
-    /// Play ad / Not an ad for a little while.
-    @ViewBuilder private var adKeys: some View {
-        if let adBreak = player.currentAd {
-            HStack(spacing: 8) {
-                Button { player.skipCurrentAd() } label: {
-                    Text("SKIP AD ▸▸ \(TimeFormat.clock(adBreak.end))")
-                        .font(Theme.mono(15, .bold))
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                }
-                .buttonStyle(.accentKey)
-                .accessibilityLabel("Skip ad")
-                Button { player.notAnAd(adBreak, transcripts: transcripts) } label: {
-                    Text("NOT\nAN AD")
-                        .font(Theme.mono(11, .bold))
-                        .multilineTextAlignment(.center)
-                        .frame(width: 76, height: 56)
-                }
-                .buttonStyle(.key)
-                .accessibilityLabel("Not an ad")
-            }
-        } else if let adBreak = player.lastSkippedAd {
-            HStack(spacing: 8) {
-                Button { player.playAd(adBreak) } label: {
-                    Text("PLAY AD").font(Theme.mono(12, .bold)).frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.key)
-                Button { player.notAnAd(adBreak, transcripts: transcripts) } label: {
-                    Text("NOT AN AD").font(Theme.mono(12, .bold)).frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.key)
-            }
-        }
-    }
-
-    /// SPEED / TRIM / BOOST / SLEEP, each with a light.
-    private var modeKeys: some View {
+    /// SPEED / TRIM / BOOST / SLEEP tiles: in the episode's colour when on.
+    private func modeKeys(tint: Color) -> some View {
         HStack(spacing: 8) {
             Menu {
                 Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: Binding(get: { player.speed }, set: { player.setSpeed($0) })) {
@@ -246,21 +338,21 @@ struct NowPlayingView: View {
                     }
                 }
             } label: {
-                modeFace(player.speedIsForShow ? "SHOW" : "SPEED", value: PlayerOptions.speedLabel(player.speed), lit: player.speed != 1)
+                tile(PlayerOptions.speedLabel(player.speed), player.speedIsForShow ? "SHOW SPEED" : "SPEED", on: player.speed != 1, tint: tint)
             }
             .accessibilityLabel("Speed, \(PlayerOptions.speedLabel(player.speed))")
 
             Button { player.setTrimSilences(!player.trimSilences) } label: {
-                modeLabel("TRIM", value: player.trimSilences ? "ON" : "OFF", lit: player.trimSilences)
+                tile(player.trimSilences ? "ON" : "OFF", "TRIM", on: player.trimSilences, tint: tint)
             }
-            .buttonStyle(.key)
+            .buttonStyle(.plain)
             .accessibilityLabel("Trim silences: speeds through pauses")
             .accessibilityAddTraits(player.trimSilences ? .isSelected : [])
 
             Button { player.setBoostVoices(!player.boostVoices) } label: {
-                modeLabel("BOOST", value: player.boostVoices ? "ON" : "OFF", lit: player.boostVoices)
+                tile(player.boostVoices ? "ON" : "OFF", "BOOST", on: player.boostVoices, tint: tint)
             }
-            .buttonStyle(.key)
+            .buttonStyle(.plain)
             .accessibilityLabel("Boost voices: makes speech clearer and more even")
             .accessibilityAddTraits(player.boostVoices ? .isSelected : [])
 
@@ -273,64 +365,66 @@ struct NowPlayingView: View {
                     Button(option.label) { player.setSleepTimer(option) }
                 }
             } label: {
-                sleepFace
+                sleepTile(tint: tint)
             }
             .accessibilityLabel(player.sleepTimer == nil ? "Sleep timer" : "Sleep timer on")
         }
     }
 
-    private func modeLabel(_ title: String, value: String, lit: Bool) -> some View {
-        VStack(spacing: 6) {
-            LED(on: lit, color: Theme.accentFill)
-            Text(title).font(Theme.mono(12, .bold))
-            Text(value).font(Theme.mono(10)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
+    private func tile(_ value: String, _ label: String, on: Bool, tint: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(Theme.big(20)).lineLimit(1).minimumScaleFactor(0.7)
+            Text(label).font(Theme.mono(10, .bold)).tracking(0.8).lineLimit(1).minimumScaleFactor(0.7)
         }
-        .frame(maxWidth: .infinity, minHeight: 66)
+        .foregroundStyle(on ? Theme.displayText : Theme.ink)
+        .frame(maxWidth: .infinity, minHeight: 58)
+        .background(on ? tint : Theme.surface, in: RoundedRectangle(cornerRadius: 18))
     }
 
-    /// A mode label on a key face (for menus).
-    private func modeFace(_ title: String, value: String, lit: Bool) -> some View {
-        modeLabel(title, value: value, lit: lit)
-            .foregroundStyle(Theme.ink)
-            .background(keyFace)
-    }
-
-    @ViewBuilder private var sleepFace: some View {
+    @ViewBuilder private func sleepTile(tint: Color) -> some View {
         if let ends = player.sleepEndsAt {
             let now = Date()
-            VStack(spacing: 6) {
-                LED(on: true, color: Theme.accentFill)
-                Text("SLEEP").font(Theme.mono(12, .bold))
+            VStack(spacing: 2) {
                 Text(timerInterval: now...max(ends, now), countsDown: true)
-                    .font(Theme.mono(10))
+                    .font(Theme.big(20))
                     .monospacedDigit()
-                    .foregroundStyle(Theme.muted)
+                Text("SLEEP").font(Theme.mono(10, .bold)).tracking(0.8)
             }
-            .frame(maxWidth: .infinity, minHeight: 66)
-            .foregroundStyle(Theme.ink)
-            .background(keyFace)
+            .foregroundStyle(Theme.displayText)
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(tint, in: RoundedRectangle(cornerRadius: 18))
         } else {
-            modeFace("SLEEP", value: player.sleepTimer == .endOfEpisode ? "EP END" : "OFF", lit: player.sleepTimer != nil)
+            tile(player.sleepTimer == .endOfEpisode ? "END" : "—", "SLEEP", on: player.sleepTimer != nil, tint: tint)
         }
     }
 
-    /// Transcript, chapters and where the sound is going.
-    private var bottomKeys: some View {
-        HStack(spacing: 8) {
-            Button {
-                transcriptEpisode = player.nowPlaying.flatMap { store.episode($0.episodeID) }
-            } label: {
-                Text("TRANSCRIPT").font(Theme.mono(12, .bold)).frame(maxWidth: .infinity, minHeight: 48)
+    /// The next episode in Up Next; tap to go back to the queue.
+    @ViewBuilder private var nextUp: some View {
+        let playingID = player.nowPlaying?.episodeID
+        let upcoming = store.queue.filter { $0.episode.id != playingID }
+        if let next = upcoming.first {
+            let episode = store.episode(next.episode.id)
+            Button { dismiss() } label: {
+                HStack(spacing: 12) {
+                    ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? next.episode.title, size: 42, radius: 10)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("UP NEXT · \(upcoming.count)")
+                            .font(Theme.mono(10, .bold))
+                            .tracking(1.2)
+                            .foregroundStyle(Theme.muted)
+                        Text(next.episode.title)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.up").font(.footnote.weight(.bold)).foregroundStyle(Theme.ink)
+                }
+                .padding(12)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
             }
-            .buttonStyle(.key)
-            Button { showingChapters = true } label: {
-                Text("CHAPTERS").font(Theme.mono(12, .bold)).frame(maxWidth: .infinity, minHeight: 48)
-            }
-            .buttonStyle(.key)
-            RoutePicker(tint: UIColor(Theme.ink))
-                .frame(width: 56, height: 48)
-                .background(keyFace)
-                .accessibilityLabel(player.outputName.map { "Playing on \($0). Choose another device" } ?? "Play on another device")
+            .buttonStyle(.plain)
+            .accessibilityHint("Back to Up Next")
         }
     }
 }

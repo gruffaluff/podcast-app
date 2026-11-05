@@ -280,6 +280,9 @@ struct TopPriorityView: View {
                 .pickerStyle(.menu)
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
+                if transcripts.isBusy {
+                    Button("Stop all transcribing", role: .destructive) { transcripts.stopAll() }
+                }
             } header: {
                 DeckHeader(title: "Transcripts")
             } footer: {

@@ -9,6 +9,7 @@ struct LibraryView: View {
     @Query(sort: \Podcast.title) private var shows: [Podcast]
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
+    @AppStorage("showsLayout") private var showsLayout = "large"
 
     private static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
         var descriptor = FetchDescriptor<PodcastEpisode>(
@@ -61,17 +62,13 @@ struct LibraryView: View {
                             }
                         }
 
-                        sectionTitle("YOUR SHOWS", detail: "\(shows.count) FOLLOWED")
-                            .padding(.top, 14)
-                        LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
-                            ForEach(shows) { show in
-                                NavigationLink(value: show) {
-                                    ShowTile(show: show)
-                                }
-                                .buttonStyle(.plain)
-                            }
+                        HStack(alignment: .center) {
+                            sectionTitle("YOUR SHOWS", detail: "\(shows.count) FOLLOWED")
+                            showsLayoutSwitch
+                                .padding(.trailing, 20)
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.top, 14)
+                        yourShows
                     }
                 }
                 .padding(.top, 4)
@@ -95,6 +92,92 @@ struct LibraryView: View {
         }
     }
 
+    /// Large artwork tiles, small card + description, or description only
+    /// (Paul's choice, remembered and synced).
+    @ViewBuilder private var yourShows: some View {
+        switch showsLayout {
+        case "card":
+            VStack(spacing: 6) {
+                ForEach(shows) { show in
+                    NavigationLink(value: show) {
+                        HStack(spacing: 12) {
+                            ArtworkView(url: show.artworkURL, title: show.title, size: 52, radius: 10)
+                            showText(show)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(8)
+                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16)
+        case "list":
+            VStack(spacing: 0) {
+                ForEach(shows) { show in
+                    NavigationLink(value: show) {
+                        showText(show)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 10)
+                            .overlay(alignment: .bottom) { Rectangle().fill(Theme.hairline).frame(height: 1) }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
+        default:
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
+                ForEach(shows) { show in
+                    NavigationLink(value: show) {
+                        ShowTile(show: show)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+    }
+
+    private func showText(_ show: Podcast) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(show.title)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+            if !show.summary.isEmpty {
+                Text(show.summary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+        }
+    }
+
+    private var showsLayoutSwitch: some View {
+        HStack(spacing: 2) {
+            layoutKey("large", icon: "square.grid.2x2.fill", label: "Large cards")
+            layoutKey("card", icon: "list.bullet.below.rectangle", label: "Small cards with description")
+            layoutKey("list", icon: "text.alignleft", label: "Description only")
+        }
+        .padding(3)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func layoutKey(_ value: String, icon: String, label: String) -> some View {
+        let on = showsLayout == value
+        return Button { showsLayout = value } label: {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(on ? Theme.onAccent : Theme.ink)
+                .frame(width: 38, height: 32)
+                .background(on ? Theme.accentFill : .clear, in: RoundedRectangle(cornerRadius: 9))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
     private func libraryKey(_ title: String, icon: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
@@ -106,8 +189,9 @@ struct LibraryView: View {
     private func sectionTitle(_ title: String, detail: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(Theme.mono(15, .bold))
-                .foregroundStyle(Theme.ink)
+                .font(Theme.mono(11, .bold))
+                .tracking(1.4)
+                .foregroundStyle(Theme.muted)
             Spacer()
             Text(detail)
                 .font(Theme.mono(11))
@@ -268,7 +352,9 @@ struct EpisodeMenuItems: View {
         } else {
             Button("Download", systemImage: "arrow.down.circle") { downloads.download(episode) }
         }
-        if transcripts.canTranscribeNow(episode) {
+        if transcripts.isQueued(episode) {
+            Button("Stop transcribing", systemImage: "stop.circle") { transcripts.stop(episode) }
+        } else if transcripts.canTranscribeNow(episode) {
             Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
         }
         if episode.played {

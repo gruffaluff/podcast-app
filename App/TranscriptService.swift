@@ -89,6 +89,16 @@ final class TranscriptService {
 
     /// The episode being transcribed on the iPhone right now.
     private(set) var current: String?
+    /// Set when Transcribe is tapped for the first time: the app shows a
+    /// one-off explainer (see RootView) before starting.
+    var explainEpisode: PodcastEpisode?
+    static let explainedKey = "transcribeExplained"
+    /// Show transcripts being fetched.
+    private(set) var fetchingPublisher: Set<String> = []
+    /// Episodes Paul stopped: the schedule leaves them alone until he asks again.
+    @ObservationIgnored private var userStopped: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "transcriptStopped") ?? [])
+    /// Stopped while running (so the worker doesn't retry them).
+    @ObservationIgnored private var stopping: Set<String> = []
 
     @ObservationIgnored private let store: LibraryStore
     @ObservationIgnored private var pending: [String] = []
@@ -131,7 +141,12 @@ final class TranscriptService {
     /// "Transcribe now": straight away, whatever the schedule. Downloads the
     /// episode first if needed (transcripts are made from the audio file).
     func transcribeNow(_ episode: PodcastEpisode) {
+        guard UserDefaults.standard.bool(forKey: Self.explainedKey) else {
+            explainEpisode = episode
+            return
+        }
         let id = episode.episodeID
+        setStopped(id, false)
         requested.insert(id)
         if episode.transcriptState == .failed { episode.transcriptState = .none }
         if store.localAudioURL(for: episode) == nil && episode.transcriptURL == nil {
@@ -144,12 +159,76 @@ final class TranscriptService {
 
     /// "Transcribe Up Next now".
     func transcribeUpNextNow() {
+        // Chosen deliberately in settings: counts as having seen the explainer.
+        UserDefaults.standard.set(true, forKey: Self.explainedKey)
         let episodes = store.episodes(store.queue.map(\.episode.id))
         for item in store.queue.reversed() {
             if let episode = episodes[item.episode.id], episode.transcriptState != .ready {
                 transcribeNow(episode)
             }
         }
+    }
+
+    /// The explainer's Transcribe button.
+    func confirmExplainer() {
+        UserDefaults.standard.set(true, forKey: Self.explainedKey)
+        if let episode = explainEpisode {
+            explainEpisode = nil
+            transcribeNow(episode)
+        }
+    }
+
+    /// Typical time per hour of audio on this iPhone, from past runs.
+    var typicalMinutesPerHour: Double? {
+        let runs = TranscriptionLog.all.filter { $0.finished && $0.audioSeconds > 600 }
+        guard runs.count >= 1 else { return nil }
+        let ratio = runs.map { $0.seconds / $0.audioSeconds }.reduce(0, +) / Double(runs.count)
+        return ratio * 60
+    }
+
+    /// Waiting in line or being transcribed now.
+    func isQueued(_ episode: PodcastEpisode) -> Bool {
+        pending.contains(episode.episodeID) || current == episode.episodeID
+    }
+
+    func isFetchingPublisher(_ episode: PodcastEpisode) -> Bool {
+        fetchingPublisher.contains(episode.episodeID)
+    }
+
+    /// Stop: ends the work now, keeps nothing half-made, and takes the
+    /// episode out of the line so the schedule doesn't restart it.
+    func stop(_ episode: PodcastEpisode) {
+        let id = episode.episodeID
+        setStopped(id, true)
+        requested.remove(id)
+        pending.removeAll { $0 == id }
+        if current == id {
+            stopping.insert(id)
+            let running = worker
+            running?.cancel()
+            Task {
+                await running?.value
+                startWorker()
+            }
+        } else if episode.transcriptState == .waiting || episode.transcriptState == .transcribing {
+            episode.transcriptState = .none
+            store.save()
+        }
+    }
+
+    /// "Stop all transcribing".
+    func stopAll() {
+        let ids = pending + (current.map { [$0] } ?? [])
+        for id in ids {
+            if let episode = store.episode(id) { stop(episode) }
+        }
+    }
+
+    var isBusy: Bool { current != nil || !pending.isEmpty }
+
+    private func setStopped(_ id: String, _ on: Bool) {
+        if on { userStopped.insert(id) } else { userStopped.remove(id) }
+        UserDefaults.standard.set(Array(userStopped), forKey: "transcriptStopped")
     }
 
     // MARK: Requests
@@ -169,9 +248,11 @@ final class TranscriptService {
             return
         }
         guard downloaded else {
-            episode.transcriptState = .waiting
+            if !userStopped.contains(id) { episode.transcriptState = .waiting }
             return
         }
+        // Stopped by Paul: only "Transcribe now" starts it again.
+        if userStopped.contains(id) && !requested.contains(id) { return }
         if urgent || requested.contains(id) {
             pending.removeAll { $0 == id }
             pending.insert(id, at: 0)
@@ -198,6 +279,8 @@ final class TranscriptService {
     // MARK: Publisher transcripts
 
     private func fetchPublisherTranscript(id: String, url: URL) async {
+        fetchingPublisher.insert(id)
+        defer { fetchingPublisher.remove(id) }
         let segments = await Task.detached { () -> [TranscriptSegment]? in
             guard let data = try? await URLSession.shared.data(from: url).0 else { return nil }
             return try? TranscriptParser.parse(data)
@@ -225,11 +308,21 @@ final class TranscriptService {
                 current = id
                 let hadTranscript = episode.transcriptState == .ready
                 if !hadTranscript { episode.transcriptState = .transcribing }
+                let started = Date()
+                let audioLength = episode.duration ?? 0
+                let runTitle = episode.title
+                let runShow = episode.podcast?.title ?? ""
                 do {
                     let transcript = try await OnDeviceTranscriber.transcribe(audio)
                     if let episode = store.episode(id) { finish(episode, with: transcript) }
+                    TranscriptionLog.add(.init(episodeTitle: runTitle, showTitle: runShow, audioSeconds: audioLength > 0 ? audioLength : (transcript.segments.last?.end ?? 0), seconds: Date().timeIntervalSince(started), date: started, finished: true))
                 } catch {
-                    if let episode = store.episode(id) {
+                    if stopping.contains(id) {
+                        // Paul stopped it: drop it, keep nothing half-made.
+                        stopping.remove(id)
+                        if let episode = store.episode(id), !hadTranscript { episode.transcriptState = .none }
+                        TranscriptionLog.add(.init(episodeTitle: runTitle, showTitle: runShow, audioSeconds: audioLength, seconds: Date().timeIntervalSince(started), date: started, finished: false))
+                    } else if let episode = store.episode(id) {
                         // Cancelled (e.g. background time ran out): try again later.
                         if !hadTranscript { episode.transcriptState = Task.isCancelled ? .waiting : .failed }
                         if !Task.isCancelled { episode.adsChecked = true }
@@ -524,5 +617,38 @@ private final class MusicObserver: NSObject, SNResultsObserving, @unchecked Send
         lock.lock()
         found.append(window)
         lock.unlock()
+    }
+}
+
+/// How long each on-device transcription took, for the Stats screen and the
+/// first-time explainer's estimate. Kept on this iPhone (timings depend on
+/// the phone), newest last, at most 200.
+enum TranscriptionLog {
+    struct Run: Codable, Hashable {
+        var episodeTitle: String
+        var showTitle: String
+        /// Length of the audio.
+        var audioSeconds: Double
+        /// Time the iPhone took.
+        var seconds: Double
+        var date: Date
+        /// False when Paul stopped it.
+        var finished: Bool
+    }
+
+    private static let key = "transcriptionLog"
+
+    static var all: [Run] {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return [] }
+        return (try? JSONDecoder().decode([Run].self, from: data)) ?? []
+    }
+
+    static func add(_ run: Run) {
+        var runs = all
+        runs.append(run)
+        if runs.count > 200 { runs.removeFirst(runs.count - 200) }
+        if let data = try? JSONEncoder().encode(runs) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
     }
 }

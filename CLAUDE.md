@@ -18,14 +18,25 @@ in `design/icon/deck_options.png`. Earlier Podspot icons: `make_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Tape Deck"** (Paul's pick, Nov 2026, from three redesigns on the
-canvas https://claude.ai/artifact/RgNB6YCQMCdk9XdPfpiaTL; replaces the
-original warm off-white / serif / terracotta look). Warm grey device panels,
-ink black, one orange accent for keys, monospaced titles, labels and times
-(iOS's SF Mono, no bundled fonts), a dark display panel for what's playing,
-segmented progress bars (ads in amber), chunky keys that press down, status
-lights. Tokens in `App/Theme.swift`; shared pieces in `App/Deck.swift`.
-Function matters more than look to Paul.
+**Look: "Middle ground"** (Paul's pick, 5 Nov 2026; replaced Tape Deck,
+which he loved but this won). Developed on the canvas
+https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d (rows "Middle ground,
+developed" and "Transcript, same height as artwork"). Warm sand page
+(#E9E3D5), paper cards (#F6F2E9), ink text, one olive accent (#45543A);
+big titles in heavy condensed capitals (system font, `Theme.big`); what's
+playing is shown in its artwork's colour (`ArtworkColors`) with the artwork
+fading into it. Player: top area edge to edge with rounded bottom corners,
+fixed height, ARTWORK / TRANSCRIPT switch (transcript = live lines + find),
+ad breaks as a floating bar inside the top area (so nothing below moves),
+then counter, wave progress bar, transport, SPEED / TRIM / BOOST / SLEEP
+tiles, Up Next peek, notes. Mini player and show header are tinted from
+the artwork too. Tokens keep their Tape Deck names in `App/Theme.swift`;
+shared pieces in `App/Deck.swift`. Earlier explorations (Minimal, Flashy,
+Abstract, Bold palettes, Olive) are on the same canvas. Function matters
+more than look to Paul.
+Not yet in the app from the mock-ups: the Up Next now-playing header, the
+Up Next sheet pulled up over the player, the episode page's status rows,
+the show page's on-page Nowhere / Top / Bottom switch.
 
 ## Constraints
 
@@ -40,6 +51,10 @@ Function matters more than look to Paul.
   allowance, store fees), say so before doing it or when speccing it.
 - Paul is not a developer. Explain changes in plain English, keep the build
   green, and tell him when a new TestFlight build is ready to try.
+- **"FNB" = for next build** (Paul, 5 Nov 2026): a message starting with
+  "FNB" means add it to "Queued for the next app build" below and do not
+  build, merge or start the work yet. Paul is compiling a list; build the
+  list only when he says so. Reply briefly confirming what was queued.
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
   decisions, progress and open questions in the same change, without
   asking first, and mention briefly what changed here in your reply.
@@ -106,6 +121,22 @@ Function matters more than look to Paul.
   (not secret; the Development key is a3fe…, same key pair); the
   private key is only in `.github/cloudkit-key.enc`, encrypted with the
   CLOUDKIT_PASSPHRASE secret Paul set (made by cloudkit-key.yml). Uses the Production CloudKit environment (TestFlight builds always do).
+- **iCloud and alerts working (4 Nov 2026, build 112)**: Shows screen shows
+  SYNC OK and "ALERTS OK · 2 shows, 2 with the bell sent · alerts on".
+  How it got there (all needed again if the container is ever reset):
+  TestFlight uses CloudKit Production, which can't create record types or
+  new subscription fields. Record types come from
+  `Config/CloudKitSchema.ckdb` (Codemagic "iCloud schema" workflow, needs
+  CLOUDKIT_MANAGEMENT_TOKEN in the "apple" group, then Deploy in the
+  Console). Query subscriptions must first exist in Development:
+  `docs/cloudkit-subscribe.html` on GitHub Pages (CloudKit JS + a
+  Development API token), then Deploy; its notification fields must match
+  `RealtimeAlerts.subscribeIfNeeded` exactly (alert "New from %1$@: %2$@").
+  CloudKit's modify calls report per-record refusals in their results, so
+  always check them. Alerts job uses the Production server key (c74f…).
+  GitHub's 15-minute schedule actually runs much less often; Paul is fine
+  with that for now (a free outside timer such as cron-job.org could
+  trigger it if ever wanted).
 - **Subscriber (private) feeds** (Patreon, Supercast, Substack, Memberful,
   Acast+ etc.): pasting the private RSS link in Add a show works (the key
   is in the link). Feeds that need a username and password aren't
@@ -495,38 +526,30 @@ Function matters more than look to Paul.
   Apple chart feeds (could not be reached from the build machine; Discover
   falls back to directory search).
 
+## Queued for the next app build
+
+- (empty: Paul adds with "FNB")
+
+## Done in the "middle ground" build (5 Nov 2026)
+
+New look (above) plus Paul's FNB list: find in transcripts (player panel
+and transcript screen: highlights, n of m, next / previous); mini player
+steps aside while the keyboard is up (search results were hidden under
+it); "Your shows" layout switch (large / card + description / list,
+synced `showsLayout`); first-time Transcribe explainer
+(`.transcribeExplainer()`, on root and sheets; estimate from this
+iPhone's timings); transcription timings (`TranscriptionLog`, on the
+iPhone in UserDefaults) in Stats (count, total, per hour of audio,
+longest, shortest, latest, stopped); Stop a transcription (`stop` /
+`stopAll` in TranscriptService; stopped episodes stay out of the schedule
+until Transcribe now; Stop on the transcript screens, STOP TX key, Up
+Next and Library menus, "Stop all transcribing" in settings). Also
+artwork caching (`ArtworkImageCache`: memory + Caches folder, images at
+most 600 points; `CachedImage`) and a bigger URLCache. Built without a
+compiler: check the Codemagic log first if the build fails.
+
 ## Open questions for Paul
 
-- **iCloud in TestFlight builds (found 4 Nov 2026)**: TestFlight apps use
-  CloudKit's Production side, which can't create record types; the Console
-  showed only "Users" in both Development and Production, so neither iCloud
-  sync of the library nor alerts had ever worked (the phone's own data is
-  fine). Fix: `Config/CloudKitSchema.ckdb` (written by hand from the models:
-  CD_<class> / CD_<property>, URL as STRING, Bool/Int INT64, Data BYTES +
-  _ckAsset, to-one relationship STRING) loaded into Development by the
-  manual Codemagic workflow "iCloud schema" (`xcrun cktool import-schema`),
-  then Paul deploys to Production (docs/SETUP.md). Entitlement now says
-  Production. Paul loaded the schema and deployed it (4 Nov 2026); the
-  alerts job reaches Production with its own key ID. Build 108 showed
-  SYNC OK (library syncing to iCloud now) but ALERTS never ran: CloudKit's
-  modifyRecords / modifySubscriptions report per-record refusals inside
-  the result, not as a thrown error, so builds 103/104 marked the follows
-  record and subscriptions as done while every one was refused, and later
-  builds skipped them. Fixed: results are checked, the done flags are v2,
-  and the setup-record step is gone (the schema file creates the types). The Shows screen's iCloud section now
-  shows ACCOUNT (CloudKit's account status in words), SYNC and ALERTS
-  (last OK time or the problem). Build 109/110: the follows record saves;
-  the subscriptions fail ("attempting to create a subscription in a
-  production container", CKError 12): Production only accepts a query
-  subscription after it was created once in Development and the schema
-  deployed (Apple DTS). Fix without a Mac: `docs/cloudkit-subscribe.html`
-  (CloudKit JS, signs in as Paul, creates both subscriptions in
-  Development) on GitHub Pages; steps in docs/SETUP.md. Paul ran it; the
-  next refusal named 'notif_alert_loc_arg_0': the live side only accepts
-  the notification fields the Development subscription had, so the app and
-  the page now set exactly the same ones (alert text "New from %1$@: %2$@"
-  with showTitle / episodeTitle, sound, content-available; no title, which
-  CloudKit JS can't set). Paul re-runs the page and deploys again.
-- Otherwise none open. (Answered: name Poddeck + cassette icon D; earlier: Apple
+- None open. (Answered: name Poddeck + cassette icon D; earlier: Apple
   Podcasts has no export, links supported instead; speaker labels added
   now, can be removed.)

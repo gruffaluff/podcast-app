@@ -90,6 +90,50 @@ struct HistoryView: View {
 struct StatsView: View {
     @Environment(LibraryStore.self) private var store
     @State private var stats = LibraryStore.ListeningStats()
+    @State private var runs: [TranscriptionLog.Run] = TranscriptionLog.all
+
+    /// How long transcripts take on this iPhone.
+    @ViewBuilder private var transcriptStats: some View {
+        let finished = runs.filter(\.finished)
+        DeckHeader(title: "Transcripts", detail: finished.isEmpty ? nil : "\(finished.count) made on this iPhone")
+        if finished.isEmpty {
+            Text("Transcripts made on this iPhone will show how long they took here.")
+                .foregroundStyle(Theme.muted)
+        } else {
+            let total = finished.map(\.seconds).reduce(0, +)
+            let audio = finished.map(\.audioSeconds).reduce(0, +)
+            let perHour = audio > 0 ? total / audio * 60 : 0
+            let longest = finished.max { $0.seconds < $1.seconds }
+            let shortest = finished.min { $0.seconds < $1.seconds }
+            let stopped = runs.count - finished.count
+            VStack(spacing: 8) {
+                statRow("Time spent transcribing", Self.duration(total))
+                statRow("Average per hour of audio", "\(String(format: "%.1f", perHour)) min")
+                if let longest { statRow("Longest", "\(Self.duration(longest.seconds)) · \(longest.episodeTitle)") }
+                if let shortest { statRow("Shortest", "\(Self.duration(shortest.seconds)) · \(shortest.episodeTitle)") }
+                if let latest = finished.last { statRow("Latest", "\(Self.duration(latest.seconds)) · \(latest.episodeTitle)") }
+                if stopped > 0 { statRow("Stopped", "\(stopped)") }
+            }
+            .padding(14)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
+        }
+    }
+
+    private func statRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label).foregroundStyle(Theme.muted)
+            Spacer(minLength: 12)
+            Text(value).foregroundStyle(Theme.ink).fontWeight(.semibold).lineLimit(1).multilineTextAlignment(.trailing)
+        }
+        .font(.subheadline)
+    }
+
+    static func duration(_ seconds: Double) -> String {
+        let total = Int(seconds.rounded())
+        if total >= 3600 { return "\(total / 3600) h \(total % 3600 / 60) min" }
+        if total >= 60 { return "\(total / 60) min \(total % 60) s" }
+        return "\(total) s"
+    }
 
     var body: some View {
         ScrollView {
@@ -125,6 +169,7 @@ struct StatsView: View {
                 Text("Counts time actually playing, at whatever speed you listen.")
                     .font(.footnote)
                     .foregroundStyle(Theme.muted)
+                transcriptStats
             }
             .padding(16)
         }
