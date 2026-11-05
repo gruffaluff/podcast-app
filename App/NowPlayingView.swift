@@ -13,6 +13,7 @@ struct NowPlayingView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
     @Environment(TranscriptService.self) private var transcripts
+    @Environment(DownloadManager.self) private var downloads
     @Environment(\.dismiss) private var dismiss
     /// While dragging along the progress bar, where it would play from.
     @State private var scrubTime: TimeInterval?
@@ -21,8 +22,8 @@ struct NowPlayingView: View {
     @State private var transcriptEpisode: PodcastEpisode?
     @State private var showingQueue = false
     @State private var searchingTranscript = false
-    /// Up Next opened below the player (not over it).
-    @State private var queueOpen = false
+    /// The downloaded episode's real loudness, for the progress line.
+    @State private var waveform: [CGFloat]?
     @State private var closing = false
     @AppStorage("playerShowsTranscript") private var showsTranscript = false
 
@@ -45,11 +46,8 @@ struct NowPlayingView: View {
                             modeKeys(tint: tint)
                             nextUp
                             if let episode = currentEpisode {
-                                // What the episode page showed: place in Up
-                                // Next, download, transcript; then the notes.
-                                EpisodeStatusRows(episode: episode)
-                                    .padding(.top, 6)
                                 EpisodeNotesText(episode: episode)
+                                    .padding(.top, 6)
                             }
                         }
                         .padding(.horizontal, 18)
@@ -68,6 +66,13 @@ struct NowPlayingView: View {
                 .ignoresSafeArea(edges: .top)
                 }
                 .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
+                // The real shape of the episode, once it's downloaded.
+                .task(id: waveformKey) {
+                    waveform = nil
+                    if let episode = currentEpisode, let file = store.localAudioURL(for: episode) {
+                        waveform = await Waveform.levels(for: file, count: 44)
+                    }
+                }
             } else {
                 Text("Nothing playing")
                     .foregroundStyle(Theme.muted)
@@ -96,7 +101,7 @@ struct NowPlayingView: View {
     /// top edge, so the keys start below it.
     private func hero(_ item: PlayerModel.NowPlaying, tint: Color, top: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            // One row: close, device, then (transcript) find, mark played.
+            // One row: close, device, then (transcript) find, download, mark played.
             HStack(spacing: 8) {
                 roundButton("chevron.down", label: "Close player") { dismiss() }
                 deviceButton
@@ -104,6 +109,7 @@ struct NowPlayingView: View {
                 if showsTranscript {
                     roundButton("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
                 }
+                if let episode = currentEpisode { downloadKey(episode) }
                 roundButton("checkmark", label: "Mark as played") { markPlayed() }
             }
             Group {
@@ -206,6 +212,41 @@ struct NowPlayingView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    private var waveformKey: String {
+        let id = player.nowPlaying?.episodeID ?? ""
+        let local = currentEpisode.map { store.localAudioURL(for: $0) != nil } ?? false
+        return "\(id)-\(local)"
+    }
+
+    /// Download: an arrow; a ring filling while it downloads; a filled
+    /// circle once it's on the phone.
+    private func downloadKey(_ episode: PodcastEpisode) -> some View {
+        let local = store.localAudioURL(for: episode) != nil
+        let fraction = downloads.progress[episode.episodeID]
+        return Button {
+            if !local && fraction == nil { downloads.download(episode) }
+        } label: {
+            ZStack {
+                if let fraction {
+                    Circle().stroke(Theme.displayText.opacity(0.3), lineWidth: 3)
+                    Circle()
+                        .trim(from: 0, to: max(0.04, fraction))
+                        .stroke(Theme.displayText, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                } else {
+                    Image(systemName: local ? "arrow.down.circle.fill" : "arrow.down")
+                        .font(.system(size: 16, weight: .bold))
+                }
+            }
+            .frame(width: 22, height: 22)
+            .frame(width: 40, height: 40)
+            .background(Self.keyFill, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(local)
+        .accessibilityLabel(local ? "Downloaded" : fraction.map { "Downloading, \(Int($0 * 100)) percent" } ?? "Download")
+    }
+
     /// The top keys' fill: dark enough to stand out on any artwork.
     static let keyFill = Color.black.opacity(0.45)
 
@@ -223,8 +264,9 @@ struct NowPlayingView: View {
     /// Marked played (with Undo); the player moves on as when an episode ends.
     private func markPlayed() {
         guard let episode = currentEpisode else { return }
-        store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-        player.finishEarly()
+        // Finishing marks it played (and keeps its place for "Next in the
+        // list"); Undo brings back its played state and place.
+        store.undoable("Marked played", episodes: [episode]) { player.finishEarly() }
     }
 
     /// While an ad plays: a floating bar with Skip ad and Not an ad. Just
@@ -301,7 +343,10 @@ struct NowPlayingView: View {
         let left: TimeInterval = max(0, player.duration - shown)
         let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
         let endsText: String = "ENDS " + endsAt.formatted(date: .omitted, time: .shortened)
-        return HStack(alignment: .center, spacing: 12) {
+        return ZStack {
+            // Centred on the screen, so right above the play key.
+            LevelBars(playing: player.isPlaying && scrubTime == nil, color: heroTint, level: { player.outputLevel })
+            HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(TimeFormat.clock(shown))
                     .font(Theme.big(46))
@@ -312,8 +357,7 @@ struct NowPlayingView: View {
                     .tracking(1.2)
                     .foregroundStyle(Theme.muted)
             }
-            LevelBars(playing: player.isPlaying && scrubTime == nil, color: heroTint)
-                .frame(maxWidth: .infinity)
+            Spacer(minLength: 0)
             if player.duration > 0 {
                 VStack(alignment: .trailing, spacing: 0) {
                     Text("−" + TimeFormat.clock(left))
@@ -325,6 +369,7 @@ struct NowPlayingView: View {
                         .tracking(1.2)
                         .foregroundStyle(Theme.muted)
                 }
+            }
             }
         }
     }
@@ -342,7 +387,7 @@ struct NowPlayingView: View {
             let width = max(1, geometry.size.width)
             let x = min(width, max(0, shown / duration * width))
             ZStack(alignment: .leading) {
-                SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline)
+                SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline, levels: waveform)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Theme.surface)
                     .overlay(RoundedRectangle(cornerRadius: 3).stroke(Theme.ink, lineWidth: 2))
@@ -480,21 +525,20 @@ struct NowPlayingView: View {
     }
 
     /// The next episode in Up Next; tap to go back to the queue.
-    /// What's next: tap to open the next few below (tap one to play it);
-    /// "Edit Up Next" opens the full list to reorder or remove.
+    /// What's next. Tap (or swipe up) to open Up Next over the player; the
+    /// handle and "ALL n" show that it opens.
     @ViewBuilder private var nextUp: some View {
         let playingID = player.nowPlaying?.episodeID
         let upcoming = store.queue.filter { $0.episode.id != playingID }
         if let next = upcoming.first {
             let episode = store.episode(next.episode.id)
-            VStack(spacing: 0) {
-                Button {
-                    withAnimation(.snappy) { queueOpen.toggle() }
-                } label: {
+            Button { showingQueue = true } label: {
+                VStack(spacing: 6) {
+                    Capsule().fill(Theme.hairline).frame(width: 34, height: 4)
                     HStack(spacing: 12) {
                         ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? next.episode.title, size: 42, radius: 10)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("UP NEXT · \(upcoming.count)")
+                            Text("UP NEXT")
                                 .font(Theme.mono(10, .bold))
                                 .tracking(1.2)
                                 .foregroundStyle(Theme.muted)
@@ -504,52 +548,29 @@ struct NowPlayingView: View {
                                 .lineLimit(1)
                         }
                         Spacer(minLength: 0)
-                        Image(systemName: "chevron.down")
-                            .font(.footnote.weight(.bold))
-                            .foregroundStyle(Theme.ink)
-                            .rotationEffect(.degrees(queueOpen ? 180 : 0))
-                    }
-                    .padding(12)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint(queueOpen ? "Hides Up Next" : "Shows what's next")
-                if queueOpen {
-                    let ids = upcoming.prefix(6).map(\.episode.id)
-                    let found = store.episodes(ids)
-                    ForEach(Array(upcoming.prefix(6).dropFirst()), id: \.episode.id) { item in
-                        if let queued = found[item.episode.id] {
-                            Divider().overlay(Theme.hairline).padding(.horizontal, 12)
-                            Button { player.play(queued) } label: {
-                                HStack(spacing: 12) {
-                                    ArtworkView(url: queued.artwork, title: queued.podcast?.title ?? queued.title, size: 34, radius: 8)
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(queued.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
-                                        Text(queued.podcast?.title ?? "").font(.system(size: 12)).foregroundStyle(Theme.muted).lineLimit(1)
-                                    }
-                                    Spacer(minLength: 0)
-                                    Text(queued.timeLeft.map { TimeFormat.clock($0) } ?? "")
-                                        .font(Theme.mono(11)).monospacedDigit().foregroundStyle(Theme.muted)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("Plays it now")
+                        HStack(spacing: 4) {
+                            Image(systemName: "list.bullet")
+                            Text("ALL \(upcoming.count)")
                         }
+                        .font(Theme.mono(11, .bold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 30)
+                        .background(Theme.background, in: Capsule())
                     }
-                    Button { showingQueue = true } label: {
-                        Text("EDIT UP NEXT ›")
-                            .font(Theme.mono(11, .bold))
-                            .tracking(1)
-                            .foregroundStyle(Theme.accentText)
-                            .frame(maxWidth: .infinity, minHeight: 40)
-                    }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
+                .contentShape(Rectangle())
             }
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
+            .buttonStyle(.plain)
+            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
+                if value.translation.height < -30 { showingQueue = true }
+            })
+            .accessibilityLabel("Up next: \(next.episode.title). \(upcoming.count) in Up Next")
+            .accessibilityHint("Opens Up Next")
         }
     }
 }
@@ -559,33 +580,46 @@ struct NowPlayingView: View {
 private struct LevelBars: View {
     let playing: Bool
     let color: Color
+    /// How loud the sound is right now (RMS); 0 when it can't be measured.
+    let level: () -> Float
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 15, paused: !playing)) { context in
+        TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !playing)) { context in
             bars(at: context.date.timeIntervalSinceReferenceDate)
         }
+        .frame(width: 60, height: 30)
         .accessibilityHidden(true)
     }
 
     // Split out (with explicit types) so the compiler checks it quickly.
     private func bars(at time: Double) -> some View {
-        HStack(alignment: .center, spacing: 3) {
+        let loudness: Double = Self.loudness(level())
+        return HStack(alignment: .center, spacing: 3) {
             ForEach(0..<9, id: \.self) { (index: Int) in
                 Capsule()
                     .fill(color.opacity(0.85))
-                    .frame(width: 4, height: Self.height(index: index, time: time, playing: playing))
+                    .frame(width: 4, height: Self.height(index: index, time: time, loudness: loudness, playing: playing))
             }
         }
         .frame(height: 30)
-        .animation(.easeOut(duration: 0.2), value: playing)
     }
 
-    private static func height(index: Int, time: Double, playing: Bool) -> CGFloat {
-        guard playing else { return 9 }
+    /// RMS to 0...1 (about −50 dB to −10 dB); -1 when there's no reading.
+    private static func loudness(_ rms: Float) -> Double {
+        guard rms > 0 else { return -1 }
+        let decibels: Double = 20 * log10(Double(rms))
+        return min(1, max(0, (decibels + 50) / 40))
+    }
+
+    private static func height(index: Int, time: Double, loudness: Double, playing: Bool) -> CGFloat {
+        guard playing else { return 6 }
         let i = Double(index)
-        let speed: Double = 2.1 + Double(index % 3) * 0.7
-        let wave: Double = abs(sin(time * speed + i * 1.3))
-        return CGFloat(6 + 22 * wave)
+        // Taller in the middle, with a little movement between the bars.
+        let shape: Double = 1 - abs(i - 4) / 6
+        let jitter: Double = 0.75 + 0.25 * abs(sin(time * (5 + Double(index % 3)) + i * 1.7))
+        // No reading (some streams): a gentle made-up motion instead.
+        let amount: Double = loudness < 0 ? 0.5 * abs(sin(time * 2.3 + i)) : loudness
+        return CGFloat(4 + 24 * amount * shape * jitter)
     }
 }
 

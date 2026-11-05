@@ -10,6 +10,9 @@ final class AudioTapState: @unchecked Sendable {
     var trimSilences = false
     /// Set on the audio thread; read by the player to speed through pauses.
     var inPause = false
+    /// How loud the sound is right now (RMS, smoothed); drives the player's
+    /// level bars. Written on the audio thread, read for display only.
+    var level: Float = 0
 
     fileprivate var sampleRate: Double = 44_100
     fileprivate var boosters: [VoiceBoost] = []
@@ -53,9 +56,11 @@ final class AudioTapState: @unchecked Sendable {
     }
 
     fileprivate func process(_ buffers: UnsafeMutableAudioBufferListPointer, frames: Int) {
-        if trimSilences, let first = buffers.first, let data = first.mData {
+        if let first = buffers.first, let data = first.mData {
             let samples = UnsafeBufferPointer(start: data.assumingMemoryBound(to: Float.self), count: Int(first.mDataByteSize) / MemoryLayout<Float>.size)
-            inPause = detector.feed(rms: SilenceDetector.rms(samples), duration: Double(frames) / sampleRate)
+            let rms = SilenceDetector.rms(samples)
+            level = level * 0.6 + rms * 0.4
+            inPause = trimSilences ? detector.feed(rms: rms, duration: Double(frames) / sampleRate) : false
         } else {
             inPause = false
         }
