@@ -543,7 +543,11 @@ to Nowhere / Top / Bottom" on the show page.
   (developer.apple.com → Certificates, Identifiers & Profiles →
   Identifiers → com.gruffaluff.podcasts → Additional Capabilities); check
   with a status_only run that the App ID's capabilities list shows
-  CarPlay, or the signed build fails. Build only when Paul says; nothing runs automatically on
+  CarPlay, or the signed build fails. Done 5 Nov 2026: Paul ticked it;
+  status shows CARPLAY_PLAYABLE_CONTENT on the App ID (the API's name for
+  the CarPlay audio capability). If the next build's signing complains
+  about `com.apple.developer.carplay-audio`, check the profile's
+  entitlements first. Build only when Paul says; nothing runs automatically on
   Monday (Paul, 5 Nov 2026).
 - **FNB notes also live in Notion** (Personal / Poddeck / FNB, page id
   40f7d696-6c51-80d4-898d-ef27b486ce92). Read only what is below the last
