@@ -579,7 +579,7 @@ From Claude's app review plus Paul's Notion notes after 16:55:
   a row); the pulled-up list has no numbers, a small NEXT tag instead.
   Its ≡ handles are iOS's own size (can't be made bigger without a
   hand-made reorder).
-- Bedtime sleep timer (Shows screen, on by default): starting an episode
+- Bedtime sleep timer (Shows screen, off by default, Paul): starting an episode
   10pm–5am sets the sleep timer to the last one chosen in the menu (end
   of episode at first).
 - Chapters: next / previous chapter for headphones, car and lock screen

@@ -176,7 +176,7 @@ struct TopPriorityView: View {
     @Query(sort: \Podcast.title) private var allShows: [Podcast]
     @AppStorage("afterEpisode") private var afterEpisode = "top"  // PlayerModel.afterEpisodeKey
     @AppStorage("downloadCapGB") private var downloadCapGB = 0  // LibraryStore.downloadCapKey
-    @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = true  // PlayerModel.bedtimeKey
+    @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = false  // PlayerModel.bedtimeKey
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
     @State private var findAds = AdScanner.isEnabled
