@@ -298,7 +298,9 @@ struct NowPlayingView: View {
     /// end (at this speed), and level bars moving in between while playing.
     private var clock: some View {
         let shown = scrubTime ?? player.currentTime
-        let left = max(0, player.duration - shown)
+        let left: TimeInterval = max(0, player.duration - shown)
+        let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
+        let endsText: String = "ENDS " + endsAt.formatted(date: .omitted, time: .shortened)
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(TimeFormat.clock(shown))
@@ -318,7 +320,7 @@ struct NowPlayingView: View {
                         .font(Theme.big(30))
                         .monospacedDigit()
                         .foregroundStyle(Theme.ink)
-                    Text("ENDS \(Date().addingTimeInterval(left / max(player.speed, 0.5)).formatted(date: .omitted, time: .shortened))")
+                    Text(endsText)
                         .font(Theme.mono(10, .bold))
                         .tracking(1.2)
                         .foregroundStyle(Theme.muted)
@@ -560,19 +562,30 @@ private struct LevelBars: View {
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 15, paused: !playing)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            HStack(alignment: .center, spacing: 3) {
-                ForEach(0..<9, id: \.self) { index in
-                    let wave = playing ? abs(sin(t * (2.1 + Double(index % 3) * 0.7) + Double(index) * 1.3)) : 0.15
-                    Capsule()
-                        .fill(color.opacity(0.85))
-                        .frame(width: 4, height: 6 + 22 * wave)
-                }
-            }
-            .frame(height: 30)
-            .animation(.easeOut(duration: 0.2), value: playing)
+            bars(at: context.date.timeIntervalSinceReferenceDate)
         }
         .accessibilityHidden(true)
+    }
+
+    // Split out (with explicit types) so the compiler checks it quickly.
+    private func bars(at time: Double) -> some View {
+        HStack(alignment: .center, spacing: 3) {
+            ForEach(0..<9, id: \.self) { (index: Int) in
+                Capsule()
+                    .fill(color.opacity(0.85))
+                    .frame(width: 4, height: Self.height(index: index, time: time, playing: playing))
+            }
+        }
+        .frame(height: 30)
+        .animation(.easeOut(duration: 0.2), value: playing)
+    }
+
+    private static func height(index: Int, time: Double, playing: Bool) -> CGFloat {
+        guard playing else { return 9 }
+        let i = Double(index)
+        let speed: Double = 2.1 + Double(index % 3) * 0.7
+        let wave: Double = abs(sin(time * speed + i * 1.3))
+        return CGFloat(6 + 22 * wave)
     }
 }
 
