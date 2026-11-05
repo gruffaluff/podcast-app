@@ -327,12 +327,12 @@ final class PlayerModel {
     }
     static let bedtimeKey = "bedtimeSleepTimer"
 
-    /// Bedtime sleep timer (on by default): starting an episode between
+    /// Bedtime sleep timer (off by default): starting an episode between
     /// 10pm and 5am sets the sleep timer to the last one used (end of
     /// episode the first time), unless one is already running.
     private func startBedtimeTimerIfNeeded() {
         let defaults = UserDefaults.standard
-        let on = defaults.object(forKey: Self.bedtimeKey) as? Bool ?? true
+        let on = defaults.object(forKey: Self.bedtimeKey) as? Bool ?? false
         let hour = Calendar.current.component(.hour, from: Date())
         guard on, sleepTimer == nil, hour >= 22 || hour < 5 else { return }
         let minutes = defaults.object(forKey: Self.lastSleepKey) as? Int ?? 0

@@ -107,8 +107,8 @@ to Nowhere / Top / Bottom" on the show page.
   Pause, Skip forward/back, Set sleep timer (App Intents).
 - **CarPlay** (Paul listens in the car): Up Next and Shows tabs, standard
   Now Playing with a speed button and Up Next. Needs Apple's CarPlay audio
-  entitlement: Paul applied (Audio) on 4 Nov 2026 and is waiting for
-  Apple's email; then add it to the entitlements file (docs/SETUP.md).
+  entitlement: Paul applied (Audio) on 4 Nov 2026; Apple granted it
+  5 Nov 2026 (goes into the next build, see the queue below).
 - **Decided against (Paul, 4 Nov 2026)**: bookmark from AirPods, episode
   summaries, video podcasts, video clip cards (stay as they are, no new
   work), Apple Watch (maybe later if others ask), speaker separation
@@ -533,9 +533,41 @@ to Nowhere / Top / Bottom" on the show page.
   Apple chart feeds (could not be reached from the build machine; Discover
   falls back to directory search).
 
+## Done in the Friday batch (5 Nov 2026, evening, build 121)
+
+From the queue and the Notion notes after 18:10:
+- New Episodes cards option E: 248×330 with a 12-point gap (Apple's
+  proportions; Paul measured Apple Podcasts at ~247×330). Paul wants to
+  live with it and be asked again next time he says to check Notion.
+- Play next goes straight after the episode playing now (it was going
+  above it, at the very top).
+- Up Next: long press and drag to reorder any time; the reorder key
+  (arrows icon, where Edit was) shows handles and delete buttons;
+  settings moved to the right.
+- Following a show: its latest episode goes into Up Next too (by the
+  show's rule; new shows start on Bottom), as well as downloading.
+- Find ads while listening is off by default (Paul: battery).
+- Tab titles sit on the same line as the bar's buttons (`tabTitle`),
+  so content starts higher, on Up Next, Library, Discover and Search.
+- Discover tighter: smaller gaps around the category chips and section
+  headers, smaller suggestion cards.
+- Bedtime sleep timer off by default; CarPlay entitlement included.
+
 ## Queued for the next app build
 
-- (empty: Paul adds with "FNB")
+- (Bedtime timer default and CarPlay went out in the Friday batch.)
+- CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
+  The entitlement is added to `Config/Podcasts.entitlements` on the PR #39
+  branch. Before merging, Paul ticks CarPlay on the App ID
+  (developer.apple.com → Certificates, Identifiers & Profiles →
+  Identifiers → com.gruffaluff.podcasts → Additional Capabilities); check
+  with a status_only run that the App ID's capabilities list shows
+  CarPlay, or the signed build fails. Done 5 Nov 2026: Paul ticked it;
+  status shows CARPLAY_PLAYABLE_CONTENT on the App ID (the API's name for
+  the CarPlay audio capability). If the next build's signing complains
+  about `com.apple.developer.carplay-audio`, check the profile's
+  entitlements first. Build only when Paul says; nothing runs automatically on
+  Monday (Paul, 5 Nov 2026).
 - **FNB notes also live in Notion** (Personal / Poddeck / FNB, page id
   40f7d696-6c51-80d4-898d-ef27b486ce92). Read only what is below the last
   "✅ Claude read everything above on …" line, then add a new such line
@@ -579,7 +611,7 @@ From Claude's app review plus Paul's Notion notes after 16:55:
   a row); the pulled-up list has no numbers, a small NEXT tag instead.
   Its ≡ handles are iOS's own size (can't be made bigger without a
   hand-made reorder).
-- Bedtime sleep timer (Shows screen, on by default): starting an episode
+- Bedtime sleep timer (Shows screen, off by default, Paul): starting an episode
   10pm–5am sets the sleep timer to the last one chosen in the menu (end
   of episode at first).
 - Chapters: next / previous chapter for headphones, car and lock screen

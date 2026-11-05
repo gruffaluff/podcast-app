@@ -116,7 +116,12 @@ final class LibraryStore {
         _ = apply(feed, to: show)
         // Only the newest episode downloads (following the Wi-Fi only setting).
         // Older ones stay unplayed; Paul can select them and mark them played.
-        if downloadLatest, let latest = latestEpisode(of: show) { downloads?.download(latest, automatic: true) }
+        save()
+        if downloadLatest, let latest = latestEpisode(of: show) {
+            downloads?.download(latest, automatic: true)
+            // And into Up Next, by the usual rules (new shows start on Bottom).
+            if !latest.played { commit(QueueEngine.addNewEpisodes([latest.queueEpisode], to: queue, settings: queueSettings)) }
+        }
         save()
         return show
     }
@@ -290,8 +295,20 @@ final class LibraryStore {
 
     // MARK: Up Next
 
+    /// Play next: straight after the episode playing now (it stays at the
+    /// top of Up Next while it plays), else at the top.
     func playNext(_ episode: PodcastEpisode) {
-        commit(QueueEngine.playNext(episode.queueEpisode, in: queue, settings: queueSettings))
+        guard let playing = playingEpisodeID, playing != episode.episodeID,
+              let position = queue.firstIndex(where: { $0.episode.id == playing }) else {
+            commit(QueueEngine.playNext(episode.queueEpisode, in: queue, settings: queueSettings))
+            return
+        }
+        let playingItem = queue[position]
+        var rest = queue
+        rest.remove(at: position)
+        rest = QueueEngine.playNext(episode.queueEpisode, in: rest, settings: queueSettings)
+        rest.insert(playingItem, at: min(position, rest.count))
+        commit(rest)
     }
 
     func playLast(_ episode: PodcastEpisode) {

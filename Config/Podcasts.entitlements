@@ -26,6 +26,10 @@
 	<array>
 		<string>group.com.gruffaluff.podcasts</string>
 	</array>
+	<!-- CarPlay audio app (Apple granted it 5 Nov 2026; Paul enables it on
+	     the App ID under Additional Capabilities). -->
+	<key>com.apple.developer.carplay-audio</key>
+	<true/>
 	<key>aps-environment</key>
 	<string>production</string>
 </dict>

@@ -6,8 +6,7 @@ struct UpNextView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @State private var showingPriority = false
-    /// Reordering only while Edit is on (by the ≡ handles), so a long
-    /// press on a row never starts dragging it by accident.
+    /// Edit mode: ≡ handles and delete buttons on every row.
     @State private var editing = false
     /// Shows from the chart, offered when Up Next is empty.
     @State private var suggestions: [DirectoryItem] = []
@@ -51,7 +50,9 @@ struct UpNextView: View {
                             }
                         }
                     }
-                    .onMove(perform: editing ? { from, to in store.moveQueue(from: from, to: to) } : nil)
+                    // Long press and drag to reorder (Paul); the reorder key
+                    // shows the handles and delete buttons too.
+                    .onMove { from, to in store.moveQueue(from: from, to: to) }
                     .listRowBackground(Theme.surface)
                     .listRowSeparatorTint(Theme.hairline)
                     if store.queue.isEmpty {
@@ -115,20 +116,21 @@ struct UpNextView: View {
                     suggestions = await SuggestionRow.load(store: store)
                 }
             }
-            .navigationTitle("UP NEXT")
+            .tabTitle("UP NEXT")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                // Reorder / remove mode (long press and drag works anyway).
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { withAnimation { editing.toggle() } } label: {
+                        Image(systemName: editing ? "checkmark" : "arrow.up.arrow.down")
+                    }
+                    .accessibilityLabel(editing ? "Done reordering" : "Reorder Up Next")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button { showingPriority = true } label: {
                         Image(systemName: "slider.horizontal.3")
                     }
-                    .accessibilityLabel("Top show priority")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(editing ? "Done" : "Edit") {
-                        withAnimation { editing.toggle() }
-                    }
-                    .fontWeight(editing ? .semibold : .regular)
+                    .accessibilityLabel("Shows and settings")
                 }
             }
             .sheet(isPresented: $showingPriority) {

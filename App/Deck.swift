@@ -236,3 +236,24 @@ struct EpisodeLights: View {
         return "\(download), \(transcript)"
     }
 }
+
+extension View {
+    /// A tab's big title on the same line as its bar buttons (no tall
+    /// large-title gap above the content). The plain title stays for back
+    /// buttons on screens pushed from here.
+    func tabTitle(_ title: String) -> some View {
+        self.navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
+                ToolbarItem(placement: .topBarLeading) {
+                    Text(title)
+                        .font(Theme.big(30))
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize()
+                        .accessibilityAddTraits(.isHeader)
+                }
+                .sharedBackgroundVisibility(.hidden)
+            }
+    }
+}

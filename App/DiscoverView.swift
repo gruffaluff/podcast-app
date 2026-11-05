@@ -40,7 +40,7 @@ struct DiscoverView: View {
             .task(id: genre) { await loadChart() }
             .task { await loadSuggestions() }
             .refreshable { await loadChart() }
-            .navigationTitle("DISCOVER")
+            .tabTitle("DISCOVER")
             .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
         }
@@ -85,11 +85,11 @@ struct DiscoverView: View {
                     chip(item.name, selected: genre == item) { genre = item }
                 }
             }
-            .padding(.vertical, 4)
             .padding(.bottom, 3)
         }
         .listRowBackground(Theme.background)
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0))
     }
 
     private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
@@ -121,6 +121,7 @@ struct DiscoverView: View {
             }
         } header: {
             DeckHeader(title: genre.map { "Top in \($0.name)" } ?? "UK top shows", detail: genre == nil ? "This week" : "Chart")
+                .padding(.top, -6)
         }
         .listRowBackground(Theme.background)
         .listRowSeparatorTint(Theme.hairline)
@@ -144,13 +145,14 @@ struct DiscoverView: View {
     private func suggestionsSection(_ showTitle: String, _ items: [DirectoryItem]) -> some View {
         Section {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
                     ForEach(items) { SuggestionCard(item: $0) }
                 }
-                .padding(.vertical, 4)
             }
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 4, trailing: 0))
         } header: {
             DeckHeader(title: "Because you listen to \(showTitle)")
+                .padding(.top, -6)
         }
         .listRowBackground(Theme.background)
         .listRowSeparator(.hidden)
@@ -222,9 +224,9 @@ private struct SuggestionCard: View {
         VStack(alignment: .leading, spacing: 6) {
             NavigationLink(value: item) {
                 VStack(alignment: .leading, spacing: 6) {
-                    ArtworkView(url: item.artworkURL, title: item.title, size: 132, radius: 10)
+                    ArtworkView(url: item.artworkURL, title: item.title, size: 120, radius: 10)
                     Text(item.title)
-                        .font(.subheadline.weight(.medium))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(2, reservesSpace: true)
                 }
@@ -232,7 +234,7 @@ private struct SuggestionCard: View {
             .buttonStyle(.plain)
             FollowButton(item: item, follower: follower)
         }
-        .frame(width: 132)
+        .frame(width: 120)
         .sheet(item: $follower.justFollowed) { ShowSettingsView(show: $0, justFollowed: true) }
     }
 }

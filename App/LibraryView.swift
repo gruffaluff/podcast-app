@@ -53,7 +53,7 @@ struct LibraryView: View {
                         if !newEpisodes.isEmpty {
                             sectionTitle("NEW EPISODES", detail: "\(newEpisodes.count) UNPLAYED")
                             ScrollView(.horizontal, showsIndicators: false) {
-                                LazyHStack(spacing: 14) {
+                                LazyHStack(spacing: 12) {
                                     ForEach(newEpisodes) { episode in
                                         EpisodeCard(episode: episode)
                                     }
@@ -81,7 +81,7 @@ struct LibraryView: View {
             .refreshable { await store.refreshAll() }
             .onAppear { continuing = store.continueListening(excluding: player.nowPlaying?.episodeID, limit: 3) }
             .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = store.continueListening(excluding: id, limit: 3) }
-            .navigationTitle("LIBRARY")
+            .tabTitle("LIBRARY")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -228,8 +228,9 @@ private struct EpisodeCard: View {
     @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
 
-    private static let width: CGFloat = 300
-    private static let height: CGFloat = 300
+    // Option E (Paul, 5 Nov 2026): Apple Podcasts' proportions.
+    private static let width: CGFloat = 248
+    private static let height: CGFloat = 330
 
     var body: some View {
         let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")

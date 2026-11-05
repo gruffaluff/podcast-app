@@ -9,7 +9,7 @@ import PodcastCore
 final class AdScanner {
     /// The "Find ads while listening" setting (default on).
     static var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: "findAdsWhileListening") as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: "findAdsWhileListening") as? Bool ?? false }
         set { UserDefaults.standard.set(newValue, forKey: "findAdsWhileListening") }
     }
 
