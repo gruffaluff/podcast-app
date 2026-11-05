@@ -19,6 +19,7 @@ struct NowPlayingView: View {
     @State private var showingChapters = false
     @State private var showingNotes = false
     @State private var transcriptEpisode: PodcastEpisode?
+    @State private var showingQueue = false
     @AppStorage("playerShowsTranscript") private var showsTranscript = false
 
     private var currentEpisode: PodcastEpisode? {
@@ -65,6 +66,11 @@ struct NowPlayingView: View {
             if let episode = currentEpisode { EpisodeNotesView(episode: episode) }
         }
         .sheet(item: $transcriptEpisode) { TranscriptView(episode: $0) }
+        .sheet(isPresented: $showingQueue) {
+            UpNextSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .transcribeExplainer()
     }
 
@@ -404,7 +410,7 @@ struct NowPlayingView: View {
         let upcoming = store.queue.filter { $0.episode.id != playingID }
         if let next = upcoming.first {
             let episode = store.episode(next.episode.id)
-            Button { dismiss() } label: {
+            Button { showingQueue = true } label: {
                 HStack(spacing: 12) {
                     ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? next.episode.title, size: 42, radius: 10)
                     VStack(alignment: .leading, spacing: 2) {
@@ -424,7 +430,7 @@ struct NowPlayingView: View {
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Back to Up Next")
+            .accessibilityHint("Shows Up Next over the player")
         }
     }
 }

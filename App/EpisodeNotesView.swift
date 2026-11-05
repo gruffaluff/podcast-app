@@ -23,6 +23,7 @@ struct EpisodeNotesView: View {
                             EpisodeLights(episode: episode)
                         }
                     }
+                    EpisodeStatusRows(episode: episode)
                     EpisodeActions(episode: episode)
                     EpisodeNotesText(episode: episode)
                 }

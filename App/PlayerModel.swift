@@ -21,6 +21,10 @@ final class PlayerModel {
 
     private(set) var nowPlaying: NowPlaying?
     private(set) var isPlaying = false
+    /// Bumped to ask the app to open the full player (e.g. from Up Next's
+    /// now-playing header).
+    private(set) var openPlayerRequests = 0
+    func requestOpenPlayer() { openPlayerRequests += 1 }
     private(set) var currentTime: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
 
