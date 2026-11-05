@@ -567,6 +567,12 @@ the app stays Tape Deck until Paul decides.
   stopped). Stats page gets a Transcripts section: number made, total
   time spent, average time per hour of audio, longest and shortest
   (with the episode), and the latest one.
+- **Stop a transcription**: a Stop key wherever a transcript is in
+  progress (transcript screen, TX light / episode keys, Up Next row
+  menu), plus "Stop all transcribing" in settings. Stopping ends the
+  on-device work straight away, keeps nothing half-made, takes the
+  episode out of the waiting list (so the schedule doesn't restart it)
+  and counts as "stopped" in the Stats timings.
 
 ## Open questions for Paul
 
