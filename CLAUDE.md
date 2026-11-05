@@ -62,6 +62,10 @@ the app stays Tape Deck until Paul decides.
   allowance, store fees), say so before doing it or when speccing it.
 - Paul is not a developer. Explain changes in plain English, keep the build
   green, and tell him when a new TestFlight build is ready to try.
+- **"FNB" = for next build** (Paul, 5 Nov 2026): a message starting with
+  "FNB" means add it to "Queued for the next app build" below and do not
+  build, merge or start the work yet. Paul is compiling a list; build the
+  list only when he says so. Reply briefly confirming what was queued.
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
   decisions, progress and open questions in the same change, without
   asking first, and mention briefly what changed here in your reply.
