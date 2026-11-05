@@ -217,8 +217,9 @@ struct LibraryView: View {
     }
 }
 
-/// A card in the New Episodes carousel: the show's colour with the artwork
-/// on top, then a paper card sliding over it with the details and keys.
+/// A card in the New Episodes carousel: the artwork filling the top, then
+/// a paper card sliding over it with the show, how long ago, the details
+/// and keys.
 private struct EpisodeCard: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -228,27 +229,26 @@ private struct EpisodeCard: View {
         let strip = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
 
         VStack(alignment: .leading, spacing: 0) {
-            // Top: the show's colour with the artwork, like the player.
-            VStack(spacing: 10) {
-                HStack {
-                    Text((episode.podcast?.title ?? "").uppercased()).lineLimit(1)
-                    Spacer(minLength: 8)
-                    Text(TimeFormat.ago(episode.published).uppercased())
-                }
-                .font(Theme.mono(10, .bold))
-                .foregroundStyle(.white)
-                ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 168, radius: 10)
-                    .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+            // Top: the artwork filling the card edge to edge.
+            CachedImage(url: episode.artwork) {
+                ArtworkView(url: nil, title: episode.podcast?.title ?? episode.title, size: 220, radius: 0)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
-            .padding(.bottom, 28)
-            .frame(maxWidth: .infinity)
-            .background(strip)
+            .frame(width: 220, height: 210)
+            .clipped()
             .contentShape(Rectangle())
             .onTapGesture { store.notesEpisode = episode }
-            // Bottom: a paper card sliding up over the colour.
+            .accessibilityHidden(true)
+            // Bottom: a paper card sliding up over the artwork, with the
+            // show and how long ago at the top.
             VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Text((episode.podcast?.title ?? "").uppercased()).lineLimit(1)
+                    Spacer(minLength: 6)
+                    Text(TimeFormat.ago(episode.published).uppercased()).fixedSize()
+                }
+                .font(Theme.mono(10, .bold))
+                .tracking(0.6)
+                .foregroundStyle(Theme.muted)
                 Text(episode.title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
@@ -285,10 +285,14 @@ private struct EpisodeCard: View {
                 .padding(.top, 2)
             }
             .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.surface, in: UnevenRoundedRectangle(topLeadingRadius: 18, topTrailingRadius: 18))
             .padding(.top, -18)
         }
         .frame(width: 220)
+        // The show's colour behind the whole card, so the top always runs
+        // to both edges (it fell short on the right).
+        .background(strip)
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
         .padding(.bottom, 6)

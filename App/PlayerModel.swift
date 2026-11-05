@@ -402,6 +402,11 @@ final class PlayerModel {
         }
     }
 
+    static let afterEpisodeKey = "afterEpisode"
+
+    /// How loud the sound is right now (0 when unknown, e.g. some streams).
+    var outputLevel: Float { tapState.level }
+
     /// "Mark as played" from the player: finish now, as if it had ended
     /// (marks played, deletes the download, moves on to Up Next).
     func finishEarly() {
@@ -438,6 +443,8 @@ final class PlayerModel {
     /// Finished: mark played, remove from Up Next, play the next one.
     private func didFinish() {
         guard let id = nowPlaying?.episodeID else { return }
+        // Where it sat in Up Next, for "Next in the list".
+        let position = store.queue.firstIndex { $0.episode.id == id }
         store.markPlayed(id)
         if sleepTimer == .endOfEpisode {
             setSleepTimer(nil)
@@ -445,7 +452,11 @@ final class PlayerModel {
             return
         }
         var next: PodcastEpisode?
-        for item in store.queue {
+        // Setting "After an episode": the one that was after it in Up Next,
+        // or (default) the top of Up Next.
+        let afterInList = UserDefaults.standard.string(forKey: Self.afterEpisodeKey) == "next"
+        let start = afterInList ? min(position ?? 0, store.queue.count) : 0
+        for item in store.queue[start...] + store.queue[..<start] {
             if let episode = store.episode(item.episode.id) {
                 next = episode
                 break

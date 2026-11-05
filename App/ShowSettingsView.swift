@@ -174,6 +174,7 @@ struct TopPriorityView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @Query(sort: \Podcast.title) private var allShows: [Podcast]
+    @AppStorage("afterEpisode") private var afterEpisode = "top"  // PlayerModel.afterEpisodeKey
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
     @State private var findAds = AdScanner.isEnabled
@@ -269,6 +270,17 @@ struct TopPriorityView: View {
                     .tint(Theme.accentFill)
             } footer: {
                 Text("Play next and Play last never put an episode before an older one from the same show.")
+            }
+            .listRowBackground(Theme.background)
+
+            Section {
+                Picker("After an episode, play", selection: $afterEpisode) {
+                    Text("Top of Up Next").tag("top")
+                    Text("Next in the list").tag("next")
+                }
+                .pickerStyle(.menu)
+            } footer: {
+                Text(afterEpisode == "next" ? "Carries on with the episode that was below it in Up Next." : "Always goes back to the top of Up Next.")
             }
             .listRowBackground(Theme.background)
 

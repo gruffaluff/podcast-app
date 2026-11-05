@@ -109,9 +109,9 @@ struct StatsView: View {
             VStack(spacing: 8) {
                 statRow("Time spent transcribing", Self.duration(total))
                 statRow("Average per hour of audio", "\(String(format: "%.1f", perHour)) min")
-                if let longest { statRow("Longest", "\(Self.duration(longest.seconds)) · \(longest.episodeTitle)") }
-                if let shortest { statRow("Shortest", "\(Self.duration(shortest.seconds)) · \(shortest.episodeTitle)") }
-                if let latest = finished.last { statRow("Latest", "\(Self.duration(latest.seconds)) · \(latest.episodeTitle)") }
+                if let longest { statRow("Longest", Self.duration(longest.seconds)) }
+                if let shortest { statRow("Shortest", Self.duration(shortest.seconds)) }
+                if let latest = finished.last { statRow("Latest", Self.duration(latest.seconds)) }
                 if stopped > 0 { statRow("Stopped", "\(stopped)") }
             }
             .padding(14)

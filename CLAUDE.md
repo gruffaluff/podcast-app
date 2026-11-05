@@ -563,6 +563,27 @@ bar. To check on the phone: whether lists still scroll back behind the
 mini player (it is now a bottom safe-area inset, so lists should stop
 above it).
 
+## Done from the fourth Notion FNB batch (5 Nov 2026)
+
+Level bars follow the real sound (`AudioTapState.level`, RMS from the
+audio tap, which is always attached; made-up motion only when a stream
+gives no reading) and sit centred above the play key. The progress line's
+bars show the episode's real loudness once downloaded (`Waveform`: six
+quarter-second samples per bar, cached for the session; the fixed pattern
+otherwise). Status rows under the player removed; a download key in the
+top row (arrow / filling ring / filled when on the phone). Up Next card
+opens the full list over the player again, with a handle, "ALL n" and
+swipe up. Transcript stats show times only (no episode titles). New
+setting (Shows screen): "After an episode, play: Top of Up Next (default)
+/ Next in the list" (`afterEpisode`). Mark as played from the player
+keeps the place for "Next in the list". Library New Episodes cards: the
+artwork fills the top edge to edge (no coloured frame), and the show name
+and "25M AGO" sit in the paper part above the title (Paul). Swipe buttons left as iOS draws
+them (Paul: leave it for now; options were icons/colours/full swipe, or a
+hand-made full-row swipe). Before merging: wait for GitHub's free Build
+check on the PR (it runs on PRs), so Codemagic minutes only go on builds
+that compile.
+
 ## Done from the third Notion FNB batch (5 Nov 2026, after build 116)
 
 Player: no ⋯ menu any more: Full transcript is a key beside the ARTWORK /

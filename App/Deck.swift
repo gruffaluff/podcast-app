@@ -72,6 +72,9 @@ struct SegmentBar: View {
     var height: CGFloat = 12
     var played: Color = Theme.displayText
     var track: Color = Theme.displayTrack
+    /// The episode's real loudness per bar (0...1), when known; otherwise
+    /// a fixed pattern.
+    var levels: [CGFloat]? = nil
 
     var body: some View {
         HStack(alignment: .center, spacing: 2) {
@@ -82,13 +85,18 @@ struct SegmentBar: View {
                 let isPlayed = (start + end) / 2 <= progress
                 RoundedRectangle(cornerRadius: 1.5)
                     .fill(isAd ? Theme.adMarker : (isPlayed ? played : track))
-                    .frame(height: height < 10 ? height : height * Self.wave(index))
+                    .frame(height: height < 10 ? height : height * barHeight(index))
             }
         }
         .frame(height: height)
         .accessibilityElement()
         .accessibilityLabel("Progress")
         .accessibilityValue("\(Int(progress * 100)) percent")
+    }
+
+    private func barHeight(_ index: Int) -> CGFloat {
+        if let levels, index < levels.count { return levels[index] }
+        return Self.wave(index)
     }
 
     /// A fixed, natural-looking pattern of bar heights (0.35...1).
