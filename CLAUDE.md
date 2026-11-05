@@ -554,6 +554,19 @@ the app stays Tape Deck until Paul decides.
   (artwork thumbnail with the show's title and a line or two of its
   description) and **Description only** (a text list, no artwork).
   Remember the choice (synced setting).
+- **First-time transcribe explainer**: the first time Paul taps
+  Transcribe (any Transcribe / TX key or Transcribe now), show a one-off
+  pop-up before starting: transcripts are made on the iPhone from the
+  downloaded audio (nothing leaves the phone), roughly how long one
+  takes (from the timings below once there are some, else a typical
+  figure per hour of audio), that older iPhones are slower and it can
+  use battery and slow the phone while running, and that "While
+  charging" is gentler. Buttons: Transcribe / Cancel. Shown once.
+- **Transcription timings in Stats**: record each on-device
+  transcription (episode, audio length, time taken, date, finished or
+  stopped). Stats page gets a Transcripts section: number made, total
+  time spent, average time per hour of audio, longest and shortest
+  (with the episode), and the latest one.
 
 ## Open questions for Paul
 
