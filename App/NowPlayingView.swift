@@ -21,6 +21,9 @@ struct NowPlayingView: View {
     @State private var transcriptEpisode: PodcastEpisode?
     @State private var showingQueue = false
     @State private var searchingTranscript = false
+    /// Up Next opened below the player (not over it).
+    @State private var queueOpen = false
+    @State private var closing = false
     @AppStorage("playerShowsTranscript") private var showsTranscript = false
 
     private var currentEpisode: PodcastEpisode? {
@@ -42,8 +45,11 @@ struct NowPlayingView: View {
                             modeKeys(tint: tint)
                             nextUp
                             if let episode = currentEpisode {
-                                EpisodeNotesText(episode: episode)
+                                // What the episode page showed: place in Up
+                                // Next, download, transcript; then the notes.
+                                EpisodeStatusRows(episode: episode)
                                     .padding(.top, 6)
+                                EpisodeNotesText(episode: episode)
                             }
                         }
                         .padding(.horizontal, 18)
@@ -52,7 +58,13 @@ struct NowPlayingView: View {
                     }
                 }
                 .safeAreaInset(edge: .bottom) { UndoBar().padding(.horizontal, 12) }
-                .scrollBounceBehavior(.basedOnSize)
+                // Pull down past the top to close the player.
+                .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y + $0.contentInsets.top } action: { _, offset in
+                    if offset < -100, !closing {
+                        closing = true
+                        dismiss()
+                    }
+                }
                 .ignoresSafeArea(edges: .top)
                 }
                 .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
@@ -84,7 +96,7 @@ struct NowPlayingView: View {
     /// top edge, so the keys start below it.
     private func hero(_ item: PlayerModel.NowPlaying, tint: Color, top: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            // One row: close, device, then (transcript) find, mark played, more.
+            // One row: close, device, then (transcript) find, mark played.
             HStack(spacing: 8) {
                 roundButton("chevron.down", label: "Close player") { dismiss() }
                 deviceButton
@@ -93,7 +105,6 @@ struct NowPlayingView: View {
                     roundButton("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
                 }
                 roundButton("checkmark", label: "Mark as played") { markPlayed() }
-                moreMenu
             }
             Group {
                 if showsTranscript, let episode = currentEpisode {
@@ -103,8 +114,12 @@ struct NowPlayingView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            if showsTranscript { chapterChip }
             adBar
-            modeSwitch(tint: tint)
+            HStack(spacing: 8) {
+                modeSwitch(tint: tint)
+                roundButton("arrow.up.left.and.arrow.down.right", label: "Full transcript") { transcriptEpisode = currentEpisode }
+            }
         }
         .foregroundStyle(Theme.displayText)
         .padding(.horizontal, 20)
@@ -130,10 +145,6 @@ struct NowPlayingView: View {
             }
         }
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 40, bottomTrailingRadius: 40))
-        // Swipe down on the top area to close (the player fills the screen).
-        .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { value in
-            if value.translation.height > 90, abs(value.translation.width) < 80 { dismiss() }
-        })
         .environment(\.heroTint, tint)
     }
 
@@ -216,22 +227,6 @@ struct NowPlayingView: View {
         player.finishEarly()
     }
 
-    private var moreMenu: some View {
-        Menu {
-            Button("Episode notes", systemImage: "doc.text") { showingNotes = true }
-            if !player.chapters.isEmpty {
-                Button("Chapters", systemImage: "list.number") { showingChapters = true }
-            }
-            Button("Full transcript", systemImage: "text.quote") { transcriptEpisode = currentEpisode }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 18, weight: .bold))
-                .frame(width: 40, height: 40)
-                .background(Self.keyFill, in: Circle())
-        }
-        .accessibilityLabel("More")
-    }
-
     /// While an ad plays: a floating bar with Skip ad and Not an ad. Just
     /// after a skip: Play ad / Not an ad.
     @ViewBuilder private var adBar: some View {
@@ -299,19 +294,41 @@ struct NowPlayingView: View {
 
     // MARK: Below
 
+    /// Played on the left, left to go on the right with the time it will
+    /// end (at this speed), and level bars moving in between while playing.
     private var clock: some View {
         let shown = scrubTime ?? player.currentTime
-        return HStack(alignment: .firstTextBaseline) {
-            Text(TimeFormat.clock(shown))
-                .font(Theme.big(46))
-                .monospacedDigit()
-                .foregroundStyle(Theme.ink)
-            Spacer()
-            Text(player.duration > 0 ? "−" + TimeFormat.clock(max(0, player.duration - shown)) : "")
-                .font(Theme.mono(15, .bold))
-                .monospacedDigit()
-                .foregroundStyle(Theme.muted)
+        let left = max(0, player.duration - shown)
+        return HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(TimeFormat.clock(shown))
+                    .font(Theme.big(46))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
+                Text("PLAYED")
+                    .font(Theme.mono(10, .bold))
+                    .tracking(1.2)
+                    .foregroundStyle(Theme.muted)
+            }
+            LevelBars(playing: player.isPlaying && scrubTime == nil, color: heroTint)
+                .frame(maxWidth: .infinity)
+            if player.duration > 0 {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("−" + TimeFormat.clock(left))
+                        .font(Theme.big(30))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.ink)
+                    Text("ENDS \(Date().addingTimeInterval(left / max(player.speed, 0.5)).formatted(date: .omitted, time: .shortened))")
+                        .font(Theme.mono(10, .bold))
+                        .tracking(1.2)
+                        .foregroundStyle(Theme.muted)
+                }
+            }
         }
+    }
+
+    private var heroTint: Color {
+        player.nowPlaying.flatMap { ArtworkColors.shared.background(for: $0.artworkURL) } ?? Theme.display
     }
 
     /// The wave progress bar. Only the outlined handle at the current
@@ -324,10 +341,10 @@ struct NowPlayingView: View {
             let x = min(width, max(0, shown / duration * width))
             ZStack(alignment: .leading) {
                 SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline)
-                RoundedRectangle(cornerRadius: 4)
+                RoundedRectangle(cornerRadius: 3)
                     .fill(Theme.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.ink, lineWidth: 2.5))
-                    .frame(width: 12, height: 38)
+                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Theme.ink, lineWidth: 2))
+                    .frame(width: 8, height: 32)
                     .shadow(color: .black.opacity(scrubTime == nil ? 0.1 : 0.3), radius: 4, y: 2)
                     .scaleEffect(scrubTime == nil ? 1 : 1.15)
                     // A finger-sized touch area, centred on the handle and
@@ -461,33 +478,101 @@ struct NowPlayingView: View {
     }
 
     /// The next episode in Up Next; tap to go back to the queue.
+    /// What's next: tap to open the next few below (tap one to play it);
+    /// "Edit Up Next" opens the full list to reorder or remove.
     @ViewBuilder private var nextUp: some View {
         let playingID = player.nowPlaying?.episodeID
         let upcoming = store.queue.filter { $0.episode.id != playingID }
         if let next = upcoming.first {
             let episode = store.episode(next.episode.id)
-            Button { showingQueue = true } label: {
-                HStack(spacing: 12) {
-                    ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? next.episode.title, size: 42, radius: 10)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("UP NEXT · \(upcoming.count)")
-                            .font(Theme.mono(10, .bold))
-                            .tracking(1.2)
-                            .foregroundStyle(Theme.muted)
-                        Text(next.episode.title)
-                            .font(.system(size: 15, weight: .bold))
+            VStack(spacing: 0) {
+                Button {
+                    withAnimation(.snappy) { queueOpen.toggle() }
+                } label: {
+                    HStack(spacing: 12) {
+                        ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? next.episode.title, size: 42, radius: 10)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("UP NEXT · \(upcoming.count)")
+                                .font(Theme.mono(10, .bold))
+                                .tracking(1.2)
+                                .foregroundStyle(Theme.muted)
+                            Text(next.episode.title)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.down")
+                            .font(.footnote.weight(.bold))
                             .foregroundStyle(Theme.ink)
-                            .lineLimit(1)
+                            .rotationEffect(.degrees(queueOpen ? 180 : 0))
                     }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.up").font(.footnote.weight(.bold)).foregroundStyle(Theme.ink)
+                    .padding(12)
+                    .contentShape(Rectangle())
                 }
-                .padding(12)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
+                .buttonStyle(.plain)
+                .accessibilityHint(queueOpen ? "Hides Up Next" : "Shows what's next")
+                if queueOpen {
+                    let ids = upcoming.prefix(6).map(\.episode.id)
+                    let found = store.episodes(ids)
+                    ForEach(Array(upcoming.prefix(6).dropFirst()), id: \.episode.id) { item in
+                        if let queued = found[item.episode.id] {
+                            Divider().overlay(Theme.hairline).padding(.horizontal, 12)
+                            Button { player.play(queued) } label: {
+                                HStack(spacing: 12) {
+                                    ArtworkView(url: queued.artwork, title: queued.podcast?.title ?? queued.title, size: 34, radius: 8)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(queued.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
+                                        Text(queued.podcast?.title ?? "").font(.system(size: 12)).foregroundStyle(Theme.muted).lineLimit(1)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Text(queued.timeLeft.map { TimeFormat.clock($0) } ?? "")
+                                        .font(Theme.mono(11)).monospacedDigit().foregroundStyle(Theme.muted)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Plays it now")
+                        }
+                    }
+                    Button { showingQueue = true } label: {
+                        Text("EDIT UP NEXT ›")
+                            .font(Theme.mono(11, .bold))
+                            .tracking(1)
+                            .foregroundStyle(Theme.accentText)
+                            .frame(maxWidth: .infinity, minHeight: 40)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .buttonStyle(.plain)
-            .accessibilityHint("Shows Up Next over the player")
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
         }
+    }
+}
+
+/// Little level bars between the times: they move while the episode plays
+/// and settle when it's paused.
+private struct LevelBars: View {
+    let playing: Bool
+    let color: Color
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 15, paused: !playing)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .center, spacing: 3) {
+                ForEach(0..<9, id: \.self) { index in
+                    let wave = playing ? abs(sin(t * (2.1 + Double(index % 3) * 0.7) + Double(index) * 1.3)) : 0.15
+                    Capsule()
+                        .fill(color.opacity(0.85))
+                        .frame(width: 4, height: 6 + 22 * wave)
+                }
+            }
+            .frame(height: 30)
+            .animation(.easeOut(duration: 0.2), value: playing)
+        }
+        .accessibilityHidden(true)
     }
 }
 

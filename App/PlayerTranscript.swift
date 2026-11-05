@@ -211,6 +211,7 @@ struct PlayerTranscriptPanel: View {
 /// screen.
 struct TranscriptStatusView: View {
     @Environment(TranscriptService.self) private var transcripts
+    @Environment(DownloadManager.self) private var downloads
     @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
     var onDark = false
@@ -219,13 +220,26 @@ struct TranscriptStatusView: View {
         VStack(spacing: 10) {
             switch episode.transcriptState {
             case .transcribing:
-                ProgressView().tint(textColor)
-                Text("Transcribing on this iPhone…").font(.headline)
+                if let fraction = transcripts.progress[episode.episodeID] {
+                    Text("Transcribing · \(Int(fraction * 100))%").font(.headline).monospacedDigit()
+                    bar(fraction)
+                } else {
+                    ProgressView().tint(textColor)
+                    Text("Getting ready to transcribe…").font(.headline)
+                }
                 Text("You can keep listening. Stop it if the phone gets warm or slow.")
                 stopButton
-            case .waiting where transcripts.isQueued(episode):
-                Text("Waiting to transcribe").font(.headline)
-                Text(store.localAudioURL(for: episode) == nil ? "It downloads first, then transcribes." : transcripts.schedule.explanation)
+            case .waiting where transcripts.isQueued(episode) || transcripts.isRequested(episode):
+                if let fraction = downloads.progress[episode.episodeID] {
+                    // Transcripts are made from the downloaded file.
+                    Text("Downloading first · \(Int(fraction * 100))%").font(.headline).monospacedDigit()
+                    bar(fraction)
+                    Text("Then it transcribes on this iPhone.")
+                } else {
+                    ProgressView().tint(textColor)
+                    Text("Waiting to transcribe").font(.headline)
+                    Text(store.localAudioURL(for: episode) == nil ? "It downloads first, then transcribes." : transcripts.schedule.explanation)
+                }
                 stopButton
             case .failed:
                 Text("Couldn't make a transcript for this episode.").font(.headline)
@@ -252,6 +266,13 @@ struct TranscriptStatusView: View {
 
     private var textColor: Color { onDark ? Theme.displayText : Theme.ink }
 
+    private func bar(_ fraction: Double) -> some View {
+        ProgressView(value: min(1, max(0, fraction)))
+            .tint(textColor)
+            .frame(maxWidth: 240)
+            .animation(.easeOut(duration: 0.4), value: fraction)
+    }
+
     private var stopButton: some View {
         Button { transcripts.stop(episode) } label: {
             Text("STOP").font(Theme.mono(13, .bold)).padding(.horizontal, 18).frame(minHeight: 44)
@@ -265,26 +286,30 @@ extension View {
     /// The one-off explainer shown the first time Transcribe is tapped. Put
     /// on the root and on each sheet that has a Transcribe key, so it shows
     /// on top of whatever is open.
-    func transcribeExplainer() -> some View {
-        modifier(TranscribeExplainer())
+    /// `enabled` false while something covers this screen (e.g. the full
+    /// player), so the alert shows on the top one only.
+    func transcribeExplainer(enabled: Bool = true) -> some View {
+        modifier(TranscribeExplainer(enabled: enabled))
     }
 }
 
 private struct TranscribeExplainer: ViewModifier {
     @Environment(TranscriptService.self) private var transcripts
+    var enabled = true
 
     func body(content: Content) -> some View {
-        content.alert("Transcripts on your iPhone", isPresented: Binding(get: { transcripts.explainEpisode != nil }, set: { _ in })) {
+        content.alert("Transcribe on this iPhone?", isPresented: Binding(get: { enabled && transcripts.explainEpisode != nil }, set: { _ in })) {
+            // Listed in this order, Transcribe shows on the left.
             Button("Transcribe") { transcripts.confirmExplainer() }
-            Button("Cancel", role: .cancel) { transcripts.explainEpisode = nil }
+            Button("Not now") { transcripts.explainEpisode = nil }
         } message: {
             Text(message)
         }
     }
 
     private var message: String {
-        let estimate = transcripts.typicalMinutesPerHour.map { "On this iPhone an hour of audio takes about \(max(1, Int($0.rounded()))) minutes." }
-            ?? "An hour of audio usually takes a few minutes on a recent iPhone, and longer on older ones."
-        return "Poddeck makes transcripts on this iPhone from the downloaded audio, so nothing leaves your phone. \(estimate) While it runs it uses battery and can make the phone warm or a little slower, especially older iPhones. Setting transcripts to \"While charging\" is gentler, and you can stop a transcript at any time."
+        let time = transcripts.typicalMinutesPerHour.map { "About \(max(1, Int($0.rounded()))) min per hour of audio." }
+            ?? "A few minutes per hour of audio."
+        return "Made from the download; nothing leaves your phone.\n\(time)\nUses battery while it runs. Stop it any time."
     }
 }

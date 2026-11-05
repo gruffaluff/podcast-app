@@ -22,6 +22,8 @@ struct UpNextView: View {
                                 QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID)
                             }
                             .buttonStyle(.plain)
+                            // No line under the last row.
+                            .listRowSeparator(index == store.queue.count - 1 ? .hidden : .visible, edges: .bottom)
                             .swipeActions(edge: .trailing) {
                                 Button("Played") {
                                     store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
@@ -184,11 +186,12 @@ private struct QueueRow: View {
                 }
                 .font(Theme.mono(10))
                 .foregroundStyle(Theme.muted)
-                if let status {
-                    Text(status.uppercased())
-                        .font(Theme.mono(10))
-                        .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
-                }
+                // Always takes its line (blank when there's nothing to say),
+                // so rows don't change height when one starts playing.
+                Text((status ?? " ").uppercased())
+                    .font(Theme.mono(10))
+                    .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
+                    .lineLimit(1)
             }
             Spacer(minLength: 6)
             VStack(alignment: .trailing, spacing: 5) {

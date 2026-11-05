@@ -563,6 +563,31 @@ bar. To check on the phone: whether lists still scroll back behind the
 mini player (it is now a bottom safe-area inset, so lists should stop
 above it).
 
+## Done from the third Notion FNB batch (5 Nov 2026, after build 116)
+
+Player: no ⋯ menu any more: Full transcript is a key beside the ARTWORK /
+TRANSCRIPT switch, the chapter chip shows in transcript mode too, and the
+episode page's detail (place in Up Next, download, transcript rows) sits
+above the notes under the player. Up Next opens below the player (next 5,
+tap to play, "Edit Up Next" for the full list) instead of sliding over
+it. Time area: played (big) and left with "ENDS 16:48" (at this speed),
+level bars moving between them while playing (`LevelBars`). Pull down
+past the top closes the player (`onScrollGeometryChange`; the drag
+gesture never fired). Scrub handle 8×32. Transcribe explainer: shorter,
+Transcribe on the left, "Not now"; it no longer shows from the root while
+the player is open (that closed and reopened the player). Progress: the
+transcript status shows "Downloading first · 40%" and "Transcribing ·
+62%" with bars (`TranscriptService.progress`, from how far the speech
+results have got). Up Next rows keep their height (status line always
+there) and the last row has no line under it. Show page and Discover
+preview header runs edge to edge up under the status bar with rounded
+bottom corners (list ignores the top safe area; search is a field under
+the header); the "New episodes go to" bar is gone (the header's settings
+key covers it).
+Codemagic: free 500 Mac minutes a month, each build ~15–20 min, so about
+25 builds a month. Batch notes into fewer builds; it stops at the limit
+(no charge).
+
 ## Done from the second Notion FNB batch (5 Nov 2026, after build 115)
 
 Build 115 confirmed: device button opens the output list, handle-only

@@ -89,6 +89,8 @@ final class TranscriptService {
 
     /// The episode being transcribed on the iPhone right now.
     private(set) var current: String?
+    /// How far through the audio the transcript has got (0–1), per episode.
+    private(set) var progress: [String: Double] = [:]
     /// Set when Transcribe is tapped for the first time: the app shows a
     /// one-off explainer (see RootView) before starting.
     var explainEpisode: PodcastEpisode?
@@ -184,6 +186,12 @@ final class TranscriptService {
         guard runs.count >= 1 else { return nil }
         let ratio = runs.map { $0.seconds / $0.audioSeconds }.reduce(0, +) / Double(runs.count)
         return ratio * 60
+    }
+
+    /// Paul tapped Transcribe and it hasn't finished (it may be downloading
+    /// first).
+    func isRequested(_ episode: PodcastEpisode) -> Bool {
+        requested.contains(episode.episodeID)
     }
 
     /// Waiting in line or being transcribed now.
@@ -313,7 +321,11 @@ final class TranscriptService {
                 let runTitle = episode.title
                 let runShow = episode.podcast?.title ?? ""
                 do {
-                    let transcript = try await OnDeviceTranscriber.transcribe(audio)
+                    let transcript = try await OnDeviceTranscriber.transcribe(audio) { fraction in
+                        Task { @MainActor [weak self] in
+                            if self?.current == id { self?.progress[id] = fraction }
+                        }
+                    }
                     if let episode = store.episode(id) { finish(episode, with: transcript) }
                     TranscriptionLog.add(.init(episodeTitle: runTitle, showTitle: runShow, audioSeconds: audioLength > 0 ? audioLength : (transcript.segments.last?.end ?? 0), seconds: Date().timeIntervalSince(started), date: started, finished: true))
                 } catch {
@@ -330,6 +342,7 @@ final class TranscriptService {
                     }
                 }
                 current = nil
+                progress[id] = nil
                 requested.remove(id)
                 store.save()
             }
@@ -440,12 +453,13 @@ enum OnDeviceTranscriber {
         var errorDescription: String? { "On-device transcription doesn't support this language yet." }
     }
 
-    static func transcribe(_ audio: URL) async throws -> Transcript {
+    /// `onProgress` gets how far through the audio it is (0–1).
+    static func transcribe(_ audio: URL, onProgress: @escaping @Sendable (Double) -> Void = { _ in }) async throws -> Transcript {
         async let music = MusicDetector.spans(in: audio)
         // Words grouped into lines; no speaker labels (Paul dropped speaker
         // separation as not worth the battery). Shows' own transcripts still
         // name their speakers.
-        let words = try await speech(in: audio)
+        let words = try await speech(in: audio, onProgress: onProgress)
         return Transcript(source: .onDevice, segments: words, music: await music)
     }
 
@@ -530,14 +544,18 @@ enum OnDeviceTranscriber {
         return output
     }
 
-    private static func speech(in audio: URL) async throws -> [TranscriptSegment] {
+    private static func speech(in audio: URL, onProgress: @escaping @Sendable (Double) -> Void) async throws -> [TranscriptSegment] {
         let transcriber = try await makeTranscriber()
         let analyzer = SpeechAnalyzer(modules: [transcriber])
         let file = try AVAudioFile(forReading: audio)
+        let duration = Double(file.length) / file.processingFormat.sampleRate
+        onProgress(0)
 
         let collector = Task { () -> [TranscriptSegment] in
             var segments: [TranscriptSegment] = []
             for try await result in transcriber.results where result.isFinal {
+                let reached = result.range.end.seconds
+                if duration > 0, reached.isFinite { onProgress(min(1, reached / duration)) }
                 let words = wordSegments(of: result)
                 if !words.isEmpty {
                     segments += words
