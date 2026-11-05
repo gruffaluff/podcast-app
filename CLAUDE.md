@@ -576,9 +576,15 @@ opens the full list over the player again, with a handle, "ALL n" and
 swipe up. Transcript stats show times only (no episode titles). New
 setting (Shows screen): "After an episode, play: Top of Up Next (default)
 / Next in the list" (`afterEpisode`). Mark as played from the player
-keeps the place for "Next in the list". Library New Episodes cards: the
-artwork fills the top edge to edge (no coloured frame), and the show name
-and "25M AGO" sit in the paper part above the title (Paul). Swipe buttons left as iOS draws
+keeps the place for "Next in the list". Library New Episodes cards, then (after build 119, Paul: "wider and
+shorter and more themed like the Apple app"): 300×300, the artwork
+filling the card and fading into its own colour, white text over it
+(SHOW · 1H AGO, title, one line of description), a translucent play pill
+with the time left, download and ⋯; DL/TX lights dropped from the card
+(the download key shows downloads); the carousel snaps to each card.
+GitHub's free Build check runs on a slower Intel Mac and can fail
+("unable to type-check in reasonable time") where Codemagic passes: keep
+SwiftUI expressions small either way. Swipe buttons left as iOS draws
 them (Paul: leave it for now; options were icons/colours/full swipe, or a
 hand-made full-row swipe). Before merging: wait for GitHub's free Build
 check on the PR (it runs on PRs), so Codemagic minutes only go on builds
