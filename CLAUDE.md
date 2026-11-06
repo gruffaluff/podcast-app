@@ -335,6 +335,13 @@ to Nowhere / Top / Bottom" on the show page.
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
 - Show and episode names on the page are made-up examples (footer says so).
+- **Hosting moved to Cloudflare Pages** (Paul, 6 Nov 2026): project
+  "poddeck" (Workers & Pages), connected to this repo, production branch
+  main, no build command, output folder `docs`; custom domains poddeck.uk
+  and www.poddeck.uk (Cloudflare made its own records; proxied/orange is
+  right now). Every merge to main redeploys it. GitHub Pages is switched
+  off, so `docs/CNAME` and `docs/_config.yml` are leftovers (remove in a
+  later build). Earlier GitHub Pages notes below are history.
 - **Own address: poddeck.uk** (Paul bought it on Cloudflare Registrar,
   6 Nov 2026; the domain is his only cost, yearly). Cloudflare DNS records
   for GitHub must be "DNS only" (grey cloud), not proxied. Don't type the
@@ -663,6 +670,16 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
+  it (Settings → General → Change visibility). Not before: November's
+  free private allowance is already used, so going private now would stop
+  the alerts job and the PR compile check until December. Private costs
+  nothing (no card on GitHub, so it pauses at the limit instead of
+  charging): alerts ≈ 800 of the 2,000 free minutes a month (26 runs a
+  day, each billed as a minute); each Mac PR check ≈ 65 (10×), so run the
+  check once per build batch, not on every push. If alerts ever pause,
+  move the cron to every 30 minutes. The website is on Cloudflare Pages
+  (works with private repos); GitHub Pages stays off.
 - (poddeck.uk went out with PR #41 on 6 Nov 2026. Paul added the
   Cloudflare DNS records himself. After the merge: tick Enforce HTTPS in
   Settings → Pages once it's offered.)
