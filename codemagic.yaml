@@ -23,6 +23,23 @@ workflows:
         - pattern: main
           include: true
       cancel_previous_builds: true
+    # Skip the app build when a merge only touches the website, design
+    # files or notes (Paul, 6 Nov 2026): poddeck.uk (Cloudflare Pages)
+    # updates on its own, without spending free Mac minutes. Any change
+    # elsewhere still builds. (Tried once on 4 Nov and removed while a
+    # missing GitHub webhook was being blamed on it; the filter was fine.)
+    when:
+      changeset:
+        includes:
+          - '.'
+        excludes:
+          - 'website/**'
+          - 'docs/**'
+          - 'design/**'
+          - '**/*.md'
+          - 'scripts/build_site.py'
+          - 'scripts/new_episode_alerts.py'
+          - '.github/**'
     scripts:
       - name: Build, sign and upload to TestFlight
         script: |

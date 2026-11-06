@@ -62,6 +62,10 @@ to Nowhere / Top / Bottom" on the show page.
   "FNB" means add it to "Queued for the next app build" below and do not
   build, merge or start the work yet. Paul is compiling a list; build the
   list only when he says so. Reply briefly confirming what was queued.
+- **"UBDM" = update but don't merge** (Paul, 6 Nov 2026): make the
+  change on the branch (and open a PR so GitHub's free check compiles
+  it), but don't merge, so no Codemagic build starts until Paul says
+  "build".
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
   decisions, progress and open questions in the same change, without
   asking first, and mention briefly what changed here in your reply.
@@ -334,7 +338,22 @@ to Nowhere / Top / Bottom" on the show page.
 - The download button says "Coming soon to TestFlight" until
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
-- Show and episode names on the page are made-up examples (footer says so).
+- Real screenshots (Paul's iPhone, 6 Nov 2026, build 123) in
+  `website/shots/` (600 px JPEGs; `scripts/build_site.py` copies them to
+  `docs/shots/`; the claude.ai page gets them through the publish `files`
+  map): the player is the hero, the transcript screenshot sits in the
+  transcripts section, and "On a real iPhone" is a swipeable gallery (Up
+  Next, Library, a show, chapters, show settings, Discover, stats). Up
+  Next / show / Discover still show the old row style and circled skip
+  keys: retake after the next build. Footer: screenshots show real shows,
+  whose names and artwork belong to their owners; demo names are made up.
+- **Hosting moved to Cloudflare Pages** (Paul, 6 Nov 2026): project
+  "poddeck" (Workers & Pages), connected to this repo, production branch
+  main, no build command, output folder `docs`; custom domains poddeck.uk
+  and www.poddeck.uk (Cloudflare made its own records; proxied/orange is
+  right now). Every merge to main redeploys it. GitHub Pages is switched
+  off, so `docs/CNAME` and `docs/_config.yml` are leftovers (remove in a
+  later build). Earlier GitHub Pages notes below are history.
 - **Own address: poddeck.uk** (Paul bought it on Cloudflare Registrar,
   6 Nov 2026; the domain is his only cost, yearly). Cloudflare DNS records
   for GitHub must be "DNS only" (grey cloud), not proxied. Don't type the
@@ -661,8 +680,49 @@ From the Notion notes after 6 Nov 08:10:
   transcript") with the From the show / Auto switch above it.
 - Website at poddeck.uk (files on the branch, see Website).
 
+## Done in the last weekend build (6 Nov 2026, PR #42, build 124; Paul: "one last weekend build")
+
+- Player skip back / forward have no circle round them and a
+  bigger icon (36 pt) in proportion with the play key.
+- One row style everywhere: **B, one rounded paper panel with thin
+  lines between rows** (Paul, 6 Nov 2026, from the A/B mock-up). Shared
+  `panelRow(index, of:, highlighted:)` in Deck.swift draws each row's
+  slice of the panel and its own line (system separators run past the
+  panel edge in plain lists). Used by Up Next (playing row highlighted),
+  show episode lists, show previews and Discover (search and charts);
+  the pulled-up Up Next and Chapters already looked like this. Search
+  results still use plain rows (left for now). Branch only (UBDM).
+- Stats "finished in 30 days" counts only episodes actually played
+  (`lastPlayedAt` set); bulk Mark all as played made it say 1557.
+- Reorder drag (Paul: white square corners on the lifted row, Shows
+  screen): the Shows screen's lists were on the sand background, so iOS
+  drew the lifted row on a plain light square. Its rows are now paper
+  panels too (style B), and lifted rows keep rounded corners
+  (`.contentShape(.dragPreview, …)`) in all three reorderable lists: Up
+  Next, the pulled-up Up Next and Top show priority. Check on the phone.
+- Website no longer tied to app builds (Paul, 6 Nov 2026, UBDM):
+  `codemagic.yaml` skips the TestFlight build when a merge only touches
+  `website/`, `docs/`, `design/`, `.md` notes, `.github/`,
+  `scripts/build_site.py` or `scripts/new_episode_alerts.py`. Cloudflare
+  still redeploys poddeck.uk on every merge to main. Takes effect from the
+  merge that adds it (that merge itself builds). If a build that should
+  have run is ever skipped, check the Codemagic build list for "skipped"
+  and the changeset rule first.
+
 ## Queued for the next app build
 
+- Retake the website's Up Next, show and Discover screenshots on build
+  124 (new row style, skip keys without circles) and swap them in.
+- **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
+  it (Settings → General → Change visibility). Not before: November's
+  free private allowance is already used, so going private now would stop
+  the alerts job and the PR compile check until December. Private costs
+  nothing (no card on GitHub, so it pauses at the limit instead of
+  charging): alerts ≈ 800 of the 2,000 free minutes a month (26 runs a
+  day, each billed as a minute); each Mac PR check ≈ 65 (10×), so run the
+  check once per build batch, not on every push. If alerts ever pause,
+  move the cron to every 30 minutes. The website is on Cloudflare Pages
+  (works with private repos); GitHub Pages stays off.
 - (poddeck.uk went out with PR #41 on 6 Nov 2026. Paul added the
   Cloudflare DNS records himself. After the merge: tick Enforce HTTPS in
   Settings → Pages once it's offered.)

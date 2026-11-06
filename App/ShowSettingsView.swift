@@ -203,6 +203,9 @@ struct TopPriorityView: View {
                             .foregroundStyle(Theme.ink)
                             .lineLimit(1)
                     }
+                    // A lifted row keeps rounded corners (it showed white
+                    // square corners while dragging).
+                    .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
                 }
                 .onMove { from, to in
                     shows.move(fromOffsets: from, toOffset: to)
@@ -213,7 +216,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("Your favourite goes first. Its new episodes always land above lower-ranked Top shows, whenever they arrive.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 ForEach(allShows) { show in
@@ -224,7 +227,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("The bell sends an alert when a new episode arrives, saying where it went in Up Next.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 Picker("Check for new episodes", selection: $checkHours) {
@@ -242,7 +245,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("iOS decides the exact moment, so checks can run a little late. Pull down on Up Next to check now.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 skipPicker("Back", selection: Binding(get: { player.skipBackSeconds }, set: { player.setSkipBack($0) }))
@@ -252,7 +255,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("Seconds skipped by the back and forward buttons, lock screen and headphones. You can also touch and hold a skip button in the player to change it.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 Toggle("Find ads while listening", isOn: $findAds)
@@ -265,7 +268,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("While a downloaded episode plays, Poddeck checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 Toggle("Keep each show in order", isOn: $store.keepShowOrder)
@@ -273,7 +276,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("Play next and Play last never put an episode before an older one from the same show.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 Toggle("Bedtime sleep timer", isOn: $bedtimeTimer)
@@ -281,7 +284,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("Starting an episode between 10pm and 5am sets the sleep timer to the one you last chose (end of episode at first).")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 Picker("After an episode, play", selection: $afterEpisode) {
@@ -292,7 +295,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text(afterEpisode == "next" ? "Carries on with the episode that was below it in Up Next." : "Always goes back to the top of Up Next.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 // A menu picker, as this screen's list stays in edit mode for dragging.
@@ -315,7 +318,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text(transcripts.schedule.explanation + " Shows that publish their own transcripts don't need transcribing. Any episode can be transcribed straight away with Transcribe now.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
             .tint(Theme.accentFill)
 
             Section {
@@ -336,7 +339,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("New episodes download automatically for shows with downloads on. Played episodes' downloads are deleted straight away to save space, unless you keep them for 24 hours. Downloads you start yourself go straight away. Over the limit, the oldest go first: played ones, then ones not in Up Next, then the end of Up Next (never what's playing).")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             Section {
                 // A button (this list stays in edit mode, where links can't be tapped).
@@ -347,7 +350,7 @@ struct TopPriorityView: View {
             } footer: {
                 Text("How much space downloads take, per show, with delete and \"keep latest\" limits.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
 
             ImportExportSection()
 
@@ -367,7 +370,7 @@ struct TopPriorityView: View {
                      ? "Your shows, Up Next, progress, bookmarks and settings are saved to your iCloud, so they come back if you reinstall Poddeck or get a new iPhone. Downloads and transcripts stay on this iPhone; downloads come back by themselves."
                      : "Sign in to iCloud in the Settings app to keep your shows, Up Next and progress safe if you reinstall Poddeck. Everything is still saved on this iPhone.")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.surface)
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)

@@ -8,6 +8,7 @@ published; a normal web host needs them in the file, plus a favicon and
 the preview card details that link previews (iMessage, WhatsApp) read.
 """
 from pathlib import Path
+import shutil
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "website" / "poddeck.html"
@@ -51,4 +52,8 @@ img {{ max-width: 100%; }}
 <body>
 """
 OUT.write_text(head + body.strip() + "\n</body>\n</html>\n", encoding="utf-8")
+# Screenshots used by the page (website/shots → docs/shots).
+shots = ROOT / "website" / "shots"
+if shots.is_dir():
+    shutil.copytree(shots, ROOT / "docs" / "shots", dirs_exist_ok=True)
 print(f"Wrote {OUT.relative_to(ROOT)} from {SOURCE.relative_to(ROOT)}")

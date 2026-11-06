@@ -140,16 +140,10 @@ struct UpNextView: View {
                     .padding(.bottom, 4)
             }
         }
-        // Each row is its own paper card (no system lines): lines tied to
-        // a row's place flickered in the wrong spots while dragging.
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 9, leading: 24, bottom: 9, trailing: 24))
-        .listRowBackground(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Theme.surface)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 3)
-        )
+        // One rounded paper panel with lines between rows (style B, the
+        // same as every list); the playing one is highlighted. The lines are
+        // drawn by the row, not the system, so they don't flicker mid-drag.
+        .panelRow(index, of: store.queue.count, highlighted: player.nowPlaying?.episodeID == episode.episodeID)
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
