@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poddeck</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="canonical" href="https://poddeck.uk/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://poddeck.uk/">
+<meta property="og:title" content="Poddeck: a podcast app you run, not rent">
+<meta property="og:description" content="Transcripts, ad skipping, smart speed and a queue that keeps every show in order, all on your iPhone. No subscription, no account, no ads.">
+<meta property="og:image" content="https://poddeck.uk/icon.png">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#E9E3D5">
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Poddeck: a podcast app for iPhone with no subscription, no account, no ads and no hidden costs. Everything runs on your phone.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root {
+  --page: #E9E3D5;
+  --paper: #F6F2E9;
+  --ink: #1F1D19;
+  --ink-soft: #57524A;
+  --line: #D6CDB9;
+  --olive: #45543A;
+  --deep: #2F3A27;
+  --on-deep: #F3EEDF;
+  --on-deep-soft: #C9CDB8;
+  --amber: #D9A441;
+  --highlight: #F2DFB8;
+  --top: #45543A;
+  --bottom: #8A6A2E;
+  --off: #8C857A;
+  --shadow: 0 1px 0 rgba(31,29,25,.06), 0 10px 30px -12px rgba(47,58,39,.28);
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Figtree", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #191B15; --paper: #23261E; --ink: #ECE6D8; --ink-soft: #ADA796; --line: #3A3E32;
+    --olive: #A8B98A; --deep: #2A3323; --on-deep: #F3EEDF; --on-deep-soft: #B7BDA6;
+    --amber: #E2B15A; --highlight: #3B3524; --top: #A8B98A; --bottom: #D6AE68; --off: #8C857A;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #191B15; --paper: #23261E; --ink: #ECE6D8; --ink-soft: #ADA796; --line: #3A3E32;
+  --olive: #A8B98A; --deep: #2A3323; --on-deep: #F3EEDF; --on-deep-soft: #B7BDA6;
+  --amber: #E2B15A; --highlight: #3B3524; --top: #A8B98A; --bottom: #D6AE68; --off: #8C857A;
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--page); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; text-transform: uppercase; letter-spacing: .005em; line-height: .95; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(52px, 9vw, 104px); }
+h2 { font-size: clamp(40px, 6vw, 68px); }
+h3 { font-size: 30px; }
+p { margin: 0; }
+a { color: var(--olive); }
+.label { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--olive); }
+.lede { font-size: 20px; color: var(--ink-soft); max-width: 36em; }
+.muted { color: var(--ink-soft); }
+
+/* Header */
+header.top { padding-block: 18px; }
+header.top .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand img { width: 40px; height: 40px; border-radius: 10px; box-shadow: var(--shadow); }
+.brand span { font-family: var(--display); font-weight: 800; font-size: 28px; letter-spacing: .02em; }
+nav.links { display: flex; gap: 18px; margin-left: auto; flex-wrap: wrap; }
+nav.links a { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); text-decoration: none; }
+nav.links a:hover { color: var(--olive); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 14px; font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; border: 0; cursor: pointer; }
+.btn.primary { background: var(--olive); color: var(--page); }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn[aria-disabled="true"] { opacity: .75; cursor: default; }
+
+/* Hero */
+.hero { padding-block: 36px 64px; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 48px; align-items: center; }
+.hero-copy { display: grid; gap: 22px; min-width: 0; }
+.hero h1 em { font-style: normal; color: var(--olive); }
+.hero .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.zeros { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-top: 6px; }
+.zero { background: var(--paper); border-radius: 14px; padding: 12px 12px 10px; box-shadow: var(--shadow); }
+.zero b { display: block; font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1; }
+.zero span { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* Phone */
+.phone { width: min(330px, 100%); margin: 0 auto; aspect-ratio: 330 / 680; background: var(--paper); border-radius: 46px; padding: 10px; box-shadow: 0 0 0 2px var(--line), 0 30px 60px -24px rgba(31,29,25,.45); max-width: 100%; }
+.screen { height: 100%; border-radius: 37px; overflow: hidden; background: #E9E3D5; color: #1F1D19; display: flex; flex-direction: column; font-family: var(--body); }
+.p-top { position: relative; height: 54%; background: linear-gradient(160deg, #5E7048, #2F3A27 70%); border-radius: 0 0 26px 26px; padding: 44px 16px 14px; display: flex; flex-direction: column; color: #F6F2E9; }
+.p-keys { display: flex; gap: 6px; }
+.p-keys i { width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,.35); display: block; }
+.p-keys i:first-child { margin-right: auto; }
+.p-art { flex: 1; display: grid; place-items: center; }
+.cassette { width: 72%; aspect-ratio: 1.55; background: #E6D8B6; border-radius: 10px; position: relative; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.cassette::before { content: ""; position: absolute; inset: 14% 10% 34%; background: #45543A; border-radius: 5px; }
+.cassette .reel { position: absolute; top: 30%; width: 19%; aspect-ratio: 1; border-radius: 50%; background: #2F3A27; border: 4px solid #E6D8B6; animation: spin 4s linear infinite; }
+.cassette .reel::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: #E6D8B6; }
+.cassette .reel.l { left: 22%; } .cassette .reel.r { right: 22%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .cassette .reel { animation: none; } }
+.p-switch { display: flex; gap: 4px; background: rgba(0,0,0,.3); border-radius: 10px; padding: 3px; align-self: center; font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.p-switch span { padding: 5px 10px; border-radius: 8px; }
+.p-switch span.on { background: #F6F2E9; color: #2F3A27; }
+.p-adbar { position: absolute; left: 14px; right: 14px; bottom: 50px; background: rgba(20,24,16,.82); border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.p-adbar b { margin-left: auto; background: #D9A441; color: #1F1D19; border-radius: 8px; padding: 4px 8px; font-family: var(--mono); font-size: 9px; letter-spacing: .08em; }
+.p-body { flex: 1; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.p-title { font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1; text-transform: uppercase; }
+.p-show { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; color: #57524A; text-transform: uppercase; }
+.p-wave { display: flex; align-items: center; gap: 2px; height: 30px; }
+.p-wave i { flex: 1; background: #B9B09C; border-radius: 2px; }
+.p-wave i.done { background: #45543A; }
+.p-transport { display: flex; justify-content: center; align-items: center; gap: 22px; }
+.p-transport i { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #1F1D19; display: block; }
+.p-transport i.play { width: 50px; height: 50px; background: #1F1D19; border: 0; }
+.p-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.p-tiles span { background: #F6F2E9; border-radius: 9px; padding: 6px 2px; text-align: center; font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: .06em; }
+.p-tiles span b { display: block; font-size: 11px; color: #45543A; }
+
+/* Sections */
+section { padding-block: 72px; }
+.sec-head { display: grid; gap: 14px; margin-bottom: 36px; max-width: 760px; }
+
+/* Receipt */
+.money { background: var(--deep); color: var(--on-deep); }
+.money .wrap { display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 420px); gap: 48px; align-items: center; }
+.money .label { color: var(--amber); }
+.money .lede { color: var(--on-deep-soft); }
+.money-copy { display: grid; gap: 18px; min-width: 0; }
+.receipt { background: #F6F2E9; color: #1F1D19; font-family: var(--mono); font-size: 13px; padding: 26px 24px 30px; border-radius: 4px; position: relative; box-shadow: 0 24px 50px -20px rgba(0,0,0,.6); transform: rotate(1.2deg); min-width: 0; }
+.receipt::after { content: ""; position: absolute; left: 0; right: 0; bottom: -10px; height: 10px; background: linear-gradient(-45deg, transparent 6px, #F6F2E9 0) 0 0 / 12px 10px, linear-gradient(45deg, transparent 6px, #F6F2E9 0) 0 0 / 12px 10px; }
+.receipt h4 { margin: 0 0 4px; text-align: center; font-size: 15px; letter-spacing: .2em; }
+.receipt .sub { text-align: center; color: #57524A; font-size: 11px; margin-bottom: 16px; }
+.receipt .row { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px dashed #CFC6B3; }
+.receipt .row span:first-child { flex: 1; min-width: 0; }
+.receipt .row small { display: block; color: #6B655A; font-size: 11px; }
+.receipt .total { display: flex; justify-content: space-between; font-weight: 700; font-size: 17px; padding-top: 12px; }
+.receipt .stamp { margin-top: 14px; text-align: center; font-size: 11px; color: #45543A; letter-spacing: .15em; }
+
+/* Feature blocks */
+.feature { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; padding-block: 44px; border-top: 1.5px solid var(--line); }
+.feature:first-of-type { border-top: 0; }
+.f-copy { display: grid; gap: 16px; min-width: 0; }
+.f-copy .what { font-size: 19px; }
+.how { background: var(--paper); border-radius: 18px; padding: 20px 22px; box-shadow: var(--shadow); display: grid; gap: 10px; min-width: 0; }
+.how ol { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+.how li { counter-increment: s; display: grid; grid-template-columns: 26px minmax(0,1fr); gap: 10px; }
+.how li::before { content: counter(s); font-family: var(--mono); font-weight: 700; font-size: 12px; width: 24px; height: 24px; border-radius: 50%; background: var(--highlight); color: var(--ink); display: grid; place-items: center; margin-top: 2px; }
+.yours { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 8px; background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--line); color: var(--ink-soft); }
+.chip b { color: var(--olive); }
+
+/* Up Next demo */
+.demo { background: var(--paper); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); display: grid; gap: 16px; min-width: 0; }
+.shows { display: grid; gap: 8px; }
+.show-row { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 10px; align-items: center; }
+.art { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; color: #F6F2E9; font-size: 17px; }
+.show-row .name { font-weight: 600; font-size: 15px; line-height: 1.2; min-width: 0; }
+.show-row .name small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--ink-soft); text-transform: uppercase; }
+.show-ctl { display: flex; gap: 6px; align-items: center; }
+.seg { display: flex; background: var(--page); border-radius: 9px; padding: 2px; }
+.seg button { border: 0; background: transparent; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 6px 7px; border-radius: 7px; color: var(--ink-soft); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--page); }
+.new-ep { border: 0; background: var(--olive); color: var(--page); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 8px 9px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.queue-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.queue-head h4 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 24px; text-transform: uppercase; }
+.queue-head button { border: 0; background: none; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--olive); cursor: pointer; text-transform: uppercase; }
+ol.queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+ol.queue li { display: grid; grid-template-columns: 22px 30px minmax(0,1fr) auto; gap: 10px; align-items: center; background: var(--page); border-radius: 12px; padding: 7px 10px; transition: background .5s; }
+ol.queue li .n { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+ol.queue li .art { width: 30px; height: 30px; font-size: 14px; border-radius: 7px; }
+ol.queue li .t { font-size: 14px; line-height: 1.25; min-width: 0; }
+ol.queue li .t small { display: block; color: var(--ink-soft); font-size: 12px; }
+ol.queue li .tag { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 3px 6px; border-radius: 6px; background: var(--paper); }
+ol.queue li.fresh { background: var(--highlight); }
+ol.queue li.empty { grid-template-columns: 1fr; color: var(--ink-soft); font-size: 14px; }
+.demo-note { font-size: 14px; min-height: 2.6em; color: var(--ink); border-left: 3px solid var(--amber); padding-left: 10px; }
+
+/* Transcript mock */
+.tx { background: var(--paper); border-radius: 22px; padding: 18px 20px; box-shadow: var(--shadow); display: grid; gap: 12px; min-width: 0; font-size: 15px; }
+.tx .find { display: flex; align-items: center; gap: 8px; background: var(--page); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.tx .find b { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); font-weight: 500; }
+.tx .stamp { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; }
+.tx .line { display: block; }
+.tx .line .who { display: block; font-weight: 700; font-size: 13px; color: var(--olive); }
+.tx .line.now { background: var(--highlight); margin-inline: -10px; padding: 6px 10px; border-radius: 10px; }
+.tx mark { background: var(--amber); color: #1F1D19; border-radius: 3px; padding: 0 2px; }
+.tx .music { display: flex; gap: 8px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+.tx .ad { border: 1.5px dashed var(--bottom); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; font-size: 13px; flex-wrap: wrap; }
+.tx .ad .k { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 5px 8px; border-radius: 7px; background: var(--page); }
+
+/* Tool grid */
+.tools { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.tool { background: var(--paper); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); display: grid; gap: 8px; align-content: start; min-width: 0; }
+.tool h3 { font-size: 26px; }
+.tool p { font-size: 15px; color: var(--ink-soft); }
+.tool .def { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--olive); font-weight: 700; }
+
+/* Data table */
+.table-wrap { overflow-x: auto; background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; min-width: 620px; font-size: 15px; }
+th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.where { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 7px; white-space: nowrap; }
+.where.phone-only { background: var(--olive); color: var(--page); }
+.where.icloud { background: var(--highlight); color: var(--ink); }
+.where.public { background: var(--page); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+
+/* Defaults panel */
+.defaults { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 32px; background: var(--paper); border-radius: 18px; padding: 8px 22px; box-shadow: var(--shadow); }
+.defaults div { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.defaults div span:last-child { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--olive); text-align: right; white-space: nowrap; }
+
+/* FAQ */
+.faq { display: grid; gap: 10px; max-width: 820px; }
+details { background: var(--paper); border-radius: 14px; box-shadow: var(--shadow); }
+summary { cursor: pointer; padding: 16px 20px; font-weight: 700; font-size: 17px; list-style: none; display: flex; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; margin-left: auto; font-family: var(--mono); color: var(--olive); }
+details[open] summary::after { content: "−"; }
+details p { padding: 0 20px 18px; color: var(--ink-soft); max-width: 62ch; }
+
+/* Download */
+.get { background: var(--olive); color: var(--page); border-radius: 28px; padding: 44px 36px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 28px; align-items: center; }
+.get img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+.get h2 { font-size: clamp(36px, 5vw, 56px); }
+.get p { opacity: .85; margin-top: 8px; }
+.get .btn { background: var(--page); color: var(--ink); }
+footer { padding-block: 36px 48px; font-size: 13px; color: var(--ink-soft); }
+footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .hero .wrap, .money .wrap, .feature { grid-template-columns: minmax(0,1fr); }
+  .tools { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .get { grid-template-columns: minmax(0,1fr); text-align: left; }
+  .receipt { transform: none; }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  section { padding-block: 52px; }
+  nav.links { display: none; }
+  .zeros { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .tools, .defaults { grid-template-columns: minmax(0,1fr); }
+  .show-row { grid-template-columns: 34px minmax(0,1fr); }
+  .show-ctl { grid-column: 1 / -1; justify-content: space-between; }
+  .get { padding: 32px 22px; }
+}
+</style>
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Poddeck"><img src="data:image/png;base64,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" alt=""><span>PODDECK</span></a>
+    <nav class="links">
+      <a href="#cost">Cost</a>
+      <a href="#features">Features</a>
+      <a href="#privacy">Your data</a>
+      <a href="#questions">Questions</a>
+    </nav>
+    <a class="btn primary download-link" href="#get" aria-disabled="true">TestFlight</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <span class="label">Podcast app for iPhone</span>
+        <h1>A podcast app you <em>run</em>, not rent.</h1>
+        <p class="lede">Poddeck does the clever things paid apps charge for: transcripts, ad skipping, smart speed, a queue that keeps every show in order. It does them all on your iPhone. There's no subscription, no account and no adverts, and nothing about you goes to a server.</p>
+        <div class="actions">
+          <a class="btn primary download-link" id="testflight" href="#get" aria-disabled="true">Coming soon to TestFlight</a>
+          <a class="btn ghost" href="#features">See how it works</a>
+        </div>
+        <div class="zeros" aria-label="What it asks of you">
+          <div class="zero"><b>£0</b><span>a month</span></div>
+          <div class="zero"><b>0</b><span>accounts</span></div>
+          <div class="zero"><b>0</b><span>ads</span></div>
+          <div class="zero"><b>0</b><span>trackers</span></div>
+        </div>
+      </div>
+      <div class="phone" aria-hidden="true">
+        <div class="screen">
+          <div class="p-top">
+            <div class="p-keys"><i></i><i></i><i></i><i></i></div>
+            <div class="p-art"><div class="cassette"><span class="reel l"></span><span class="reel r"></span></div></div>
+            <div class="p-adbar">Ad break · 1:12<b>SKIP AD</b></div>
+            <div class="p-switch"><span class="on">ARTWORK</span><span>TRANSCRIPT</span></div>
+          </div>
+          <div class="p-body">
+            <div><div class="p-show">Tidewater Weekly · Ep 212</div><div class="p-title">The lighthouse keepers' strike</div></div>
+            <div class="p-wave" id="heroWave"></div>
+            <div class="p-transport"><i></i><i class="play"></i><i></i></div>
+            <div class="p-tiles"><span><b>1.4×</b>SPEED</span><span><b>ON</b>TRIM</span><span><b>OFF</b>BOOST</span><span><b>30M</b>SLEEP</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="money" id="cost">
+    <div class="wrap">
+      <div class="money-copy">
+        <span class="label">What it costs</span>
+        <h2>The bill is empty. On purpose.</h2>
+        <p class="lede">Most podcast apps pay for themselves with a subscription, adverts or your listening data, because they run servers. Poddeck doesn't run any. Your iPhone does the work, Apple's free services carry the rest, and nothing is metered, so there's nothing to charge for.</p>
+        <p class="lede">No trial that runs out. No "Plus" tier with the good features locked away. Every feature on this page is in the app you install.</p>
+      </div>
+      <div class="receipt" role="table" aria-label="What Poddeck costs each month">
+        <h4>PODDECK</h4>
+        <div class="sub">Monthly statement · every month</div>
+        <div class="row" role="row"><span role="cell">The app</span><span role="cell">£0.00</span></div>
+        <div class="row" role="row"><span role="cell">Subscription<small>There isn't one</small></span><span role="cell">£0.00</span></div>
+        <div class="row" role="row"><span role="cell">Transcripts<small>Made on your iPhone</small></span><span role="cell">£0.00</span></div>
+        <div class="row" role="row"><span role="cell">Ad detection<small>Made on your iPhone</small></span><span role="cell">£0.00</span></div>
+        <div class="row" role="row"><span role="cell">Sync &amp; backup<small>Your own iCloud</small></span><span role="cell">£0.00</span></div>
+        <div class="row" role="row"><span role="cell">New-episode alerts<small>Apple's free push service</small></span><span role="cell">£0.00</span></div>
+        <div class="row" role="row"><span role="cell">Account sign-up<small>Not needed</small></span><span role="cell">—</span></div>
+        <div class="total"><span>TOTAL</span><span>£0.00</span></div>
+        <div class="stamp">NOTHING TO CANCEL</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">Features, and how they actually work</span>
+        <h2>Everything explained. Everything switchable.</h2>
+        <p class="lede">No black boxes. Here's what each feature does, how it does it, and which settings you hold.</p>
+      </div>
+
+      <!-- Up Next -->
+      <div class="feature">
+        <div class="f-copy">
+          <span class="label">01 · Up Next</span>
+          <h3>A queue that keeps every show in order</h3>
+          <p class="what">You decide where each show's new episodes go. Poddeck promises one thing: a show's episodes are always played oldest first, wherever they land.</p>
+          <div class="how">
+            <span class="label">How it works</span>
+            <ol>
+              <li><span>Set each show to <b>Top</b>, <b>Bottom</b> or <b>Off</b>. Newly followed shows start on Bottom.</span></li>
+              <li><span>Rank your Top shows. A new episode from a Top show goes right after that show's last queued episode, or, if it has none queued, above every lower-ranked show. Your favourite stays first.</span></li>
+              <li><span>Bottom shows go to the end. Off shows wait quietly on their own page.</span></li>
+              <li><span>Play next, Play last and drag to reorder still work. "Keep each show in order" stops you breaking a show's order by accident (you can turn it off).</span></li>
+            </ol>
+          </div>
+          <div class="yours"><span class="chip">Per show: <b>Top · Bottom · Off</b></span><span class="chip">Top-show ranking</span><span class="chip">Keep playing new episodes</span></div>
+        </div>
+        <div class="demo" id="demo">
+          <span class="label">Try it: the real queue rules</span>
+          <div class="shows" id="shows"></div>
+          <div class="demo-note" id="note" aria-live="polite">Press <b>+ NEW</b> on any show to see where its next episode goes.</div>
+          <div class="queue-head"><h4>Up Next</h4><button type="button" id="playTop">Play top ▸</button></div>
+          <ol class="queue" id="queue"></ol>
+        </div>
+      </div>
+
+      <!-- Transcripts -->
+      <div class="feature">
+        <div class="f-copy">
+          <span class="label">02 · Transcripts</span>
+          <h3>Read along, search, jump in</h3>
+          <p class="what">Every episode can have a transcript that follows playback. Tap any line to jump there, find words inside an episode, or search everything you've ever transcribed.</p>
+          <div class="how">
+            <span class="label">How it works</span>
+            <ol>
+              <li><span>If the show publishes its own transcript, Poddeck uses it, with speaker names.</span></li>
+              <li><span>If not, your iPhone writes one using Apple's built-in speech recognition, from the downloaded audio. The audio never leaves the phone.</span></li>
+              <li><span>It only transcribes when you ask, unless you choose "While charging" or "As soon as downloaded". You can stop it any time.</span></li>
+              <li><span>Music is spotted on the phone too and shown as its own row; ad breaks show as a dashed band.</span></li>
+            </ol>
+          </div>
+          <div class="yours"><span class="chip">Transcribe: <b>Only when I ask</b></span><span class="chip">Stop any time</span><span class="chip">Name speakers</span></div>
+        </div>
+        <div class="tx" aria-hidden="true">
+          <div class="find">⌕ lighthouse <b>2 of 5 ‹ ›</b></div>
+          <div class="music">♪ Music · intro theme · 14s</div>
+          <div class="stamp">12m 40s</div>
+          <div class="line"><span class="who">Mara</span>The keepers walked out on the first of May, every <mark>lighthouse</mark> on the coast went dark for a night.</div>
+          <div class="line now"><span class="who">Dev</span>Which sounds dramatic until you learn the ships had radar by then.</div>
+          <div class="ad"><span>Ad break · 1m 12s</span><span class="k">PLAY AD</span><span class="k">NOT AN AD</span></div>
+          <div class="stamp">14m 05s</div>
+          <div class="line"><span class="who">Mara</span>So it was really about who got to keep the houses.</div>
+        </div>
+      </div>
+
+      <!-- Ads -->
+      <div class="feature">
+        <div class="f-copy">
+          <span class="label">03 · Ad skipping</span>
+          <h3>Skip ads with one tap, or not at all</h3>
+          <p class="what">When an ad break plays, a Skip ad button appears in the player and the mini player. It's your call every time, unless you tell Poddeck to skip on its own.</p>
+          <div class="how">
+            <span class="label">How it works</span>
+            <ol>
+              <li><span>Poddeck reads the transcript of <i>your</i> download for sponsor language: "brought to you by", promo codes, web addresses, "after the break", plus the music around them.</span></li>
+              <li><span>Ads inserted into podcasts differ from download to download, so it checks your copy, not someone else's list.</span></li>
+              <li><span>Wrong? Tap <b>Play ad</b> to hear it or <b>Not an ad</b> to correct it. Poddeck remembers.</span></li>
+              <li><span>Optional: "Find ads while listening" checks the next few minutes as you go, without a full transcript. It's off by default because it uses battery.</span></li>
+            </ol>
+          </div>
+          <div class="yours"><span class="chip">Skip automatically: <b>Off</b></span><span class="chip">Find while listening: <b>Off</b></span></div>
+        </div>
+        <div class="tools" style="grid-template-columns: minmax(0,1fr);">
+          <div class="tool"><span class="def">What it isn't</span><h3>Not a blocklist, not a server</h3><p>There's no shared database of ads and nobody else sees what you skip. It's pattern spotting on your own phone, which means it can miss one or catch a genuine bit of the show. That's why every break can be played or corrected.</p></div>
+          <div class="tool"><span class="def">Fair to shows</span><h3>The ad still downloads</h3><p>The show's audio arrives exactly as published and counts as a normal download for the show. Poddeck just lets you choose whether to hear the ad.</p></div>
+        </div>
+      </div>
+
+      <!-- Listening tools -->
+      <div class="feature" style="grid-template-columns: minmax(0,1fr);">
+        <div class="f-copy">
+          <span class="label">04 · The player</span>
+          <h3>Listening tools that stay out of the way</h3>
+          <p class="what">Four keys under the play button, each one plain about what it does.</p>
+        </div>
+        <div class="tools">
+          <div class="tool"><span class="def">Speed · 1.0–2.0×</span><h3>Speed</h3><p>One speed for everything, or a speed per show (the key then says SHOW). The ENDS time under the progress bar is worked out at your speed.</p></div>
+          <div class="tool"><span class="def">Trim · off by default</span><h3>Trim silences</h3><p>Speeds through pauses longer than about a third of a second. Nothing is cut out; the gaps just go by faster. Stats tell you the time it saved.</p></div>
+          <div class="tool"><span class="def">Boost · off by default</span><h3>Boost voices</h3><p>Evens out loud and quiet voices so you can hear them in the car or on a train, without riding the volume.</p></div>
+          <div class="tool"><span class="def">Sleep · 5–60 min or episode end</span><h3>Sleep timer</h3><p>Fades out over the last 10 seconds. Shake the phone for 5 more minutes. An optional bedtime mode sets it for you after 10pm.</p></div>
+          <div class="tool"><span class="def">Chapters · from the show or made on the phone</span><h3>Chapters</h3><p>Uses the show's own chapters and artwork. If there are none, your iPhone makes them from the transcript, with titles from Apple's on-device model.</p></div>
+          <div class="tool"><span class="def">Per show</span><h3>Skip intros &amp; outros</h3><p>Set seconds to skip at the start and end of a show. Skip buttons are 5–60 seconds each way; touch and hold one to change it on the spot.</p></div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="feature">
+        <div class="f-copy">
+          <span class="label">05 · New episodes</span>
+          <h3>New episodes arrive by themselves</h3>
+          <p class="what">Ring the bell on a show and you get an alert that says where the episode went: "New from Tidewater Weekly, added to the top of Up Next". Episodes from shows set to Top or Bottom also download, ready to play.</p>
+          <div class="how">
+            <span class="label">How it works</span>
+            <ol>
+              <li><span>Your iPhone checks your shows in the background every 1, 3 or 6 hours (iOS picks the exact moment).</span></li>
+              <li><span>For faster alerts, a small open-source job checks your feeds on GitHub's free computers and sends a push through Apple. Your list of shows is <b>encrypted</b> so only that job can read it, and its logs never print show names or links.</span></li>
+              <li><span>Downloads use Wi-Fi only unless you say otherwise, and played episodes are deleted straight away (or after 24 hours, if you prefer).</span></li>
+            </ol>
+          </div>
+          <div class="yours"><span class="chip">Bell per show</span><span class="chip">Wi-Fi only: <b>On</b></span><span class="chip">Keep downloads under: <b>2–20 GB</b></span></div>
+        </div>
+        <div class="how" style="align-self:center">
+          <span class="label">Honest timing</span>
+          <p>Alerts come "within an hour or so", not to the second. Free scheduling isn't instant, and iOS sometimes holds back background work in Low Power Mode. We'd rather tell you than promise a stopwatch.</p>
+        </div>
+      </div>
+
+      <!-- Sync -->
+      <div class="feature">
+        <div class="f-copy">
+          <span class="label">06 · Your library is yours</span>
+          <h3>Sync to your iCloud. Leave any time.</h3>
+          <p class="what">Your shows, Up Next, progress, bookmarks and settings sync to your own iCloud, so a new iPhone picks up where you left off. Poddeck has no account because it doesn't need one.</p>
+          <div class="how">
+            <span class="label">How it works</span>
+            <ol>
+              <li><span>Data is stored in your private iCloud space, which only you can read. It uses a small slice of your iCloud storage.</span></li>
+              <li><span>Bring shows in from Pocket Casts, Overcast, Castro and others with an OPML file. Apple Podcasts links work in Add a show.</span></li>
+              <li><span>Export every show as an OPML file whenever you like. No lock-in.</span></li>
+              <li><span>Private feeds from Patreon, Supercast, Substack and similar work by pasting the feed link.</span></li>
+            </ol>
+          </div>
+        </div>
+        <div class="tools" style="grid-template-columns: minmax(0,1fr);">
+          <div class="tool"><span class="def">Everywhere you listen</span><h3>Beyond the app</h3><p>Home Screen and Lock Screen widgets, a Control Centre play key, Siri and Shortcuts ("Play Up Next", sleep timer), the Action button, CarPlay, AirPlay to any speaker, and touch-and-hold shortcuts on the app icon.</p></div>
+          <div class="tool"><span class="def">Your listening, on your phone</span><h3>Stats &amp; history</h3><p>Time listened this week, time saved by speed and trimming, ads skipped, top shows and full history. Worked out on the phone; never sent anywhere.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy" style="padding-top:24px">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">Where your data goes</span>
+        <h2>Every byte, accounted for</h2>
+        <p class="lede">Poddeck has no servers of its own, no analytics and no ad partners. Here's the full list of where things are kept.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>What</th><th>Kept</th><th>Who can see it</th></tr></thead>
+          <tbody>
+            <tr><td>Transcripts &amp; downloads</td><td><span class="where phone-only">Your iPhone only</span></td><td>You. Included in your normal iPhone backup (downloads left out to save space).</td></tr>
+            <tr><td>Shows, Up Next, progress, bookmarks, settings</td><td><span class="where icloud">Your iCloud</span></td><td>You. Stored in your private iCloud database.</td></tr>
+            <tr><td>Stats, history &amp; transcription timings</td><td><span class="where phone-only">Your iPhone only</span></td><td>You.</td></tr>
+            <tr><td>Episode audio &amp; artwork</td><td><span class="where public">The show's own feed</span></td><td>The show's host sees a download, as with any podcast app.</td></tr>
+            <tr><td>Search &amp; Discover</td><td><span class="where public">Apple's public directory</span></td><td>Apple receives the search words, as with Apple Podcasts. Recent searches stay on the phone.</td></tr>
+            <tr><td>Followed shows, for alerts</td><td><span class="where public">Encrypted list</span></td><td>Only the open-source alerts job can unlock it. It keeps fingerprints of what it has seen, not titles or links.</td></tr>
+            <tr><td>Analytics, tracking, ads</td><td><span class="where public">None</span></td><td>There's nothing to see.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="control" style="padding-top:24px">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">Out of the box</span>
+        <h2>Quiet defaults. You turn things up.</h2>
+        <p class="lede">Anything that uses battery, data or makes choices for you starts off. These are the settings as you'll find them on first open.</p>
+      </div>
+      <div class="defaults">
+        <div><span>Transcribe episodes</span><span>Only when I ask</span></div>
+        <div><span>Skip ads automatically</span><span>Off</span></div>
+        <div><span>Find ads while listening</span><span>Off</span></div>
+        <div><span>Trim silences · Boost voices</span><span>Off</span></div>
+        <div><span>Bedtime sleep timer</span><span>Off</span></div>
+        <div><span>Download on Wi-Fi only</span><span>On</span></div>
+        <div><span>New shows go to</span><span>Bottom</span></div>
+        <div><span>Keep each show in order</span><span>On</span></div>
+        <div><span>Background checks</span><span>Every 3 hours</span></div>
+        <div><span>Keep played downloads</span><span>Delete at once</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="questions" style="padding-top:24px">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">No catches</span>
+        <h2>Fair questions</h2>
+      </div>
+      <div class="faq">
+        <details><summary>So how is it free?</summary><p>Because it costs nothing to run. There are no servers to pay for: your iPhone does the transcribing and ad spotting, your iCloud holds your library, and the alerts job runs on free public computing. Poddeck is a personal project, not a business, so there's no one to pay back.</p></details>
+        <details><summary>Will it ever start charging?</summary><p>There's nothing to start charging for. If that ever changed, you'd be told plainly first, and your shows can be exported as an OPML file to any other app at any time.</p></details>
+        <details><summary>Does it use much battery?</summary><p>Normal listening uses what any player uses. Making a transcript works the phone hard while it runs, which is why it only happens when you ask, or while charging if you choose that. Before the first one, Poddeck gives an estimate from your own iPhone, and Stats shows how long each one really took.</p></details>
+        <details><summary>Does it use my iCloud storage?</summary><p>A little. Your library, queue and settings are small. Downloads and transcripts stay on the phone and are not synced.</p></details>
+        <details><summary>What do I need?</summary><p>An iPhone on iOS 26 or later. Transcripts work in the languages Apple's speech recognition supports; auto-generated chapter titles are best on iPhones with Apple Intelligence and fall back to simpler titles otherwise.</p></details>
+        <details><summary>Why TestFlight and not the App Store?</summary><p>Poddeck is in testing. TestFlight is Apple's free way to install apps that are still being built. You install the free TestFlight app, open the invite link and Poddeck installs like any other app. Test builds last 90 days and update themselves.</p></details>
+        <details><summary>Can it play video podcasts or shows that need a password?</summary><p>Not yet. Poddeck is audio-first. Private feeds work when the key is in the link (Patreon, Supercast and the like); feeds that ask for a username and password aren't supported yet.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="get" style="padding-top:24px">
+    <div class="wrap">
+      <div class="get">
+        <img src="data:image/png;base64,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" alt="Poddeck icon: a cassette">
+        <div>
+          <h2>Press play. Pay nothing.</h2>
+          <p>Free on iPhone through TestFlight. No account to make, nothing to cancel.</p>
+        </div>
+        <a class="btn download-link" id="testflight2" href="#get" aria-disabled="true">Coming soon to TestFlight</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Poddeck · a personal podcast app for iPhone</span>
+    <span>Show and episode names on this page are made-up examples.</span>
+  </div>
+</footer>
+
+<script>
+// Paste the TestFlight public link here once Apple has approved the account.
+const TESTFLIGHT_URL = "";
+
+(function setUpDownload() {
+  if (!TESTFLIGHT_URL) return;
+  for (const link of document.querySelectorAll(".download-link")) {
+    link.href = TESTFLIGHT_URL;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.removeAttribute("aria-disabled");
+  }
+  document.getElementById("testflight").textContent = "Download on TestFlight";
+  document.getElementById("testflight2").textContent = "Download on TestFlight";
+})();
+
+(function heroWave() {
+  const el = document.getElementById("heroWave");
+  const n = 46;
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement("i");
+    const h = 30 + 70 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * 0.37));
+    b.style.height = h.toFixed(0) + "%";
+    if (i < 17) b.className = "done";
+    el.appendChild(b);
+  }
+})();
+
+// Up Next demo: the same rules as the app's QueueEngine.
+(function upNextDemo() {
+  const shows = [
+    { id: "tw", name: "Tidewater Weekly", color: "#45543A", mode: "top", ep: 212 },
+    { id: "ll", name: "The Long Lunch", color: "#9A5B3C", mode: "top", ep: 88 },
+    { id: "sm", name: "Small Machines", color: "#3F5E73", mode: "bottom", ep: 41 },
+    { id: "ff", name: "Field Notes FM", color: "#7A6A3A", mode: "off", ep: 19 },
+  ];
+  let queue = [
+    { show: "tw", ep: 211 },
+    { show: "ll", ep: 87 },
+    { show: "sm", ep: 40 },
+  ];
+  let fresh = null;
+  const byId = Object.fromEntries(shows.map(s => [s.id, s]));
+  const topRank = () => shows.filter(s => s.mode === "top").map(s => s.id);
+
+  function tagFor(s) {
+    if (s.mode === "top") return "TOP" + (topRank().indexOf(s.id) + 1);
+    if (s.mode === "bottom") return "BTM";
+    return "OFF";
+  }
+
+  function addEpisode(show) {
+    show.ep += 1;
+    const item = { show: show.id, ep: show.ep };
+    const note = document.getElementById("note");
+    if (show.mode === "off") {
+      fresh = null;
+      note.innerHTML = `<b>${show.name}</b> is Off, so episode ${show.ep} waits on the show's page. Nothing is added.`;
+      render();
+      return;
+    }
+    let at;
+    let why;
+    const lastOwn = queue.map(q => q.show).lastIndexOf(show.id);
+    if (lastOwn >= 0) {
+      at = lastOwn + 1;
+      why = `right after its own episode ${queue[lastOwn].ep}, so the show stays oldest first`;
+    } else if (show.mode === "top") {
+      const ranks = topRank();
+      const mine = ranks.indexOf(show.id);
+      const higher = new Set(ranks.slice(0, mine));
+      at = 0;
+      queue.forEach((q, i) => { if (higher.has(q.show)) at = i + 1; });
+      why = mine === 0 ? "at the very top: it's your number one Top show" : "above every lower-ranked show";
+    } else {
+      at = queue.length;
+      why = "at the end, as a Bottom show";
+    }
+    queue.splice(at, 0, item);
+    fresh = item;
+    note.innerHTML = `<b>${show.name}</b> episode ${show.ep} went in at number ${at + 1}, ${why}.`;
+    render();
+  }
+
+  function renderShows() {
+    const box = document.getElementById("shows");
+    box.innerHTML = "";
+    for (const s of shows) {
+      const row = document.createElement("div");
+      row.className = "show-row";
+      row.innerHTML = `<span class="art" style="background:${s.color}">${s.name.replace("The ", "")[0]}</span>
+        <span class="name">${s.name}<small>${tagFor(s)}</small></span>
+        <span class="show-ctl"><span class="seg" role="group" aria-label="New episodes from ${s.name} go to"></span></span>`;
+      const seg = row.querySelector(".seg");
+      for (const m of ["top", "bottom", "off"]) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = m.toUpperCase();
+        b.setAttribute("aria-pressed", String(s.mode === m));
+        b.addEventListener("click", () => {
+          s.mode = m;
+          document.getElementById("note").innerHTML = `New episodes from <b>${s.name}</b> now go to <b>${m === "top" ? "Top" : m === "bottom" ? "Bottom" : "nowhere"}</b>.`;
+          fresh = null;
+          render();
+        });
+        seg.appendChild(b);
+      }
+      const add = document.createElement("button");
+      add.type = "button";
+      add.className = "new-ep";
+      add.textContent = "+ NEW";
+      add.setAttribute("aria-label", `New episode from ${s.name}`);
+      add.addEventListener("click", () => addEpisode(s));
+      row.querySelector(".show-ctl").appendChild(add);
+      box.appendChild(row);
+    }
+  }
+
+  function renderQueue() {
+    const list = document.getElementById("queue");
+    list.innerHTML = "";
+    if (!queue.length) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "Up Next is empty. Add a new episode above.";
+      list.appendChild(li);
+      return;
+    }
+    queue.forEach((q, i) => {
+      const s = byId[q.show];
+      const li = document.createElement("li");
+      if (q === fresh) li.className = "fresh";
+      li.innerHTML = `<span class="n">${String(i + 1).padStart(2, "0")}</span>
+        <span class="art" style="background:${s.color}">${s.name.replace("The ", "")[0]}</span>
+        <span class="t">${s.name}<small>Episode ${q.ep}</small></span>
+        <span class="tag">${tagFor(s)}</span>`;
+      list.appendChild(li);
+    });
+  }
+
+  function render() { renderShows(); renderQueue(); }
+
+  document.getElementById("playTop").addEventListener("click", () => {
+    const done = queue.shift();
+    fresh = null;
+    document.getElementById("note").innerHTML = done
+      ? `Played <b>${byId[done.show].name}</b> episode ${done.ep}. It's marked played, taken off Up Next and its download deleted.`
+      : "Nothing left to play.";
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

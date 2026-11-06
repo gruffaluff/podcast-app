@@ -330,9 +330,22 @@ to Nowhere / Top / Bottom" on the show page.
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
 - Show and episode names on the page are made-up examples (footer says so).
-- Hosting it at its own address (e.g. GitHub Pages) is possible later;
-  free now that the repo is public (Pages serves `docs/` once Paul turns
-  it on).
+- **Own address: poddeck.uk** (Paul bought it, 6 Nov 2026; the domain is
+  his only cost, yearly, from his registrar). Served free by GitHub Pages
+  from `docs/` on main: `docs/index.html` is made from
+  `website/poddeck.html` by `scripts/build_site.py` (adds the normal
+  page head, favicon `docs/icon.png`, link-preview card); `docs/CNAME`
+  holds poddeck.uk; `docs/_config.yml` keeps DESIGN.md / SETUP.md off the
+  site. After editing the page: run the script, commit both, and
+  republish the claude.ai page. DNS at the registrar: four A records for
+  poddeck.uk → 185.199.108.153, 185.199.109.153, 185.199.110.153,
+  185.199.111.153, and CNAME www → gruffaluff.github.io; then Settings →
+  Pages: custom domain poddeck.uk, Enforce HTTPS once offered. Note: with
+  a custom domain, gruffaluff.github.io/podcast-app/... redirects to
+  poddeck.uk, so `docs/cloudkit-subscribe.html` (only needed if the
+  CloudKit container is ever reset) would need poddeck.uk added as an
+  allowed origin on its CloudKit API token. A merge to main also starts a
+  Codemagic build, so website-only changes ride along with app builds.
 
 ## Proposed technical approach (confirm with Paul before big changes)
 
