@@ -203,9 +203,6 @@ struct TopPriorityView: View {
                             .foregroundStyle(Theme.ink)
                             .lineLimit(1)
                     }
-                    // A lifted row keeps rounded corners (it showed white
-                    // square corners while dragging).
-                    .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
                 }
                 .onMove { from, to in
                     shows.move(fromOffsets: from, toOffset: to)

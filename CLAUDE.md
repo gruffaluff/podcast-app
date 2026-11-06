@@ -711,6 +711,16 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- Up Next reorder reworked (Paul, build 124: "still janky", screenshot
+  showed the lifted row clipped short with no handle and a gap left
+  behind): Up Next now uses iOS's own inset grouped list (the panel,
+  lines and lifted row are drawn by iOS, like the pulled-up Up Next and
+  Shows screen) instead of hand-drawn `panelRow` slices; the
+  `.contentShape(.dragPreview, …)` from build 124 was what clipped the
+  lifted row and is gone from all three reorderable lists. `panelRow`
+  (non-reorder lists) now uses the same 16 pt margins as inset grouped
+  lists. If it's still not smooth, the next step is a hand-made reorder.
+  UBDM.
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips

@@ -40,7 +40,6 @@ struct UpNextSheet: View {
                             }
                         }
                         .listRowBackground(item.episode.id == player.nowPlaying?.episodeID ? Theme.highlight : Theme.surface)
-                        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
                     }
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
                     .onDelete { offsets in

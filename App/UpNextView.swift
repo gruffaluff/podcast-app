@@ -83,7 +83,8 @@ struct UpNextView: View {
             }
             .environment(\.editMode, .constant(editing ? .active : .inactive))
             .onChange(of: editing) { if editing { openRow = nil } }
-            .listStyle(.plain)
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(.compact)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .refreshable { await store.refreshAll() }
@@ -140,10 +141,11 @@ struct UpNextView: View {
                     .padding(.bottom, 4)
             }
         }
-        // One rounded paper panel with lines between rows (style B, the
-        // same as every list); the playing one is highlighted. The lines are
-        // drawn by the row, not the system, so they don't flicker mid-drag.
-        .panelRow(index, of: store.queue.count, highlighted: player.nowPlaying?.episodeID == episode.episodeID)
+        // Style B drawn by iOS itself (inset grouped list), not by the rows:
+        // iOS then lifts and moves a row cleanly while reordering. Drawing
+        // the panel slice by slice made the lifted row clip and leave gaps.
+        .listRowBackground(player.nowPlaying?.episodeID == episode.episodeID ? Theme.highlight : Theme.surface)
+        .listRowSeparatorTint(Theme.hairline)
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
