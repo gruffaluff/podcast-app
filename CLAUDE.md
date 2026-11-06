@@ -721,6 +721,13 @@ From the Notion notes after 6 Nov 08:10:
   (non-reorder lists) now uses the same 16 pt margins as inset grouped
   lists. If it's still not smooth, the next step is a hand-made reorder.
   UBDM.
+- Up Next order snapping back after a drag (Paul's screen recording,
+  build 124: drop a row, then a ghost copy and the old order comes back):
+  `LibraryStore.commit` deleted and re-made every saved Up Next row on
+  every change, so iCloud got a burst of deletes + new records and an
+  older copy could come back and reorder Up Next. Rows are now updated in
+  place (order / manual changed only when different; duplicates from old
+  syncs removed). UBDM.
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
