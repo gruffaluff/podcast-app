@@ -680,10 +680,9 @@ From the Notion notes after 6 Nov 08:10:
   transcript") with the From the show / Auto switch above it.
 - Website at poddeck.uk (files on the branch, see Website).
 
-## Queued for the next app build
+## Done in the last weekend build (6 Nov 2026, PR #42, build 124; Paul: "one last weekend build")
 
-- Built on the branch, not merged (Paul, 6 Nov 2026, "work on but not
-  build"): player skip back / forward have no circle round them and a
+- Player skip back / forward have no circle round them and a
   bigger icon (36 pt) in proportion with the play key.
 - One row style everywhere: **B, one rounded paper panel with thin
   lines between rows** (Paul, 6 Nov 2026, from the A/B mock-up). Shared
@@ -710,6 +709,10 @@ From the Notion notes after 6 Nov 08:10:
   have run is ever skipped, check the Codemagic build list for "skipped"
   and the changeset rule first.
 
+## Queued for the next app build
+
+- Retake the website's Up Next, show and Discover screenshots on build
+  124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's
   free private allowance is already used, so going private now would stop
