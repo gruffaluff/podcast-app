@@ -701,6 +701,14 @@ From the Notion notes after 6 Nov 08:10:
   panels too (style B), and lifted rows keep rounded corners
   (`.contentShape(.dragPreview, …)`) in all three reorderable lists: Up
   Next, the pulled-up Up Next and Top show priority. Check on the phone.
+- Website no longer tied to app builds (Paul, 6 Nov 2026, UBDM):
+  `codemagic.yaml` skips the TestFlight build when a merge only touches
+  `website/`, `docs/`, `design/`, `.md` notes, `.github/`,
+  `scripts/build_site.py` or `scripts/new_episode_alerts.py`. Cloudflare
+  still redeploys poddeck.uk on every merge to main. Takes effect from the
+  merge that adds it (that merge itself builds). If a build that should
+  have run is ever skipped, check the Codemagic build list for "skipped"
+  and the changeset rule first.
 
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's
