@@ -631,6 +631,11 @@ From the Notion notes after 6 Nov 08:10:
   aren't in the show's transcript, so only Find ads while listening or a
   transcript made on the iPhone catches those. Asked Paul where he saw
   the found ad with no button (scrubber / transcript / show).
+- Player transport: previous / next chapter keys sit in the gaps either
+  side of play when the episode has chapters (skip back, ⏮, play, ⏭,
+  skip forward). Mini player: skip back, play, skip forward (its
+  next-chapter key moved out; chapters live in the full player and the
+  chapter list).
 - Website at poddeck.uk (files on the branch, see Website).
 
 ## Queued for the next app build

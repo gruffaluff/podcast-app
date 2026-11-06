@@ -445,6 +445,11 @@ struct NowPlayingView: View {
                 .foregroundStyle(Theme.ink)
                 .overlay(Circle().stroke(Theme.ink, lineWidth: 2))
             Spacer()
+            // Chapter keys in the gaps, when the episode has chapters (Paul).
+            if hasChapters {
+                chapterKey("backward.end.fill", label: "Previous chapter") { player.previousChapter() }
+                Spacer()
+            }
             Button { player.togglePlayPause() } label: {
                 Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 30))
@@ -455,12 +460,30 @@ struct NowPlayingView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
             Spacer()
+            if hasChapters {
+                chapterKey("forward.end.fill", label: "Next chapter") { player.nextChapter() }
+                Spacer()
+            }
             SkipButton(direction: .forward, iconSize: 24, frame: 60)
                 .foregroundStyle(Theme.ink)
                 .overlay(Circle().stroke(Theme.ink, lineWidth: 2))
         }
         .tint(Theme.ink)
         .padding(.horizontal, 18)
+    }
+
+    private var hasChapters: Bool { !player.chapters.isEmpty }
+
+    private func chapterKey(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     /// SPEED / TRIM / BOOST / SLEEP tiles: in the episode's colour when on.
