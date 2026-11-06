@@ -613,6 +613,12 @@ From the Notion notes after 6 Nov 08:10:
   a long press always picks the row up. Rows are separate paper cards with
   no system divider lines (lines tied to a row's place flickered while
   dragging), and the row no longer switches animation off (text jumped).
+  Both ways of reordering (long press, and the reorder key's handles) were
+  also hit and miss because every sync, including the one a reorder
+  starts, reloaded Up Next about 2 seconds later and replaced the list
+  with an identical copy, redrawing it mid-drag: `reloadQueueFromSaved`
+  now changes nothing when the saved order matches. Row keys don't open
+  while the reorder key is on.
 - Website at poddeck.uk (files on the branch, see Website).
 
 ## Queued for the next app build

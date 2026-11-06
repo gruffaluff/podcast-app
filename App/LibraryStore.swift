@@ -473,18 +473,28 @@ final class LibraryStore {
     }
 
     /// Re-reads Up Next after iCloud changed it (only if it differs).
+    /// Leaves `queue` untouched when nothing changed: every sync (including
+    /// the one our own reorder starts) lands here a couple of seconds later,
+    /// and replacing the list with an identical one redrew Up Next mid-drag,
+    /// cancelling the next drag and making rows flicker.
     func reloadQueueFromSaved() {
-        let before = queue.map(\.episode.id)
-        loadQueue()
-        if queue.map(\.episode.id) != before { transcripts?.prepareUpNext() }
+        let saved = savedQueue()
+        guard saved.map(\.episode.id) != queue.map(\.episode.id)
+                || saved.map(\.source) != queue.map(\.source) else { return }
+        queue = saved
+        transcripts?.prepareUpNext()
     }
 
     private func loadQueue() {
+        queue = savedQueue()
+    }
+
+    private func savedQueue() -> [QueueItem] {
         let descriptor = FetchDescriptor<UpNextEntry>(sortBy: [SortDescriptor(\.order)])
         let entries = (try? context.fetch(descriptor)) ?? []
         let found = episodes(entries.map(\.episodeID))
         var seen = Set<String>()
-        queue = entries.compactMap { entry in
+        return entries.compactMap { entry in
             guard seen.insert(entry.episodeID).inserted else { return nil }
             return found[entry.episodeID].map { QueueItem(episode: $0.queueEpisode, source: entry.manual ? .manual : .auto) }
         }

@@ -82,6 +82,7 @@ struct UpNextView: View {
                 }
             }
             .environment(\.editMode, .constant(editing ? .active : .inactive))
+            .onChange(of: editing) { if editing { openRow = nil } }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
@@ -130,7 +131,8 @@ struct UpNextView: View {
             QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID) {
                 player.play(episode)
             }
-            .onTapGesture { toggleRow(episode.episodeID) }
+            // While reordering, taps do nothing (rows growing mid-drag jumped).
+            .onTapGesture { if !editing { toggleRow(episode.episodeID) } }
             .accessibilityAddTraits(.isButton)
             .accessibilityHint(isOpen ? "Hides the keys" : "Shows play, notes, download and more")
             if isOpen {
