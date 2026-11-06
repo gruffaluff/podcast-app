@@ -59,8 +59,12 @@ struct LibraryView: View {
                                     }
                                 }
                                 .scrollTargetLayout()
-                                .padding(.horizontal, 20)
                             }
+                            // Cards settle with their left edge on the page margin.
+                            .contentMargins(.horizontal, 20, for: .scrollContent)
+                            // The scroll view cut the cards' shadow off in a
+                            // hard line (the "two tone" band under them).
+                            .scrollClipDisabled()
                             // Settles on a card after a swipe, like Apple Podcasts.
                             .scrollTargetBehavior(.viewAligned)
                         }
@@ -235,21 +239,28 @@ private struct EpisodeCard: View {
     var body: some View {
         let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
 
-        ZStack(alignment: .bottomLeading) {
-            tint
-            // The artwork across the top, fading into the colour.
-            CachedImage(url: episode.artwork) { Color.clear }
-                .frame(width: Self.width, height: Self.width)
-                .clipped()
-                .frame(maxHeight: .infinity, alignment: .top)
-                .accessibilityHidden(true)
-            LinearGradient(stops: [.init(color: tint.opacity(0), location: 0.3),
-                                   .init(color: tint.opacity(0.85), location: 0.55),
-                                   .init(color: tint, location: 0.7)],
-                           startPoint: .top, endPoint: .bottom)
-            details(tint: tint)
-        }
-        .frame(width: Self.width, height: Self.height)
+        // Every layer is pinned to the card's size (overlays never resize
+        // the card): a ZStack grew to its widest child, which pushed the
+        // artwork sideways and left a strip of colour on one edge.
+        tint
+            .frame(width: Self.width, height: Self.height)
+            .overlay(alignment: .top) {
+                // The artwork across the top, fading into the colour.
+                CachedImage(url: episode.artwork) { Color.clear }
+                    .frame(width: Self.width, height: Self.width)
+                    .clipped()
+                    .accessibilityHidden(true)
+            }
+            .overlay {
+                LinearGradient(stops: [.init(color: tint.opacity(0), location: 0.3),
+                                       .init(color: tint.opacity(0.85), location: 0.55),
+                                       .init(color: tint, location: 0.7)],
+                               startPoint: .top, endPoint: .bottom)
+            }
+            .overlay(alignment: .bottomLeading) {
+                details(tint: tint)
+                    .frame(width: Self.width, alignment: .leading)
+            }
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .contentShape(RoundedRectangle(cornerRadius: 22))
         .onTapGesture { store.notesEpisode = episode }

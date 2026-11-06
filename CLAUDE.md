@@ -599,6 +599,22 @@ From the Notion notes after 22:15 and this chat:
 - Also out with this build: the rebuilt website note and the alerts
   limits note above.
 
+## Ready for Monday's build (6 Nov 2026, not merged; Paul: hold until Monday)
+
+From the Notion notes after 6 Nov 08:10:
+- New Episodes cards: every layer pinned to 248×330 with overlays (the
+  ZStack grew to its widest child, pushing the artwork sideways and
+  leaving a strip of colour on one edge); the carousel uses
+  `.contentMargins` so cards settle on the page margin, and
+  `.scrollClipDisabled()` so the card shadow isn't cut off in a hard line
+  (the "two tone" band under the cards).
+- Up Next drag to reorder: the long-press menu on rows is gone (it fought
+  the drag for the same press; the row keys cover everything it had), so
+  a long press always picks the row up. Rows are separate paper cards with
+  no system divider lines (lines tied to a row's place flickered while
+  dragging), and the row no longer switches animation off (text jumped).
+- Website at poddeck.uk (files on the branch, see Website).
+
 ## Queued for the next app build
 
 - poddeck.uk website files (branch, ready): go live with Monday's build
