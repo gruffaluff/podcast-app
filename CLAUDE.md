@@ -567,6 +567,22 @@ From the queue and the Notion notes after 18:10:
   headers, smaller suggestion cards.
 - Bedtime sleep timer off by default; CarPlay entitlement included.
 
+## Done in the weekend build (6 Nov 2026)
+
+From the Notion notes after 22:15 and this chat:
+- Up Next episode actions (Paul picked A + C from the mock-up): tap a row
+  to open a strip of icon keys with small labels under it (PLAY/PAUSE,
+  NOTES, DL / % / DEL DL, TX / STOP TX, TO TOP, PLAYED, REMOVE; tap again
+  to close); tapping the artwork plays; swipe right shows Notes (full
+  swipe opens the episode page) and To top (= Play next); swipe left
+  stays Played / Remove. `UpNextRowKeys` in UpNextView.swift.
+- New Episodes card play pill shows "1h 16m" (plus "left" once started)
+  on one line; the long clock (1:16:31) wrapped onto two lines.
+- Show page keys (FOLLOWING, settings, bell) all a fixed 44 points high
+  (they looked uneven; bigger text could stretch the first two).
+- Also out with this build: the rebuilt website note and the alerts
+  limits note above.
+
 ## Queued for the next app build
 
 - (Bedtime timer default and CarPlay went out in the Friday batch.)
