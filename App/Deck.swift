@@ -290,10 +290,12 @@ struct PanelBackground: View {
             .fill(fill)
             .overlay(alignment: .bottom) {
                 if !position.roundsBottom {
-                    Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.leading, 12)
+                    Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.leading, 16)
                 }
             }
-            .padding(.horizontal, 12)
+            // Same margins as iOS's inset grouped lists (Up Next, Shows,
+            // pulled-up lists), so every panel lines up.
+            .padding(.horizontal, 16)
     }
 }
 
@@ -305,8 +307,6 @@ extension View {
             .listRowBackground(PanelBackground(position: PanelPosition(index: index, count: count),
                                                fill: highlighted ? Theme.highlight : Theme.surface))
             .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
-            // A row lifted to reorder keeps rounded corners.
-            .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 14))
+            .listRowInsets(EdgeInsets(top: 8, leading: 32, bottom: 8, trailing: 32))
     }
 }

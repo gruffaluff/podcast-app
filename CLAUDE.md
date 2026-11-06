@@ -709,6 +709,26 @@ From the Notion notes after 6 Nov 08:10:
   have run is ever skipped, check the Codemagic build list for "skipped"
   and the changeset rule first.
 
+## Done in build 125 (6 Nov 2026, PR #43; Paul: "let's build again")
+
+- Up Next reorder reworked (Paul, build 124: "still janky", screenshot
+  showed the lifted row clipped short with no handle and a gap left
+  behind): Up Next now uses iOS's own inset grouped list (the panel,
+  lines and lifted row are drawn by iOS, like the pulled-up Up Next and
+  Shows screen) instead of hand-drawn `panelRow` slices; the
+  `.contentShape(.dragPreview, …)` from build 124 was what clipped the
+  lifted row and is gone from all three reorderable lists. `panelRow`
+  (non-reorder lists) now uses the same 16 pt margins as inset grouped
+  lists. If it's still not smooth, the next step is a hand-made reorder.
+  UBDM.
+- Up Next order snapping back after a drag (Paul's screen recording,
+  build 124: drop a row, then a ghost copy and the old order comes back):
+  `LibraryStore.commit` deleted and re-made every saved Up Next row on
+  every change, so iCloud got a burst of deletes + new records and an
+  older copy could come back and reorder Up Next. Rows are now updated in
+  place (order / manual changed only when different; duplicates from old
+  syncs removed). Covers the pulled-up Up Next in the player too (same
+  `moveQueue` → `commit`). UBDM.
 ## Queued for the next app build
 
 - Retake the website's Up Next, show and Discover screenshots on build
@@ -854,9 +874,11 @@ preview header runs edge to edge up under the status bar with rounded
 bottom corners (list ignores the top safe area; search is a field under
 the header); the "New episodes go to" bar is gone (the header's settings
 key covers it).
-Codemagic: free 500 Mac minutes a month, each build ~15–20 min, so about
-25 builds a month. Batch notes into fewer builds; it stops at the limit
-(no charge).
+Codemagic: free 500 Mac minutes a month. Builds actually take about 5
+minutes (Paul checked 6 Nov 2026: 5m16s and 4m52s; the account page showed
+100 / 500 used after ~23 builds), so roughly 90–100 builds a month. It
+stops at the limit (no charge). Don't press "Enable subscription" on the
+Codemagic page: that's the paid plan.
 
 ## Done from the second Notion FNB batch (5 Nov 2026, after build 115)
 

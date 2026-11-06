@@ -465,9 +465,28 @@ final class LibraryStore {
         // Rows for episodes not on this iPhone yet (still arriving from
         // iCloud) are kept, so a sync in progress never loses them.
         let here = episodes(existing.map(\.episodeID))
-        for entry in existing where here[entry.episodeID] != nil { context.delete(entry) }
+        // Saved rows are updated in place, not deleted and re-made on every
+        // change: re-making them all sent iCloud a burst of deletes and new
+        // records, and an older copy coming back from a sync put Up Next
+        // back in its old order a moment after a drag (Paul's recording).
+        var kept: [String: UpNextEntry] = [:]
+        for entry in existing where here[entry.episodeID] != nil {
+            if kept[entry.episodeID] == nil {
+                kept[entry.episodeID] = entry
+            } else {
+                context.delete(entry)  // a duplicate left by an earlier sync
+            }
+        }
+        let wanted = Set(newQueue.map(\.episode.id))
+        for (id, entry) in kept where !wanted.contains(id) { context.delete(entry) }
         for (index, item) in newQueue.enumerated() {
-            context.insert(UpNextEntry(episodeID: item.episode.id, manual: item.source == .manual, order: index))
+            let manual = item.source == .manual
+            if let entry = kept[item.episode.id] {
+                if entry.order != index { entry.order = index }
+                if entry.manual != manual { entry.manual = manual }
+            } else {
+                context.insert(UpNextEntry(episodeID: item.episode.id, manual: manual, order: index))
+            }
         }
         save()
     }
