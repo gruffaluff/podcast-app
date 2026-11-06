@@ -62,6 +62,10 @@ to Nowhere / Top / Bottom" on the show page.
   "FNB" means add it to "Queued for the next app build" below and do not
   build, merge or start the work yet. Paul is compiling a list; build the
   list only when he says so. Reply briefly confirming what was queued.
+- **"UBDM" = update but don't merge** (Paul, 6 Nov 2026): make the
+  change on the branch (and open a PR so GitHub's free check compiles
+  it), but don't merge, so no Codemagic build starts until Paul says
+  "build".
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
   decisions, progress and open questions in the same change, without
   asking first, and mention briefly what changed here in your reply.
@@ -673,10 +677,14 @@ From the Notion notes after 6 Nov 08:10:
 - Built on the branch, not merged (Paul, 6 Nov 2026, "work on but not
   build"): player skip back / forward have no circle round them and a
   bigger icon (36 pt) in proportion with the play key.
-- Open question for Paul: one row style everywhere (mock-up sent 6 Nov):
-  A separate rounded cards with gaps (today's Up Next) or B one rounded
-  panel with lines (today's chapters / mini Up Next). Apply the pick to
-  Up Next, the pulled-up lists, show episode lists and Discover.
+- One row style everywhere: **B, one rounded paper panel with thin
+  lines between rows** (Paul, 6 Nov 2026, from the A/B mock-up). Shared
+  `panelRow(index, of:, highlighted:)` in Deck.swift draws each row's
+  slice of the panel and its own line (system separators run past the
+  panel edge in plain lists). Used by Up Next (playing row highlighted),
+  show episode lists, show previews and Discover (search and charts);
+  the pulled-up Up Next and Chapters already looked like this. Search
+  results still use plain rows (left for now). Branch only (UBDM).
 
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's

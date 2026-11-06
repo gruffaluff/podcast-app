@@ -20,10 +20,10 @@ struct ShowPreviewView: View {
                 .listRowInsets(EdgeInsets())
             Section {
                 if let feed {
-                    ForEach(feed.episodes.prefix(30), id: \.guid) { episode in
+                    let shown = Array(feed.episodes.prefix(30))
+                    ForEach(Array(shown.enumerated()), id: \.element.guid) { index, episode in
                         episodeRow(episode)
-                            .listRowBackground(Theme.background)
-                            .listRowSeparatorTint(Theme.hairline)
+                            .panelRow(index, of: shown.count)
                     }
                 } else if failed {
                     Text("Couldn't load this show's episodes. Pull down to try again.")

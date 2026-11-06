@@ -52,13 +52,18 @@ struct DiscoverView: View {
         Section {
             if searching && searchResults.isEmpty {
                 HStack { Spacer(); ProgressView(); Spacer() }
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
             } else if searchResults.isEmpty {
                 Text("No shows found.").foregroundStyle(Theme.muted)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
             }
-            ForEach(searchResults) { DirectoryItemRow(item: $0) }
+            ForEach(Array(searchResults.enumerated()), id: \.element.id) { index, item in
+                DirectoryItemRow(item: item)
+                    .panelRow(index, of: searchResults.count)
+            }
         }
-        .listRowBackground(Theme.background)
-        .listRowSeparatorTint(Theme.hairline)
     }
 
     private func search(debounced: Bool = false) async {
@@ -110,21 +115,24 @@ struct DiscoverView: View {
     private var chartSection: some View {
         Section {
             if chart.isEmpty {
-                if chartFailed {
-                    Text("Couldn't load the charts. Pull down to try again.").foregroundStyle(Theme.muted)
-                } else {
-                    HStack { Spacer(); ProgressView(); Spacer() }
+                Group {
+                    if chartFailed {
+                        Text("Couldn't load the charts. Pull down to try again.").foregroundStyle(Theme.muted)
+                    } else {
+                        HStack { Spacer(); ProgressView(); Spacer() }
+                    }
                 }
+                .listRowBackground(Theme.background)
+                .listRowSeparator(.hidden)
             }
             ForEach(Array(chart.enumerated()), id: \.element.id) { index, item in
                 DirectoryItemRow(item: item, rank: index + 1)
+                    .panelRow(index, of: chart.count)
             }
         } header: {
             DeckHeader(title: genre.map { "Top in \($0.name)" } ?? "UK top shows", detail: genre == nil ? "This week" : "Chart")
                 .padding(.top, -6)
         }
-        .listRowBackground(Theme.background)
-        .listRowSeparatorTint(Theme.hairline)
     }
 
     private func loadChart() async {

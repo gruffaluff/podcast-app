@@ -70,7 +70,7 @@ struct ShowView: View {
                         .listRowSeparator(.hidden)
                         .selectionDisabled()
                 }
-                ForEach(episodes) { episode in
+                ForEach(Array(episodes.enumerated()), id: \.element.episodeID) { index, episode in
                     Group {
                         if selecting {
                             row(episode)
@@ -79,9 +79,8 @@ struct ShowView: View {
                         }
                     }
                     .tag(episode.episodeID)
+                    .panelRow(index, of: episodes.count)
                 }
-                .listRowBackground(Theme.background)
-                .listRowSeparatorTint(Theme.hairline)
             }
         }
         .environment(\.editMode, .constant(selecting ? .active : .inactive))

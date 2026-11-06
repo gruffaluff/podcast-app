@@ -257,3 +257,54 @@ extension View {
             }
     }
 }
+
+// MARK: - Panel rows (Paul, 6 Nov 2026: one row style everywhere, "B")
+
+/// Where a row sits in its rounded paper panel.
+enum PanelPosition {
+    case only, first, middle, last
+
+    init(index: Int, count: Int) {
+        if count <= 1 { self = .only }
+        else if index == 0 { self = .first }
+        else if index >= count - 1 { self = .last }
+        else { self = .middle }
+    }
+
+    var roundsTop: Bool { self == .only || self == .first }
+    var roundsBottom: Bool { self == .only || self == .last }
+}
+
+/// One slice of a rounded paper panel, with a thin line under every row
+/// but the last. Drawn by the row itself (not the system separators, which
+/// run past the panel's edge in plain lists).
+struct PanelBackground: View {
+    let position: PanelPosition
+    var fill: Color = Theme.surface
+
+    var body: some View {
+        let top: CGFloat = position.roundsTop ? 14 : 0
+        let bottom: CGFloat = position.roundsBottom ? 14 : 0
+        UnevenRoundedRectangle(topLeadingRadius: top, bottomLeadingRadius: bottom,
+                               bottomTrailingRadius: bottom, topTrailingRadius: top)
+            .fill(fill)
+            .overlay(alignment: .bottom) {
+                if !position.roundsBottom {
+                    Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.leading, 12)
+                }
+            }
+            .padding(.horizontal, 12)
+    }
+}
+
+extension View {
+    /// Puts a list row in a rounded paper panel, like the pulled-up Up Next
+    /// and Chapters lists: the same look for every list in the app.
+    func panelRow(_ index: Int, of count: Int, highlighted: Bool = false) -> some View {
+        self
+            .listRowBackground(PanelBackground(position: PanelPosition(index: index, count: count),
+                                               fill: highlighted ? Theme.highlight : Theme.surface))
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
+    }
+}
