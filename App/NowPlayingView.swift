@@ -446,9 +446,9 @@ struct NowPlayingView: View {
 
     private func transport(tint: Color) -> some View {
         HStack {
-            SkipButton(direction: .back, iconSize: 24, frame: 60)
+            // No circle (Paul): a bigger icon, in proportion with play.
+            SkipButton(direction: .back, iconSize: 36, frame: 60)
                 .foregroundStyle(Theme.ink)
-                .overlay(Circle().stroke(Theme.ink, lineWidth: 2))
             Spacer()
             // Chapter keys in the gaps, when the episode has chapters (Paul).
             if hasChapters {
@@ -469,9 +469,9 @@ struct NowPlayingView: View {
                 chapterKey("forward.end.fill", label: "Next chapter") { player.nextChapter() }
                 Spacer()
             }
-            SkipButton(direction: .forward, iconSize: 24, frame: 60)
+            // No circle (Paul): a bigger icon, in proportion with play.
+            SkipButton(direction: .forward, iconSize: 36, frame: 60)
                 .foregroundStyle(Theme.ink)
-                .overlay(Circle().stroke(Theme.ink, lineWidth: 2))
         }
         .tint(Theme.ink)
         .padding(.horizontal, 18)

@@ -670,6 +670,14 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- Built on the branch, not merged (Paul, 6 Nov 2026, "work on but not
+  build"): player skip back / forward have no circle round them and a
+  bigger icon (36 pt) in proportion with the play key.
+- Open question for Paul: one row style everywhere (mock-up sent 6 Nov):
+  A separate rounded cards with gaps (today's Up Next) or B one rounded
+  panel with lines (today's chapters / mini Up Next). Apply the pick to
+  Up Next, the pulled-up lists, show episode lists and Discover.
+
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's
   free private allowance is already used, so going private now would stop
