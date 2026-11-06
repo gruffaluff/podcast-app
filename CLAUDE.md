@@ -338,7 +338,15 @@ to Nowhere / Top / Bottom" on the show page.
 - The download button says "Coming soon to TestFlight" until
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
-- Show and episode names on the page are made-up examples (footer says so).
+- Real screenshots (Paul's iPhone, 6 Nov 2026, build 123) in
+  `website/shots/` (600 px JPEGs; `scripts/build_site.py` copies them to
+  `docs/shots/`; the claude.ai page gets them through the publish `files`
+  map): the player is the hero, the transcript screenshot sits in the
+  transcripts section, and "On a real iPhone" is a swipeable gallery (Up
+  Next, Library, a show, chapters, show settings, Discover, stats). Up
+  Next / show / Discover still show the old row style and circled skip
+  keys: retake after the next build. Footer: screenshots show real shows,
+  whose names and artwork belong to their owners; demo names are made up.
 - **Hosting moved to Cloudflare Pages** (Paul, 6 Nov 2026): project
   "poddeck" (Workers & Pages), connected to this repo, production branch
   main, no build command, output folder `docs`; custom domains poddeck.uk

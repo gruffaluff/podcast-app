@@ -245,6 +245,17 @@ details p { padding: 0 20px 18px; color: var(--ink-soft); max-width: 62ch; }
 footer { padding-block: 36px 48px; font-size: 13px; color: var(--ink-soft); }
 footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
 
+
+/* Real screenshots */
+.shot { margin: 0; display: grid; gap: 10px; justify-items: center; min-width: 0; }
+.shot img { display: block; width: 100%; max-width: 300px; height: auto; border-radius: 34px; box-shadow: 0 0 0 8px #1F1D19, 0 28px 50px -24px rgba(31,29,25,.55); }
+.hero-shot img { max-width: 320px; }
+.shot figcaption { font-size: 14px; color: var(--ink-soft); text-align: center; max-width: 240px; }
+.shot figcaption b { display: block; color: var(--ink); font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 2px; }
+.gallery { display: grid; grid-auto-flow: column; grid-auto-columns: 240px; gap: 28px; overflow-x: auto; padding: 12px 8px 24px; scroll-snap-type: x mandatory; }
+.gallery .shot { scroll-snap-align: start; }
+.gallery .shot img { max-width: 240px; border-radius: 28px; box-shadow: 0 0 0 7px #1F1D19, 0 22px 40px -22px rgba(31,29,25,.5); }
+
 @media (max-width: 900px) {
   .hero .wrap, .money .wrap, .feature { grid-template-columns: minmax(0,1fr); }
   .tools { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -301,22 +312,9 @@ img { max-width: 100%; }
           <div class="zero"><b>0</b><span>trackers</span></div>
         </div>
       </div>
-      <div class="phone" aria-hidden="true">
-        <div class="screen">
-          <div class="p-top">
-            <div class="p-keys"><i></i><i></i><i></i><i></i></div>
-            <div class="p-art"><div class="cassette"><span class="reel l"></span><span class="reel r"></span></div></div>
-            <div class="p-adbar">CH 3 · The night the lights went out<b>CHAPTERS</b></div>
-            <div class="p-switch"><span class="on">ARTWORK</span><span>TRANSCRIPT</span></div>
-          </div>
-          <div class="p-body">
-            <div><div class="p-show">Tidewater Weekly · Ep 212</div><div class="p-title">The lighthouse keepers' strike</div></div>
-            <div class="p-wave" id="heroWave"></div>
-            <div class="p-transport"><i></i><i class="play"></i><i></i></div>
-            <div class="p-tiles"><span><b>1.4×</b>SPEED</span><span><b>ON</b>TRIM</span><span><b>OFF</b>BOOST</span><span><b>30M</b>SLEEP</span></div>
-          </div>
-        </div>
-      </div>
+      <figure class="shot hero-shot">
+        <img src="shots/player.jpg" width="600" height="1304" alt="Poddeck's player: the episode's artwork filling the top, the chapter playing, the progress line with the episode's real loudness, and the speed, trim, boost and sleep keys.">
+      </figure>
     </div>
   </section>
 
@@ -394,16 +392,9 @@ img { max-width: 100%; }
           </div>
           <div class="yours"><span class="chip">Transcribe: <b>Only when I ask</b></span><span class="chip">Stop any time</span><span class="chip">Name speakers</span></div>
         </div>
-        <div class="tx" aria-hidden="true">
-          <div class="find">⌕ lighthouse <b>2 of 5 ‹ ›</b></div>
-          <div class="music">♪ Music · intro theme · 14s</div>
-          <div class="stamp">12m 40s</div>
-          <div class="line"><span class="who">Mara</span>The keepers walked out on the first of May, every <mark>lighthouse</mark> on the coast went dark for a night.</div>
-          <div class="line now"><span class="who">Dev</span>Which sounds dramatic until you learn the ships had radar by then.</div>
-          <div class="ad"><span>Ad break · 1m 12s</span><span class="k">PLAY AD</span><span class="k">NOT AN AD</span></div>
-          <div class="stamp">14m 05s</div>
-          <div class="line"><span class="who">Mara</span>So it was really about who got to keep the houses.</div>
-        </div>
+        <figure class="shot">
+          <img src="shots/transcript.jpg" width="600" height="1304" loading="lazy" alt="The player in TRANSCRIPT mode: the line being spoken now in large type, with the lines before and after it.">
+        </figure>
       </div>
 
       <!-- Listening tools -->
@@ -466,6 +457,25 @@ img { max-width: 100%; }
           <div class="tool"><span class="def">Everywhere you listen</span><h3>Beyond the app</h3><p>Home Screen and Lock Screen widgets, a Control Centre play key, Siri and Shortcuts ("Play Up Next", sleep timer), the Action button, CarPlay, AirPlay to any speaker, and touch-and-hold shortcuts on the app icon.</p></div>
           <div class="tool"><span class="def">Your listening, on your phone</span><h3>Stats &amp; history</h3><p>Time listened this week, time saved by speed and trimming, top shows and full history. Worked out on the phone; never sent anywhere.</p></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens" style="padding-top:24px">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label">On a real iPhone</span>
+        <h2>What it actually looks like</h2>
+        <p class="lede">Straight from the app, with real shows. Swipe or scroll along.</p>
+      </div>
+      <div class="gallery">
+        <figure class="shot"><img src="shots/upnext.jpg" width="600" height="1304" loading="lazy" alt="Up Next: episodes in order with Top and Bottom tags, times and download and transcript lights."><figcaption><b>Up Next</b> Each show stays oldest first, your Top shows lead.</figcaption></figure>
+        <figure class="shot"><img src="shots/library.jpg" width="600" height="1304" loading="lazy" alt="Library: new episode cards with the artwork fading into its colour, then your shows."><figcaption><b>Library</b> New episodes, then every show you follow.</figcaption></figure>
+        <figure class="shot"><img src="shots/show.jpg" width="600" height="1304" loading="lazy" alt="A show page: the artwork header, Following, Top and the alert bell, then the episodes."><figcaption><b>A show</b> Follow, Top or Bottom, and the alert bell, right on the page.</figcaption></figure>
+        <figure class="shot"><img src="shots/chapters.jpg" width="600" height="1304" loading="lazy" alt="Chapters made on the iPhone from the transcript, with the one playing now highlighted."><figcaption><b>Chapters</b> From the show, or made on your iPhone when there are none.</figcaption></figure>
+        <figure class="shot"><img src="shots/settings.jpg" width="600" height="1304" loading="lazy" alt="Show settings: Off, Top or Bottom, downloads, alerts, speed and skip intro and outro for this show."><figcaption><b>Show settings</b> Every show set the way you want it.</figcaption></figure>
+        <figure class="shot"><img src="shots/discover.jpg" width="600" height="1304" loading="lazy" alt="Discover: categories, suggestions based on what you follow, and the UK top shows."><figcaption><b>Discover</b> Charts and suggestions from Apple's free directory.</figcaption></figure>
+        <figure class="shot"><img src="shots/stats.jpg" width="600" height="1304" loading="lazy" alt="Stats: time listened this week and in total, a bar for each day, and your top shows."><figcaption><b>Stats</b> Worked out on your phone, never sent anywhere.</figcaption></figure>
       </div>
     </div>
   </section>
@@ -551,7 +561,7 @@ img { max-width: 100%; }
 <footer>
   <div class="wrap">
     <span>Poddeck · a personal podcast app for iPhone</span>
-    <span>Show and episode names on this page are made-up examples.</span>
+    <span>Screenshots show real shows; their names and artwork belong to their owners. Names in the demo are made up.</span>
   </div>
 </footer>
 
@@ -573,6 +583,7 @@ const TESTFLIGHT_URL = "";
 
 (function heroWave() {
   const el = document.getElementById("heroWave");
+  if (!el) return;
   const n = 46;
   for (let i = 0; i < n; i++) {
     const b = document.createElement("i");
