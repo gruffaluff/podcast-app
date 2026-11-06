@@ -277,7 +277,9 @@ private struct EpisodeCard: View {
                 Button { player.play(episode) } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "play.fill")
-                        Text(playLabel).monospacedDigit()
+                        Text(playLabel)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Theme.displayText)
@@ -307,8 +309,11 @@ private struct EpisodeCard: View {
     }
 
     private var playLabel: String {
+        // "1h 16m" like Apple's cards; a long clock (1:16:31) wrapped
+        // onto two lines in the pill.
         guard let left = episode.timeLeft, left > 0 else { return "PLAY" }
-        return TimeFormat.clock(left)
+        let started = episode.position > 1
+        return TimeFormat.length(left) + (started ? " left" : "")
     }
 }
 

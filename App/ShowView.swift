@@ -240,7 +240,8 @@ struct ShowView: View {
                     }
                     .foregroundStyle(tint)
                     .padding(.horizontal, 10)
-                    .frame(maxWidth: .infinity, minHeight: 42)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
                     .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
@@ -251,7 +252,8 @@ struct ShowView: View {
                         Text(modeName).font(Theme.mono(12, .bold))
                     }
                     .padding(.horizontal, 10)
-                    .frame(maxWidth: .infinity, minHeight: 42)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
                     .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
@@ -260,7 +262,7 @@ struct ShowView: View {
                     Image(systemName: show.notify ? "bell.fill" : "bell.slash")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(show.notify ? Theme.ink : Theme.displayText)
-                        .frame(width: 42, height: 42)
+                        .frame(width: 44, height: 44)
                         .background(show.notify ? Theme.highlight : NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)

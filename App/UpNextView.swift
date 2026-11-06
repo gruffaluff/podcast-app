@@ -10,6 +10,8 @@ struct UpNextView: View {
     @State private var editing = false
     /// Shows from the chart, offered when Up Next is empty.
     @State private var suggestions: [DirectoryItem] = []
+    /// The row whose keys are showing (tap a row to open, again to close).
+    @State private var openRow: String?
 
     var body: some View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
@@ -20,34 +22,7 @@ struct UpNextView: View {
                 Section {
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
-                            Button { player.play(episode) } label: {
-                                QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID)
-                            }
-                            .buttonStyle(.plain)
-                            // No line under the last row.
-                            .listRowSeparator(index == store.queue.count - 1 ? .hidden : .visible, edges: .bottom)
-                            .swipeActions(edge: .trailing) {
-                                Button("Played") {
-                                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                                }
-                                .tint(Theme.ink)
-                                Button("Remove") {
-                                    store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
-                                }
-                                .tint(Theme.muted)
-                            }
-                            .contextMenu {
-                                if transcripts.isQueued(episode) {
-                                    Button("Stop transcribing", systemImage: "stop.circle") { transcripts.stop(episode) }
-                                } else if transcripts.canTranscribeNow(episode) {
-                                    Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
-                                }
-                                Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
-                                Button("Mark as played", systemImage: "checkmark.circle") {
-                                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                                }
-                                Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
-                            }
+                            queueRow(index: index, item: item, episode: episode, settings: settings)
                         }
                     }
                     // Long press and drag to reorder (Paul); the reorder key
@@ -146,6 +121,63 @@ struct UpNextView: View {
         }
     }
 
+    /// One Up Next row: tap for its keys, artwork to play, swipe right for
+    /// notes / to the top, swipe left for played / remove.
+    private func queueRow(index: Int, item: QueueItem, episode: PodcastEpisode, settings: QueueSettings) -> some View {
+        let isOpen = openRow == episode.episodeID
+        return VStack(spacing: 8) {
+            // Tap a row for its keys; the artwork plays (Paul, A + C).
+            QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID) {
+                player.play(episode)
+            }
+            .onTapGesture { toggleRow(episode.episodeID) }
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(isOpen ? "Hides the keys" : "Shows play, notes, download and more")
+            if isOpen {
+                UpNextRowKeys(episode: episode) { openRow = nil }
+                    .padding(.bottom, 4)
+            }
+        }
+        // No line under the last row.
+        .listRowSeparator(index == store.queue.count - 1 ? .hidden : .visible, edges: .bottom)
+        // Swipe right: notes (a full swipe opens them) and to the top.
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
+                .tint(Theme.accentFill)
+            Button("To top", systemImage: "arrow.up.to.line") { store.playNext(episode) }
+                .tint(Theme.muted)
+        }
+        .swipeActions(edge: .trailing) {
+            Button("Played") {
+                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+            }
+            .tint(Theme.ink)
+            Button("Remove") {
+                store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
+            }
+            .tint(Theme.muted)
+        }
+        .contextMenu {
+            if transcripts.isQueued(episode) {
+                Button("Stop transcribing", systemImage: "stop.circle") { transcripts.stop(episode) }
+            } else if transcripts.canTranscribeNow(episode) {
+                Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
+            }
+            Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
+            Button("Mark as played", systemImage: "checkmark.circle") {
+                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+            }
+            Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
+        }
+    }
+
+    private func toggleRow(_ id: String) {
+        // No animation: List resizing rows animates jerkily.
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { openRow = openRow == id ? nil : id }
+    }
+
     private func header(episodes: [String: PodcastEpisode]) -> some View {
         let total = store.queue.compactMap { episodes[$0.episode.id]?.timeLeft }.reduce(0, +)
         var counts = "\(store.queue.count) EPISODE\(store.queue.count == 1 ? "" : "S")"
@@ -175,16 +207,21 @@ private struct QueueRow: View {
     let episode: PodcastEpisode
     let settings: QueueSettings
     let isPlaying: Bool
+    /// Tapping the artwork plays straight away.
+    let play: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 46, radius: 8)
-                .overlay {
-                    if isPlaying {
-                        RoundedRectangle(cornerRadius: 8).stroke(Theme.accentFill, lineWidth: 3)
+            Button(action: play) {
+                ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 46, radius: 8)
+                    .overlay {
+                        if isPlaying {
+                            RoundedRectangle(cornerRadius: 8).stroke(Theme.accentFill, lineWidth: 3)
+                        }
                     }
-                }
-                .accessibilityLabel("Number \(number)")
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Play number \(number)")
             VStack(alignment: .leading, spacing: 3) {
                 Text(episode.title)
                     .font(.system(size: 15, weight: .semibold))
@@ -250,4 +287,86 @@ private struct QueueRow: View {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
+}
+
+/// The keys under an opened Up Next row: play, notes, download,
+/// transcribe, to the top, played, remove (Paul's option A).
+private struct UpNextRowKeys: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @Environment(DownloadManager.self) private var downloads
+    @Environment(TranscriptService.self) private var transcripts
+    let episode: PodcastEpisode
+    let close: () -> Void
+
+    var body: some View {
+        HStack(spacing: 5) {
+            playKey
+            key("NOTES", icon: "doc.text") { store.notesEpisode = episode }
+            downloadKey
+            transcriptKey
+            key("TO TOP", icon: "arrow.up.to.line") {
+                store.playNext(episode)
+                close()
+            }
+            key("PLAYED", icon: "checkmark") {
+                close()
+                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+            }
+            key("REMOVE", icon: "xmark") {
+                close()
+                store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
+            }
+        }
+    }
+
+    @ViewBuilder private var playKey: some View {
+        let isThis = player.nowPlaying?.episodeID == episode.episodeID
+        if isThis && player.isPlaying {
+            key("PAUSE", icon: "pause.fill", dark: true) { player.pause() }
+        } else {
+            key("PLAY", icon: "play.fill", dark: true) { player.play(episode) }
+        }
+    }
+
+    @ViewBuilder private var downloadKey: some View {
+        if let fraction = downloads.progress[episode.episodeID] {
+            key("\(Int(fraction * 100))%", icon: "stop.circle") { store.removeDownload(episode) }
+                .accessibilityLabel("Stop download")
+        } else if episode.downloadFile != nil {
+            key("DEL DL", icon: "trash") { store.removeDownload(episode) }
+                .accessibilityLabel("Delete download")
+        } else {
+            key("DL", icon: "arrow.down.circle") { downloads.download(episode) }
+                .accessibilityLabel("Download")
+        }
+    }
+
+    @ViewBuilder private var transcriptKey: some View {
+        if transcripts.isQueued(episode) {
+            key("STOP TX", icon: "stop.circle") { transcripts.stop(episode) }
+                .accessibilityLabel("Stop transcribing")
+        } else if transcripts.canTranscribeNow(episode) {
+            key("TX", icon: "text.quote") { transcripts.transcribeNow(episode) }
+                .accessibilityLabel("Transcribe now")
+        } else {
+            key("TX", icon: "text.quote") { store.notesEpisode = episode }
+                .accessibilityLabel("Transcript")
+        }
+    }
+
+    private func key(_ title: String, icon: String, dark: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(title)
+                    .font(Theme.mono(8, .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .plain, radius: 8))
+    }
 }

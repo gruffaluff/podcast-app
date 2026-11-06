@@ -144,6 +144,13 @@ to Nowhere / Top / Bottom" on the show page.
   GitHub's 15-minute schedule actually runs much less often; Paul is fine
   with that for now (a free outside timer such as cron-job.org could
   trigger it if ever wanted).
+  Known limits (told Paul 5 Nov 2026): GitHub turns off scheduled jobs in
+  a repo with no commits for 60 days (it emails first; re-enable in the
+  Actions tab, or any commit keeps it alive); the quiet "refresh Up
+  Next" pushes are best-effort and iOS may drop or delay them (Low Power
+  Mode, app force-quit); visible bell alerts are dependable once sent;
+  timing is "within an hour or so", not instant. All free: public-repo
+  Linux minutes, CloudKit public database and Apple's push service.
 - **Subscriber (private) feeds** (Patreon, Supercast, Substack, Memberful,
   Acast+ etc.): pasting the private RSS link in Add a show works (the key
   is in the link). Feeds that need a username and password aren't
@@ -310,8 +317,15 @@ to Nowhere / Top / Bottom" on the show page.
 - Showcase page: `website/poddeck.html`, published as a private claude.ai
   page (https://claude.ai/artifact/AQnieLZr5m9vCoNU9GoWpn); republish from
   that file to keep the same link. Only Paul can open it until he shares it.
-- Same look as the app; feature sections with phone mock-ups, a live Up
-  Next demo using the app's ordering rules, privacy note, download section.
+- Rebuilt 5 Nov 2026 (Paul: focus on features, how they work, and an
+  experience you control with no subscription or hidden costs). Middle
+  ground look. Sections: hero ("A podcast app you run, not rent"), a £0
+  monthly "receipt", six features each with "How it works" steps and the
+  settings you hold (Up Next with a live demo of the real queue rules,
+  transcripts, ad skipping, player tools, new-episode alerts with honest
+  timing, iCloud sync / OPML / widgets / CarPlay), "Where your data goes"
+  table, first-open defaults, a "Fair questions" FAQ and download.
+  Keep its claims in step with the app's defaults when they change.
 - The download button says "Coming soon to TestFlight" until
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
@@ -552,6 +566,22 @@ From the queue and the Notion notes after 18:10:
 - Discover tighter: smaller gaps around the category chips and section
   headers, smaller suggestion cards.
 - Bedtime sleep timer off by default; CarPlay entitlement included.
+
+## Done in the weekend build (6 Nov 2026)
+
+From the Notion notes after 22:15 and this chat:
+- Up Next episode actions (Paul picked A + C from the mock-up): tap a row
+  to open a strip of icon keys with small labels under it (PLAY/PAUSE,
+  NOTES, DL / % / DEL DL, TX / STOP TX, TO TOP, PLAYED, REMOVE; tap again
+  to close); tapping the artwork plays; swipe right shows Notes (full
+  swipe opens the episode page) and To top (= Play next); swipe left
+  stays Played / Remove. `UpNextRowKeys` in UpNextView.swift.
+- New Episodes card play pill shows "1h 16m" (plus "left" once started)
+  on one line; the long clock (1:16:31) wrapped onto two lines.
+- Show page keys (FOLLOWING, settings, bell) all a fixed 44 points high
+  (they looked uneven; bigger text could stretch the first two).
+- Also out with this build: the rebuilt website note and the alerts
+  limits note above.
 
 ## Queued for the next app build
 
