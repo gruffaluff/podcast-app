@@ -645,6 +645,9 @@ From the Notion notes after 6 Nov 08:10:
   the playhead is transcribed on the iPhone and matched to the
   transcript (sync anchors). Streamed episodes can't be checked (no file
   to sample): "This is playing now" on a transcript line is the fix there.
+  Neither Find ads nor the sync check runs on an episode that already
+  has a full on-device pass (`adsChecked`): it found the ads and lined
+  the transcript up all the way through.
 - Website at poddeck.uk (files on the branch, see Website).
 
 ## Queued for the next app build

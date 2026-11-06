@@ -27,6 +27,7 @@ final class AdScanner {
     private var hasShowTranscript = false
     /// Stretches already sync-checked this session.
     private var synced: [ClosedRange<TimeInterval>] = []
+    private var fullyChecked = false
 
     /// Sync check (works with Find ads off): one short sample every
     /// `syncEvery` seconds of audio, a little ahead of where Paul is.
@@ -47,11 +48,15 @@ final class AdScanner {
         scanned = episode.adScanned
         synced = []
         hasShowTranscript = episode.transcriptFile.flatMap(TranscriptFiles.load)?.source == .publisher
+        // A full transcript made on the iPhone from this download already
+        // found the ads and lined the show's transcript up all the way
+        // through, so there's nothing left to check while listening.
+        fullyChecked = episode.adsChecked
     }
 
     /// Called as playback moves; starts the next slice when one is due.
     func playhead(_ time: TimeInterval, duration knownDuration: TimeInterval) {
-        guard task == nil, let audio, let id = episodeID else { return }
+        guard task == nil, !fullyChecked, let audio, let id = episodeID else { return }
         duration = max(duration, knownDuration)
         guard Self.isEnabled else {
             if hasShowTranscript { syncCheck(at: time, audio: audio, id: id) }
