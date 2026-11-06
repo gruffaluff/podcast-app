@@ -330,8 +330,11 @@ to Nowhere / Top / Bottom" on the show page.
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
 - Show and episode names on the page are made-up examples (footer says so).
-- **Own address: poddeck.uk** (Paul bought it, 6 Nov 2026; the domain is
-  his only cost, yearly, from his registrar). Served free by GitHub Pages
+- **Own address: poddeck.uk** (Paul bought it on Cloudflare Registrar,
+  6 Nov 2026; the domain is his only cost, yearly). Cloudflare DNS records
+  for GitHub must be "DNS only" (grey cloud), not proxied. Don't type the
+  domain into GitHub's Pages settings by hand: that commits a CNAME file
+  to main and starts a Codemagic build; `docs/CNAME` sets it on merge. Served free by GitHub Pages
   from `docs/` on main: `docs/index.html` is made from
   `website/poddeck.html` by `scripts/build_site.py` (adds the normal
   page head, favicon `docs/icon.png`, link-preview card); `docs/CNAME`
@@ -598,6 +601,8 @@ From the Notion notes after 22:15 and this chat:
 
 ## Queued for the next app build
 
+- poddeck.uk website files (branch, ready): go live with Monday's build
+  (Paul, 6 Nov 2026: hold the build, evaluating over the weekend).
 - (Bedtime timer default and CarPlay went out in the Friday batch.)
 - CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
   The entitlement is added to `Config/Podcasts.entitlements` on the PR #39
