@@ -731,6 +731,14 @@ From the Notion notes after 6 Nov 08:10:
   `moveQueue` → `commit`). UBDM.
 ## Queued for the next app build
 
+- Up Next reorder, after build 125 (Paul: main list "performing much
+  better" but white corners on the lifted row; pulled-up Up Next "still
+  janky": rows came back in the wrong order, once reversed, then snapped
+  back). Both lists: each row paints its own colour edge to edge (no
+  list insets) with a rounded drag shape, so the lifted row is the whole
+  row with rounded corners. Pulled-up Up Next: no longer always in edit
+  mode (that was the wrong-order redraw); long press and drag like the
+  tab, swipe left to Remove (with Undo). UBDM, on PR #44's branch.
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips

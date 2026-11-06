@@ -144,7 +144,16 @@ struct UpNextView: View {
         // Style B drawn by iOS itself (inset grouped list), not by the rows:
         // iOS then lifts and moves a row cleanly while reordering. Drawing
         // the panel slice by slice made the lifted row clip and leave gaps.
-        .listRowBackground(player.nowPlaying?.episodeID == episode.episodeID ? Theme.highlight : Theme.surface)
+        // The row also paints its own colour edge to edge (no list insets),
+        // so the lifted copy is the whole row with rounded corners; on its
+        // own iOS put it on a white square (white corners, build 125).
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(rowColor(episode))
+        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(rowColor(episode))
         .listRowSeparatorTint(Theme.hairline)
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -163,6 +172,10 @@ struct UpNextView: View {
             }
             .tint(Theme.muted)
         }
+    }
+
+    private func rowColor(_ episode: PodcastEpisode) -> Color {
+        player.nowPlaying?.episodeID == episode.episodeID ? Theme.highlight : Theme.surface
     }
 
     private func toggleRow(_ id: String) {

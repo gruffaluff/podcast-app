@@ -39,14 +39,29 @@ struct UpNextSheet: View {
                                 }
                             }
                         }
-                        .listRowBackground(item.episode.id == player.nowPlaying?.episodeID ? Theme.highlight : Theme.surface)
+                        // The row paints its own background edge to edge, so
+                        // the lifted copy while dragging is the whole row with
+                        // rounded corners (not white square ones).
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(rowColor(item))
                         .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(rowColor(item))
+                        .listRowSeparatorTint(Theme.hairline)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
+                            } label: {
+                                Label("Remove", systemImage: "minus.circle")
+                            }
+                        }
                     }
+                    // Long press and drag, like the Up Next tab. (Always-on
+                    // edit mode here redrew rows in the wrong order after a
+                    // move, then snapped back.)
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
-                    .onDelete { offsets in
-                        let ids = offsets.map { store.queue[$0].episode.id }
-                        for id in ids { store.removeFromQueue(id) }
-                    }
                 } header: {
                     Text(summary(total: total))
                         .font(Theme.mono(12))
@@ -66,7 +81,6 @@ struct UpNextSheet: View {
                     .listRowBackground(Theme.surface)
                 }
             }
-            .environment(\.editMode, .constant(.active))
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .navigationTitle("UP NEXT")
@@ -75,6 +89,10 @@ struct UpNextSheet: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
+    }
+
+    private func rowColor(_ item: QueueItem) -> Color {
+        item.episode.id == player.nowPlaying?.episodeID ? Theme.highlight : Theme.surface
     }
 
     private func summary(total: TimeInterval) -> String {
