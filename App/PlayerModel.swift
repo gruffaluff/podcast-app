@@ -657,6 +657,9 @@ final class PlayerModel {
 
     /// Ad breaks and auto chapters, which arrive once the transcript is analysed.
     private func loadAnalysis(for episode: PodcastEpisode) {
+        // Shows with their own transcript: look for sponsor reads in its text
+        // (episodes fetched before this was added have none yet).
+        store.transcripts?.findAdsInText(episode)
         adBreaks = episode.adBreaks
         autoChapters = episode.autoChapters
         allowedAds = []

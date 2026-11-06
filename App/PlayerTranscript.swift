@@ -164,10 +164,18 @@ struct PlayerTranscriptPanel: View {
         }
     }
 
+    /// The suspected ad break a line sits in, if any.
+    private func adBreak(for line: TranscriptLayout.Line) -> AdBreak? {
+        let breaks = isPlayingThis ? player.adBreaks : episode.adBreaks
+        return breaks.first { $0.contains(line.start + 0.1) }
+    }
+
     private func lineView(_ line: TranscriptLayout.Line, isFocus: Bool) -> some View {
         let names = episode.podcast?.speakerNames ?? [:]
         let speaker = line.speaker.map { names[$0] ?? $0 }
-        let label = [speaker?.uppercased(), TimeFormat.clock(line.start)].compactMap { $0 }.joined(separator: " · ")
+        // Lines in a suspected ad: an amber bar down the side and "AD" first.
+        let ad = adBreak(for: line)
+        let label = [ad == nil ? nil : "SUSPECTED AD", speaker?.uppercased(), TimeFormat.clock(line.start)].compactMap { $0 }.joined(separator: " · ")
         return Button {
             if !isPlayingThis { player.play(episode) }
             player.seek(to: line.start)
@@ -184,10 +192,19 @@ struct PlayerTranscriptPanel: View {
                     .multilineTextAlignment(.leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, ad == nil ? 0 : 12)
+            .overlay(alignment: .leading) {
+                if ad != nil {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Theme.adMarker)
+                        .frame(width: 4)
+                }
+            }
             .opacity(isFocus ? 1 : 0.6)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(ad == nil ? Text(line.text) : Text("Suspected ad. \(line.text)"))
         .accessibilityHint("Plays from \(TimeFormat.clock(line.start))")
     }
 

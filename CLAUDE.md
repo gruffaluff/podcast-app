@@ -619,6 +619,18 @@ From the Notion notes after 6 Nov 08:10:
   with an identical copy, redrawing it mid-drag: `reloadQueueFromSaved`
   now changes nothing when the saved order matches. Row keys don't open
   while the reorder key is on.
+- Ads (Paul: no Skip ad button seen; show suspected ads in the
+  transcript): the player's transcript now marks lines in a suspected
+  ad with an amber bar and "SUSPECTED AD" (`PlayerTranscript.swift`).
+  Shows with their own transcript never had ads looked for unless the
+  iPhone also transcribed them (Only when I ask + Find ads while
+  listening off = never), so sponsor reads in the show's own transcript
+  text are now found too (`TranscriptService.findAdsInText`: text only,
+  no battery; times follow Paul's audio as far as the sync anchors allow;
+  an on-device pass replaces them). Ads inserted into Paul's download
+  aren't in the show's transcript, so only Find ads while listening or a
+  transcript made on the iPhone catches those. Asked Paul where he saw
+  the found ad with no button (scrubber / transcript / show).
 - Website at poddeck.uk (files on the branch, see Website).
 
 ## Queued for the next app build
