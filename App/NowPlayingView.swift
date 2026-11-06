@@ -90,7 +90,12 @@ struct NowPlayingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .tint(Theme.ink)
-        .sheet(isPresented: $showingChapters) { ChaptersView() }
+        .sheet(isPresented: $showingChapters) {
+            // Pulled up like the Up Next list: half height, drag for more.
+            ChaptersView()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showingNotes) {
             if let episode = currentEpisode { EpisodeNotesView(episode: episode) }
         }

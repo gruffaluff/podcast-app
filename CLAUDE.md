@@ -648,6 +648,12 @@ From the Notion notes after 6 Nov 08:10:
   Neither Find ads nor the sync check runs on an episode that already
   has a full on-device pass (`adsChecked`): it found the ads and lined
   the transcript up all the way through.
+- Chapters list (Paul: tighter, like the pulled-up Up Next): opens at
+  half height with a handle (drag up for full), inset paper rows with
+  42-point artwork, one-line bold titles, "0:12:30 · 8m" underneath, the
+  playing chapter highlighted with a NOW tag and the next one tagged
+  NEXT; a summary line ("8 chapters", or "· made on your iPhone from the
+  transcript") with the From the show / Auto switch above it.
 - Website at poddeck.uk (files on the branch, see Website).
 
 ## Queued for the next app build
