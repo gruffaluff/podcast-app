@@ -685,6 +685,12 @@ From the Notion notes after 6 Nov 08:10:
   show episode lists, show previews and Discover (search and charts);
   the pulled-up Up Next and Chapters already looked like this. Search
   results still use plain rows (left for now). Branch only (UBDM).
+- Reorder drag (Paul: white square corners on the lifted row, Shows
+  screen): the Shows screen's lists were on the sand background, so iOS
+  drew the lifted row on a plain light square. Its rows are now paper
+  panels too (style B), and lifted rows keep rounded corners
+  (`.contentShape(.dragPreview, …)`) in all three reorderable lists: Up
+  Next, the pulled-up Up Next and Top show priority. Check on the phone.
 
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's

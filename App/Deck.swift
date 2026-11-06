@@ -306,5 +306,7 @@ extension View {
                                                fill: highlighted ? Theme.highlight : Theme.surface))
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
+            // A row lifted to reorder keeps rounded corners.
+            .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 14))
     }
 }
