@@ -709,7 +709,7 @@ From the Notion notes after 6 Nov 08:10:
   have run is ever skipped, check the Codemagic build list for "skipped"
   and the changeset rule first.
 
-## Queued for the next app build
+## Done in build 125 (6 Nov 2026, PR #43; Paul: "let's build again")
 
 - Up Next reorder reworked (Paul, build 124: "still janky", screenshot
   showed the lifted row clipped short with no handle and a gap left
@@ -729,6 +729,8 @@ From the Notion notes after 6 Nov 08:10:
   place (order / manual changed only when different; duplicates from old
   syncs removed). Covers the pulled-up Up Next in the player too (same
   `moveQueue` → `commit`). UBDM.
+## Queued for the next app build
+
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
