@@ -872,9 +872,11 @@ preview header runs edge to edge up under the status bar with rounded
 bottom corners (list ignores the top safe area; search is a field under
 the header); the "New episodes go to" bar is gone (the header's settings
 key covers it).
-Codemagic: free 500 Mac minutes a month, each build ~15–20 min, so about
-25 builds a month. Batch notes into fewer builds; it stops at the limit
-(no charge).
+Codemagic: free 500 Mac minutes a month. Builds actually take about 5
+minutes (Paul checked 6 Nov 2026: 5m16s and 4m52s; the account page showed
+100 / 500 used after ~23 builds), so roughly 90–100 builds a month. It
+stops at the limit (no charge). Don't press "Enable subscription" on the
+Codemagic page: that's the paid plan.
 
 ## Done from the second Notion FNB batch (5 Nov 2026, after build 115)
 
