@@ -604,7 +604,7 @@ From the Notion notes after 22:15 and this chat:
 - Also out with this build: the rebuilt website note and the alerts
   limits note above.
 
-## Ready for Monday's build (6 Nov 2026, not merged; Paul: hold until Monday)
+## Done in the Friday afternoon build (6 Nov 2026, PR #41, build 123; Paul: "let's build now")
 
 From the Notion notes after 6 Nov 08:10:
 - New Episodes cards: every layer pinned to 248×330 with overlays (the
@@ -663,8 +663,9 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
-- poddeck.uk website files (branch, ready): go live with Monday's build
-  (Paul, 6 Nov 2026: hold the build, evaluating over the weekend).
+- (poddeck.uk went out with PR #41 on 6 Nov 2026. Paul added the
+  Cloudflare DNS records himself. After the merge: tick Enforce HTTPS in
+  Settings → Pages once it's offered.)
 - (Bedtime timer default and CarPlay went out in the Friday batch.)
 - CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
   The entitlement is added to `Config/Podcasts.entitlements` on the PR #39
