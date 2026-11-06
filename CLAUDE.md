@@ -326,13 +326,34 @@ to Nowhere / Top / Bottom" on the show page.
   timing, iCloud sync / OPML / widgets / CarPlay), "Where your data goes"
   table, first-open defaults, a "Fair questions" FAQ and download.
   Keep its claims in step with the app's defaults when they change.
+- Ad skipping is not a selling point (Paul, 6 Nov 2026: not a strong
+  feature). The site doesn't feature it: no ad section, no Skip ad in the
+  hero phone (it shows the chapter chip), no ad line on the receipt; one
+  small "Ad breaks · optional, off by default" card among the player
+  tools. "0 ads" in the hero means the app itself shows no adverts.
 - The download button says "Coming soon to TestFlight" until
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.
 - Show and episode names on the page are made-up examples (footer says so).
-- Hosting it at its own address (e.g. GitHub Pages) is possible later;
-  free now that the repo is public (Pages serves `docs/` once Paul turns
-  it on).
+- **Own address: poddeck.uk** (Paul bought it on Cloudflare Registrar,
+  6 Nov 2026; the domain is his only cost, yearly). Cloudflare DNS records
+  for GitHub must be "DNS only" (grey cloud), not proxied. Don't type the
+  domain into GitHub's Pages settings by hand: that commits a CNAME file
+  to main and starts a Codemagic build; `docs/CNAME` sets it on merge. Served free by GitHub Pages
+  from `docs/` on main: `docs/index.html` is made from
+  `website/poddeck.html` by `scripts/build_site.py` (adds the normal
+  page head, favicon `docs/icon.png`, link-preview card); `docs/CNAME`
+  holds poddeck.uk; `docs/_config.yml` keeps DESIGN.md / SETUP.md off the
+  site. After editing the page: run the script, commit both, and
+  republish the claude.ai page. DNS at the registrar: four A records for
+  poddeck.uk → 185.199.108.153, 185.199.109.153, 185.199.110.153,
+  185.199.111.153, and CNAME www → gruffaluff.github.io; then Settings →
+  Pages: custom domain poddeck.uk, Enforce HTTPS once offered. Note: with
+  a custom domain, gruffaluff.github.io/podcast-app/... redirects to
+  poddeck.uk, so `docs/cloudkit-subscribe.html` (only needed if the
+  CloudKit container is ever reset) would need poddeck.uk added as an
+  allowed origin on its CloudKit API token. A merge to main also starts a
+  Codemagic build, so website-only changes ride along with app builds.
 
 ## Proposed technical approach (confirm with Paul before big changes)
 
@@ -583,8 +604,68 @@ From the Notion notes after 22:15 and this chat:
 - Also out with this build: the rebuilt website note and the alerts
   limits note above.
 
+## Done in the Friday afternoon build (6 Nov 2026, PR #41, build 123; Paul: "let's build now")
+
+From the Notion notes after 6 Nov 08:10:
+- New Episodes cards: every layer pinned to 248×330 with overlays (the
+  ZStack grew to its widest child, pushing the artwork sideways and
+  leaving a strip of colour on one edge); the carousel uses
+  `.contentMargins` so cards settle on the page margin, and
+  `.scrollClipDisabled()` so the card shadow isn't cut off in a hard line
+  (the "two tone" band under the cards).
+- Up Next drag to reorder: the long-press menu on rows is gone (it fought
+  the drag for the same press; the row keys cover everything it had), so
+  a long press always picks the row up. Rows are separate paper cards with
+  no system divider lines (lines tied to a row's place flickered while
+  dragging), and the row no longer switches animation off (text jumped).
+  Both ways of reordering (long press, and the reorder key's handles) were
+  also hit and miss because every sync, including the one a reorder
+  starts, reloaded Up Next about 2 seconds later and replaced the list
+  with an identical copy, redrawing it mid-drag: `reloadQueueFromSaved`
+  now changes nothing when the saved order matches. Row keys don't open
+  while the reorder key is on.
+- Ads (Paul: no Skip ad button seen; show suspected ads in the
+  transcript): the player's transcript now marks lines in a suspected
+  ad with an amber bar and "SUSPECTED AD" (`PlayerTranscript.swift`).
+  Shows with their own transcript never had ads looked for unless the
+  iPhone also transcribed them (Only when I ask + Find ads while
+  listening off = never), so sponsor reads in the show's own transcript
+  text are now found too (`TranscriptService.findAdsInText`: text only,
+  no battery; times follow Paul's audio as far as the sync anchors allow;
+  an on-device pass replaces them). Ads inserted into Paul's download
+  aren't in the show's transcript, so only Find ads while listening or a
+  transcript made on the iPhone catches those. Asked Paul where he saw
+  the found ad with no button (scrubber / transcript / show).
+- Player transport: previous / next chapter keys sit in the gaps either
+  side of play when the episode has chapters (skip back, ⏮, play, ⏭,
+  skip forward). Mini player: skip back, play, skip forward (its
+  next-chapter key moved out; chapters live in the full player and the
+  chapter list).
+- Transcript sync (Paul: transcripts still not following along): the
+  show's own transcript was only lined up with Paul's audio by Find ads
+  while listening, which is now off by default, so after each inserted
+  ad it drifted. New light "sync check" in `AdScanner` that runs whatever
+  the ads setting: while a downloaded episode with the show's own
+  transcript plays, a 25-second sample every 2½ minutes just ahead of
+  the playhead is transcribed on the iPhone and matched to the
+  transcript (sync anchors). Streamed episodes can't be checked (no file
+  to sample): "This is playing now" on a transcript line is the fix there.
+  Neither Find ads nor the sync check runs on an episode that already
+  has a full on-device pass (`adsChecked`): it found the ads and lined
+  the transcript up all the way through.
+- Chapters list (Paul: tighter, like the pulled-up Up Next): opens at
+  half height with a handle (drag up for full), inset paper rows with
+  42-point artwork, one-line bold titles, "0:12:30 · 8m" underneath, the
+  playing chapter highlighted with a NOW tag and the next one tagged
+  NEXT; a summary line ("8 chapters", or "· made on your iPhone from the
+  transcript") with the From the show / Auto switch above it.
+- Website at poddeck.uk (files on the branch, see Website).
+
 ## Queued for the next app build
 
+- (poddeck.uk went out with PR #41 on 6 Nov 2026. Paul added the
+  Cloudflare DNS records himself. After the merge: tick Enforce HTTPS in
+  Settings → Pages once it's offered.)
 - (Bedtime timer default and CarPlay went out in the Friday batch.)
 - CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
   The entitlement is added to `Config/Podcasts.entitlements` on the PR #39

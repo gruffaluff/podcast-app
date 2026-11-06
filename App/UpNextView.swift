@@ -26,10 +26,10 @@ struct UpNextView: View {
                         }
                     }
                     // Long press and drag to reorder (Paul); the reorder key
-                    // shows the handles and delete buttons too.
+                    // shows the handles and delete buttons too. No long-press
+                    // menu on these rows: it fought the drag for the same
+                    // press (the row keys cover everything it had).
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
-                    .listRowBackground(Theme.surface)
-                    .listRowSeparatorTint(Theme.hairline)
                     if store.queue.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("UP NEXT IS EMPTY")
@@ -82,6 +82,7 @@ struct UpNextView: View {
                 }
             }
             .environment(\.editMode, .constant(editing ? .active : .inactive))
+            .onChange(of: editing) { if editing { openRow = nil } }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
@@ -130,7 +131,8 @@ struct UpNextView: View {
             QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID) {
                 player.play(episode)
             }
-            .onTapGesture { toggleRow(episode.episodeID) }
+            // While reordering, taps do nothing (rows growing mid-drag jumped).
+            .onTapGesture { if !editing { toggleRow(episode.episodeID) } }
             .accessibilityAddTraits(.isButton)
             .accessibilityHint(isOpen ? "Hides the keys" : "Shows play, notes, download and more")
             if isOpen {
@@ -138,8 +140,16 @@ struct UpNextView: View {
                     .padding(.bottom, 4)
             }
         }
-        // No line under the last row.
-        .listRowSeparator(index == store.queue.count - 1 ? .hidden : .visible, edges: .bottom)
+        // Each row is its own paper card (no system lines): lines tied to
+        // a row's place flickered in the wrong spots while dragging.
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 9, leading: 24, bottom: 9, trailing: 24))
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Theme.surface)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 3)
+        )
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
@@ -156,18 +166,6 @@ struct UpNextView: View {
                 store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
             }
             .tint(Theme.muted)
-        }
-        .contextMenu {
-            if transcripts.isQueued(episode) {
-                Button("Stop transcribing", systemImage: "stop.circle") { transcripts.stop(episode) }
-            } else if transcripts.canTranscribeNow(episode) {
-                Button("Transcribe now", systemImage: "text.quote") { transcripts.transcribeNow(episode) }
-            }
-            Button("Episode notes", systemImage: "doc.text") { store.notesEpisode = episode }
-            Button("Mark as played", systemImage: "checkmark.circle") {
-                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-            }
-            Button("Remove from Up Next", systemImage: "minus.circle") { store.removeFromQueue(episode.episodeID) }
         }
     }
 
@@ -250,11 +248,7 @@ private struct QueueRow: View {
                 EpisodeLights(episode: episode)
             }
         }
-        .padding(.vertical, 4)
         .contentShape(Rectangle())
-        // Tapping plays it, which adds the PLAYING line; without this the
-        // title slid about while the row grew.
-        .transaction { $0.animation = nil }
     }
 
     /// TOP1 / TOP2 (rank) or BTM for episodes added by a show's setting;

@@ -391,6 +391,8 @@ final class TranscriptService {
             episode.adBreaks = AdDetection.breaks(in: lines, music: transcript.music)
                 .filter { ad in !dismissed.contains { abs($0 - ad.start) < 5 } }
             episode.adsChecked = true
+        } else {
+            findAdsInText(episode, transcript: transcript)
         }
         if episode.chaptersURL == nil {
             let duration = episode.duration ?? lines.last?.end ?? 0
@@ -406,6 +408,25 @@ final class TranscriptService {
             }
         }
         NotificationCenter.default.post(name: .episodeAnalysisUpdated, object: id)
+    }
+
+    /// Sponsor reads in the show's own transcript (text only, no battery):
+    /// these are the ads read inside the show. Ads inserted into Paul's
+    /// download aren't in the show's transcript; only an on-device pass (or
+    /// Find ads while listening) hears those, and its result replaces these.
+    /// Times follow Paul's audio as far as the sync anchors allow.
+    func findAdsInText(_ episode: PodcastEpisode, transcript: Transcript? = nil) {
+        guard !episode.adsChecked, let transcript = transcript ?? self.transcript(for: episode),
+              transcript.source == .publisher else { return }
+        let aligned = TranscriptAlign.aligned(transcript, anchors: episode.syncAnchors)
+        let lines = TranscriptLayout.lines(from: aligned.segments)
+        let dismissed = episode.dismissedAds
+        let found = AdDetection.breaks(in: lines, music: [])
+            .filter { ad in !dismissed.contains { abs($0 - ad.start) < 5 } }
+        guard found != episode.adBreaks else { return }
+        episode.adBreaks = found
+        store.save()
+        NotificationCenter.default.post(name: .episodeAnalysisUpdated, object: episode.episodeID)
     }
 
     /// "Not an ad": forget this break, and don't find it again.
