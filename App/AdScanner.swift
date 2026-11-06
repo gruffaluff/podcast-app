@@ -22,6 +22,16 @@ final class AdScanner {
     private var duration: TimeInterval = 0
     private var scanned: [ClosedRange<TimeInterval>] = []
     private var task: Task<Void, Never>?
+    /// The show supplies its own transcript (which lacks the ads inserted
+    /// into Paul's download, so it needs lining up with the audio).
+    private var hasShowTranscript = false
+    /// Stretches already sync-checked this session.
+    private var synced: [ClosedRange<TimeInterval>] = []
+
+    /// Sync check (works with Find ads off): one short sample every
+    /// `syncEvery` seconds of audio, a little ahead of where Paul is.
+    static let syncSample: TimeInterval = 25
+    static let syncEvery: TimeInterval = 150
 
     init(store: LibraryStore) {
         self.store = store
@@ -35,12 +45,18 @@ final class AdScanner {
         self.audio = audio
         duration = episode.duration ?? 0
         scanned = episode.adScanned
+        synced = []
+        hasShowTranscript = episode.transcriptFile.flatMap(TranscriptFiles.load)?.source == .publisher
     }
 
     /// Called as playback moves; starts the next slice when one is due.
     func playhead(_ time: TimeInterval, duration knownDuration: TimeInterval) {
-        guard Self.isEnabled, task == nil, let audio, let id = episodeID else { return }
+        guard task == nil, let audio, let id = episodeID else { return }
         duration = max(duration, knownDuration)
+        guard Self.isEnabled else {
+            if hasShowTranscript { syncCheck(at: time, audio: audio, id: id) }
+            return
+        }
         guard let slice = AdScanPlan.nextSlice(playhead: time, scanned: scanned, duration: duration) else { return }
 
         task = Task { [weak self] in
@@ -54,6 +70,24 @@ final class AdScanner {
             self.scanned = AdScanPlan.adding(slice, to: self.scanned)
             let all = self.store.addAdBreaks(breaks, scanned: slice, to: id)
             self.onUpdate?(id, all)
+        }
+    }
+
+    /// Keeps the show's transcript in step without Find ads: a 25-second
+    /// sample every 2½ minutes just ahead of the playhead (about a sixth of
+    /// the work of Find ads), matched word for word against the transcript.
+    private func syncCheck(at time: TimeInterval, audio: URL, id: String) {
+        guard let cell = AdScanPlan.nextSlice(playhead: time, scanned: synced, duration: duration) else { return }
+        let start = cell.lowerBound
+        let sample = start...min(duration, start + Self.syncSample)
+        let covered = start...min(duration, start + Self.syncEvery)
+        task = Task { [weak self] in
+            let words = (try? await OnDeviceTranscriber.words(in: audio, slice: sample)) ?? []
+            guard let self else { return }
+            self.task = nil
+            guard !Task.isCancelled, self.episodeID == id else { return }
+            self.synced = AdScanPlan.adding(covered, to: self.synced)
+            self.syncTranscript(id, heard: words)
         }
     }
 

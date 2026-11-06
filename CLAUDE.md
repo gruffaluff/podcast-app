@@ -636,6 +636,15 @@ From the Notion notes after 6 Nov 08:10:
   skip forward). Mini player: skip back, play, skip forward (its
   next-chapter key moved out; chapters live in the full player and the
   chapter list).
+- Transcript sync (Paul: transcripts still not following along): the
+  show's own transcript was only lined up with Paul's audio by Find ads
+  while listening, which is now off by default, so after each inserted
+  ad it drifted. New light "sync check" in `AdScanner` that runs whatever
+  the ads setting: while a downloaded episode with the show's own
+  transcript plays, a 25-second sample every 2½ minutes just ahead of
+  the playhead is transcribed on the iPhone and matched to the
+  transcript (sync anchors). Streamed episodes can't be checked (no file
+  to sample): "This is playing now" on a transcript line is the fix there.
 - Website at poddeck.uk (files on the branch, see Website).
 
 ## Queued for the next app build
