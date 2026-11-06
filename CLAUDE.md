@@ -326,6 +326,11 @@ to Nowhere / Top / Bottom" on the show page.
   timing, iCloud sync / OPML / widgets / CarPlay), "Where your data goes"
   table, first-open defaults, a "Fair questions" FAQ and download.
   Keep its claims in step with the app's defaults when they change.
+- Ad skipping is not a selling point (Paul, 6 Nov 2026: not a strong
+  feature). The site doesn't feature it: no ad section, no Skip ad in the
+  hero phone (it shows the chapter chip), no ad line on the receipt; one
+  small "Ad breaks · optional, off by default" card among the player
+  tools. "0 ads" in the hero means the app itself shows no adverts.
 - The download button says "Coming soon to TestFlight" until
   `TESTFLIGHT_URL` (top of the page's script) is set to the TestFlight
   public invite link.

@@ -266,7 +266,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
       <div class="hero-copy">
         <span class="label">Podcast app for iPhone</span>
         <h1>A podcast app you <em>run</em>, not rent.</h1>
-        <p class="lede">Poddeck does the clever things paid apps charge for: transcripts, ad skipping, smart speed, a queue that keeps every show in order. It does them all on your iPhone. There's no subscription, no account and no adverts, and nothing about you goes to a server.</p>
+        <p class="lede">Poddeck does the clever things paid apps charge for: transcripts, smart speed, chapters, and a queue that keeps every show in order. It does them all on your iPhone. There's no subscription, no account and no adverts, and nothing about you goes to a server.</p>
         <div class="actions">
           <a class="btn primary download-link" id="testflight" href="#get" aria-disabled="true">Coming soon to TestFlight</a>
           <a class="btn ghost" href="#features">See how it works</a>
@@ -283,7 +283,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
           <div class="p-top">
             <div class="p-keys"><i></i><i></i><i></i><i></i></div>
             <div class="p-art"><div class="cassette"><span class="reel l"></span><span class="reel r"></span></div></div>
-            <div class="p-adbar">Ad break · 1:12<b>SKIP AD</b></div>
+            <div class="p-adbar">CH 3 · The night the lights went out<b>CHAPTERS</b></div>
             <div class="p-switch"><span class="on">ARTWORK</span><span>TRANSCRIPT</span></div>
           </div>
           <div class="p-body">
@@ -311,8 +311,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
         <div class="row" role="row"><span role="cell">The app</span><span role="cell">£0.00</span></div>
         <div class="row" role="row"><span role="cell">Subscription<small>There isn't one</small></span><span role="cell">£0.00</span></div>
         <div class="row" role="row"><span role="cell">Transcripts<small>Made on your iPhone</small></span><span role="cell">£0.00</span></div>
-        <div class="row" role="row"><span role="cell">Ad detection<small>Made on your iPhone</small></span><span role="cell">£0.00</span></div>
-        <div class="row" role="row"><span role="cell">Sync &amp; backup<small>Your own iCloud</small></span><span role="cell">£0.00</span></div>
+                <div class="row" role="row"><span role="cell">Sync &amp; backup<small>Your own iCloud</small></span><span role="cell">£0.00</span></div>
         <div class="row" role="row"><span role="cell">New-episode alerts<small>Apple's free push service</small></span><span role="cell">£0.00</span></div>
         <div class="row" role="row"><span role="cell">Account sign-up<small>Not needed</small></span><span role="cell">—</span></div>
         <div class="total"><span>TOTAL</span><span>£0.00</span></div>
@@ -384,33 +383,10 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
         </div>
       </div>
 
-      <!-- Ads -->
-      <div class="feature">
-        <div class="f-copy">
-          <span class="label">03 · Ad skipping</span>
-          <h3>Skip ads with one tap, or not at all</h3>
-          <p class="what">When an ad break plays, a Skip ad button appears in the player and the mini player. It's your call every time, unless you tell Poddeck to skip on its own.</p>
-          <div class="how">
-            <span class="label">How it works</span>
-            <ol>
-              <li><span>Poddeck reads the transcript of <i>your</i> download for sponsor language: "brought to you by", promo codes, web addresses, "after the break", plus the music around them.</span></li>
-              <li><span>Ads inserted into podcasts differ from download to download, so it checks your copy, not someone else's list.</span></li>
-              <li><span>Wrong? Tap <b>Play ad</b> to hear it or <b>Not an ad</b> to correct it. Poddeck remembers.</span></li>
-              <li><span>Optional: "Find ads while listening" checks the next few minutes as you go, without a full transcript. It's off by default because it uses battery.</span></li>
-            </ol>
-          </div>
-          <div class="yours"><span class="chip">Skip automatically: <b>Off</b></span><span class="chip">Find while listening: <b>Off</b></span></div>
-        </div>
-        <div class="tools" style="grid-template-columns: minmax(0,1fr);">
-          <div class="tool"><span class="def">What it isn't</span><h3>Not a blocklist, not a server</h3><p>There's no shared database of ads and nobody else sees what you skip. It's pattern spotting on your own phone, which means it can miss one or catch a genuine bit of the show. That's why every break can be played or corrected.</p></div>
-          <div class="tool"><span class="def">Fair to shows</span><h3>The ad still downloads</h3><p>The show's audio arrives exactly as published and counts as a normal download for the show. Poddeck just lets you choose whether to hear the ad.</p></div>
-        </div>
-      </div>
-
       <!-- Listening tools -->
       <div class="feature" style="grid-template-columns: minmax(0,1fr);">
         <div class="f-copy">
-          <span class="label">04 · The player</span>
+          <span class="label">03 · The player</span>
           <h3>Listening tools that stay out of the way</h3>
           <p class="what">Four keys under the play button, each one plain about what it does.</p>
         </div>
@@ -421,13 +397,14 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
           <div class="tool"><span class="def">Sleep · 5–60 min or episode end</span><h3>Sleep timer</h3><p>Fades out over the last 10 seconds. Shake the phone for 5 more minutes. An optional bedtime mode sets it for you after 10pm.</p></div>
           <div class="tool"><span class="def">Chapters · from the show or made on the phone</span><h3>Chapters</h3><p>Uses the show's own chapters and artwork. If there are none, your iPhone makes them from the transcript, with titles from Apple's on-device model.</p></div>
           <div class="tool"><span class="def">Per show</span><h3>Skip intros &amp; outros</h3><p>Set seconds to skip at the start and end of a show. Skip buttons are 5–60 seconds each way; touch and hold one to change it on the spot.</p></div>
+          <div class="tool"><span class="def">Optional · off by default</span><h3>Ad breaks</h3><p>When a transcript shows a sponsor read, a Skip ad button appears while it plays. It's your call each time, and Not an ad puts it right.</p></div>
         </div>
       </div>
 
       <!-- Alerts -->
       <div class="feature">
         <div class="f-copy">
-          <span class="label">05 · New episodes</span>
+          <span class="label">04 · New episodes</span>
           <h3>New episodes arrive by themselves</h3>
           <p class="what">Ring the bell on a show and you get an alert that says where the episode went: "New from Tidewater Weekly, added to the top of Up Next". Episodes from shows set to Top or Bottom also download, ready to play.</p>
           <div class="how">
@@ -449,7 +426,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
       <!-- Sync -->
       <div class="feature">
         <div class="f-copy">
-          <span class="label">06 · Your library is yours</span>
+          <span class="label">05 · Your library is yours</span>
           <h3>Sync to your iCloud. Leave any time.</h3>
           <p class="what">Your shows, Up Next, progress, bookmarks and settings sync to your own iCloud, so a new iPhone picks up where you left off. Poddeck has no account because it doesn't need one.</p>
           <div class="how">
@@ -464,7 +441,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
         </div>
         <div class="tools" style="grid-template-columns: minmax(0,1fr);">
           <div class="tool"><span class="def">Everywhere you listen</span><h3>Beyond the app</h3><p>Home Screen and Lock Screen widgets, a Control Centre play key, Siri and Shortcuts ("Play Up Next", sleep timer), the Action button, CarPlay, AirPlay to any speaker, and touch-and-hold shortcuts on the app icon.</p></div>
-          <div class="tool"><span class="def">Your listening, on your phone</span><h3>Stats &amp; history</h3><p>Time listened this week, time saved by speed and trimming, ads skipped, top shows and full history. Worked out on the phone; never sent anywhere.</p></div>
+          <div class="tool"><span class="def">Your listening, on your phone</span><h3>Stats &amp; history</h3><p>Time listened this week, time saved by speed and trimming, top shows and full history. Worked out on the phone; never sent anywhere.</p></div>
         </div>
       </div>
     </div>
@@ -504,7 +481,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
       <div class="defaults">
         <div><span>Transcribe episodes</span><span>Only when I ask</span></div>
         <div><span>Skip ads automatically</span><span>Off</span></div>
-        <div><span>Find ads while listening</span><span>Off</span></div>
+        <div><span>New-episode alerts</span><span>Per show</span></div>
         <div><span>Trim silences · Boost voices</span><span>Off</span></div>
         <div><span>Bedtime sleep timer</span><span>Off</span></div>
         <div><span>Download on Wi-Fi only</span><span>On</span></div>
@@ -523,7 +500,7 @@ footer .wrap { display: flex; gap: 16px; justify-content: space-between; flex-wr
         <h2>Fair questions</h2>
       </div>
       <div class="faq">
-        <details><summary>So how is it free?</summary><p>Because it costs nothing to run. There are no servers to pay for: your iPhone does the transcribing and ad spotting, your iCloud holds your library, and the alerts job runs on free public computing. Poddeck is a personal project, not a business, so there's no one to pay back.</p></details>
+        <details><summary>So how is it free?</summary><p>Because it costs nothing to run. There are no servers to pay for: your iPhone does the transcribing, your iCloud holds your library, and the alerts job runs on free public computing. Poddeck is a personal project, not a business, so there's no one to pay back.</p></details>
         <details><summary>Will it ever start charging?</summary><p>There's nothing to start charging for. If that ever changed, you'd be told plainly first, and your shows can be exported as an OPML file to any other app at any time.</p></details>
         <details><summary>Does it use much battery?</summary><p>Normal listening uses what any player uses. Making a transcript works the phone hard while it runs, which is why it only happens when you ask, or while charging if you choose that. Before the first one, Poddeck gives an estimate from your own iPhone, and Stats shows how long each one really took.</p></details>
         <details><summary>Does it use my iCloud storage?</summary><p>A little. Your library, queue and settings are small. Downloads and transcripts stay on the phone and are not synced.</p></details>
