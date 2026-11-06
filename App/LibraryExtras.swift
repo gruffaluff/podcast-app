@@ -102,7 +102,11 @@ extension LibraryStore {
             calendar.date(byAdding: .day, value: -back, to: today).map { (day: $0, seconds: byDay[$0] ?? 0) }
         }
         let finished = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.played == true && $0.playedAt != nil })
-        stats.finishedThisMonth = ((try? context.fetch(finished)) ?? []).filter { ($0.playedAt ?? .distantPast) >= monthStart }.count
+        // Only episodes actually listened to: "Mark all as played" on a
+        // show's back catalogue counted too (Paul saw 1557 in 30 days).
+        stats.finishedThisMonth = ((try? context.fetch(finished)) ?? [])
+            .filter { ($0.playedAt ?? .distantPast) >= monthStart && $0.lastPlayedAt != nil }
+            .count
         return stats
     }
 }

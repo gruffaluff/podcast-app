@@ -693,6 +693,8 @@ From the Notion notes after 6 Nov 08:10:
   show episode lists, show previews and Discover (search and charts);
   the pulled-up Up Next and Chapters already looked like this. Search
   results still use plain rows (left for now). Branch only (UBDM).
+- Stats "finished in 30 days" counts only episodes actually played
+  (`lastPlayedAt` set); bulk Mark all as played made it say 1557.
 - Reorder drag (Paul: white square corners on the lifted row, Shows
   screen): the Shows screen's lists were on the sand background, so iOS
   drew the lifted row on a plain light square. Its rows are now paper
