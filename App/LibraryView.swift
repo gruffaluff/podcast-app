@@ -235,9 +235,8 @@ private struct EpisodeCard: View {
     // Option E (Paul, 5 Nov 2026): Apple Podcasts' proportions.
     private static let width: CGFloat = 248
     private static let height: CGFloat = 330
-    /// The top part with the artwork, and the artwork's own size in it.
-    private static let artArea: CGFloat = 158
-    private static let artSize: CGFloat = 138
+    /// How far down the card the artwork reaches before it has faded out.
+    private static let artArea: CGFloat = 186
 
     var body: some View {
         let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
@@ -248,37 +247,26 @@ private struct EpisodeCard: View {
         tint
             .frame(width: Self.width, height: Self.height)
             .overlay(alignment: .top) {
-                // Zoomed out like Apple Podcasts (Paul, 7 Nov 2026): the
-                // whole artwork shows, smaller, over a soft blurred copy of
-                // itself that fades into the card's colour, leaving room
-                // for more of the text.
-                ZStack {
-                    CachedImage(url: episode.artwork) { Color.clear }
-                        .frame(width: Self.width, height: Self.artArea)
-                        .blur(radius: 18)
-                        .opacity(0.7)
-                        .clipped()
-                    CachedImage(url: episode.artwork) { tint }
-                        .frame(width: Self.artSize, height: Self.artSize)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
-                        .padding(.top, 8)
-                }
-                .frame(width: Self.width, height: Self.artArea)
-                .clipped()
-                .accessibilityHidden(true)
-            }
-            .overlay(alignment: .top) {
-                // The blurred backdrop melts into the colour under the art.
-                LinearGradient(colors: [tint.opacity(0), tint], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 40)
-                    .offset(y: Self.artArea - 40)
+                // Like Apple Podcasts' card (Paul's screenshot, 7 Nov 2026):
+                // the artwork across the full width at the top, shown almost
+                // whole, its lower part melting into the card's colour; the
+                // text sits below it, not over it.
+                CachedImage(url: episode.artwork) { Color.clear }
+                    .frame(width: Self.width, height: Self.width)
+                    .clipped()
+                    .mask(
+                        LinearGradient(stops: [.init(color: .black, location: 0),
+                                               .init(color: .black, location: 0.6),
+                                               .init(color: .black.opacity(0), location: Self.artArea / Self.width)],
+                                       startPoint: .top, endPoint: .bottom)
+                    )
+                    .accessibilityHidden(true)
             }
             .overlay(alignment: .bottomLeading) {
                 // The text fills the part below the artwork, keys at the
                 // bottom; the notes give way first if space runs short.
                 details(tint: tint)
-                    .frame(width: Self.width, height: Self.height - Self.artArea, alignment: .topLeading)
+                    .frame(width: Self.width, height: Self.height - Self.artArea + 14, alignment: .topLeading)
             }
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .contentShape(RoundedRectangle(cornerRadius: 22))
@@ -289,40 +277,38 @@ private struct EpisodeCard: View {
     }
 
     private func details(tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("\((episode.podcast?.title ?? "").uppercased()) · \(TimeFormat.ago(episode.published).uppercased())")
-                .font(Theme.mono(10, .bold))
-                .tracking(0.6)
-                .foregroundStyle(Theme.displayText.opacity(0.75))
+        VStack(alignment: .leading, spacing: 2) {
+            // The artwork already says which show; just how new it is.
+            Text(TimeFormat.ago(episode.published))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.displayText.opacity(0.6))
                 .lineLimit(1)
             Text(episode.title)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Theme.displayText)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
             // Up to three lines of the notes (it was one).
             Text(episode.summary)
-                .font(.footnote)
-                .layoutPriority(-1)
-                .foregroundStyle(Theme.displayText.opacity(0.8))
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.displayText.opacity(0.92))
                 .lineLimit(3)
-                .lineSpacing(1)
+                .layoutPriority(-1)
             Spacer(minLength: 0)
             // Fixed-size keys on the right and a pill that can shrink a
             // little: "54m left" pushed the ⋯ off the card's edge.
             HStack(spacing: 8) {
                 playPill
                 Spacer(minLength: 4)
-                DownloadButton(episode: episode, tint: Theme.displayText)
-                    .font(.system(size: 20))
-                    .foregroundStyle(Theme.displayText)
+                DownloadButton(episode: episode, tint: Theme.displayText.opacity(0.75))
+                    .font(.system(size: 18))
+                    .foregroundStyle(Theme.displayText.opacity(0.75))
                     .frame(width: 32, height: 36)
                 Menu {
                     EpisodeMenuItems(episode: episode)
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Theme.displayText)
+                        .foregroundStyle(Theme.displayText.opacity(0.75))
                         .frame(width: 28, height: 36)
                 }
                 .accessibilityLabel("More")
@@ -373,8 +359,8 @@ private struct EpisodeCard: View {
         // "1h 16m" like Apple's cards; a long clock (1:16:31) wrapped
         // onto two lines in the pill.
         guard let left = episode.timeLeft, left > 0 else { return "PLAY" }
-        let started = episode.position > 1
-        return TimeFormat.length(left) + (started ? " left" : "")
+        // Just the time, like Apple's ("53m"); the light pill says Playing.
+        return TimeFormat.length(left)
     }
 }
 
