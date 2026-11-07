@@ -742,6 +742,33 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- From the Notion FNB notes after 6 Nov 12:45 (read 7 Nov; plan sent to
+  Paul, waiting on his picks where marked):
+  - Player time row: make it balanced (options for Paul: bigger level
+    bars matching the digits, or speed / sleep status in the middle).
+  - Alerts wording: title = show name, message = episode title. Local
+    alerts (Alerts.swift) easy; the iCloud-pushed ones can't set a title
+    (CloudKit JS page), so either a Localizable.strings key for the body
+    now, or a notification service extension later (new target/profile).
+  - Button and switch styles audit (system segmented pickers, .bordered
+    buttons, menu pickers vs DeckSwitch / key buttons): one rule set.
+  - Scrubber too touchy: drag starts on any touch in the 44x56 area
+    (minimumDistance 0, absolute finger position). Move by drag distance
+    from the handle, small start distance, narrower area.
+  - Undo bar: built (UndoBar over the mini player and in the player; 6 s)
+    for Played / Remove / mark-all actions; Paul never saw it: find where
+    he tried and fix.
+  - Transcript "Waiting to transcribe" with Stop when nothing was asked:
+    `prepare` queues every downloaded Up Next episode even on "Only when
+    I ask"; show "No transcript yet" + TRANSCRIBE unless requested.
+  - Refresh artwork out of the Transcripts section into its own.
+  - Storage screen footer text sits on a white block: give it the page
+    background.
+  - Clips: they exist (Share a clip on any transcript line; My clips =
+    clips + bookmarks); make it findable rather than remove (Paul to say).
+  - Other iPhone sizes (SE, Pro Max, foldable): check fixed sizes (player
+    top area, 248x330 cards).
+
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
