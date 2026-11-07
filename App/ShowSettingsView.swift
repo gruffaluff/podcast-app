@@ -305,11 +305,6 @@ struct TopPriorityView: View {
                 .pickerStyle(.menu)
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
-                Button("Refresh artwork") {
-                    ArtworkImageCache.shared.clear()
-                    ArtworkColors.shared.clear()
-                }
-                .foregroundStyle(Theme.accentText)
                 if transcripts.isBusy {
                     Button("Stop all transcribing", role: .destructive) { transcripts.stopAll() }
                 }
@@ -320,6 +315,20 @@ struct TopPriorityView: View {
             }
             .listRowBackground(Theme.surface)
             .tint(Theme.accentFill)
+
+            // Its own little section (Paul: it isn't about transcripts).
+            Section {
+                Button("Refresh artwork") {
+                    ArtworkImageCache.shared.clear()
+                    ArtworkColors.shared.clear()
+                }
+                .foregroundStyle(Theme.accentText)
+            } header: {
+                DeckHeader(title: "Artwork")
+            } footer: {
+                Text("Fetches every show's artwork and colours again, if one looks wrong or out of date.")
+            }
+            .listRowBackground(Theme.surface)
 
             Section {
                 Toggle("Download on Wi-Fi only", isOn: $downloads.wifiOnly)

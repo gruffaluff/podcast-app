@@ -284,39 +284,63 @@ private struct EpisodeCard: View {
                 .font(.footnote)
                 .foregroundStyle(Theme.displayText.opacity(0.8))
                 .lineLimit(1)
-            HStack(spacing: 14) {
-                Button { player.play(episode) } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "play.fill")
-                        Text(playLabel)
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Theme.displayText)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 36)
-                    .background(.white.opacity(0.22), in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Play, \(playLabel)")
+            // Fixed-size keys on the right and a pill that can shrink a
+            // little: "54m left" pushed the ⋯ off the card's edge.
+            HStack(spacing: 8) {
+                playPill
                 Spacer(minLength: 4)
                 DownloadButton(episode: episode, tint: Theme.displayText)
                     .font(.system(size: 20))
                     .foregroundStyle(Theme.displayText)
+                    .frame(width: 32, height: 36)
                 Menu {
                     EpisodeMenuItems(episode: episode)
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(Theme.displayText)
-                        .frame(width: 32, height: 36)
+                        .frame(width: 28, height: 36)
                 }
                 .accessibilityLabel("More")
             }
             .padding(.top, 6)
         }
         .padding(16)
+    }
+
+    private var isCurrent: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+
+    /// Play, or (for the episode that's on) Playing / Paused with a moving
+    /// wave, tapping to pause and carry on.
+    private var playPill: some View {
+        let current = isCurrent
+        let playing = current && player.isPlaying
+        return Button {
+            if current { player.togglePlayPause() } else { player.play(episode) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: playing ? "pause.fill" : "play.fill")
+                Text(current ? (playing ? "Playing" : "Paused") : playLabel)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                if current {
+                    Image(systemName: "waveform")
+                        .symbolEffect(.variableColor.iterative, isActive: playing)
+                }
+            }
+            .font(.system(size: 15, weight: .bold))
+            .foregroundStyle(current ? tintForCurrent : Theme.displayText)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 36)
+            .background(current ? AnyShapeStyle(Theme.displayText) : AnyShapeStyle(Color.white.opacity(0.22)), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(current ? (playing ? "Pause" : "Carry on playing") : "Play, \(playLabel)")
+    }
+
+    /// Text on the light pill of the episode that's on: the card's colour.
+    private var tintForCurrent: Color {
+        ArtworkColors.shared.background(for: episode.artwork) ?? Theme.ink
     }
 
     private var playLabel: String {

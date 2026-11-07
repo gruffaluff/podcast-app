@@ -273,6 +273,7 @@ struct StorageView: View {
             Section {
                 if rows.isEmpty {
                     Text("Nothing downloaded.").foregroundStyle(Theme.muted)
+                        .listRowBackground(Theme.background)
                 }
                 ForEach(rows) { row in
                     VStack(alignment: .leading, spacing: 8) {
@@ -307,10 +308,15 @@ struct StorageView: View {
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.hairline)
                 }
+                // A plain row, not a section footer: in this plain list iOS
+                // put the footer on a white block.
+                Text("Played episodes' downloads are deleted automatically (straight away, or after 24 hours if you chose that). \"Latest 3\" keeps only a show's three newest downloads.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.muted)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
             } header: {
                 DeckHeader(title: "By show")
-            } footer: {
-                Text("Played episodes' downloads are deleted automatically (straight away, or after 24 hours if you chose that). \"Latest 3\" keeps only a show's three newest downloads.")
             }
         }
         .listStyle(.plain)

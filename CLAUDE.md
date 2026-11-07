@@ -742,50 +742,43 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
-- From the Notion FNB notes after 6 Nov 12:45 (read 7 Nov; plan sent to
-  Paul, waiting on his picks where marked):
-  - Player time row: make it balanced (options for Paul: bigger level
-    bars matching the digits, or speed / sleep status in the middle).
-  - Alerts wording: title = show name, message = episode title. Local
-    alerts (Alerts.swift) easy; the iCloud-pushed ones can't set a title
-    (CloudKit JS page), so either a Localizable.strings key for the body
-    now, or a notification service extension later (new target/profile).
-  - Button and switch styles audit (system segmented pickers, .bordered
-    buttons, menu pickers vs DeckSwitch / key buttons): one rule set.
-  - Scrubber too touchy: drag starts on any touch in the 44x56 area
-    (minimumDistance 0, absolute finger position). Move by drag distance
-    from the handle, small start distance, narrower area.
-  - Undo bar: built (UndoBar over the mini player and in the player; 6 s)
-    for Played / Remove / mark-all actions; Paul never saw it: find where
-    he tried and fix.
-  - Transcript "Waiting to transcribe" with Stop when nothing was asked:
-    `prepare` queues every downloaded Up Next episode even on "Only when
-    I ask"; show "No transcript yet" + TRANSCRIBE unless requested.
-  - Refresh artwork out of the Transcripts section into its own.
-  - Storage screen footer text sits on a white block: give it the page
-    background.
-  - Clips: they exist (Share a clip on any transcript line; My clips =
-    clips + bookmarks); make it findable rather than remove (Paul to say).
-  - Other iPhone sizes (SE, Pro Max, foldable): check fixed sizes (player
-    top area, 248x330 cards).
-  - Paul's answers (7 Nov): Undo also after a long jump on the scrubber
-    ("Jumped to 34:10 · UNDO" goes back, in case it was a stray touch).
-    6 and 7 mocked up on https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX
-    (6: A now / B later suggested; 7: B suggested), waiting on his
-    letters. 8: keep clips, make them easier to find (Clip key in the
-    player transcript, Search tab MY CLIPS -> SAVED). 9: style rules and
-    before/after per screen on the same page, waiting on his OK. 11: add
-    no-signal handling and a first-open welcome; feeds needing a username
-    and password later; alerts: options sent (backup to GitHub's job).
-  - Show page header (Paul, 7 Nov, screenshot of Tailenders): the
-    artwork sits pushed to the right with a flat band of colour on the
-    left, though `ShowHeroBackground` means it to fill the width. Make it
-    fill edge to edge from the top (pinned to the header's own width),
-    fading into the colour only behind the title. Same header on show
-    previews.
-  - New Episodes card that's playing (Paul, 7 Nov): the play pill should
-    show it, e.g. pause icon + "Playing" with moving level bars, and tap
-    to pause; same on Continue listening.
+- **Done on the branch, 7 Nov 2026, not pushed** (GitHub account
+  suspended; Paul: "sort with all the other fixes but don't push"):
+  - New Episodes card: "54m left" pushed the ⋯ off the card (fixed
+    `.fixedSize()` pill); keys now fixed width and the pill can shrink.
+    The card of the episode that's on shows a light pill with pause /
+    "Playing" (or "Paused") and a moving wave; tap pauses / carries on.
+    (Continue listening leaves out the episode that's on, so no change.)
+  - Transcript "Waiting to transcribe" + Stop when nothing was asked:
+    `TranscriptService.isQueued` no longer counts episodes that only sit
+    in the line on Only when I ask; `prepare` marks "waiting" only when
+    it will happen; `prepareUpNext` clears old wrong "waiting" (TX WAIT).
+  - Scrubber: touch area 32x52 round the handle, starts after 6 points,
+    moves by how far the finger travels (no jump to the finger). A jump of
+    2 minutes or more offers "Jumped to 34:10 · UNDO" (back to where it was).
+  - Refresh artwork in its own "Artwork" section on the Shows screen.
+  - Storage: the footer note is a plain row on the sand (was a white block).
+  - Clips: CLIP key on the line playing now in the player's transcript,
+    Share clip on every line's long press; Search tab "My clips" is "Saved".
+  - Player top area: the artwork fills the width from the top and fades
+    into its colour (was a 300-point picture on the right with a radial
+    fade; Paul's Tailenders screenshot was the player, not the show page).
+  - Alerts (6, option A): the phone's own alerts have the show as the
+    title, where-it-went as subtitle, episode as the message; iCloud-pushed
+    ones read "Show · Episode" via `App/en.lproj/Localizable.strings`
+    (the subscription's fixed key "New from %1$@: %2$@"). B (a
+    notification service extension) later if wanted.
+  - No internet: `NetworkStatus` (NWPathMonitor) and an "NO INTERNET ·
+    DOWNLOADS STILL PLAY" bar above the mini player (`App/Welcome.swift`).
+  - First-open welcome (`WelcomeView`): only when nothing is followed;
+    Find shows (to Discover) or Look around first; shown once.
+  - Built without a compiler: if the build fails, check these first.
+- **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
+  / C chapter) and 9 style rules, both on
+  https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
+  and saw nothing; whether to move alerts to Cloudflare (free cron
+  Worker) as a backup to GitHub; other iPhone sizes not checked yet.
+  Feeds with a username and password: later.
 
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.

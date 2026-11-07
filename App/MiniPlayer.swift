@@ -28,6 +28,8 @@ private struct MiniPlayerInset: ViewModifier {
             .contentMargins(.bottom, showing ? MiniPlayer.height + 8 : 0, for: .scrollContent)
             .overlay(alignment: .bottom) {
                 VStack(spacing: 6) {
+                    OfflineBar()
+                        .padding(.horizontal, 12)
                     UndoBar()
                         .padding(.horizontal, 12)
                     if showing {

@@ -18,6 +18,8 @@ struct PlayerTranscriptPanel: View {
     @State private var query = ""
     @State private var matchIndex = 0
     @FocusState private var fieldFocused: Bool
+    /// "Share a clip" from a line (Paul: clips were too hard to find).
+    @State private var clipLine: ClipRequest?
 
     private var isPlayingThis: Bool { player.nowPlaying?.episodeID == episode.episodeID }
 
@@ -37,6 +39,9 @@ struct PlayerTranscriptPanel: View {
             if searching { searchRow }
         }
         .overlay(alignment: .bottom) { backToNow }
+        .sheet(item: $clipLine) { request in
+            ClipView(episode: episode, line: request.line, quote: request.quote)
+        }
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.syncAnchorsData) { load() }
         .onChange(of: query) { matchIndex = 0 }
@@ -204,6 +209,25 @@ struct PlayerTranscriptPanel: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // The line playing now has a CLIP key; every line has Share clip
+        // in its long-press menu.
+        .overlay(alignment: .topTrailing) {
+            if isFocus {
+                Button { clipLine = ClipRequest(line: line, quote: line.text) } label: {
+                    Label("CLIP", systemImage: "waveform")
+                        .font(Theme.mono(10, .bold))
+                        .foregroundStyle(Theme.displayText)
+                        .padding(.horizontal, 9)
+                        .frame(minHeight: 26)
+                        .background(.black.opacity(0.28), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Share a clip of this line")
+            }
+        }
+        .contextMenu {
+            Button("Share clip", systemImage: "waveform") { clipLine = ClipRequest(line: line, quote: line.text) }
+        }
         .accessibilityLabel(ad == nil ? Text(line.text) : Text("Suspected ad. \(line.text)"))
         .accessibilityHint("Plays from \(TimeFormat.clock(line.start))")
     }
