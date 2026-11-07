@@ -768,6 +768,15 @@ From the Notion notes after 6 Nov 08:10:
     clips + bookmarks); make it findable rather than remove (Paul to say).
   - Other iPhone sizes (SE, Pro Max, foldable): check fixed sizes (player
     top area, 248x330 cards).
+  - Paul's answers (7 Nov): Undo also after a long jump on the scrubber
+    ("Jumped to 34:10 · UNDO" goes back, in case it was a stray touch).
+    6 and 7 mocked up on https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX
+    (6: A now / B later suggested; 7: B suggested), waiting on his
+    letters. 8: keep clips, make them easier to find (Clip key in the
+    player transcript, Search tab MY CLIPS -> SAVED). 9: style rules and
+    before/after per screen on the same page, waiting on his OK. 11: add
+    no-signal handling and a first-open welcome; feeds needing a username
+    and password later; alerts: options sent (backup to GitHub's job).
 
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
