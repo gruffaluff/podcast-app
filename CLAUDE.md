@@ -243,8 +243,8 @@ to Nowhere / Top / Bottom" on the show page.
 
 ### Library and new episode cards
 - Library tab opens with a **New Episodes** carousel of cards like Apple
-  Podcasts': 300×300, the artwork filling the card and fading into its
-  own colour, white SHOW · 4H AGO, title, one line of description, a play
+  Podcasts': 248×330, the whole artwork (zoomed out) over a blur of
+  itself, fading into its own colour, white SHOW · 4H AGO, title, one line of description, a play
   pill with the time left, download and ⋯; it snaps card to card. Above it
   Continue listening; below "Your shows" (large / card / list).
 
@@ -772,6 +772,11 @@ From the Notion notes after 6 Nov 08:10:
     DOWNLOADS STILL PLAY" bar above the mini player (`App/Welcome.swift`).
   - First-open welcome (`WelcomeView`): only when nothing is followed;
     Find shows (to Discover) or Look around first; shown once.
+  - New Episodes cards zoomed out like Apple Podcasts (Paul, 7 Nov): the
+    whole artwork at 138 points, rounded, over a blurred copy of itself
+    (top 158 points), fading into the card colour; below it show · age,
+    title (2 lines, 16 pt), up to 3 lines of notes (they give way first),
+    then the keys. Card stays 248x330.
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on

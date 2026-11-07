@@ -235,6 +235,9 @@ private struct EpisodeCard: View {
     // Option E (Paul, 5 Nov 2026): Apple Podcasts' proportions.
     private static let width: CGFloat = 248
     private static let height: CGFloat = 330
+    /// The top part with the artwork, and the artwork's own size in it.
+    private static let artArea: CGFloat = 158
+    private static let artSize: CGFloat = 138
 
     var body: some View {
         let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
@@ -245,21 +248,37 @@ private struct EpisodeCard: View {
         tint
             .frame(width: Self.width, height: Self.height)
             .overlay(alignment: .top) {
-                // The artwork across the top, fading into the colour.
-                CachedImage(url: episode.artwork) { Color.clear }
-                    .frame(width: Self.width, height: Self.width)
-                    .clipped()
-                    .accessibilityHidden(true)
+                // Zoomed out like Apple Podcasts (Paul, 7 Nov 2026): the
+                // whole artwork shows, smaller, over a soft blurred copy of
+                // itself that fades into the card's colour, leaving room
+                // for more of the text.
+                ZStack {
+                    CachedImage(url: episode.artwork) { Color.clear }
+                        .frame(width: Self.width, height: Self.artArea)
+                        .blur(radius: 18)
+                        .opacity(0.7)
+                        .clipped()
+                    CachedImage(url: episode.artwork) { tint }
+                        .frame(width: Self.artSize, height: Self.artSize)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
+                        .padding(.top, 8)
+                }
+                .frame(width: Self.width, height: Self.artArea)
+                .clipped()
+                .accessibilityHidden(true)
             }
-            .overlay {
-                LinearGradient(stops: [.init(color: tint.opacity(0), location: 0.3),
-                                       .init(color: tint.opacity(0.85), location: 0.55),
-                                       .init(color: tint, location: 0.7)],
-                               startPoint: .top, endPoint: .bottom)
+            .overlay(alignment: .top) {
+                // The blurred backdrop melts into the colour under the art.
+                LinearGradient(colors: [tint.opacity(0), tint], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 40)
+                    .offset(y: Self.artArea - 40)
             }
             .overlay(alignment: .bottomLeading) {
+                // The text fills the part below the artwork, keys at the
+                // bottom; the notes give way first if space runs short.
                 details(tint: tint)
-                    .frame(width: Self.width, alignment: .leading)
+                    .frame(width: Self.width, height: Self.height - Self.artArea, alignment: .topLeading)
             }
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .contentShape(RoundedRectangle(cornerRadius: 22))
@@ -277,13 +296,18 @@ private struct EpisodeCard: View {
                 .foregroundStyle(Theme.displayText.opacity(0.75))
                 .lineLimit(1)
             Text(episode.title)
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(Theme.displayText)
                 .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            // Up to three lines of the notes (it was one).
             Text(episode.summary)
                 .font(.footnote)
+                .layoutPriority(-1)
                 .foregroundStyle(Theme.displayText.opacity(0.8))
-                .lineLimit(1)
+                .lineLimit(3)
+                .lineSpacing(1)
+            Spacer(minLength: 0)
             // Fixed-size keys on the right and a pill that can shrink a
             // little: "54m left" pushed the ⋯ off the card's edge.
             HStack(spacing: 8) {
@@ -303,9 +327,11 @@ private struct EpisodeCard: View {
                 }
                 .accessibilityLabel("More")
             }
-            .padding(.top, 6)
+            .padding(.top, 2)
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 12)
     }
 
     private var isCurrent: Bool { player.nowPlaying?.episodeID == episode.episodeID }
