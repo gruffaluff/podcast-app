@@ -777,6 +777,15 @@ From the Notion notes after 6 Nov 08:10:
     before/after per screen on the same page, waiting on his OK. 11: add
     no-signal handling and a first-open welcome; feeds needing a username
     and password later; alerts: options sent (backup to GitHub's job).
+  - Show page header (Paul, 7 Nov, screenshot of Tailenders): the
+    artwork sits pushed to the right with a flat band of colour on the
+    left, though `ShowHeroBackground` means it to fill the width. Make it
+    fill edge to edge from the top (pinned to the header's own width),
+    fading into the colour only behind the title. Same header on show
+    previews.
+  - New Episodes card that's playing (Paul, 7 Nov): the play pill should
+    show it, e.g. pause icon + "Playing" with moving level bars, and tap
+    to pause; same on Continue listening.
 
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
