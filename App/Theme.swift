@@ -52,9 +52,20 @@ enum Theme {
         return String(words.prefix(2).compactMap(\.first)).uppercased()
     }
 
-    /// Big titles: heavy condensed capitals (pass uppercased text).
+    /// Whether the bundled fonts loaded (checked once).
+    private static let hasTapeDeckFonts: Bool =
+        UIFont(name: "BigShouldersDisplay-Black", size: 12) != nil && UIFont(name: "DMMono-Medium", size: 12) != nil
+
+    /// Big titles: tall, narrow industrial capitals, like the lettering on
+    /// hi-fi gear (Big Shoulders Display Black; Paul picked "tape deck",
+    /// 8 Nov 2026). Pass uppercased text. Falls back to the system font if
+    /// the font file is ever missing.
     static func big(_ size: CGFloat) -> Font {
-        .system(size: scaled(size, max: 1.2), weight: .black).width(.condensed)
+        let scaledSize = scaled(size * 1.08, max: 1.2)
+        guard hasTapeDeckFonts else {
+            return .system(size: scaled(size, max: 1.2), weight: .black).width(.condensed)
+        }
+        return .custom("BigShouldersDisplay-Black", fixedSize: scaledSize)
     }
 
     /// Follows the iPhone's text size setting (Dynamic Type), within limits
@@ -70,10 +81,17 @@ enum Theme {
         big(size)
     }
 
-    /// Labels, times and counters (the name is from Tape Deck; the new look
-    /// uses the regular system font, with `.monospacedDigit()` for times).
+    /// Labels, times and counters: DM Mono, like the printing beside the
+    /// buttons on a cassette deck (Paul picked "tape deck", 8 Nov 2026).
+    /// DM Mono has two weights: regular, and medium for anything heavier.
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .system(size: scaled(size), weight: weight)
+        let name = weight == .regular || weight == .light || weight == .thin || weight == .ultraLight
+            ? "DMMono-Regular" : "DMMono-Medium"
+        let scaledSize = scaled(size)
+        guard hasTapeDeckFonts else {
+            return .system(size: scaledSize, weight: weight)
+        }
+        return .custom(name, fixedSize: scaledSize)
     }
 }
 

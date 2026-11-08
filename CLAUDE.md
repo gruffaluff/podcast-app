@@ -26,7 +26,8 @@ which he loved but this won). Developed on the canvas
 https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d (rows "Middle ground,
 developed" and "Transcript, same height as artwork"). Warm sand page
 (#E9E3D5), paper cards (#F6F2E9), ink text, one olive accent (#45543A);
-big titles in heavy condensed capitals (system font, `Theme.big`); what's
+big titles in Big Shoulders Display capitals (`Theme.big`), labels in
+DM Mono (`Theme.mono`), body text in SF (fonts: Paul, 8 Nov 2026); what's
 playing is shown in its artwork's colour (`ArtworkColors`) with the artwork
 fading into it. Player: top area edge to edge with rounded bottom corners,
 fixed height, ARTWORK / TRANSCRIPT switch (transcript = live lines + find),
@@ -804,8 +805,16 @@ From the Notion notes after 6 Nov 08:10:
   Font options for titles and labels (body text stays SF) on
   https://claude.ai/artifact/P61T5FHNMwcgxsDNrzmgWM: A today, B New York
   + SF Mono (built in), C Big Shoulders + DM Mono (my pick), D Fraunces +
-  IBM Plex Mono, E Archivo wide + JetBrains Mono. All open-licence, free,
-  ~100–300 KB. Waiting on Paul's letter.
+  IBM Plex Mono, E Archivo wide + JetBrains Mono. **Paul picked C, tape
+  deck (8 Nov)**, done on the branch: `App/Fonts/` holds
+  BigShouldersDisplay-Black, DMMono-Regular and DMMono-Medium (from Google
+  Fonts, with their OFL licence files), listed under `UIAppFonts` in
+  Config/Info.plist. `Theme.big` uses Big Shoulders (8% larger, it's
+  narrow), `Theme.mono` uses DM Mono (regular, or medium for any heavier
+  weight); both fall back to the system font if the files don't load.
+  Body text stays SF. Still to do: move the ~50 fixed `.system(size:)`
+  labels onto Theme (with the style rules), and check nothing is too wide
+  for its space on the phone (DM Mono is a little wider than SF).
 
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
