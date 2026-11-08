@@ -9,6 +9,8 @@ struct LibraryView: View {
     @Query(sort: \Podcast.title) private var shows: [Podcast]
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
+    /// The New Episodes card scrolled into view.
+    @State private var cardInView: PersistentIdentifier?
     @AppStorage("showsLayout") private var showsLayout = "large"
 
     private static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
@@ -16,8 +18,27 @@ struct LibraryView: View {
             predicate: #Predicate { $0.played == false },
             sortBy: [SortDescriptor(\.published, order: .reverse)]
         )
-        descriptor.fetchLimit = 12
+        // More than are shown: `newCards` leaves some out.
+        descriptor.fetchLimit = 60
         return descriptor
+    }
+
+    /// The New Episodes cards: what came out since Paul followed each show,
+    /// plus that show's newest one. Following a show with a long back
+    /// catalogue filled the carousel with its old episodes (Paul, 8 Nov
+    /// 2026: cap it at the latest one).
+    private var newCards: [PodcastEpisode] {
+        var seen = Set<String>()
+        var cards: [PodcastEpisode] = []
+        for episode in newEpisodes {
+            guard let show = episode.podcast else { continue }
+            let firstForShow = seen.insert(show.feedURL).inserted
+            if firstForShow || episode.published >= show.followedAt {
+                cards.append(episode)
+            }
+            if cards.count == 12 { break }
+        }
+        return cards
     }
 
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
@@ -50,15 +71,26 @@ struct LibraryView: View {
                             .padding(.bottom, 8)
                         }
 
-                        if !newEpisodes.isEmpty {
-                            sectionTitle("NEW EPISODES", detail: "\(newEpisodes.count) UNPLAYED")
+                        let cards = newCards
+                        if !cards.isEmpty {
+                            sectionTitle("NEW EPISODES", detail: "\(cards.count) UNPLAYED")
                             ScrollView(.horizontal, showsIndicators: false) {
                                 LazyHStack(spacing: 12) {
-                                    ForEach(newEpisodes) { episode in
+                                    ForEach(cards) { episode in
                                         EpisodeCard(episode: episode)
                                     }
                                 }
                                 .scrollTargetLayout()
+                            }
+                            // Remembers which card is in view. After marking a
+                            // lot played the carousel stayed scrolled past the
+                            // cards that were left, showing an empty strip
+                            // until a swipe: go back to the first card then.
+                            .scrollPosition(id: $cardInView)
+                            .onChange(of: cards.map(\.persistentModelID)) { _, ids in
+                                if let shown = cardInView, !ids.contains(shown) {
+                                    cardInView = ids.first
+                                }
                             }
                             // Cards settle with their left edge on the page margin.
                             .contentMargins(.horizontal, 20, for: .scrollContent)

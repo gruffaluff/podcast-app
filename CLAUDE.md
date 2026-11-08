@@ -778,6 +778,12 @@ From the Notion notes after 6 Nov 08:10:
     name: the art shows it), title on one line, up to 3 lines of notes,
     then a pill with just the time ("53m"), download and ⋯ softer. Card
     stays 248x330.
+  - New Episodes (Paul, 8 Nov): after marking a lot played the carousel
+    stayed scrolled past the cards left (empty strip until a swipe); it
+    now remembers the card in view (`scrollPosition`) and goes back to the
+    first when that card goes. Following a show filled the carousel with
+    its back catalogue: cards are now episodes out since the show was
+    followed (`followedAt`) plus each show's newest one (`newCards`).
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
