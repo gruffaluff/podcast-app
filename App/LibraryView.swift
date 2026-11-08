@@ -328,9 +328,22 @@ private struct EpisodeCard: View {
             Spacer(minLength: 0)
             // Fixed-size keys on the right and a pill that can shrink a
             // little: "54m left" pushed the ⋯ off the card's edge.
-            HStack(spacing: 8) {
+            HStack(spacing: 4) {
                 playPill
                 Spacer(minLength: 4)
+                // Mark played straight from the card (Paul, 8 Nov 2026),
+                // with the usual Undo bar.
+                Button {
+                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                } label: {
+                    Image(systemName: "checkmark.circle")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(Theme.displayText.opacity(0.75))
+                        .frame(width: 32, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Mark as played")
                 DownloadButton(episode: episode, tint: Theme.displayText.opacity(0.75))
                     .font(.system(size: 18))
                     .foregroundStyle(Theme.displayText.opacity(0.75))
@@ -374,7 +387,7 @@ private struct EpisodeCard: View {
             }
             .font(.system(size: 15, weight: .bold))
             .foregroundStyle(current ? tintForCurrent : Theme.displayText)
-            .padding(.horizontal, 14)
+            .padding(.horizontal, 12)
             .frame(minHeight: 36)
             .background(current ? AnyShapeStyle(Theme.displayText) : AnyShapeStyle(Color.white.opacity(0.22)), in: Capsule())
         }

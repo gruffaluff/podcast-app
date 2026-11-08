@@ -784,6 +784,8 @@ From the Notion notes after 6 Nov 08:10:
     first when that card goes. Following a show filled the carousel with
     its back catalogue: cards are now episodes out since the show was
     followed (`followedAt`) plus each show's newest one (`newCards`).
+  - New Episodes card: a mark-played key (✓ in a circle) beside download,
+    with the Undo bar (Paul, 8 Nov).
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
