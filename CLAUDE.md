@@ -801,6 +801,11 @@ From the Notion notes after 6 Nov 08:10:
   the iPhone's text size) and iOS text styles (~46). Proposed with the
   style rules (9): one small type scale in Theme and every text through
   it, so sizes match and all follow the text size setting.
+  Font options for titles and labels (body text stays SF) on
+  https://claude.ai/artifact/P61T5FHNMwcgxsDNrzmgWM: A today, B New York
+  + SF Mono (built in), C Big Shoulders + DM Mono (my pick), D Fraunces +
+  IBM Plex Mono, E Archivo wide + JetBrains Mono. All open-licence, free,
+  ~100–300 KB. Waiting on Paul's letter.
 
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.
