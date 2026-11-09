@@ -32,9 +32,9 @@ struct NowPlayingView: View {
     @State private var closing = false
     @AppStorage("playerShowsTranscript") private var showsTranscript = false
 
-    private var currentEpisode: PodcastEpisode? {
-        player.nowPlaying.flatMap { store.episode($0.episodeID) }
-    }
+    /// Looked up once per episode, not on every redraw: the player redraws
+    /// twice a second while playing (review, 9 Nov 2026).
+    @State private var currentEpisode: PodcastEpisode?
 
     var body: some View {
         Group {
@@ -101,6 +101,9 @@ struct NowPlayingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background.ignoresSafeArea())
         .tint(Theme.ink)
+        .onChange(of: player.nowPlaying?.episodeID, initial: true) { _, id in
+            currentEpisode = id.flatMap { store.episode($0) }
+        }
         .sheet(isPresented: $showingChapters) {
             // Pulled up like the Up Next list: half height, drag for more.
             ChaptersView()
@@ -205,7 +208,7 @@ struct NowPlayingView: View {
             Button { showingNotes = true } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(item.title)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(Theme.text(18, .bold))
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     Image(systemName: "chevron.right").font(.footnote.weight(.bold))
@@ -637,7 +640,7 @@ struct NowPlayingView: View {
                                 .tracking(1.2)
                                 .foregroundStyle(Theme.muted)
                             Text(next.episode.title)
-                                .font(.system(size: 15, weight: .bold))
+                                .font(Theme.text(15, .bold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(1)
                         }

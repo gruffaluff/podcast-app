@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Observation
 import SwiftData
@@ -213,6 +214,13 @@ final class LibraryStore {
 
     // MARK: Checking for new episodes
 
+    /// Fingerprints of each feed as last applied (feed link → fingerprint),
+    /// on this iPhone only.
+    static var feedFingerprints: [String: String] {
+        get { UserDefaults.standard.dictionary(forKey: "feedFingerprints") as? [String: String] ?? [:] }
+        set { UserDefaults.standard.set(newValue, forKey: "feedFingerprints") }
+    }
+
     /// Checks every followed show and adds fresh episodes to Up Next by the queue rules.
     /// Checks every feed. `postAlerts: false` when an iCloud push already
     /// showed the alert (see RealtimeAlerts).
@@ -222,16 +230,26 @@ final class LibraryStore {
         defer { isRefreshing = false }
 
         let urls = allPodcasts.map(\.feedURL)
+        // A feed that hasn't changed since the last check is skipped: no
+        // parsing and no re-tidying every episode's notes (review, 9 Nov
+        // 2026). URLSession's cache also asks the server "changed since?"
+        // (ETag / Last-Modified), so unchanged feeds cost little data.
+        let known = Self.feedFingerprints
+        var fingerprints = known
         var feeds: [String: ParsedFeed] = [:]
-        await withTaskGroup(of: (String, ParsedFeed?).self) { group in
+        await withTaskGroup(of: (String, ParsedFeed?, String?).self) { group in
             for url in urls {
                 group.addTask {
-                    guard let feedURL = URL(string: url) else { return (url, nil) }
-                    return (url, try? await FeedClient.fetchFeed(feedURL))
+                    guard let feedURL = URL(string: url),
+                          let data = try? await FeedClient.feedData(feedURL) else { return (url, nil, nil) }
+                    let print = FeedClient.fingerprint(data)
+                    if print == known[url] { return (url, nil, print) }
+                    return (url, try? FeedParser.parse(data), print)
                 }
             }
-            for await (url, feed) in group {
+            for await (url, feed, print) in group {
                 if let feed { feeds[url] = feed }
+                if let print, feed != nil || print == known[url] { fingerprints[url] = print }
             }
         }
 
@@ -247,6 +265,7 @@ final class LibraryStore {
             fresh += apply(feed, to: show)
         }
         save()
+        Self.feedFingerprints = fingerprints.filter { urls.contains($0.key) }
         commit(QueueEngine.addNewEpisodes(fresh, to: queue, settings: queueSettings))
         lastChecked = Date()
 
@@ -544,6 +563,16 @@ enum FeedClient {
 
     static func fetchFeed(_ url: URL) async throws -> ParsedFeed {
         try FeedParser.parse(try await get(url))
+    }
+
+    /// The feed's raw bytes (for checking whether it changed before parsing).
+    static func feedData(_ url: URL) async throws -> Data {
+        try await get(url)
+    }
+
+    /// A short fingerprint of a feed's bytes.
+    static func fingerprint(_ data: Data) -> String {
+        SHA256.hash(data: data).prefix(16).map { String(format: "%02x", $0) }.joined()
     }
 
     static func searchDirectory(_ term: String) async throws -> [DirectoryShow] {

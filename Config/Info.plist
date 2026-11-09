@@ -26,7 +26,7 @@
 		<string>com.gruffaluff.podcasts.refresh</string>
 	</array>
 	<!-- CarPlay (CarPlaySceneDelegate). It only shows up in cars once Apple
-	     grants the CarPlay audio entitlement (see docs/SETUP.md). -->
+	     grants the CarPlay audio entitlement (see notes/SETUP.md). -->
 	<!-- Touch and hold the app icon (App/QuickActions.swift). -->
 	<key>UIApplicationShortcutItems</key>
 	<array>

@@ -21,9 +21,13 @@ struct ShowView: View {
     /// Search within this show's episodes (titles and notes).
     @State private var search = ""
 
-    private var addAllTitle: String {
+    /// Worked out when the menu item is tapped, not on every redraw.
+    @State private var addAllTitle = ""
+
+    private func askAddAll() {
         let count = store.backCatalogue(of: show).count
-        return count == 0 ? "Every unplayed episode is already in Up Next" : "Add \(count) episode\(count == 1 ? "" : "s") to Up Next?"
+        addAllTitle = count == 0 ? "Every unplayed episode is already in Up Next" : "Add \(count) episode\(count == 1 ? "" : "s") to Up Next?"
+        confirmingAddAll = true
     }
 
     var body: some View {
@@ -134,7 +138,7 @@ struct ShowView: View {
                         Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
                         Button("Select episodes", systemImage: "checkmark.circle") { selecting = true }
                         // The whole back catalogue, oldest first (Paul, 9 Nov 2026).
-                        Button("Add all to Up Next, oldest first", systemImage: "text.append") { confirmingAddAll = true }
+                        Button("Add all to Up Next, oldest first", systemImage: "text.append") { askAddAll() }
                         Button("Mark all as played", systemImage: "checkmark.circle.fill") { confirmingMarkAll = true }
                         Button("Mark all as unplayed", systemImage: "circle") { store.markUnplayed(show.episodes) }
                         Button("Unfollow", systemImage: "minus.circle", role: .destructive) { confirmingUnfollow = true }
@@ -243,7 +247,7 @@ struct ShowView: View {
                 .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 .accessibilityAddTraits(.isHeader)
             Text([show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · "))
-                .font(.system(size: 13))
+                .font(Theme.text(13))
                 .foregroundStyle(Theme.displayDim)
             HStack(spacing: 8) {
                 Button { confirmingUnfollow = true } label: {

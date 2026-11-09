@@ -132,13 +132,15 @@ struct PlayerTranscriptPanel: View {
 
     private var window: some View {
         let focus = focusIndex
+        // Read once per redraw (they're decoded from saved data each time).
+        let names = episode.podcast?.speakerNames ?? [:]
         return VStack(alignment: .leading, spacing: 12) {
             if let focus {
                 // One line before, then the line now (or the match) and what
                 // follows; whatever doesn't fit is cut off at the bottom.
                 let shown = searching ? [focus, focus + 1, focus + 2] : [focus - 1, focus, focus + 1, focus + 2, focus + 3]
                 ForEach(shown.filter { lines.indices.contains($0) }, id: \.self) { index in
-                    lineView(lines[index], isFocus: index == focus)
+                    lineView(lines[index], isFocus: index == focus, names: names)
                 }
             }
         }
@@ -175,8 +177,7 @@ struct PlayerTranscriptPanel: View {
         return breaks.first { $0.contains(line.start + 0.1) }
     }
 
-    private func lineView(_ line: TranscriptLayout.Line, isFocus: Bool) -> some View {
-        let names = episode.podcast?.speakerNames ?? [:]
+    private func lineView(_ line: TranscriptLayout.Line, isFocus: Bool, names: [String: String]) -> some View {
         let speaker = line.speaker.map { names[$0] ?? $0 }
         // Lines in a suspected ad: an amber bar down the side and "AD" first.
         let ad = adBreak(for: line)
@@ -192,7 +193,7 @@ struct PlayerTranscriptPanel: View {
                     .tracking(1.2)
                     .foregroundStyle(isFocus ? Theme.adMarker : Theme.displayText)
                 Text(highlighted(line.text))
-                    .font(.system(size: isFocus ? 21 : 15, weight: isFocus ? .bold : .regular))
+                    .font(Theme.text(isFocus ? 21 : 15, isFocus ? .bold : .regular))
                     .lineLimit(isFocus ? 4 : 2)
                     .multilineTextAlignment(.leading)
             }

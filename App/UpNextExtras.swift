@@ -16,6 +16,7 @@ struct UpNextSheet: View {
     var body: some View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
         let total = store.queue.compactMap { episodes[$0.episode.id]?.timeLeft }.reduce(0, +)
+        let playing = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
         NavigationStack {
             List {
                 Section {
@@ -32,13 +33,13 @@ struct UpNextSheet: View {
                             ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? item.episode.title, size: 42, radius: 9)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.episode.title)
-                                    .font(.system(size: 15, weight: .bold))
+                                    .font(Theme.text(15, .bold))
                                     .foregroundStyle(Theme.ink)
                                     .lineLimit(1)
                                 HStack(spacing: 6) {
                                     if index == nextIndex { DeckTag(text: "NEXT") }
                                     Text([episode?.podcast?.title, episode?.timeLeft.map { TimeFormat.clock($0) }].compactMap { $0 }.joined(separator: " · "))
-                                        .font(.system(size: 12))
+                                        .font(Theme.text(12))
                                         .foregroundStyle(Theme.muted)
                                         .lineLimit(1)
                                 }
@@ -50,9 +51,9 @@ struct UpNextSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
-                        .background(rowColor(item, index: index))
+                        .background(Theme.upNextBand(index, playing: playing))
                         .listRowInsets(EdgeInsets())
-                        .listRowBackground(rowColor(item, index: index))
+                        .listRowBackground(Theme.upNextBand(index, playing: playing))
                         .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -93,15 +94,6 @@ struct UpNextSheet: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
-    }
-
-    private func rowColor(_ item: QueueItem, index: Int) -> Color {
-        if item.episode.id == player.nowPlaying?.episodeID { return Theme.highlight }
-        // Band by place among the rows that aren't playing, so moving the
-        // playing row doesn't swap the other rows' colours (Paul, build 128).
-        let playingIndex = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
-        let place = playingIndex.map { index > $0 ? index - 1 : index } ?? index
-        return place.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
     }
 
     private func summary(total: TimeInterval) -> String {
@@ -190,8 +182,8 @@ struct EpisodeStatusRows: View {
                 .foregroundStyle(Theme.accentText)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.ink)
-                Text(detail).font(.system(size: 12)).foregroundStyle(Theme.muted).lineLimit(1)
+                Text(title).font(Theme.text(14, .bold)).foregroundStyle(Theme.ink)
+                Text(detail).font(Theme.text(12)).foregroundStyle(Theme.muted).lineLimit(1)
             }
             Spacer(minLength: 8)
             trailing()
@@ -228,8 +220,8 @@ struct SuggestionRow: View {
         HStack(spacing: 12) {
             ArtworkView(url: item.artworkURL, title: item.title, size: 44, radius: 8)
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.title).font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.ink).lineLimit(1)
-                Text(item.artist ?? item.genre ?? "").font(.system(size: 12)).foregroundStyle(Theme.muted).lineLimit(1)
+                Text(item.title).font(Theme.text(14, .bold)).foregroundStyle(Theme.ink).lineLimit(1)
+                Text(item.artist ?? item.genre ?? "").font(Theme.text(12)).foregroundStyle(Theme.muted).lineLimit(1)
             }
         }
     }

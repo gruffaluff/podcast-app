@@ -16,6 +16,7 @@ struct UpNextView: View {
     var body: some View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
         let settings = store.queueSettings
+        let playing = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
 
         NavigationStack {
             ScrollViewReader { proxy in
@@ -28,7 +29,7 @@ struct UpNextView: View {
                         .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
-                            queueRow(index: index, item: item, episode: episode, settings: settings)
+                            queueRow(index: index, item: item, episode: episode, settings: settings, playing: playing)
                         }
                     }
                     // Long press and drag to reorder (Paul); the reorder key
@@ -145,7 +146,7 @@ struct UpNextView: View {
 
     /// One Up Next row: tap for its keys, artwork to play, swipe right for
     /// notes / to the top, swipe left for played / remove.
-    private func queueRow(index: Int, item: QueueItem, episode: PodcastEpisode, settings: QueueSettings) -> some View {
+    private func queueRow(index: Int, item: QueueItem, episode: PodcastEpisode, settings: QueueSettings, playing: Int?) -> some View {
         let isOpen = openRow == episode.episodeID
         return VStack(spacing: 8) {
             // Tap a row for its keys; the artwork plays (Paul, A + C).
@@ -173,9 +174,9 @@ struct UpNextView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(rowColor(episode, index: index))
+        .background(Theme.upNextBand(index, playing: playing))
         .listRowInsets(EdgeInsets())
-        .listRowBackground(rowColor(episode, index: index))
+        .listRowBackground(Theme.upNextBand(index, playing: playing))
         .listRowSeparator(.hidden)
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -196,14 +197,6 @@ struct UpNextView: View {
         }
     }
 
-    private func rowColor(_ episode: PodcastEpisode, index: Int) -> Color {
-        if player.nowPlaying?.episodeID == episode.episodeID { return Theme.highlight }
-        // Band by place among the rows that aren't playing, so moving the
-        // playing row doesn't swap the other rows' colours (Paul, build 128).
-        let playingIndex = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
-        let place = playingIndex.map { index > $0 ? index - 1 : index } ?? index
-        return place.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
-    }
 
     private func toggleRow(_ id: String) {
         // No animation: List resizing rows animates jerkily.
@@ -258,7 +251,7 @@ private struct QueueRow: View {
             .accessibilityLabel("Play number \(number)")
             VStack(alignment: .leading, spacing: 3) {
                 Text(episode.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(Theme.text(15, .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2)
                 HStack(spacing: 6) {
@@ -290,10 +283,19 @@ private struct QueueRow: View {
 
     /// "9 Nov", or "9 Nov 2025" for an earlier year.
     static func published(_ date: Date) -> String {
+        let thisYear = Calendar.current.isDate(date, equalTo: Date(), toGranularity: .year)
+        return (thisYear ? dayMonth : dayMonthYear).string(from: date)
+    }
+
+    // Made once: a formatter per row per redraw was wasteful.
+    private static let dayMonth = formatter("d MMM")
+    private static let dayMonthYear = formatter("d MMM yyyy")
+
+    private static func formatter(_ format: String) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_GB")
-        formatter.dateFormat = Calendar.current.isDate(date, equalTo: Date(), toGranularity: .year) ? "d MMM" : "d MMM yyyy"
-        return formatter.string(from: date)
+        formatter.dateFormat = format
+        return formatter
     }
 
     /// TOP1 / TOP2 (rank) or BTM for episodes added by a show's setting;

@@ -2,7 +2,7 @@
 
 Read this first in every session. It records what Paul (the owner) has decided.
 Keep it up to date when decisions change. Detailed look and screen specs are in
-`docs/DESIGN.md`; the build and release pipeline is in `docs/SETUP.md`; the
+`notes/DESIGN.md`; the build and release pipeline is in `notes/SETUP.md`; the
 original screen mockups are in `design/`.
 
 ## What this is
@@ -51,7 +51,7 @@ to Nowhere / Top / Bottom" on the show page.
 - **iOS only.** Native app in Swift and SwiftUI.
 - **No Mac.** Paul has no Mac to build on. All
   building happens in the cloud: GitHub Actions (macOS runners) builds the app
-  and uploads it to TestFlight. See `docs/SETUP.md`.
+  and uploads it to TestFlight. See `notes/SETUP.md`.
 - **No server and no running costs.** All AI features run on the iPhone.
   Nothing calls Claude or any paid API at runtime.
 - **Warn about money up front** (Paul, 4 Nov 2026): if anything in any
@@ -546,7 +546,7 @@ to Nowhere / Top / Bottom" on the show page.
   transcript records, reload Up Next), iCloud status on the Shows screen,
   `Config/Podcasts.entitlements`; OPML import/export (`PodcastCore/Feed/
   OPML.swift`, tested). iCloud only switches on in signed builds: needs the
-  Apple account, then the one-off CloudKit steps in `docs/SETUP.md`.
+  Apple account, then the one-off CloudKit steps in `notes/SETUP.md`.
 - Done (rename): app, website and docs say Poddeck; cassette icon (D) is
   the app icon and the website's. The code project and bundle ID stay
   `Podcasts` / `com.gruffaluff.podcasts` (invisible to Paul).
@@ -564,7 +564,7 @@ to Nowhere / Top / Bottom" on the show page.
   (free 500 Mac minutes a month, no card, stops at the limit):
   `codemagic.yaml` + `scripts/ci_testflight.sh`, uploads on every merge
   to main, build numbers 100+. GitHub's TestFlight workflow is manual
-  only now. Setup steps in `docs/SETUP.md`. Plan (Paul agreed): only one
+  only now. Setup steps in `notes/SETUP.md`. Plan (Paul agreed): only one
   service uploads automatically. After GitHub's reset on 1 Dec 2026, try
   one GitHub Mac build; if public-repo Mac builds run free, move the
   automatic uploads back to GitHub and keep Codemagic as the backup (and
@@ -861,53 +861,57 @@ From the Notion notes after 6 Nov 08:10:
   cleared `justFollowed`, and chart items have no feed link to look the
   show up by). Discover's Follow keys use the same.
 
+## Done in build 129 (9 Nov 2026; Paul: "Go for build")
+
+- Tidy-up from the 9 Nov code review (no visible change; battery and
+  smoothness): iCloud tidy-up only after changes come in (not after our
+  own saves every 15 s while playing); transcript "is it there" checks no
+  longer read whole files; Find ads / sync check keep the show's
+  transcript for the episode and can't run two slices at once (a
+  cancelled slice no longer clears the next one's handle); artwork memory
+  capped at ~80 MB; artwork colours saved between launches, one shared
+  drawing context; widget artwork copies no longer used are deleted;
+  Trim silences checks 10×/s (was 20×); Up Next row colours and dates
+  worked out once; the full player looks its episode up once per episode;
+  show page "Add all" count only when asked; speaker names read once per
+  redraw. Feeds: unchanged feeds are skipped by a fingerprint of their
+  bytes (`LibraryStore.feedFingerprints`, this iPhone only), so their
+  notes aren't re-tidied on every check. Dead code removed
+  (`requestOpenPlayer`, `currentChapter`, `accentShadow`, `screenTitle`,
+  `darkKey`, `panelRow(highlighted:)`, the "starterShowFollowed" sync key)
+  and the AdScanner "default on" comment fixed. Not done (bigger, later if
+  needed): splitting the player's clock into child views, caching the show
+  page sort, counting unplayed without loading episodes.
+- Website files: `docs/CNAME` and `docs/_config.yml` removed; DESIGN.md and
+  SETUP.md moved to `notes/` (Cloudflare served them at poddeck.uk).
+- Up Next banding by place among the rows that aren't playing
+  (`Theme.upNextBand`), tab and pulled-up.
+- Style rules (9, Paul 9 Nov 2026): choose one of 2–4 = `DeckSwitch`
+  (Shows screen: check interval, skip lengths; was iOS segmented); choose
+  from a list = `DeckPicker`, a sand key with ▾ (show settings: keep
+  downloads, speed, skip intro/outro; Shows screen: after an episode,
+  transcribe, keep downloads under; was olive drop-down text); do
+  something = `DeckActionRow` / key buttons (Transcribe now, Refresh
+  artwork, Stop all, the transcript screen's Transcribe now / Try again /
+  Stop, clip −5/+5; was iOS round buttons or olive text); disabled keys
+  dim (`KeyButtonStyle` reads isEnabled); olive no longer decoration
+  (Discover top-3 ranks, welcome icons, clip error); can't be undone =
+  red with a confirm (Storage "Delete these downloads" now asks; "Stop all
+  transcribing" isn't red any more). Text: `Theme.text(size, weight)`
+  follows the iPhone's text size like the labels; lists, player titles,
+  chapters, transcripts and show pages use it; New Episodes cards, the
+  mini player, share cards and icons in round keys stay fixed on purpose.
+- Copy diagnostics (Paul, yes 9 Nov 2026): Shows screen → Problems →
+  COPY puts a plain-text summary on the clipboard (`App/Diagnostics.swift`:
+  app/iOS/device, counts, downloads, playing, settings, iCloud status; no
+  feed links).
+
 ## Queued for the next app build
 
-- **Code review tidy-up (9 Nov 2026; Paul: add it to the next list):**
-  battery / speed: iCloud tidy-up runs after our own saves (every ~15 s
-  while playing; only tidy after imports); `TranscriptService.prepare`
-  decodes whole transcript files just to check they exist (use
-  `TranscriptFiles.exists`); every refresh re-formats every episode's
-  notes on the main thread (only changed ones; conditional GET); the
-  full player redoes SwiftData fetches twice a second (split the clock /
-  scrub bar into child views); AdScanner can run two slices at once (task
-  handle cleared by the cancelled task); Trim silences polls 20×/s;
-  artwork memory cache has no size limit (~400 MB worst case);
-  ArtworkColors re-encodes images and makes a CIContext each time;
-  show page sorts all episodes on every keystroke; Up Next row colour /
-  date formatter per row; Your shows loads every episode to count
-  unplayed; JSON-backed model fields decoded on every read. Tidy: dead
-  code (`requestOpenPlayer`, `currentChapter`, `accentShadow`,
-  `screenTitle`, `darkKey`, `panelRow(highlighted:)`, "starterShowFollowed"
-  sync key), stale comments (AdScanner "default on"), shared key / row
-  helpers in Deck.swift, widget art files never deleted, docs/CNAME and
-  docs/_config.yml (and DESIGN.md / SETUP.md are served at poddeck.uk
-  because Cloudflare ignores _config.yml: move them out of docs/).
-
-- Lighter feed checks: send ETag / If-Modified-Since so unchanged feeds
-  are skipped (data and battery), with the notes fix above.
-- "Copy diagnostics" in settings for bug reports (Paul said yes, 9 Nov
-  2026). Not now (Paul): "Save for later" list, sleep timer "end of
-  chapter". Dragging: Paul
-  says it's OK now (build 128), so no hand-made reorder.
-
-- Up Next banding stays put when the playing row moves (Paul, build 128:
-  moving the playing row swapped the other rows' colours): rows are
-  banded by their place among the rows that aren't playing (tab and
-  pulled-up `rowColor`). On the branch, goes out with the next build.
-
-- **Style rules (9) approved (Paul, 9 Nov 2026), for the next build:**
-  one look per kind of control, every screen: choose one of 2–4 = key
-  switch with the chosen one olive (replaces iOS grey segmented
-  pickers); do something = dark key for the main action, sand key for
-  the other (replaces iOS round buttons); choose from a list = sand key
-  with ▾ (like ALL ▾ on Storage; replaces olive drop-down text); on/off =
-  iOS switch in olive (already right); olive only means chosen / on / the
-  one thing to tap now; can't be undone = red text with a confirm.
-  Before/after for the Shows screen, show settings and full transcript on
-  https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX. Do the type scale
-  with it (the ~50 fixed `.system(size:)` labels onto Theme).
 - 7 time row: left as it is (Paul, 9 Nov 2026).
+- Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
+  chapter". Dragging in Up Next is OK as of build 128: no hand-made
+  reorder.
 - **Still waiting on Paul**: where he tried Undo
   and saw nothing; whether to move alerts to Cloudflare (free cron
   Worker) as a backup to GitHub; other iPhone sizes not checked yet.

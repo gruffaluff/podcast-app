@@ -99,7 +99,7 @@ struct WelcomeView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Theme.accentText)
+                .foregroundStyle(Theme.ink)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.headline).foregroundStyle(Theme.ink)

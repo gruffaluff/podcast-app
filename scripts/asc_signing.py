@@ -59,7 +59,7 @@ def bundle_record(identifier):
     found = call("GET", f"/bundleIds?filter[identifier]={identifier}&limit=50")["data"]
     matches = [b for b in found if b["attributes"]["identifier"] == identifier]
     if not matches:
-        sys.exit(f"No App ID for {identifier}. Create it in Certificates, Identifiers & Profiles (docs/SETUP.md).")
+        sys.exit(f"No App ID for {identifier}. Create it in Certificates, Identifiers & Profiles (notes/SETUP.md).")
     return matches[0]["id"]
 
 

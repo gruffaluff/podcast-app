@@ -2,7 +2,7 @@ name: TestFlight
 
 # Builds a signed copy of the app and uploads it to TestFlight. Runs on every
 # merge into main, or by hand ("Run workflow"). Needs the four Apple secrets
-# described in docs/SETUP.md; without them it stops with a note and no error.
+# described in notes/SETUP.md; without them it stops with a note and no error.
 
 # Codemagic (codemagic.yaml) now does the automatic uploads on merges to
 # main; this workflow is kept for running by hand (and status_only checks).
@@ -35,7 +35,7 @@ jobs:
         id: secrets
         run: |
           if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8" ] || [ -z "$APPLE_TEAM_ID" ]; then
-            echo "::notice::Apple secrets not set yet (see docs/SETUP.md), so nothing was uploaded."
+            echo "::notice::Apple secrets not set yet (see notes/SETUP.md), so nothing was uploaded."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"

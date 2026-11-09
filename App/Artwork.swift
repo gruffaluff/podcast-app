@@ -74,6 +74,9 @@ final class ArtworkImageCache {
 
     init() {
         memory.countLimit = 300
+        // About 80 MB of decoded pictures at most (review, 9 Nov 2026: a
+        // count alone allowed ~400 MB of 600-point images).
+        memory.totalCostLimit = 80 * 1024 * 1024
     }
 
     /// "Refresh artwork": forget every saved picture; each is fetched again
@@ -113,7 +116,12 @@ final class ArtworkImageCache {
         inFlight[url] = task
         let image = await task.value
         inFlight[url] = nil
-        if let image { memory.setObject(image, forKey: url as NSURL) }
+        if let image { memory.setObject(image, forKey: url as NSURL, cost: Self.cost(of: image)) }
         return image
+    }
+
+    /// Bytes the decoded picture takes in memory.
+    private static func cost(of image: UIImage) -> Int {
+        Int(image.size.width * image.scale * image.size.height * image.scale * 4)
     }
 }

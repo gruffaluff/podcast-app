@@ -187,12 +187,12 @@ struct LibraryView: View {
     private func showText(_ show: Podcast) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(show.title)
-                .font(.system(size: 15, weight: .bold))
+                .font(Theme.text(15, .bold))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)
             if !show.summary.isEmpty {
                 Text(show.summary)
-                    .font(.system(size: 12))
+                    .font(Theme.text(12))
                     .foregroundStyle(Theme.muted)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -429,7 +429,7 @@ private struct ShowTile: View {
             }
             .aspectRatio(1, contentMode: .fit)
             Text(show.title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(Theme.text(14, .semibold))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)
             HStack(spacing: 6) {

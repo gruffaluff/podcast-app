@@ -69,8 +69,6 @@ final class SettingsSync {
         "keepShowOrder", "keepPlayingNew", "keepPlayedDownloads",
         "speed", "trimSilences", "boostVoices", "skipBack", "skipForward",
         "skipAds", "transcriptSchedule", "showsLayout", "playerShowsTranscript",
-        // So a reinstall doesn't follow the test show again.
-        "starterShowFollowed",
     ]
 
     private let cloud = NSUbiquitousKeyValueStore.default
@@ -130,7 +128,13 @@ extension LibraryStore {
                 let event = note.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey] as? NSPersistentCloudKitContainer.Event
                 MainActor.assumeIsolated {
                     if let event, event.endDate != nil { CloudSync.note(event.succeeded ? nil : event.error, in: "Sync", detail: LibraryStore.eventName(event.type)) }
-                    self?.scheduleCloudTidy()
+                    // Tidy only after changes come in from iCloud (or the
+                    // first set-up), not after sending our own: playback
+                    // saves every 15 seconds, and each send used to start a
+                    // full tidy of every episode (review, 9 Nov 2026).
+                    if let event, event.endDate != nil, event.type != .export {
+                        self?.scheduleCloudTidy()
+                    }
                 }
             }
         }

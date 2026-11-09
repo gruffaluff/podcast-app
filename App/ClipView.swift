@@ -41,15 +41,15 @@ struct ClipView: View {
                         Text("\(Int(length)) sec").monospacedDigit().foregroundStyle(Theme.muted)
                     }
                     waveform
+                    // Sand keys like the rest of the app (style rules).
                     HStack {
-                        Button("− 5 sec") { length = Clips.clamp(length - Clips.step) }
+                        Button { length = Clips.clamp(length - Clips.step) } label: { stepLabel("− 5 SEC") }
                             .disabled(length <= Clips.lengths.lowerBound)
                         Spacer()
-                        Button("+ 5 sec") { length = Clips.clamp(length + Clips.step) }
+                        Button { length = Clips.clamp(length + Clips.step) } label: { stepLabel("+ 5 SEC") }
                             .disabled(length >= Clips.lengths.upperBound)
                     }
-                    .buttonStyle(.borderless)
-                    .foregroundStyle(Theme.accentText)
+                    .buttonStyle(KeyButtonStyle(kind: .sand, radius: 10))
                 }
                 Section {
                     Toggle("Include audio", isOn: $includeAudio).disabled(audioFile == nil)
@@ -59,7 +59,7 @@ struct ClipView: View {
                 }
                 .tint(Theme.accentFill)
                 if let failure {
-                    Text(failure).foregroundStyle(Theme.accentText)
+                    Text(failure).foregroundStyle(Theme.muted)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -89,6 +89,13 @@ struct ClipView: View {
         QuoteCard(quote: quote, show: episode.podcast?.title ?? "", episode: episode.title, time: range.lowerBound, artwork: artwork, background: cardColor)
             .frame(width: 300, height: 300)
             .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func stepLabel(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.mono(11, .bold))
+            .padding(.horizontal, 12)
+            .frame(minHeight: 32)
     }
 
     private var waveform: some View {

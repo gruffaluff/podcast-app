@@ -6,7 +6,7 @@
 # Needs an environment variable group "apple" in Codemagic (app settings →
 # Environment variables), all marked Secure: ASC_KEY_ID, ASC_ISSUER_ID,
 # ASC_KEY_P8 (the .p8 file's whole text) and APPLE_TEAM_ID — the same
-# values as the GitHub secrets. See docs/SETUP.md.
+# values as the GitHub secrets. See notes/SETUP.md.
 workflows:
   testflight:
     name: TestFlight

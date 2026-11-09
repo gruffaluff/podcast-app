@@ -88,6 +88,18 @@ final class WidgetSync {
         last = snapshot
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshot.widgetKind)
         ControlCenter.shared.reloadAllControls()
+        removeUnusedArtwork(keeping: snapshot)
+    }
+
+    /// Deletes artwork copies the widgets no longer show (they used to pile
+    /// up in the shared folder for good).
+    private func removeUnusedArtwork(keeping snapshot: WidgetSnapshot) {
+        guard let folder = WidgetSnapshot.folder,
+              let files = try? FileManager.default.contentsOfDirectory(atPath: folder.path) else { return }
+        let used = Set(([snapshot.nowPlaying?.artworkFile] + snapshot.upNext.map(\.artworkFile)).compactMap { $0 })
+        for file in files where file.hasPrefix("art-") && file.hasSuffix(".jpg") && !used.contains(file) {
+            try? FileManager.default.removeItem(at: folder.appendingPathComponent(file))
+        }
     }
 
     /// A small copy of the artwork in the shared folder (widgets can't load

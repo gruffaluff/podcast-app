@@ -28,7 +28,7 @@ struct HistoryRow: View {
             ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 48, radius: 8)
             VStack(alignment: .leading, spacing: 4) {
                 Text(episode.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(Theme.text(15, .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2)
                 // The show on its own line, then played / time left and
@@ -260,6 +260,9 @@ struct StorageView: View {
     @State private var rows: [LibraryStore.ShowStorage] = []
     @State private var transcriptBytes: Int64 = 0
     @State private var confirmingDeleteAll = false
+    /// A show whose downloads are about to be deleted (asks first, like
+    /// every action that can't be undone).
+    @State private var deletingShow: LibraryStore.ShowStorage?
 
     var body: some View {
         List {
@@ -303,8 +306,7 @@ struct StorageView: View {
                                     ForEach([1, 2, 3, 5, 10], id: \.self) { Text("Keep latest \($0)").tag($0) }
                                 }
                                 Button("Delete these downloads", systemImage: "trash", role: .destructive) {
-                                    store.removeDownloads(of: row.show)
-                                    reload()
+                                    deletingShow = row
                                 }
                             } label: {
                                 Text(row.show.downloadLimit == 0 ? "ALL ▾" : "LATEST \(row.show.downloadLimit) ▾")
@@ -340,6 +342,16 @@ struct StorageView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete all", role: .destructive) {
                 store.removeAllDownloads()
+                reload()
+            }
+        } message: {
+            Text("Episodes stay in your library and Up Next; you can download them again.")
+        }
+        .alert("Delete \(deletingShow?.show.title ?? "these") downloads?", isPresented: Binding(get: { deletingShow != nil }, set: { if !$0 { deletingShow = nil } })) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                if let row = deletingShow { store.removeDownloads(of: row.show) }
+                deletingShow = nil
                 reload()
             }
         } message: {

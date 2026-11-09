@@ -13,7 +13,7 @@
 	</array>
 	<!-- TestFlight and App Store builds always use iCloud's Production
 	     side, which can't create record types: they come from
-	     Config/CloudKitSchema.ckdb (docs/SETUP.md). -->
+	     Config/CloudKitSchema.ckdb (notes/SETUP.md). -->
 	<key>com.apple.developer.icloud-container-environment</key>
 	<string>Production</string>
 	<!-- iCloud sync of settings (key-value storage). -->
