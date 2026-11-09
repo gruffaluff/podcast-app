@@ -28,9 +28,11 @@ struct ChaptersView: View {
                                        showTitle: player.nowPlaying?.showTitle ?? "")
                         }
                         .buttonStyle(.plain)
-                        // Flat banded rows like every other list.
-                        .listRowBackground(index == current ? Theme.highlight : Theme.band(index))
-                        .listRowSeparator(.hidden)
+                        // Cards like every other list.
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(index == current ? Theme.highlight : Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+                        .deckCardRow()
                     }
                 }
                 .listSectionSeparator(.hidden)

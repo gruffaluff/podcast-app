@@ -198,7 +198,7 @@ struct SearchView: View {
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.hairline)
                     .swipeActions {
-                        Button("Delete", role: .destructive) {
+                        Button("Delete", systemImage: "trash", role: .destructive) {
                             store.context.delete(bookmark)
                             store.save()
                         }

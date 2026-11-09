@@ -13,25 +13,15 @@ enum Theme {
     static let background = Color(hex: 0xE9E3D5)
     /// Paper cards and keys.
     static let surface = Color(hex: 0xF6F2E9)
-    /// Every other row in Up Next (banded rows instead of lines; Paul, 9 Nov 2026).
-    /// (Darker than the sand page after build 127: the first band was lost.)
-    static let surfaceBand = Color(hex: 0xE2DAC7)
     static let hairline = Color(hex: 0xD6CEBD)
 
-    /// An Up Next row's colour: the playing row highlighted, the others
-    /// banded by their place among the rows that aren't playing, so moving
-    /// the playing row doesn't swap the others' colours (Paul, build 128).
-    static func upNextBand(_ index: Int, playing: Int?) -> Color {
-        if index == playing { return highlight }
-        let place = playing.map { index > $0 ? index - 1 : index } ?? index
-        return band(place)
+    /// An Up Next card's colour: the playing one highlighted, the rest paper.
+    static func upNextCard(_ index: Int, playing: Int?) -> Color {
+        index == playing ? highlight : surface
     }
 
-    /// Every list's rows: flat, full width, alternating paper and band
-    /// (one row style everywhere, Paul after build 129).
-    static func band(_ index: Int) -> Color {
-        index.isMultiple(of: 2) ? surface : surfaceBand
-    }
+    /// Corner radius of every list card.
+    static let cardRadius: CGFloat = 14
     /// Outline buttons and quiet borders.
     static let controlBorder = Color(hex: 0xC9C2B4)
     static let ink = Color(hex: 0x1F1D19)

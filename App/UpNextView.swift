@@ -165,19 +165,15 @@ struct UpNextView: View {
         // Style B drawn by iOS itself (inset grouped list), not by the rows:
         // iOS then lifts and moves a row cleanly while reordering. Drawing
         // the panel slice by slice made the lifted row clip and leave gaps.
-        // The row paints its own colour edge to edge (no list insets), so the
-        // lifted copy is the whole row, not on a white square (build 125).
-        // Rows are banded instead of divided by lines (Paul, 9 Nov 2026),
-        // and the lifted row uses iOS's own lift: a rounded drag shape made
-        // it a separate see-through copy with the row's text showing
-        // through underneath (build 126 recordings).
+        // Each row is its own rounded paper card on the sand (Paul after
+        // build 130: cards, not bands). The cell behind it is sand, so the
+        // row iOS lifts to drag has sand corners, never white ones; iOS's
+        // own lift is used (a drag shape made a see-through copy, build 126).
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
-        .background(Theme.upNextBand(index, playing: playing))
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Theme.upNextBand(index, playing: playing))
-        .listRowSeparator(.hidden)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(Theme.upNextCard(index, playing: playing), in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+        .deckCardRow()
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
@@ -186,11 +182,13 @@ struct UpNextView: View {
                 .tint(Theme.muted)
         }
         .swipeActions(edge: .trailing) {
-            Button("Played") {
+            // Icons on every swipe key, so all draw round like Notes /
+            // To top (Paul, build 130: text-only ones drew as squares).
+            Button("Played", systemImage: "checkmark") {
                 store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
             }
             .tint(Theme.ink)
-            Button("Remove") {
+            Button("Remove", systemImage: "minus.circle") {
                 store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
             }
             .tint(Theme.muted)

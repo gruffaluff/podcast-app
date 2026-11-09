@@ -142,10 +142,9 @@ struct LibraryView: View {
     /// (Paul's choice, remembered and synced).
     @ViewBuilder private var yourShows: some View {
         switch showsLayout {
-        // Flat full-width banded rows, like Up Next and every other list
-        // (Paul, build 129: separate rounded boxes didn't match).
+        // Rounded paper cards, like every other list (Paul after build 130).
         case "card":
-            VStack(spacing: 0) {
+            VStack(spacing: 8) {
                 ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         HStack(spacing: 12) {
@@ -153,28 +152,30 @@ struct LibraryView: View {
                             showText(show)
                             Spacer(minLength: 0)
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Theme.band(index))
+                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 12)
         case "list":
-            VStack(spacing: 0) {
+            VStack(spacing: 8) {
                 ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         showText(show)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(Theme.band(index))
+                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 12)
         default:
             LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
                 ForEach(shows) { show in

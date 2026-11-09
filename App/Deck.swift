@@ -323,14 +323,24 @@ extension View {
 // MARK: - List rows (one row style everywhere)
 
 extension View {
-    /// A list row in the app's one row style: flat, full width, banded.
+    /// A list row in the app's one row style: its own rounded paper card
+    /// on the sand, with a small gap between cards (Paul after build 130:
+    /// cards, not bands; all one way or the other).
     func panelRow(_ index: Int, of count: Int) -> some View {
-        // Flat full-width banded rows, like Up Next (Paul after build 129:
-        // "we're either all rounded boxes or not"). Also gives the row's
-        // content the 32 points the rounded panel's margins took.
         self
-            .listRowBackground(Theme.band(index))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+            .deckCardRow()
+    }
+
+    /// The list-row settings around a card: sand behind it (so a row lifted
+    /// to drag has sand corners, not white ones) and the gaps between cards.
+    func deckCardRow() -> some View {
+        self
+            .listRowBackground(Theme.background)
             .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
     }
 }

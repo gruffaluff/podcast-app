@@ -923,6 +923,21 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Cards, not bands** (Paul, after build 130: "I don't think I like
+  banded, go back to the card style"; on the branch, goes out with the next
+  build). Every list row is its own rounded paper card (`Theme.surface`,
+  radius `Theme.cardRadius` 14) on the sand with a 8 pt gap: `panelRow`
+  (show pages, show previews, Discover, Add a show), Up Next tab and
+  pulled-up (playing card in `Theme.highlight`, `Theme.upNextCard`),
+  Chapters, Your shows card and list layouts. `deckCardRow()` gives the
+  cell a sand background, so the row iOS lifts to drag has sand corners,
+  not white ones. Side margins 12 pt + 12 pt inside the card. Bands
+  (`surfaceBand`, `Theme.band`) removed.
+- **Swipe keys all round** (Paul: two looks; prefers the round ones):
+  every swipe action has an icon (Played ✓, Remove, Unplayed, Play next /
+  Play last, Delete), so iOS draws them all as round icon keys with a
+  label, like Notes / To top. Text-only ones drew as rounded squares.
+
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
