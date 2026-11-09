@@ -906,11 +906,10 @@ From the Notion notes after 6 Nov 08:10:
   app/iOS/device, counts, downloads, playing, settings, iCloud status; no
   feed links).
 
-## Queued for the next app build
+## Done in build 130 (9 Nov 2026, PR #48; Paul: "Go")
 
 - **One row style: flat banded rows everywhere** (Paul, after build 129:
-  "we are either all rounded boxes or not"; done on the branch, goes out
-  with the next build). `panelRow` is now flat full-width rows
+  "we are either all rounded boxes or not"). `panelRow` is now flat full-width rows
   alternating paper / band (`Theme.band`), 16 pt insets, no lines: show
   episode lists, show previews, Discover search and charts, Add a show
   results. Your shows "card" and "list" layouts and the Chapters list
@@ -921,6 +920,8 @@ From the Notion notes after 6 Nov 08:10:
   link sits invisibly behind the row), the 32 pt the panel margins took
   goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
   grows without limit), + FOLLOW is a sand key so it shows on every band.
+
+## Queued for the next app build
 
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
