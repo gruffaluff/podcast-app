@@ -13,11 +13,31 @@ import PodcastCore
 final class ArtworkColors {
     static let shared = ArtworkColors()
 
-    private var colors: [URL: RGB] = [:]
+    private var colors: [URL: RGB] = ArtworkColors.saved()
     @ObservationIgnored private var loading: Set<URL> = []
+
+    /// Measured colours are kept between launches, so artwork isn't
+    /// measured again every time the app opens (review, 9 Nov 2026).
+    private static let savedKey = "artworkColors"
+
+    private static func saved() -> [URL: RGB] {
+        guard let stored = UserDefaults.standard.dictionary(forKey: savedKey) as? [String: [Double]] else { return [:] }
+        var result: [URL: RGB] = [:]
+        for (key, value) in stored where value.count == 3 {
+            if let url = URL(string: key) { result[url] = RGB(r: value[0], g: value[1], b: value[2]) }
+        }
+        return result
+    }
+
+    private func persist() {
+        var stored: [String: [Double]] = [:]
+        for (url, rgb) in colors { stored[url.absoluteString] = [rgb.r, rgb.g, rgb.b] }
+        UserDefaults.standard.set(stored, forKey: Self.savedKey)
+    }
 
     func clear() {
         colors.removeAll()
+        UserDefaults.standard.removeObject(forKey: Self.savedKey)
     }
 
     func background(for url: URL?) -> Color? {
@@ -33,8 +53,12 @@ final class ArtworkColors {
         let average = await Task.detached(priority: .utility) { ArtworkColors.averageColor(of: data) }.value
         if let average {
             colors[url] = ColorContrast.themedBackground(from: average)
+            persist()
         }
     }
+
+    /// One drawing context for every measurement (making one is costly).
+    nonisolated(unsafe) private static let context = CIContext()
 
     /// The image's average colour, measured on a small copy for speed.
     nonisolated static func averageColor(of data: Data) -> RGB? {
@@ -46,7 +70,7 @@ final class ArtworkColors {
         filter.extent = small.extent
         guard let output = filter.outputImage else { return nil }
         var pixel = [UInt8](repeating: 0, count: 4)
-        CIContext().render(output, toBitmap: &pixel, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+        context.render(output, toBitmap: &pixel, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
         return RGB(r: Double(pixel[0]) / 255, g: Double(pixel[1]) / 255, b: Double(pixel[2]) / 255)
     }
 }

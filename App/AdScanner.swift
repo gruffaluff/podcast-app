@@ -7,7 +7,7 @@ import PodcastCore
 /// lighter than transcribing whole episodes; only runs while listening.
 @MainActor
 final class AdScanner {
-    /// The "Find ads while listening" setting (default on).
+    /// The "Find ads while listening" setting (default off: battery).
     static var isEnabled: Bool {
         get { UserDefaults.standard.object(forKey: "findAdsWhileListening") as? Bool ?? false }
         set { UserDefaults.standard.set(newValue, forKey: "findAdsWhileListening") }
@@ -24,7 +24,10 @@ final class AdScanner {
     private var task: Task<Void, Never>?
     /// The show supplies its own transcript (which lacks the ads inserted
     /// into Paul's download, so it needs lining up with the audio).
-    private var hasShowTranscript = false
+    private var hasShowTranscript: Bool { showTranscript != nil }
+    /// The show's own transcript, read once per episode (it used to be
+    /// read from disk on every sync check).
+    private var showTranscript: [TranscriptSegment]?
     /// Stretches already sync-checked this session.
     private var synced: [ClosedRange<TimeInterval>] = []
     private var fullyChecked = false
@@ -47,7 +50,8 @@ final class AdScanner {
         duration = episode.duration ?? 0
         scanned = episode.adScanned
         synced = []
-        hasShowTranscript = episode.transcriptFile.flatMap(TranscriptFiles.load)?.source == .publisher
+        showTranscript = episode.transcriptFile.flatMap(TranscriptFiles.load)
+            .flatMap { $0.source == .publisher ? $0.segments : nil }
         // A full transcript made on the iPhone from this download already
         // found the ads and lined the show's transcript up all the way
         // through, so there's nothing left to check while listening.
@@ -67,9 +71,11 @@ final class AdScanner {
         task = Task { [weak self] in
             let words = (try? await OnDeviceTranscriber.words(in: audio, slice: slice)) ?? []
             let breaks = AdDetection.breaks(in: TranscriptLayout.lines(from: words))
-            guard let self else { return }
+            // A cancelled slice leaves `task` alone: it may already be the
+            // next episode's (clearing it let two slices run at once).
+            guard let self, !Task.isCancelled else { return }
             self.task = nil
-            guard !Task.isCancelled, self.episodeID == id else { return }
+            guard self.episodeID == id else { return }
             self.syncTranscript(id, heard: words)
             // Marked as checked even if it failed, so it isn't retried endlessly.
             self.scanned = AdScanPlan.adding(slice, to: self.scanned)
@@ -88,9 +94,9 @@ final class AdScanner {
         let covered = start...min(duration, start + Self.syncEvery)
         task = Task { [weak self] in
             let words = (try? await OnDeviceTranscriber.words(in: audio, slice: sample)) ?? []
-            guard let self else { return }
+            guard let self, !Task.isCancelled else { return }
             self.task = nil
-            guard !Task.isCancelled, self.episodeID == id else { return }
+            guard self.episodeID == id else { return }
             self.synced = AdScanPlan.adding(covered, to: self.synced)
             self.syncTranscript(id, heard: words)
         }
@@ -98,9 +104,8 @@ final class AdScanner {
 
     /// The same words line the show's transcript up with this audio.
     private func syncTranscript(_ id: String, heard words: [TranscriptSegment]) {
-        guard let episode = store.episode(id), let file = episode.transcriptFile,
-              let transcript = TranscriptFiles.load(file), transcript.source == .publisher,
-              let anchor = TranscriptAlign.anchor(heard: words, transcript: transcript.segments) else { return }
+        guard id == episodeID, let segments = showTranscript, let episode = store.episode(id),
+              let anchor = TranscriptAlign.anchor(heard: words, transcript: segments) else { return }
         episode.syncAnchors = TranscriptAlign.adding(anchor, to: episode.syncAnchors)
         store.save()
     }
@@ -110,5 +115,6 @@ final class AdScanner {
         task = nil
         episodeID = nil
         audio = nil
+        showTranscript = nil
     }
 }

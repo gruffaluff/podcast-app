@@ -198,7 +198,7 @@ struct DirectoryItemRow: View {
             if let rank {
                 Text(String(format: "%02d", rank))
                     .font(Theme.mono(15, .bold))
-                    .foregroundStyle(rank <= 3 ? Theme.accentText : Theme.muted)
+                    .foregroundStyle(rank <= 3 ? Theme.ink : Theme.muted)
                     .frame(width: 26)
             }
             NavigationLink(value: item) {

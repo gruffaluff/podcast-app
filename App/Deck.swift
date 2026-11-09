@@ -3,9 +3,10 @@ import SwiftUI
 /// A rounded key: paper (plain), ink (dark) or olive (accent, "on").
 /// Presses in slightly when tapped.
 struct KeyButtonStyle: ButtonStyle {
-    enum Kind { case plain, dark, accent }
+    enum Kind { case plain, dark, accent, sand }
     var kind: Kind = .plain
     var radius: CGFloat = 14
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         let (fill, text): (Color, Color) = {
@@ -13,6 +14,7 @@ struct KeyButtonStyle: ButtonStyle {
             case .plain: return (Theme.surface, Theme.ink)
             case .dark: return (Theme.ink, Theme.surface)
             case .accent: return (Theme.accentFill, Theme.onAccent)
+            case .sand: return (Theme.background, Theme.ink)
             }
         }()
         let pressed = configuration.isPressed
@@ -20,14 +22,13 @@ struct KeyButtonStyle: ButtonStyle {
             .foregroundStyle(text)
             .background(RoundedRectangle(cornerRadius: radius).fill(fill))
             .scaleEffect(pressed ? 0.97 : 1)
-            .opacity(pressed ? 0.85 : 1)
+            .opacity(isEnabled ? (pressed ? 0.85 : 1) : 0.4)
             .animation(.easeOut(duration: 0.08), value: pressed)
     }
 }
 
 extension ButtonStyle where Self == KeyButtonStyle {
     static var key: KeyButtonStyle { KeyButtonStyle() }
-    static var darkKey: KeyButtonStyle { KeyButtonStyle(kind: .dark) }
     static var accentKey: KeyButtonStyle { KeyButtonStyle(kind: .accent) }
 }
 
@@ -187,6 +188,67 @@ struct DeckSwitch<Value: Hashable>: View {
     }
 }
 
+/// "Choose from a list" (style rules, Paul 9 Nov 2026): a sand key showing
+/// the choice with ▾, opening the list. Replaces iOS's olive drop-down text.
+struct DeckPicker<Value: Hashable>: View {
+    let title: String
+    let options: [(label: String, value: Value)]
+    @Binding var selection: Value
+
+    private var current: String {
+        options.first { $0.value == selection }?.label ?? ""
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            Menu {
+                Picker(title, selection: $selection) {
+                    ForEach(options.indices, id: \.self) { index in
+                        Text(options[index].label).tag(options[index].value)
+                    }
+                }
+            } label: {
+                Text(current.uppercased() + " ▾")
+                    .font(Theme.mono(11, .bold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .frame(minHeight: 32)
+                    .background(Theme.background, in: RoundedRectangle(cornerRadius: 10))
+            }
+            .accessibilityLabel("\(title): \(current)")
+        }
+    }
+}
+
+/// "Do something" in a settings row: the row's title, then a key. Dark for
+/// the main action, sand for others (style rules, Paul 9 Nov 2026).
+struct DeckActionRow: View {
+    let title: String
+    let key: String
+    var main = false
+    let action: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            Button(action: action) {
+                Text(key.uppercased())
+                    .font(Theme.mono(11, .bold))
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 32)
+            }
+            .buttonStyle(KeyButtonStyle(kind: main ? .dark : .sand, radius: 10))
+        }
+    }
+}
+
 /// Two labelled lights for an episode: DL (downloaded; shows % while
 /// downloading) and TX (transcript ready; blinks while transcribing).
 struct EpisodeLights: View {
@@ -302,10 +364,10 @@ struct PanelBackground: View {
 extension View {
     /// Puts a list row in a rounded paper panel, like the pulled-up Up Next
     /// and Chapters lists: the same look for every list in the app.
-    func panelRow(_ index: Int, of count: Int, highlighted: Bool = false) -> some View {
+    func panelRow(_ index: Int, of count: Int) -> some View {
         self
             .listRowBackground(PanelBackground(position: PanelPosition(index: index, count: count),
-                                               fill: highlighted ? Theme.highlight : Theme.surface))
+                                               fill: Theme.surface))
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 8, leading: 32, bottom: 8, trailing: 32))
     }

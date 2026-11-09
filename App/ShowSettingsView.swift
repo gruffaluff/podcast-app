@@ -52,10 +52,9 @@ struct ShowSettingsView: View {
                         store.save()
                         if on { Task { await NewEpisodeAlerts.requestPermission() } }
                     }))
-                    Picker("Keep downloads", selection: Binding(get: { show.downloadLimit }, set: { store.setDownloadLimit($0, for: show) })) {
-                        Text("All").tag(0)
-                        ForEach([1, 2, 3, 5, 10], id: \.self) { Text("Latest \($0)").tag($0) }
-                    }
+                    DeckPicker(title: "Keep downloads",
+                               options: [(label: "All", value: 0)] + [1, 2, 3, 5, 10].map { (label: "Latest \($0)", value: $0) },
+                               selection: Binding(get: { show.downloadLimit }, set: { store.setDownloadLimit($0, for: show) }))
                 } footer: {
                     Text("Downloads follow your Wi-Fi only setting. Keep downloads deletes this show's older downloads beyond the newest few. Alerts say where the episode went in Up Next.")
                 }
@@ -63,20 +62,13 @@ struct ShowSettingsView: View {
                 .tint(Theme.accentFill)
 
                 Section {
-                    Picker("Speed", selection: Binding(get: { show.speedOverride }, set: { value in
+                    DeckPicker(title: "Speed", options: Self.speedChoices, selection: Binding(get: { show.speedOverride }, set: { value in
                         show.speedOverride = value
                         store.save()
                         player.showSettingsChanged(show)
-                    })) {
-                        Text("Same as everything").tag(0.0)
-                        ForEach(PlayerOptions.speeds, id: \.self) { Text(PlayerOptions.speedLabel($0)).tag($0) }
-                    }
-                    Picker("Skip intro", selection: secondsBinding(\.skipIntro)) {
-                        ForEach(Self.skipChoices, id: \.self) { Text(Self.skipLabel($0)).tag($0) }
-                    }
-                    Picker("Skip outro", selection: secondsBinding(\.skipOutro)) {
-                        ForEach(Self.skipChoices, id: \.self) { Text(Self.skipLabel($0)).tag($0) }
-                    }
+                    }))
+                    DeckPicker(title: "Skip intro", options: Self.skipOptions, selection: secondsBinding(\.skipIntro))
+                    DeckPicker(title: "Skip outro", options: Self.skipOptions, selection: secondsBinding(\.skipOutro))
                 } header: {
                     DeckHeader(title: "Playback for this show")
                 } footer: {
@@ -149,6 +141,12 @@ struct ShowSettingsView: View {
     }
 
     static let skipChoices: [Double] = [0, 10, 15, 20, 30, 45, 60, 90, 120]
+    static var skipOptions: [(label: String, value: Double)] {
+        skipChoices.map { (label: skipLabel($0), value: $0) }
+    }
+    static var speedChoices: [(label: String, value: Double)] {
+        [(label: "Same as everything", value: 0.0)] + PlayerOptions.speeds.map { (label: PlayerOptions.speedLabel($0), value: $0) }
+    }
 
     static func skipLabel(_ seconds: Double) -> String {
         let whole = Int(seconds)
@@ -259,12 +257,8 @@ struct TopPriorityView: View {
             .listRowBackground(Theme.surface)
 
             Section {
-                Picker("Check for new episodes", selection: $checkHours) {
-                    Text("Hourly").tag(1)
-                    Text("Every 3 hours").tag(3)
-                    Text("Every 6 hours").tag(6)
-                }
-                .pickerStyle(.segmented)
+                DeckSwitch(options: [(label: "Hourly", value: 1), (label: "3 hours", value: 3), (label: "6 hours", value: 6)],
+                           selection: $checkHours)
                 .onChange(of: checkHours) { _, hours in
                     BackgroundRefresh.intervalHours = hours
                     BackgroundRefresh.schedule()
@@ -316,11 +310,9 @@ struct TopPriorityView: View {
             .listRowBackground(Theme.surface)
 
             Section {
-                Picker("After an episode, play", selection: $afterEpisode) {
-                    Text("Top of Up Next").tag("top")
-                    Text("Next in the list").tag("next")
-                }
-                .pickerStyle(.menu)
+                DeckPicker(title: "After an episode, play",
+                           options: [(label: "Top of Up Next", value: "top"), (label: "Next in the list", value: "next")],
+                           selection: $afterEpisode)
             } footer: {
                 Text(afterEpisode == "next" ? "Carries on with the episode that was below it in Up Next." : "Always goes back to the top of Up Next.")
             }
@@ -328,14 +320,13 @@ struct TopPriorityView: View {
 
             Section {
                 // A menu picker, as this screen's list stays in edit mode for dragging.
-                Picker("Transcribe", selection: $transcripts.schedule) {
-                    ForEach(TranscriptService.Schedule.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.menu)
-                Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
-                    .foregroundStyle(Theme.accentText)
+                DeckPicker(title: "Transcribe",
+                           options: TranscriptService.Schedule.allCases.map { (label: $0.label, value: $0) },
+                           selection: $transcripts.schedule)
+                DeckActionRow(title: "Up Next", key: "Transcribe now", main: true) { transcripts.transcribeUpNextNow() }
                 if transcripts.isBusy {
-                    Button("Stop all transcribing", role: .destructive) { transcripts.stopAll() }
+                    // Not red: stopping can be undone with Transcribe now.
+                    DeckActionRow(title: "Transcribing", key: "Stop all") { transcripts.stopAll() }
                 }
             } header: {
                 DeckHeader(title: "Transcripts")
@@ -347,11 +338,10 @@ struct TopPriorityView: View {
 
             // Its own little section (Paul: it isn't about transcripts).
             Section {
-                Button("Refresh artwork") {
+                DeckActionRow(title: "Artwork", key: "Refresh") {
                     ArtworkImageCache.shared.clear()
                     ArtworkColors.shared.clear()
                 }
-                .foregroundStyle(Theme.accentText)
             } header: {
                 DeckHeader(title: "Artwork")
             } footer: {
@@ -364,13 +354,9 @@ struct TopPriorityView: View {
                     .tint(Theme.accentFill)
                 Toggle("Keep played downloads for 24 hours", isOn: $store.keepPlayedDownloads)
                     .tint(Theme.accentFill)
-                Picker("Keep downloads under", selection: $downloadCapGB) {
-                    Text("No limit").tag(0)
-                    ForEach([2, 5, 10, 20], id: \.self) { gb in
-                        Text("\(gb) GB").tag(gb)
-                    }
-                }
-                .pickerStyle(.menu)
+                DeckPicker(title: "Keep downloads under",
+                           options: [(label: "No limit", value: 0)] + [2, 5, 10, 20].map { (label: "\($0) GB", value: $0) },
+                           selection: $downloadCapGB)
                 .onChange(of: downloadCapGB) { store.applyStorageCap() }
             } header: {
                 DeckHeader(title: "Downloads")
@@ -409,6 +395,8 @@ struct TopPriorityView: View {
                      : "Sign in to iCloud in the Settings app to keep your shows, Up Next and progress safe if you reinstall Poddeck. Everything is still saved on this iPhone.")
             }
             .listRowBackground(Theme.surface)
+
+            DiagnosticsSection()
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
@@ -424,11 +412,7 @@ struct TopPriorityView: View {
             Text(title.uppercased())
                 .font(Theme.mono(11, .semibold))
                 .foregroundStyle(Theme.muted)
-            Picker(title, selection: selection) {
-                ForEach(PlayerOptions.skipLengths, id: \.self) { Text("\($0)s").tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            DeckSwitch(options: PlayerOptions.skipLengths.map { (label: "\($0)s", value: $0) }, selection: selection)
         }
         .padding(.vertical, 4)
     }
@@ -499,7 +483,7 @@ struct ICloudStatusRows: View {
     private func line(_ title: String, _ text: String, bad: Bool) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title).font(Theme.mono(10, .bold)).foregroundStyle(bad ? Theme.accentText : Theme.muted)
-            Text(text).font(.system(size: 12)).foregroundStyle(Theme.ink).textSelection(.enabled)
+            Text(text).font(Theme.text(12)).foregroundStyle(Theme.ink).textSelection(.enabled)
         }
         .accessibilityElement(children: .combine)
     }

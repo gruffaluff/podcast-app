@@ -17,6 +17,15 @@ enum Theme {
     /// (Darker than the sand page after build 127: the first band was lost.)
     static let surfaceBand = Color(hex: 0xE2DAC7)
     static let hairline = Color(hex: 0xD6CEBD)
+
+    /// An Up Next row's colour: the playing row highlighted, the others
+    /// banded by their place among the rows that aren't playing, so moving
+    /// the playing row doesn't swap the others' colours (Paul, build 128).
+    static func upNextBand(_ index: Int, playing: Int?) -> Color {
+        if index == playing { return highlight }
+        let place = playing.map { index > $0 ? index - 1 : index } ?? index
+        return place.isMultiple(of: 2) ? surface : surfaceBand
+    }
     /// Outline buttons and quiet borders.
     static let controlBorder = Color(hex: 0xC9C2B4)
     static let ink = Color(hex: 0x1F1D19)
@@ -24,7 +33,6 @@ enum Theme {
     static let muted = Color(hex: 0x5C5547)
     /// Olive: keys that are on, switches; text on it is paper.
     static let accentFill = Color(hex: 0x45543A)
-    static let accentShadow = Color(hex: 0x2F3A27)
     /// Olive text on light panels (7:1).
     static let accentText = Color(hex: 0x45543A)
     static let onAccent = Color(hex: 0xF6F2E9)
@@ -79,9 +87,14 @@ enum Theme {
         return min(Swift.max(wanted, size), size * factor)
     }
 
-    /// Screen and section titles.
-    static func screenTitle(_ size: CGFloat = 34) -> Font {
-        big(size)
+    /// Body text at a set size (SF) that still follows the iPhone's text
+    /// size setting, within the same limits as the labels. Used instead of
+    /// fixed `.system(size:)` so every list grows with the setting (style
+    /// rules, Paul 9 Nov 2026). Text in fixed-size places (New Episodes
+    /// cards, the mini player, share cards) and icons in round keys stay
+    /// fixed on purpose.
+    static func text(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: scaled(size), weight: weight)
     }
 
     /// Labels, times and counters: DM Mono, like the printing beside the

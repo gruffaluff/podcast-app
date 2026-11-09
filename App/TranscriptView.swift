@@ -199,7 +199,7 @@ struct TranscriptView: View {
                     .foregroundStyle((speakerIndex ?? 0) % 2 == 0 ? Theme.ink : Theme.accentText)
             }
             Text(line.text)
-                .font(.system(size: isCurrent ? 19 : 16))
+                .font(Theme.text(isCurrent ? 19 : 16))
                 .fontWeight(isCurrent ? .medium : .regular)
                 .foregroundStyle(isPast ? Theme.muted : Theme.ink)
                 .lineSpacing(3)
@@ -299,14 +299,25 @@ struct TranscriptView: View {
     private func bookmark(_ line: TranscriptLayout.Line, quote: String) {
         context.insert(Bookmark(episodeID: episode.episodeID, time: line.start, text: quote))
         try? context.save()
-        bookmarked = "Bookmarked at \(TimeFormat.clock(line.start))"
+        let note = "Bookmarked at \(TimeFormat.clock(line.start))"
+        bookmarked = note
         Task {
             try? await Task.sleep(for: .seconds(2))
-            bookmarked = nil
+            // Only clear this note, not a newer bookmark's.
+            if bookmarked == note { bookmarked = nil }
         }
     }
 
     // MARK: Not ready yet
+
+    /// Keys like the rest of the app (style rules, Paul 9 Nov 2026), not
+    /// iOS's round buttons.
+    private static func keyLabel(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(Theme.mono(13, .bold))
+            .padding(.horizontal, 18)
+            .frame(minHeight: 44)
+    }
 
     private var status: some View {
         VStack(spacing: 12) {
@@ -317,17 +328,15 @@ struct TranscriptView: View {
                 Text("Transcribing on your iPhone…")
                     .foregroundStyle(Theme.ink)
                 Text("This takes a few minutes for a long episode. You can close this and come back, or stop it if the phone gets warm or slow.")
-                Button("Stop transcribing") { transcripts.stop(episode) }
-                    .buttonStyle(.bordered)
-                    .tint(Theme.ink)
+                Button { transcripts.stop(episode) } label: { Self.keyLabel("Stop transcribing") }
+                    .buttonStyle(KeyButtonStyle(kind: .plain, radius: 12))
             case .failed:
                 Image(systemName: "exclamationmark.bubble")
                     .font(.title)
                 Text("Couldn't make a transcript for this episode.")
                     .foregroundStyle(Theme.ink)
-                Button("Try again") { transcripts.transcribeNow(episode) }
-                .buttonStyle(.bordered)
-                .tint(Theme.ink)
+                Button { transcripts.transcribeNow(episode) } label: { Self.keyLabel("Try again") }
+                    .buttonStyle(KeyButtonStyle(kind: .dark, radius: 12))
             default:
                 if transcripts.canTranscribeNow(episode) {
                     Text("No transcript yet")
@@ -335,9 +344,8 @@ struct TranscriptView: View {
                     Text(store.localAudioURL(for: episode) == nil
                          ? "It's made on your iPhone from the audio, so the episode downloads first."
                          : "Transcripts are made on your iPhone. " + transcripts.schedule.explanation)
-                    Button("Transcribe now") { transcripts.transcribeNow(episode) }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.ink)
+                    Button { transcripts.transcribeNow(episode) } label: { Self.keyLabel("Transcribe now") }
+                        .buttonStyle(KeyButtonStyle(kind: .dark, radius: 12))
                 } else {
                     ProgressView()
                     Text(store.localAudioURL(for: episode) == nil ? "Downloading, then transcribing…" : "Getting the transcript ready…")

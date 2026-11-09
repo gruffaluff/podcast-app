@@ -21,10 +21,6 @@ final class PlayerModel {
 
     private(set) var nowPlaying: NowPlaying?
     private(set) var isPlaying = false
-    /// Bumped to ask the app to open the full player (e.g. from Up Next's
-    /// now-playing header).
-    private(set) var openPlayerRequests = 0
-    func requestOpenPlayer() { openPlayerRequests += 1 }
     private(set) var currentTime: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
 
@@ -69,14 +65,12 @@ final class PlayerModel {
     private(set) var adBreaks: [AdBreak] = []
     /// The break just skipped, for the "Ad skipped" note with Play ad / Not an ad.
     private(set) var lastSkippedAd: AdBreak?
-    /// Skip ad breaks automatically (default on).
     /// Skip ad breaks automatically (default off: a Skip ad button shows instead).
     private(set) var skipAds = false
     /// The ad break playing right now, for the Skip ad button.
     private(set) var currentAd: AdBreak?
 
     var currentChapterIndex: Int? { Chapters.index(at: currentTime, in: chapters) }
-    var currentChapter: Chapter? { currentChapterIndex.map { chapters[$0] } }
 
     /// Next chapter (mini player, lock screen, headphones' next-track).
     func nextChapter() {
@@ -281,7 +275,7 @@ final class PlayerModel {
     private func updateTrimTimer() {
         let shouldRun = trimSilences && isPlaying
         if shouldRun, trimTimer == nil {
-            trimTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            trimTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.trimTick() }
             }
         } else if !shouldRun {

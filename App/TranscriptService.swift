@@ -251,7 +251,7 @@ final class TranscriptService {
     /// line (e.g. Paul opened its transcript).
     func prepare(_ episode: PodcastEpisode, urgent: Bool = false) {
         let id = episode.episodeID
-        let hasTranscript = episode.transcriptState == .ready && episode.transcriptFile.flatMap(TranscriptFiles.load) != nil
+        let hasTranscript = episode.transcriptState == .ready && episode.transcriptFile.map(TranscriptFiles.exists) == true
         let downloaded = store.localAudioURL(for: episode) != nil
         // Done, unless the show's own transcript is in hand but ads haven't
         // been looked for in Paul's download yet (ads differ per download).

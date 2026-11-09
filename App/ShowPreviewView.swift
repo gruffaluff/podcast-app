@@ -67,7 +67,7 @@ struct ShowPreviewView: View {
                 .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 .accessibilityAddTraits(.isHeader)
             Text([feed?.author ?? item.artist, item.genre, feed.map { "\($0.episodes.count) episodes" }].compactMap { $0 }.joined(separator: " · "))
-                .font(.system(size: 13))
+                .font(Theme.text(13))
                 .foregroundStyle(Theme.displayDim)
             if let show = followedShow {
                 NavigationLink(value: show) {

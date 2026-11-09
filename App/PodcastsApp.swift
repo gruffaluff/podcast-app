@@ -146,7 +146,6 @@ struct RootView: View {
             }
         }
         .transcribeExplainer(enabled: !showingPlayer && !showingWelcome)
-        .onChange(of: player.openPlayerRequests) { showingPlayer = true }
         // A show name / artwork in the player or on an episode page: close
         // what's open and go to the show in Library.
         .onChange(of: store.revealShow) { _, show in

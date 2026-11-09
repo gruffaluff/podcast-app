@@ -30,7 +30,7 @@ struct EpisodeNotesView: View {
                             }
                             .buttonStyle(.plain)
                             Text(episode.title)
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(Theme.text(18, .semibold))
                                 .foregroundStyle(Theme.ink)
                             EpisodeLights(episode: episode)
                         }

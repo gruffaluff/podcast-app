@@ -77,7 +77,7 @@ private struct ChapterRow: View {
             ArtworkView(url: artwork, title: showTitle, size: 42, radius: 9)
             VStack(alignment: .leading, spacing: 2) {
                 Text(chapter.title)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(Theme.text(15, .bold))
                     .foregroundStyle(chapter.isAd ? Theme.muted : Theme.ink)
                     .lineLimit(1)
                 HStack(spacing: 6) {
@@ -87,7 +87,7 @@ private struct ChapterRow: View {
                         DeckTag(text: "NEXT")
                     }
                     Text(meta)
-                        .font(.system(size: 12))
+                        .font(Theme.text(12))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                 }
