@@ -13,6 +13,8 @@ enum Theme {
     static let background = Color(hex: 0xE9E3D5)
     /// Paper cards and keys.
     static let surface = Color(hex: 0xF6F2E9)
+    /// Every other row in Up Next (banded rows instead of lines; Paul, 9 Nov 2026).
+    static let surfaceBand = Color(hex: 0xEEE8DB)
     static let hairline = Color(hex: 0xD6CEBD)
     /// Outline buttons and quiet borders.
     static let controlBorder = Color(hex: 0xC9C2B4)

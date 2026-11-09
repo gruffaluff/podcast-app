@@ -813,6 +813,29 @@ From the Notion notes after 6 Nov 08:10:
     Next tab, scrolls to the episode and opens its row keys
     (`LibraryStore.revealInUpNext`, watched by RootView and UpNextView).
 
+## Done in build 127 (9 Nov 2026; Paul: "address and build", recordings + Notion notes after 7 Nov 09:20)
+
+- Up Next (tab and pulled-up): rows banded (every other row `Theme.surfaceBand`)
+  instead of divider lines; the `.contentShape(.dragPreview…)` is gone
+  again: it made the lifted row a separate see-through copy with the
+  row's text showing through (recordings); iOS's own lift is used.
+- Up Next rows show when the episode came out ("9 NOV", or with the year)
+  on the third line, before PLAYING / downloading.
+- Player: the Undo bar floats over the page (overlay) instead of a
+  safe-area inset, which resized the scroll area and flickered.
+- Player: behind the titles the artwork is blurred and the colour fade is
+  stronger, so the titles stay clear over busy artwork; the show name
+  opens the show page. Episode page: artwork and show name open the show
+  (`LibraryStore.revealShow`: RootView closes the player / page and
+  switches to Library, LibraryView pushes the show on its path).
+- New Episodes card: the playing card's pill shows the time left (not the
+  squashed "Pla…"), with pause and the moving wave.
+- Show page episode rows: olive dot for unplayed, a tick for played, and
+  unplayed titles semibold (the fade alone wasn't clear).
+- Show settings sheet: Older episodes are key buttons (MARK OLDER PLAYED,
+  ADD ALL TO UP NEXT) and Add all shows every time, not only after
+  following (it's also in the show page's ⋯ menu).
+
 ## Queued for the next app build
 
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick

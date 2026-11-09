@@ -147,6 +147,19 @@ struct RootView: View {
         }
         .transcribeExplainer(enabled: !showingPlayer && !showingWelcome)
         .onChange(of: player.openPlayerRequests) { showingPlayer = true }
+        // A show name / artwork in the player or on an episode page: close
+        // what's open and go to the show in Library.
+        .onChange(of: store.revealShow) { _, show in
+            guard show != nil else { return }
+            store.notesEpisode = nil
+            showingPlayer = false
+            tab = 1
+            // Library pushes the show page; clear the request once it has.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(600))
+                store.revealShow = nil
+            }
+        }
         // "In Up Next · 2nd" on an episode page: close what's open, go to Up Next.
         .onChange(of: store.revealInUpNext) { _, id in
             guard id != nil else { return }

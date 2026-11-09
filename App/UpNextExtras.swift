@@ -39,17 +39,16 @@ struct UpNextSheet: View {
                                 }
                             }
                         }
-                        // The row paints its own background edge to edge, so
-                        // the lifted copy while dragging is the whole row with
-                        // rounded corners (not white square ones).
+                        // Same as the Up Next tab: the row paints its own
+                        // colour edge to edge, banded rows instead of lines,
+                        // iOS's own lift (no separate see-through copy).
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
-                        .background(rowColor(item))
-                        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+                        .background(rowColor(item, index: index))
                         .listRowInsets(EdgeInsets())
-                        .listRowBackground(rowColor(item))
-                        .listRowSeparatorTint(Theme.hairline)
+                        .listRowBackground(rowColor(item, index: index))
+                        .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
@@ -91,8 +90,9 @@ struct UpNextSheet: View {
         }
     }
 
-    private func rowColor(_ item: QueueItem) -> Color {
-        item.episode.id == player.nowPlaying?.episodeID ? Theme.highlight : Theme.surface
+    private func rowColor(_ item: QueueItem, index: Int) -> Color {
+        if item.episode.id == player.nowPlaying?.episodeID { return Theme.highlight }
+        return index.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
     }
 
     private func summary(total: TimeInterval) -> String {

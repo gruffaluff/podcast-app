@@ -5,6 +5,7 @@ import PodcastCore
 /// download / transcript lights. Opened from "Episode notes" in episode menus.
 struct EpisodeNotesView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
 
     var body: some View {
@@ -12,11 +13,22 @@ struct EpisodeNotesView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(alignment: .top, spacing: 14) {
-                        ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 96, radius: 10)
+                        // The artwork and show name open the show (Paul, 9 Nov 2026).
+                        Button(action: openShow) {
+                            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 96, radius: 10)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Open \(episode.podcast?.title ?? "the show")")
                         VStack(alignment: .leading, spacing: 6) {
-                            Text((episode.podcast?.title ?? "").uppercased())
+                            Button(action: openShow) {
+                                HStack(spacing: 4) {
+                                    Text((episode.podcast?.title ?? "").uppercased())
+                                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold))
+                                }
                                 .font(Theme.mono(11))
                                 .foregroundStyle(Theme.muted)
+                            }
+                            .buttonStyle(.plain)
                             Text(episode.title)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(Theme.ink)
@@ -37,6 +49,12 @@ struct EpisodeNotesView: View {
             }
         }
         .transcribeExplainer()
+    }
+
+    private func openShow() {
+        guard let show = episode.podcast else { return }
+        store.revealShow = show
+        dismiss()
     }
 }
 

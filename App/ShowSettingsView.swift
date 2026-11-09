@@ -84,33 +84,49 @@ struct ShowSettingsView: View {
                 }
                 .listRowBackground(Theme.surface)
 
-                if justFollowed {
-                    Section {
-                        Button(olderUnplayed ? "Mark older episodes as played" : "Keep older episodes unplayed") {
-                            let latest = store.latestEpisode(of: show)
-                            let older = show.episodes.filter { $0.episodeID != latest?.episodeID }
-                            if olderUnplayed { store.markPlayed(older) } else { store.markUnplayed(older) }
-                            olderUnplayed.toggle()
+                // Older episodes as keys like the rest of the app (they were
+                // plain olive text). Add all is here every time the sheet
+                // opens, not only right after following (Paul, 9 Nov 2026).
+                Section {
+                    HStack(spacing: 8) {
+                        if justFollowed {
+                            Button {
+                                let latest = store.latestEpisode(of: show)
+                                let older = show.episodes.filter { $0.episodeID != latest?.episodeID }
+                                if olderUnplayed { store.markPlayed(older) } else { store.markUnplayed(older) }
+                                olderUnplayed.toggle()
+                            } label: {
+                                Text(olderUnplayed ? "MARK OLDER PLAYED" : "KEEP UNPLAYED")
+                                    .font(Theme.mono(11, .bold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                            }
+                            .buttonStyle(KeyButtonStyle(kind: .plain, radius: 10))
                         }
-                        .foregroundStyle(Theme.accentText)
-                        // Listen to the whole back catalogue in order
-                        // (Paul, 9 Nov 2026).
                         if olderUnplayed {
-                            Button(addedAll ? "Added to Up Next, oldest first ✓" : "Add all to Up Next, oldest first") {
+                            Button {
                                 store.addBackCatalogue(of: show)
                                 addedAll = true
+                            } label: {
+                                Text(addedAll ? "ADDED ✓" : "ADD ALL TO UP NEXT")
+                                    .font(Theme.mono(11, .bold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
                             }
-                            .foregroundStyle(Theme.accentText)
+                            .buttonStyle(KeyButtonStyle(kind: .dark, radius: 10))
                             .disabled(addedAll)
                         }
-                    } header: {
-                        DeckHeader(title: "Older episodes")
-                    } footer: {
-                        Text(olderUnplayed
-                             ? "The newest episode is downloading. All \(show.episodes.count) episodes are unplayed; you can also do this later from the show's Select button."
-                             : "The other \(max(0, show.episodes.count - 1)) are marked as played, so only new ones show as unplayed.")
                     }
-                    .listRowBackground(Theme.surface)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowBackground(Color.clear)
+                } header: {
+                    DeckHeader(title: "Older episodes")
+                } footer: {
+                    Text(olderUnplayed
+                         ? "Add all puts every unplayed episode at the end of Up Next, oldest first, for listening from the very start. It's also in the show page's ⋯ menu."
+                         : "The other \(max(0, show.episodes.count - 1)) are marked as played, so only new ones show as unplayed.")
                 }
 
                 if show.autoAdd == .top {

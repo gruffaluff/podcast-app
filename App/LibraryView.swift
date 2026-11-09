@@ -11,6 +11,7 @@ struct LibraryView: View {
     @State private var addingShow = false
     /// The New Episodes card scrolled into view.
     @State private var cardInView: PersistentIdentifier?
+    @State private var path = NavigationPath()
     @AppStorage("showsLayout") private var showsLayout = "large"
 
     private static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
@@ -44,7 +45,7 @@ struct LibraryView: View {
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     if shows.isEmpty {
@@ -119,6 +120,12 @@ struct LibraryView: View {
             .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = store.continueListening(excluding: id, limit: 3) }
             .tabTitle("LIBRARY")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
+            // From the player's / an episode page's show name.
+            .onChange(of: store.revealShow, initial: true) { _, show in
+                guard let show else { return }
+                path = NavigationPath()
+                path.append(show)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { addingShow = true } label: {
@@ -377,9 +384,12 @@ private struct EpisodeCard: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: playing ? "pause.fill" : "play.fill")
-                Text(current ? (playing ? "Playing" : "Paused") : playLabel)
+                // The episode that's on shows its time left like the others
+                // (with the light pill and wave); "Playing" got squashed
+                // to "Pla…" (Paul, 9 Nov 2026).
+                Text(playLabel)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .fixedSize()
                 if current {
                     Image(systemName: "waveform")
                         .symbolEffect(.variableColor.iterative, isActive: playing)
