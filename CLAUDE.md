@@ -948,6 +948,14 @@ From the Notion notes after 6 Nov 08:10:
   Play last, Delete), so iOS draws them all as round icon keys with a
   label, like Notes / To top. Text-only ones drew as rounded squares.
 
+- **Colour schemes** (Paul asked 9 Nov 2026 about light theming): proposed
+  a Colours picker on the Shows screen, synced, with Sand (default),
+  Slate, Clay and Night (dark, could follow the iPhone's dark mode); same
+  layout / cards / fonts, only Theme colours change; player and mini
+  player keep the artwork colour. Mock-up:
+  https://claude.ai/artifact/HkYMMBunqi9jCSsmn8hrae. Waiting on which
+  schemes and tweaks. Means turning Theme's fixed colours into ones that
+  follow the chosen scheme.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
