@@ -14,6 +14,10 @@ struct ChaptersView: View {
             // small artwork, one-line titles, a summary line at the top.
             List {
                 Section {
+                    // A plain row, not a section header (plain lists pin headers).
+                    header
+                        .listRowBackground(Theme.background)
+                        .listRowSeparator(.hidden)
                     ForEach(Array(player.chapters.enumerated()), id: \.offset) { index, chapter in
                         Button {
                             player.play(chapter: chapter)
@@ -24,12 +28,14 @@ struct ChaptersView: View {
                                        showTitle: player.nowPlaying?.showTitle ?? "")
                         }
                         .buttonStyle(.plain)
-                        .listRowBackground(index == current ? Theme.highlight : Theme.surface)
+                        // Flat banded rows like every other list.
+                        .listRowBackground(index == current ? Theme.highlight : Theme.band(index))
+                        .listRowSeparator(.hidden)
                     }
-                } header: {
-                    header
                 }
+                .listSectionSeparator(.hidden)
             }
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .overlay {

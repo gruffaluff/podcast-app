@@ -908,6 +908,20 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **One row style: flat banded rows everywhere** (Paul, after build 129:
+  "we are either all rounded boxes or not"; done on the branch, goes out
+  with the next build). `panelRow` is now flat full-width rows
+  alternating paper / band (`Theme.band`), 16 pt insets, no lines: show
+  episode lists, show previews, Discover search and charts, Add a show
+  results. Your shows "card" and "list" layouts and the Chapters list
+  use the same bands (were separate rounded boxes / lines / an inset
+  panel). The rounded-panel code (`PanelBackground`) is gone. Settings
+  screens keep iOS's grouped sections. Search results still plain rows.
+- Discover chart / search rows were squashed (Paul): no ">" arrow (the
+  link sits invisibly behind the row), the 32 pt the panel margins took
+  goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
+  grows without limit), + FOLLOW is a sand key so it shows on every band.
+
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made

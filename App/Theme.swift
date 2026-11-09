@@ -24,7 +24,13 @@ enum Theme {
     static func upNextBand(_ index: Int, playing: Int?) -> Color {
         if index == playing { return highlight }
         let place = playing.map { index > $0 ? index - 1 : index } ?? index
-        return place.isMultiple(of: 2) ? surface : surfaceBand
+        return band(place)
+    }
+
+    /// Every list's rows: flat, full width, alternating paper and band
+    /// (one row style everywhere, Paul after build 129).
+    static func band(_ index: Int) -> Color {
+        index.isMultiple(of: 2) ? surface : surfaceBand
     }
     /// Outline buttons and quiet borders.
     static let controlBorder = Color(hex: 0xC9C2B4)
