@@ -906,7 +906,7 @@ From the Notion notes after 6 Nov 08:10:
   app/iOS/device, counts, downloads, playing, settings, iCloud status; no
   feed links).
 
-## Done in build 130 (9 Nov 2026, PR #48; Paul: "Go")
+## Done in build 130 (9 Nov 2026, PR #48; Paul: "Go"; on TestFlight 9 Nov, VALID)
 
 - **One row style: flat banded rows everywhere** (Paul, after build 129:
   "we are either all rounded boxes or not"). `panelRow` is now flat full-width rows
