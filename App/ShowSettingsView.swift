@@ -84,43 +84,32 @@ struct ShowSettingsView: View {
                 }
                 .listRowBackground(Theme.surface)
 
-                // Older episodes as keys like the rest of the app (they were
-                // plain olive text). Add all is here every time the sheet
+                // Older episodes as ordinary rows in the paper panel, like
+                // the rest of this sheet (Paul, build 127: the black and white
+                // keys matched nothing). Add all is here every time the sheet
                 // opens, not only right after following (Paul, 9 Nov 2026).
                 Section {
-                    HStack(spacing: 8) {
-                        if justFollowed {
-                            Button {
-                                let latest = store.latestEpisode(of: show)
-                                let older = show.episodes.filter { $0.episodeID != latest?.episodeID }
-                                if olderUnplayed { store.markPlayed(older) } else { store.markUnplayed(older) }
-                                olderUnplayed.toggle()
-                            } label: {
-                                Text(olderUnplayed ? "MARK OLDER PLAYED" : "KEEP UNPLAYED")
-                                    .font(Theme.mono(11, .bold))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                    .frame(maxWidth: .infinity, minHeight: 44)
-                            }
-                            .buttonStyle(KeyButtonStyle(kind: .plain, radius: 10))
-                        }
-                        if olderUnplayed {
-                            Button {
-                                store.addBackCatalogue(of: show)
-                                addedAll = true
-                            } label: {
-                                Text(addedAll ? "ADDED ✓" : "ADD ALL TO UP NEXT")
-                                    .font(Theme.mono(11, .bold))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                    .frame(maxWidth: .infinity, minHeight: 44)
-                            }
-                            .buttonStyle(KeyButtonStyle(kind: .dark, radius: 10))
-                            .disabled(addedAll)
+                    if justFollowed {
+                        Button {
+                            let latest = store.latestEpisode(of: show)
+                            let older = show.episodes.filter { $0.episodeID != latest?.episodeID }
+                            if olderUnplayed { store.markPlayed(older) } else { store.markUnplayed(older) }
+                            olderUnplayed.toggle()
+                        } label: {
+                            olderRow(olderUnplayed ? "Mark older episodes as played" : "Keep older episodes unplayed",
+                                     symbol: olderUnplayed ? "checkmark.circle" : "arrow.uturn.backward")
                         }
                     }
-                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    .listRowBackground(Color.clear)
+                    if olderUnplayed {
+                        Button {
+                            store.addBackCatalogue(of: show)
+                            addedAll = true
+                        } label: {
+                            olderRow(addedAll ? "Added to Up Next" : "Add all to Up Next, oldest first",
+                                     symbol: addedAll ? "checkmark" : "text.append")
+                        }
+                        .disabled(addedAll)
+                    }
                 } header: {
                     DeckHeader(title: "Older episodes")
                 } footer: {
@@ -128,6 +117,7 @@ struct ShowSettingsView: View {
                          ? "Add all puts every unplayed episode at the end of Up Next, oldest first, for listening from the very start. It's also in the show page's ⋯ menu."
                          : "The other \(max(0, show.episodes.count - 1)) are marked as played, so only new ones show as unplayed.")
                 }
+                .listRowBackground(Theme.surface)
 
                 if show.autoAdd == .top {
                     Section {
@@ -166,6 +156,18 @@ struct ShowSettingsView: View {
         if whole < 60 { return "\(whole)s" }
         let rest = whole % 60
         return rest == 0 ? "\(whole / 60)m" : "\(whole / 60)m \(rest)s"
+    }
+
+    /// One row in the Older episodes section: the action and its icon.
+    private func olderRow(_ title: String, symbol: String) -> some View {
+        HStack {
+            Text(title).foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.accentText)
+        }
+        .contentShape(Rectangle())
     }
 
     private func secondsBinding(_ keyPath: ReferenceWritableKeyPath<Podcast, Double>) -> Binding<Double> {

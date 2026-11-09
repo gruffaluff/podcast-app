@@ -49,7 +49,7 @@ struct ShowPreviewView: View {
     }
 
     private var followedShow: Podcast? {
-        if let followed = follower.justFollowed { return followed }
+        if let followed = follower.followed { return followed }
         return item.feedURL.flatMap { store.podcast(feedURL: $0.absoluteString) }
     }
 

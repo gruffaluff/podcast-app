@@ -25,7 +25,11 @@ struct UndoBar: View {
             .padding(.vertical, 6)
             .background(Theme.display, in: RoundedRectangle(cornerRadius: 12))
             .task(id: action.id) {
-                try? await Task.sleep(for: .seconds(6))
+                // Only a full 6 seconds clears it. There's an Undo bar on
+                // every tab and in the player; when one leaves the screen its
+                // wait is cancelled, and that used to clear the Undo at once
+                // (the bar flashed and vanished, Paul's recording, build 127).
+                do { try await Task.sleep(for: .seconds(6)) } catch { return }
                 if store.undoAction?.id == action.id { store.undoAction = nil }
             }
         }

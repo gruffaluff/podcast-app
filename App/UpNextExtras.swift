@@ -19,6 +19,11 @@ struct UpNextSheet: View {
         NavigationStack {
             List {
                 Section {
+                    Text(summary(total: total))
+                        .font(Theme.mono(12))
+                        .foregroundStyle(Theme.muted)
+                        .listRowBackground(Theme.background)
+                        .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         let episode = episodes[item.episode.id]
                         // No numbers (the top is next); a small NEXT tag on the
@@ -61,12 +66,8 @@ struct UpNextSheet: View {
                     // edit mode here redrew rows in the wrong order after a
                     // move, then snapped back.)
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
-                } header: {
-                    Text(summary(total: total))
-                        .font(Theme.mono(12))
-                        .foregroundStyle(Theme.muted)
-                        .textCase(nil)
                 }
+                .listSectionSeparator(.hidden)
                 Section {
                     Toggle(isOn: Binding(get: { store.keepPlayingNew }, set: { store.keepPlayingNew = $0 })) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -77,9 +78,13 @@ struct UpNextSheet: View {
                         }
                     }
                     .tint(Theme.accentFill)
-                    .listRowBackground(Theme.surface)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
                 }
+                .listSectionSeparator(.hidden)
             }
+            // Full-width banded rows, like the Up Next tab.
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .navigationTitle("UP NEXT")

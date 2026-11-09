@@ -836,23 +836,33 @@ From the Notion notes after 6 Nov 08:10:
   ADD ALL TO UP NEXT) and Add all shows every time, not only after
   following (it's also in the show page's ⋯ menu).
 
+## Done in build 128 (9 Nov 2026; Paul: "Build it", Notion after 9 Nov 17:40 + two recordings)
+
+- Undo bar flashing and vanishing (recording: a long scrubber jump showed
+  "Jumped to · UNDO" for a tenth of a second): there is an Undo bar on
+  every tab and in the player, and when one left the screen its 6-second
+  wait was cancelled, which cleared the Undo at once (`try?` swallowed
+  the cancel). Only a full 6 seconds clears it now (`UndoBar`).
+- Player top keys: solid dark olive fill with a thin light edge
+  (`NowPlayingView.keyFill`, also used by the show page keys and the
+  player transcript keys); the blur behind the titles is gone.
+- Up Next (tab and pulled-up) is now a plain full-width list: banded rows
+  edge to edge, so the lifted row no longer keeps the rounded panel's
+  corner mask (white corners), and the band colour is darker
+  (`surfaceBand` #E2DAC7) so it doesn't get lost against the sand. The
+  summary line is a plain first row (plain lists pin headers). iOS's own
+  lifted row may still look slightly see-through: that's iOS; a
+  hand-made reorder is the next step if it still bothers Paul.
+- Show settings Older episodes: ordinary rows in the paper panel ("Mark
+  older episodes as played", "Add all to Up Next, oldest first") with an
+  icon, instead of the black and white keys.
+- Follow from a show preview: the page now stays "✓ FOLLOWING · OPEN
+  SHOW" after the settings sheet closes (`Follower.followed`; the sheet
+  cleared `justFollowed`, and chart items have no feed link to look the
+  show up by). Discover's Follow keys use the same.
+
 ## Queued for the next app build
 
-- **From build 127 (Paul, Notion after 9 Nov 17:40 + two recordings, FNB):**
-  - Player top keys (⌄, IPHONE device, notes, ✓) get lost on busy
-    artwork, and the new blur behind the titles looks bad (smeared
-    faces): drop the blur, give the keys a solid backing.
-  - Up Next lifted row still shows white corners when dragged.
-  - Banding too faint: the band colour is lost against the sand
-    (pulled-up Up Next and the tab); needs more contrast.
-  - Show settings MARK OLDER PLAYED / ADD ALL TO UP NEXT keys: rounded
-    shape matches nothing else; use the app's normal key style.
-  - Scrubber Undo (recording): after a long jump the "Jumped to · UNDO"
-    bar shows for about 0.1 s and vanishes, every time. Paul says it was
-    fine the build before (the overlay change in 127 is the suspect).
-  - Follow from a show preview (recording): after following and Done on
-    the settings sheet, the preview still says "+ FOLLOW" (it should
-    become FOLLOWING / Open show).
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
   https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo

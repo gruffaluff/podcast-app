@@ -164,21 +164,12 @@ struct NowPlayingView: View {
             // and fades into its colour behind the titles and keys.
             ZStack(alignment: .top) {
                 tint
+                // No blur behind the titles (Paul, build 127: it smeared the
+                // artwork); the colour fade below keeps them readable.
                 GeometryReader { geometry in
-                    ZStack {
-                        CachedImage(url: item.artworkURL) { Color.clear }
-                            .frame(width: geometry.size.width, height: geometry.size.width)
-                            .clipped()
-                        // Behind the titles the artwork is blurred, so busy
-                        // artwork doesn't fight the text (Paul, 9 Nov 2026).
-                        CachedImage(url: item.artworkURL) { Color.clear }
-                            .frame(width: geometry.size.width, height: geometry.size.width)
-                            .blur(radius: 18)
-                            .clipped()
-                            .mask(LinearGradient(stops: [.init(color: .clear, location: 0.35),
-                                                         .init(color: .black, location: 0.62)],
-                                                 startPoint: .top, endPoint: .bottom))
-                    }
+                    CachedImage(url: item.artworkURL) { Color.clear }
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                        .clipped()
                 }
                 .opacity(showsTranscript ? 0.15 : 1)
                 .accessibilityHidden(true)
@@ -253,6 +244,7 @@ struct NowPlayingView: View {
         .padding(.horizontal, 14)
         .frame(height: 40)
         .background(Self.keyFill, in: Capsule())
+        .overlay(Capsule().stroke(Theme.displayText.opacity(0.3), lineWidth: 1))
         .allowsHitTesting(false)
         .background(RoutePicker(tint: .clear))
         .accessibilityElement(children: .ignore)
@@ -296,14 +288,16 @@ struct NowPlayingView: View {
             .frame(width: 22, height: 22)
             .frame(width: 40, height: 40)
             .background(Self.keyFill, in: Circle())
+            .overlay(Circle().stroke(Theme.displayText.opacity(0.3), lineWidth: 1))
         }
         .buttonStyle(.plain)
         .disabled(local)
         .accessibilityLabel(local ? "Downloaded" : fraction.map { "Stop download, \(Int($0 * 100)) percent done" } ?? "Download")
     }
 
-    /// The top keys' fill: dark enough to stand out on any artwork.
-    static let keyFill = Color.black.opacity(0.45)
+    /// The top keys' fill: solid, so they stand out on any artwork (Paul,
+    /// build 127: they got lost on busy artwork at 45% black).
+    static let keyFill = Theme.display.opacity(0.92)
 
     private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -311,6 +305,7 @@ struct NowPlayingView: View {
                 .font(.system(size: 16, weight: .bold))
                 .frame(width: 40, height: 40)
                 .background(Self.keyFill, in: Circle())
+            .overlay(Circle().stroke(Theme.displayText.opacity(0.3), lineWidth: 1))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

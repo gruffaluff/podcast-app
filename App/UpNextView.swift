@@ -21,6 +21,11 @@ struct UpNextView: View {
             ScrollViewReader { proxy in
             List {
                 Section {
+                    // A plain row, not a section header: plain lists pin
+                    // headers to the top while scrolling.
+                    header(episodes: episodes)
+                        .listRowBackground(Theme.background)
+                        .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
                             queueRow(index: index, item: item, episode: episode, settings: settings)
@@ -63,9 +68,8 @@ struct UpNextView: View {
                             }
                         }
                     }
-                } header: {
-                    header(episodes: episodes)
                 }
+                .listSectionSeparator(.hidden)
 
                 Section {
                     Toggle(isOn: Binding(get: { store.keepPlayingNew }, set: { store.keepPlayingNew = $0 })) {
@@ -96,8 +100,11 @@ struct UpNextView: View {
                 }
             }
             }
-            .listStyle(.insetGrouped)
-            .listSectionSpacing(.compact)
+            // Full-width banded rows (Paul, after build 127): in a rounded
+            // inset panel the lifted row kept the panel's corner mask (white
+            // corners) and the band colour got lost against the sand at the
+            // panel's edges.
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .refreshable { await store.refreshAll() }
