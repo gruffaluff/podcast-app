@@ -921,7 +921,7 @@ From the Notion notes after 6 Nov 08:10:
   goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
   grows without limit), + FOLLOW is a sand key so it shows on every band.
 
-## Done in build 131 (9 Nov 2026, PR #49; Paul: "Build")
+## Done in build 131 (9 Nov 2026, PR #49; Paul: "Build"; on TestFlight 9 Nov, VALID)
 
 - **Cards, not bands** (Paul, after build 130: "I don't think I like
   banded, go back to the card style"). Every list row is its own rounded paper card (`Theme.surface`,
