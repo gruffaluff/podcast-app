@@ -494,7 +494,7 @@ struct DownloadButton: View {
                         Circle().trim(from: 0, to: max(0.03, fraction))
                             .stroke(tint == Theme.ink ? Theme.accentFill : tint, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                             .rotationEffect(.degrees(-90))
-                        Image(systemName: "stop.fill").font(.system(size: 8))
+                        Image(systemName: "stop.fill").font(.system(size: 9, weight: .bold))
                     }
                     .frame(width: 22, height: 22)
                 }

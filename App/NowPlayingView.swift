@@ -245,7 +245,12 @@ struct NowPlayingView: View {
         let local = store.localAudioURL(for: episode) != nil
         let fraction = downloads.progress[episode.episodeID]
         return Button {
-            if !local && fraction == nil { downloads.download(episode) }
+            // While it downloads the key is a stop key (Paul, 9 Nov 2026).
+            if fraction != nil {
+                store.removeDownload(episode)
+            } else if !local {
+                downloads.download(episode)
+            }
         } label: {
             ZStack {
                 if let fraction {
@@ -254,6 +259,8 @@ struct NowPlayingView: View {
                         .trim(from: 0, to: max(0.04, fraction))
                         .stroke(Theme.displayText, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                         .rotationEffect(.degrees(-90))
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 8, weight: .bold))
                 } else {
                     Image(systemName: local ? "arrow.down.circle.fill" : "arrow.down")
                         .font(.system(size: 16, weight: .bold))
@@ -265,7 +272,7 @@ struct NowPlayingView: View {
         }
         .buttonStyle(.plain)
         .disabled(local)
-        .accessibilityLabel(local ? "Downloaded" : fraction.map { "Downloading, \(Int($0 * 100)) percent" } ?? "Download")
+        .accessibilityLabel(local ? "Downloaded" : fraction.map { "Stop download, \(Int($0 * 100)) percent done" } ?? "Download")
     }
 
     /// The top keys' fill: dark enough to stand out on any artwork.

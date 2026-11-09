@@ -790,6 +790,10 @@ From the Notion notes after 6 Nov 08:10:
   - History / Continue listening rows (`HistoryRow`): the show name on
     one line and "PLAYED · 3D AGO" / "12m LEFT · 1H AGO" on its own line
     under it (Paul, 9 Nov: lost after long show names).
+  - Download keys stop the download while it runs (Paul, 9 Nov): the
+    player's top-row key now does (it did nothing mid-download) with a
+    stop square in the filling ring; the card's stop square is bigger.
+    Up Next ("40%" key), show pages (STOP DL) and menus already did.
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
