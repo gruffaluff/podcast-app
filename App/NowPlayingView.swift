@@ -300,7 +300,7 @@ struct NowPlayingView: View {
 
     /// The top keys' fill: solid, so they stand out on any artwork (Paul,
     /// build 127: they got lost on busy artwork at 45% black).
-    static let keyFill = Theme.display.opacity(0.92)
+    static var keyFill: Color { Theme.display.opacity(0.92) }
 
     private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {

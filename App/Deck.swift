@@ -342,8 +342,8 @@ extension View {
         background {
             RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .fill(fill)
-                .shadow(color: Theme.ink.opacity(0.06), radius: 0.5, y: 1)
-                .shadow(color: Theme.ink.opacity(0.08), radius: 3, y: 1.5)
+                .shadow(color: Theme.shadowSoft, radius: 0.5, y: 1)
+                .shadow(color: Theme.shadowWide, radius: 3, y: 1.5)
         }
     }
 

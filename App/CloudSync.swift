@@ -69,6 +69,7 @@ final class SettingsSync {
         "keepShowOrder", "keepPlayingNew", "keepPlayedDownloads",
         "speed", "trimSilences", "boostVoices", "skipBack", "skipForward",
         "skipAds", "transcriptSchedule", "showsLayout", "playerShowsTranscript",
+        "colourScheme",
     ]
 
     private let cloud = NSUbiquitousKeyValueStore.default

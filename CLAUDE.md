@@ -948,14 +948,20 @@ From the Notion notes after 6 Nov 08:10:
   Play last, Delete), so iOS draws them all as round icon keys with a
   label, like Notes / To top. Text-only ones drew as rounded squares.
 
-- **Colour schemes** (Paul asked 9 Nov 2026 about light theming): proposed
-  a Colours picker on the Shows screen, synced, with Sand (default),
-  Slate, Clay and Night (dark, could follow the iPhone's dark mode); same
-  layout / cards / fonts, only Theme colours change; player and mini
-  player keep the artwork colour. Mock-up:
-  https://claude.ai/artifact/HkYMMBunqi9jCSsmn8hrae. Waiting on which
-  schemes and tweaks. Means turning Theme's fixed colours into ones that
-  follow the chosen scheme.
+- **Colour schemes** (Paul, 9 Nov 2026: "include all 4"; on the branch,
+  goes out with the next build; mock-up
+  https://claude.ai/artifact/HkYMMBunqi9jCSsmn8hrae). Shows screen →
+  Colours: SAND (default) / SLATE / CLAY / NIGHT (`DeckSwitch`), saved as
+  "colourScheme" and synced with the other settings. `ColourScheme` in
+  Theme.swift holds each palette; every `Theme` colour token is now
+  computed from `ColourScheme.current`. `SchemedRoot` (PodcastsApp.swift)
+  sets the current scheme before drawing, redraws the whole app when it
+  changes (`.id`, so open sheets close) and sets iOS's light / dark look
+  (Night is dark, so system controls, menus and the keyboard follow).
+  Card shadows are black in every scheme (`Theme.shadowSoft/Wide`). The
+  player, mini player and show headers keep the artwork's colour; widgets
+  keep their own Sand colours. Night doesn't yet switch on by itself with
+  the iPhone's dark mode (ask Paul if wanted).
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made

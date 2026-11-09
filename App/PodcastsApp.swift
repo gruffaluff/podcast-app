@@ -35,7 +35,7 @@ struct PodcastsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            SchemedRoot()
                 .environment(store)
                 .environment(player)
                 .environment(downloads)
@@ -46,7 +46,8 @@ struct PodcastsApp: App {
 
     /// Big heavy condensed titles and plain tab labels.
     private static func styleSystemBars() {
-        let ink = UIColor(Theme.ink)
+        // Follows the scheme's light / dark (Night is dark).
+        let ink = UIColor.label
         UINavigationBar.appearance().largeTitleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 40, weight: .black, width: .condensed), .foregroundColor: ink
         ]
@@ -183,5 +184,20 @@ struct RootView: View {
                 }
             }
         }
+    }
+}
+
+/// Draws the app in the chosen colour scheme. Changing the scheme redraws
+/// everything (open sheets close), since every colour comes from it.
+private struct SchemedRoot: View {
+    @AppStorage(ColourScheme.key) private var scheme = ColourScheme.sand.rawValue
+
+    var body: some View {
+        let chosen = ColourScheme(rawValue: scheme) ?? .sand
+        // Set before anything below is drawn, so every Theme colour matches.
+        let _ = ColourScheme.use(chosen)
+        RootView()
+            .id(chosen)
+            .preferredColorScheme(chosen.isDark ? .dark : .light)
     }
 }
