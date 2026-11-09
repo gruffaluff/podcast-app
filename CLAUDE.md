@@ -836,7 +836,7 @@ From the Notion notes after 6 Nov 08:10:
   ADD ALL TO UP NEXT) and Add all shows every time, not only after
   following (it's also in the show page's ⋯ menu).
 
-## Done in build 128 (9 Nov 2026; Paul: "Build it", Notion after 9 Nov 17:40 + two recordings)
+## Done in build 128 (9 Nov 2026, PR #46; Paul: "Build it", Notion after 9 Nov 17:40 + two recordings; on TestFlight 9 Nov, VALID)
 
 - Undo bar flashing and vanishing (recording: a long scrubber jump showed
   "Jumped to · UNDO" for a tenth of a second): there is an Undo bar on
@@ -862,6 +862,27 @@ From the Notion notes after 6 Nov 08:10:
   show up by). Discover's Follow keys use the same.
 
 ## Queued for the next app build
+
+- **Code review (9 Nov 2026, proposed, waiting on Paul's go-ahead):**
+  battery / speed: iCloud tidy-up runs after our own saves (every ~15 s
+  while playing; only tidy after imports); `TranscriptService.prepare`
+  decodes whole transcript files just to check they exist (use
+  `TranscriptFiles.exists`); every refresh re-formats every episode's
+  notes on the main thread (only changed ones; conditional GET); the
+  full player redoes SwiftData fetches twice a second (split the clock /
+  scrub bar into child views); AdScanner can run two slices at once (task
+  handle cleared by the cancelled task); Trim silences polls 20×/s;
+  artwork memory cache has no size limit (~400 MB worst case);
+  ArtworkColors re-encodes images and makes a CIContext each time;
+  show page sorts all episodes on every keystroke; Up Next row colour /
+  date formatter per row; Your shows loads every episode to count
+  unplayed; JSON-backed model fields decoded on every read. Tidy: dead
+  code (`requestOpenPlayer`, `currentChapter`, `accentShadow`,
+  `screenTitle`, `darkKey`, `panelRow(highlighted:)`, "starterShowFollowed"
+  sync key), stale comments (AdScanner "default on"), shared key / row
+  helpers in Deck.swift, widget art files never deleted, docs/CNAME and
+  docs/_config.yml (and DESIGN.md / SETUP.md are served at poddeck.uk
+  because Cloudflare ignores _config.yml: move them out of docs/).
 
 - Up Next banding stays put when the playing row moves (Paul, build 128:
   moving the playing row swapped the other rows' colours): rows are
