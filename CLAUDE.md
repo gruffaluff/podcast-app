@@ -730,7 +730,7 @@ From the Notion notes after 6 Nov 08:10:
   place (order / manual changed only when different; duplicates from old
   syncs removed). Covers the pulled-up Up Next in the player too (same
   `moveQueue` → `commit`). UBDM.
-## Done in build 126 (6 Nov 2026, PR #44; Paul: "Build")
+## Done in build 126 (9 Nov 2026, PR #44; Paul said "Build" on 6 Nov, but the GitHub suspension stopped the merge, so it went out with the batch below)
 
 - Up Next reorder, after build 125 (Paul: main list "performing much
   better" but white corners on the lifted row; pulled-up Up Next "still
@@ -741,7 +741,7 @@ From the Notion notes after 6 Nov 08:10:
   mode (that was the wrong-order redraw); long press and drag like the
   tab, swipe left to Remove (with Undo).
 
-## Done in build 127 (9 Nov 2026, PR #44; Paul: "GitHub is back. Push and merge and build")
+## Also in build 126 (9 Nov 2026, same PR #44; Paul: "GitHub is back. Push and merge and build"; on TestFlight 9 Nov, VALID)
 
 - Made 7–9 Nov while the GitHub account was suspended (Paul: "sort with
   all the other fixes but don't push"); GitHub's Build check passed on
