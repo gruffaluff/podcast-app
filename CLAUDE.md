@@ -863,7 +863,7 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
-- **Code review (9 Nov 2026, proposed, waiting on Paul's go-ahead):**
+- **Code review tidy-up (9 Nov 2026; Paul: add it to the next list):**
   battery / speed: iCloud tidy-up runs after our own saves (every ~15 s
   while playing; only tidy after imports); `TranscriptService.prepare`
   decodes whole transcript files just to check they exist (use
@@ -883,6 +883,13 @@ From the Notion notes after 6 Nov 08:10:
   helpers in Deck.swift, widget art files never deleted, docs/CNAME and
   docs/_config.yml (and DESIGN.md / SETUP.md are served at poddeck.uk
   because Cloudflare ignores _config.yml: move them out of docs/).
+
+- Lighter feed checks: send ETag / If-Modified-Since so unchanged feeds
+  are skipped (data and battery), with the notes fix above.
+- Suggested from the 9 Nov review, each needs Paul's yes: a "Save for
+  later" list (star an episode without queueing it); sleep timer "end of
+  chapter"; "Copy diagnostics" in settings for bug reports. Dragging: Paul
+  says it's OK now (build 128), so no hand-made reorder.
 
 - Up Next banding stays put when the playing row moves (Paul, build 128:
   moving the playing row swapped the other rows' colours): rows are
