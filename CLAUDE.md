@@ -948,8 +948,7 @@ From the Notion notes after 6 Nov 08:10:
   Play last, Delete), so iOS draws them all as round icon keys with a
   label, like Notes / To top. Text-only ones drew as rounded squares.
 
-- **Colour schemes** (Paul, 9 Nov 2026: "include all 4"; on the branch,
-  goes out with the next build; mock-up
+- **Colour schemes** (Paul, 9 Nov 2026: "include all 4"; mock-up
   https://claude.ai/artifact/HkYMMBunqi9jCSsmn8hrae). Shows screen →
   Colours: SAND (default) / SLATE / CLAY / NIGHT (`DeckSwitch`), saved as
   "colourScheme" and synced with the other settings. `ColourScheme` in
@@ -960,8 +959,10 @@ From the Notion notes after 6 Nov 08:10:
   (Night is dark, so system controls, menus and the keyboard follow).
   Card shadows are black in every scheme (`Theme.shadowSoft/Wide`). The
   player, mini player and show headers keep the artwork's colour; widgets
-  keep their own Sand colours. Night doesn't yet switch on by itself with
-  the iPhone's dark mode (ask Paul if wanted).
+  keep their own Sand colours. **Default is AUTO** (Paul: "Night should be
+  the default for dark mode"): Sand when the iPhone is light, Night when
+  it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
+  AUTO / SAND / SLATE / CLAY / NIGHT.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made

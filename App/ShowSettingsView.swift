@@ -202,7 +202,7 @@ struct TopPriorityView: View {
     @Environment(TranscriptService.self) private var transcripts
     @Query(sort: \Podcast.title) private var allShows: [Podcast]
     @AppStorage("afterEpisode") private var afterEpisode = "top"  // PlayerModel.afterEpisodeKey
-    @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.sand.rawValue
+    @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.auto
     @AppStorage("downloadCapGB") private var downloadCapGB = 0  // LibraryStore.downloadCapKey
     @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = false  // PlayerModel.bedtimeKey
     @State private var shows: [Podcast] = []
@@ -260,12 +260,13 @@ struct TopPriorityView: View {
             // Colour schemes (Paul, 9 Nov 2026). Choosing one redraws the
             // whole app in it, so this screen closes.
             Section {
-                DeckSwitch(options: ColourScheme.allCases.map { (label: $0.label, value: $0.rawValue) },
+                DeckSwitch(options: [(label: "Auto", value: ColourScheme.auto)]
+                               + ColourScheme.allCases.map { (label: $0.label, value: $0.rawValue) },
                            selection: $colourScheme)
             } header: {
                 DeckHeader(title: "Colours")
             } footer: {
-                Text("Sand, Slate, Clay or Night (dark). The player keeps the colour of what's playing. The app redraws in the new colours.")
+                Text("Auto uses Sand, or Night when your iPhone is in dark mode. The player keeps the colour of what's playing. The app redraws in the new colours.")
             }
             .listRowBackground(Theme.surface)
 

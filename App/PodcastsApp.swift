@@ -189,15 +189,18 @@ struct RootView: View {
 
 /// Draws the app in the chosen colour scheme. Changing the scheme redraws
 /// everything (open sheets close), since every colour comes from it.
+/// "Auto" (the default) follows the iPhone: Sand in light, Night in dark.
 private struct SchemedRoot: View {
-    @AppStorage(ColourScheme.key) private var scheme = ColourScheme.sand.rawValue
+    @AppStorage(ColourScheme.key) private var setting = ColourScheme.auto
+    @Environment(\.colorScheme) private var systemScheme
 
     var body: some View {
-        let chosen = ColourScheme(rawValue: scheme) ?? .sand
+        let chosen = ColourScheme.resolve(setting, systemDark: systemScheme == .dark)
         // Set before anything below is drawn, so every Theme colour matches.
         let _ = ColourScheme.use(chosen)
         RootView()
             .id(chosen)
-            .preferredColorScheme(chosen.isDark ? .dark : .light)
+            // Auto leaves light / dark to the iPhone; a picked scheme sets it.
+            .preferredColorScheme(setting == ColourScheme.auto ? nil : (chosen.isDark ? .dark : .light))
     }
 }

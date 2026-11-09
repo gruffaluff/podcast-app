@@ -20,12 +20,21 @@ enum ColourScheme: String, CaseIterable, Identifiable {
     var isDark: Bool { self == .night }
 
     /// The settings key (synced through iCloud with the other settings).
+    /// Its default, "auto", follows the iPhone: Sand when it's light, Night
+    /// when it's in dark mode (Paul, 9 Nov 2026).
     static let key = "colourScheme"
+    static let auto = "auto"
+
+    /// The scheme a saved setting means, given the iPhone's light / dark.
+    static func resolve(_ setting: String, systemDark: Bool) -> ColourScheme {
+        ColourScheme(rawValue: setting) ?? (systemDark ? .night : .sand)
+    }
 
     /// The scheme in use. RootView sets it from the saved setting before
     /// drawing, and redraws the whole app when it changes.
     static var current: ColourScheme =
-        ColourScheme(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .sand
+        resolve(UserDefaults.standard.string(forKey: key) ?? auto,
+                systemDark: UITraitCollection.current.userInterfaceStyle == .dark)
 
     static func use(_ scheme: ColourScheme) { current = scheme }
 
