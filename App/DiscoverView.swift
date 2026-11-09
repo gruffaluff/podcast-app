@@ -253,7 +253,13 @@ private struct SuggestionCard: View {
 final class Follower {
     var busy = false
     var failed = false
+    /// Opens the settings sheet; the sheet clears it when it closes.
     var justFollowed: Podcast?
+    /// The show this follower followed. Kept after the sheet closes, so the
+    /// page says FOLLOWING even when the directory had no feed link (charts)
+    /// or the feed moved (Paul's recording, build 127: it went back to
+    /// "+ FOLLOW" after Done).
+    var followed: Podcast?
 
     func follow(_ item: DirectoryItem, store: LibraryStore) async {
         guard !busy else { return }
@@ -269,6 +275,7 @@ final class Follower {
         guard let show = try? await store.follow(feedURL: feedURL) else { failed = true; return }
         if show.genre == nil { show.genre = item.genre }
         store.save()
+        followed = show
         if isNew { justFollowed = show }
     }
 }
@@ -280,7 +287,7 @@ private struct FollowButton: View {
 
     private var isFollowing: Bool {
         if let url = item.feedURL, store.podcast(feedURL: url.absoluteString) != nil { return true }
-        return follower.justFollowed != nil
+        return follower.followed != nil
     }
 
     var body: some View {
