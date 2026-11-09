@@ -49,7 +49,7 @@ struct UpNextSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 12)
-                        .background(Theme.upNextCard(index, playing: playing), in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+                        .deckCard(Theme.upNextCard(index, playing: playing))
                         .deckCardRow()
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -185,7 +185,7 @@ struct EpisodeStatusRows: View {
             trailing()
         }
         .padding(12)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
+        .deckCard()
         .accessibilityElement(children: .contain)
     }
 

@@ -97,8 +97,7 @@ struct SearchView: View {
                 if let episode = episodes[result.episodeID] {
                     ForEach(Array(result.matches.enumerated()), id: \.offset) { _, match in
                         TranscriptResultRow(episode: episode, match: match)
-                            .listRowBackground(Theme.background)
-                            .listRowSeparatorTint(Theme.hairline)
+                            .panelRow(0, of: 1)
                     }
                 }
             }
@@ -149,7 +148,7 @@ struct SearchView: View {
                     }
                 }
             }
-            .listRowBackground(Theme.background)
+            .panelRow(0, of: 1)
         }
         if text.count >= 2 {
             let episodes = matchingEpisodes(text)
@@ -169,7 +168,7 @@ struct SearchView: View {
                 }
                 .buttonStyle(.plain)
                 .contextMenu { EpisodeMenuItems(episode: episode) }
-                .listRowBackground(Theme.background)
+                .panelRow(0, of: 1)
             }
         }
     }
@@ -195,8 +194,7 @@ struct SearchView: View {
         ForEach(matching) { bookmark in
             if let episode = episodes[bookmark.episodeID] {
                 ClipRow(bookmark: bookmark, episode: episode)
-                    .listRowBackground(Theme.background)
-                    .listRowSeparatorTint(Theme.hairline)
+                    .panelRow(0, of: 1)
                     .swipeActions {
                         Button("Delete", systemImage: "trash", role: .destructive) {
                             store.context.delete(bookmark)

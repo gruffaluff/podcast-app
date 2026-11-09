@@ -88,7 +88,7 @@ struct EpisodeNotesText: View {
             }
         }
         .padding(14)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
+        .deckCard()
     }
 
     private var detail: String {

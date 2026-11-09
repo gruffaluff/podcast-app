@@ -61,14 +61,19 @@ struct LibraryView: View {
 
                         if !continuing.isEmpty {
                             sectionTitle("CONTINUE LISTENING", detail: "\(continuing.count) STARTED")
-                            VStack(spacing: 6) {
+                            VStack(spacing: 10) {
                                 ForEach(continuing) { episode in
-                                    Button { player.play(episode) } label: { HistoryRow(episode: episode) }
+                                    Button { player.play(episode) } label: {
+                                        HistoryRow(episode: episode)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .deckCard()
+                                    }
                                         .buttonStyle(.plain)
                                         .contextMenu { EpisodeMenuItems(episode: episode) }
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 12)
                             .padding(.bottom, 8)
                         }
 
@@ -144,7 +149,7 @@ struct LibraryView: View {
         switch showsLayout {
         // Rounded paper cards, like every other list (Paul after build 130).
         case "card":
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         HStack(spacing: 12) {
@@ -154,7 +159,7 @@ struct LibraryView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+                        .deckCard()
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -162,14 +167,14 @@ struct LibraryView: View {
             }
             .padding(.horizontal, 12)
         case "list":
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         showText(show)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+                            .deckCard()
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)

@@ -64,8 +64,7 @@ struct UpNextView: View {
                                 } label: {
                                     SuggestionRow(item: item)
                                 }
-                                .listRowBackground(Theme.background)
-                                .listRowSeparatorTint(Theme.hairline)
+                                .panelRow(0, of: 1)
                             }
                         }
                     }
@@ -172,7 +171,7 @@ struct UpNextView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
-        .background(Theme.upNextCard(index, playing: playing), in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+        .deckCard(Theme.upNextCard(index, playing: playing))
         .deckCardRow()
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {

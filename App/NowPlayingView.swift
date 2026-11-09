@@ -659,7 +659,7 @@ struct NowPlayingView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
                 .padding(.bottom, 12)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22))
+                .deckCard()
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

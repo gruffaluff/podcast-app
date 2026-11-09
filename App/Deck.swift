@@ -331,8 +331,20 @@ extension View {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+            .deckCard()
             .deckCardRow()
+    }
+
+    /// The app's one card look (Paul picked B, 9 Nov 2026): a rounded
+    /// paper card sitting slightly off the sand on a soft shadow. Every
+    /// list row and every card-like panel uses it.
+    func deckCard(_ fill: Color = Theme.surface, radius: CGFloat = Theme.cardRadius) -> some View {
+        background {
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .fill(fill)
+                .shadow(color: Theme.ink.opacity(0.06), radius: 0.5, y: 1)
+                .shadow(color: Theme.ink.opacity(0.08), radius: 3, y: 1.5)
+        }
     }
 
     /// The list-row settings around a card: sand behind it (so a row lifted
@@ -341,6 +353,6 @@ extension View {
         self
             .listRowBackground(Theme.background)
             .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+            .listRowInsets(EdgeInsets(top: 5, leading: 12, bottom: 5, trailing: 12))
     }
 }

@@ -933,10 +933,16 @@ From the Notion notes after 6 Nov 08:10:
   cell a sand background, so the row iOS lifts to drag has sand corners,
   not white ones. Side margins 12 pt + 12 pt inside the card. Bands
   (`surfaceBand`, `Theme.band`) removed.
-  Card look options for Paul (9 Nov 2026) on
-  https://claude.ai/artifact/JhXRL117ui7WKLjVYFomYU: A paper cards (on
-  the branch), B paper + soft shadow, C lighter cards with a hairline
-  edge and 6 pt gap. Waiting on his pick before building.
+  Card look: **B, paper cards with a soft shadow, the same everywhere**
+  (Paul, 9 Nov 2026, from https://claude.ai/artifact/JhXRL117ui7WKLjVYFomYU;
+  A flat paper and C outlined were the others). One modifier,
+  `deckCard(fill, radius)` in Deck.swift (radius 14, two light shadows),
+  used by every list row (`panelRow`, Up Next tab and pulled-up, Chapters,
+  Your shows card / list, Continue listening, History, Storage, Search
+  results, Up Next suggestions) and every card panel (player's Up Next
+  card, episode notes box, episode status rows, Stats tiles). Cards sit
+  10 pt apart. The ALL ▾ / LATEST ▾ keys inside cards are sand (style
+  rule). Settings screens keep iOS's grouped sections.
 - **Swipe keys all round** (Paul: two looks; prefers the round ones):
   every swipe action has an icon (Played ✓, Remove, Unplayed, Play next /
   Play last, Delete), so iOS draws them all as round icon keys with a

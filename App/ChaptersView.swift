@@ -31,7 +31,7 @@ struct ChaptersView: View {
                         // Cards like every other list.
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(index == current ? Theme.highlight : Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius))
+                        .deckCard(index == current ? Theme.highlight : Theme.surface)
                         .deckCardRow()
                     }
                 }

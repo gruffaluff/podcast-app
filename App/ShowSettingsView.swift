@@ -455,7 +455,7 @@ private struct AllShowsRow: View {
                     .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 10)
                     .frame(minWidth: 64, minHeight: 32)
-                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
+                    .background(Theme.background, in: RoundedRectangle(cornerRadius: 10))
             }
             .accessibilityLabel("New episodes go to: \(show.autoAdd.rawValue)")
         }
