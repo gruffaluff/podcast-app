@@ -933,6 +933,10 @@ From the Notion notes after 6 Nov 08:10:
   cell a sand background, so the row iOS lifts to drag has sand corners,
   not white ones. Side margins 12 pt + 12 pt inside the card. Bands
   (`surfaceBand`, `Theme.band`) removed.
+  Card look options for Paul (9 Nov 2026) on
+  https://claude.ai/artifact/JhXRL117ui7WKLjVYFomYU: A paper cards (on
+  the branch), B paper + soft shadow, C lighter cards with a hairline
+  edge and 6 pt gap. Waiting on his pick before building.
 - **Swipe keys all round** (Paul: two looks; prefers the round ones):
   every swipe action has an icon (Played ✓, Remove, Unplayed, Play next /
   Play last, Delete), so iOS draws them all as round icon keys with a
