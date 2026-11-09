@@ -838,6 +838,21 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **From build 127 (Paul, Notion after 9 Nov 17:40 + two recordings, FNB):**
+  - Player top keys (⌄, IPHONE device, notes, ✓) get lost on busy
+    artwork, and the new blur behind the titles looks bad (smeared
+    faces): drop the blur, give the keys a solid backing.
+  - Up Next lifted row still shows white corners when dragged.
+  - Banding too faint: the band colour is lost against the sand
+    (pulled-up Up Next and the tab); needs more contrast.
+  - Show settings MARK OLDER PLAYED / ADD ALL TO UP NEXT keys: rounded
+    shape matches nothing else; use the app's normal key style.
+  - Scrubber Undo (recording): after a long jump the "Jumped to · UNDO"
+    bar shows for about 0.1 s and vanishes, every time. Paul says it was
+    fine the build before (the overlay change in 127 is the suspect).
+  - Follow from a show preview (recording): after following and Done on
+    the settings sheet, the preview still says "+ FOLLOW" (it should
+    become FOLLOWING / Open show).
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
   https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
