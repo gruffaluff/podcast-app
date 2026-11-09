@@ -794,6 +794,11 @@ From the Notion notes after 6 Nov 08:10:
     player's top-row key now does (it did nothing mid-download) with a
     stop square in the filling ring; the card's stop square is bigger.
     Up Next ("40%" key), show pages (STOP DL) and menus already did.
+  - Transcript keys (Paul asked 9 Nov if they work like download): they
+    already turn into stop keys while a transcript is on its way (Up Next
+    row keys, show pages, menus, player panel); now they also show how far
+    it has got ("TX 62%" on Up Next, "STOP TX · 62%" on show pages).
+    Stopping doesn't cancel a download it started first (the file is kept).
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on

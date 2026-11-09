@@ -329,7 +329,7 @@ struct EpisodeActions: View {
                     key("↓ DL") { downloads.download(episode) }
                 }
                 if transcripts.isQueued(episode) {
-                    key("STOP TX") { transcripts.stop(episode) }
+                    key(transcripts.progress[episode.episodeID].map { "STOP TX · \(Int($0 * 100))%" } ?? "STOP TX") { transcripts.stop(episode) }
                         .accessibilityLabel("Stop transcribing")
                 } else if transcripts.canTranscribeNow(episode) {
                     key("TX") { transcripts.transcribeNow(episode) }

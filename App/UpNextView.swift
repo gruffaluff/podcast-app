@@ -347,7 +347,9 @@ private struct UpNextRowKeys: View {
 
     @ViewBuilder private var transcriptKey: some View {
         if transcripts.isQueued(episode) {
-            key("STOP TX", icon: "stop.circle") { transcripts.stop(episode) }
+            // Like the download key: how far it has got, tap to stop.
+            let label = transcripts.progress[episode.episodeID].map { "TX \(Int($0 * 100))%" } ?? "STOP TX"
+            key(label, icon: "stop.circle") { transcripts.stop(episode) }
                 .accessibilityLabel("Stop transcribing")
         } else if transcripts.canTranscribeNow(episode) {
             key("TX", icon: "text.quote") { transcripts.transcribeNow(episode) }
