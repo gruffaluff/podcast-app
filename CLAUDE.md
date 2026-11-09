@@ -813,7 +813,7 @@ From the Notion notes after 6 Nov 08:10:
     Next tab, scrolls to the episode and opens its row keys
     (`LibraryStore.revealInUpNext`, watched by RootView and UpNextView).
 
-## Done in build 127 (9 Nov 2026; Paul: "address and build", recordings + Notion notes after 7 Nov 09:20)
+## Done in build 127 (9 Nov 2026, PR #45; Paul: "address and build", recordings + Notion notes after 7 Nov 09:20; on TestFlight 9 Nov, VALID)
 
 - Up Next (tab and pulled-up): rows banded (every other row `Theme.surfaceBand`)
   instead of divider lines; the `.contentShape(.dragPreview…)` is gone
