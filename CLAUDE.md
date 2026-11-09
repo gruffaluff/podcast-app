@@ -921,11 +921,10 @@ From the Notion notes after 6 Nov 08:10:
   goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
   grows without limit), + FOLLOW is a sand key so it shows on every band.
 
-## Queued for the next app build
+## Done in build 131 (9 Nov 2026, PR #49; Paul: "Build")
 
 - **Cards, not bands** (Paul, after build 130: "I don't think I like
-  banded, go back to the card style"; on the branch, goes out with the next
-  build). Every list row is its own rounded paper card (`Theme.surface`,
+  banded, go back to the card style"). Every list row is its own rounded paper card (`Theme.surface`,
   radius `Theme.cardRadius` 14) on the sand with a 8 pt gap: `panelRow`
   (show pages, show previews, Discover, Add a show), Up Next tab and
   pulled-up (playing card in `Theme.highlight`, `Theme.upNextCard`),
@@ -963,6 +962,8 @@ From the Notion notes after 6 Nov 08:10:
   the default for dark mode"): Sand when the iPhone is light, Night when
   it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
   AUTO / SAND / SLATE / CLAY / NIGHT.
+## Queued for the next app build
+
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
