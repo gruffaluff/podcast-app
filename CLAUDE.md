@@ -863,6 +863,11 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- Up Next banding stays put when the playing row moves (Paul, build 128:
+  moving the playing row swapped the other rows' colours): rows are
+  banded by their place among the rows that aren't playing (tab and
+  pulled-up `rowColor`). On the branch, goes out with the next build.
+
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
   https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo

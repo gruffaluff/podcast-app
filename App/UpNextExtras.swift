@@ -97,7 +97,11 @@ struct UpNextSheet: View {
 
     private func rowColor(_ item: QueueItem, index: Int) -> Color {
         if item.episode.id == player.nowPlaying?.episodeID { return Theme.highlight }
-        return index.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
+        // Band by place among the rows that aren't playing, so moving the
+        // playing row doesn't swap the other rows' colours (Paul, build 128).
+        let playingIndex = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
+        let place = playingIndex.map { index > $0 ? index - 1 : index } ?? index
+        return place.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
     }
 
     private func summary(total: TimeInterval) -> String {

@@ -198,7 +198,11 @@ struct UpNextView: View {
 
     private func rowColor(_ episode: PodcastEpisode, index: Int) -> Color {
         if player.nowPlaying?.episodeID == episode.episodeID { return Theme.highlight }
-        return index.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
+        // Band by place among the rows that aren't playing, so moving the
+        // playing row doesn't swap the other rows' colours (Paul, build 128).
+        let playingIndex = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
+        let place = playingIndex.map { index > $0 ? index - 1 : index } ?? index
+        return place.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
     }
 
     private func toggleRow(_ id: String) {
