@@ -12,6 +12,7 @@ struct ShowSettingsView: View {
     /// True when shown right after following ("Following …" heading).
     var justFollowed = false
     @State private var olderUnplayed = true
+    @State private var addedAll = false
 
     var body: some View {
         NavigationStack {
@@ -92,6 +93,16 @@ struct ShowSettingsView: View {
                             olderUnplayed.toggle()
                         }
                         .foregroundStyle(Theme.accentText)
+                        // Listen to the whole back catalogue in order
+                        // (Paul, 9 Nov 2026).
+                        if olderUnplayed {
+                            Button(addedAll ? "Added to Up Next, oldest first ✓" : "Add all to Up Next, oldest first") {
+                                store.addBackCatalogue(of: show)
+                                addedAll = true
+                            }
+                            .foregroundStyle(Theme.accentText)
+                            .disabled(addedAll)
+                        }
                     } header: {
                         DeckHeader(title: "Older episodes")
                     } footer: {

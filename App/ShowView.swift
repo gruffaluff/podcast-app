@@ -11,6 +11,7 @@ struct ShowView: View {
     @State private var showingSettings = false
     /// Show only unplayed episodes (default), or every episode.
     @State private var showAll = false
+    @State private var confirmingAddAll = false
     @State private var confirmingMarkAll = false
     /// Select mode: tick episodes (or Select All), then mark them played/unplayed.
     @State private var selecting = false
@@ -19,6 +20,11 @@ struct ShowView: View {
     @State private var expanded: String?
     /// Search within this show's episodes (titles and notes).
     @State private var search = ""
+
+    private var addAllTitle: String {
+        let count = store.backCatalogue(of: show).count
+        return count == 0 ? "Every unplayed episode is already in Up Next" : "Add \(count) episode\(count == 1 ? "" : "s") to Up Next?"
+    }
 
     var body: some View {
         let allEpisodes = show.episodes.sorted { $0.published > $1.published }
@@ -127,6 +133,8 @@ struct ShowView: View {
                     Menu {
                         Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
                         Button("Select episodes", systemImage: "checkmark.circle") { selecting = true }
+                        // The whole back catalogue, oldest first (Paul, 9 Nov 2026).
+                        Button("Add all to Up Next, oldest first", systemImage: "text.append") { confirmingAddAll = true }
                         Button("Mark all as played", systemImage: "checkmark.circle.fill") { confirmingMarkAll = true }
                         Button("Mark all as unplayed", systemImage: "circle") { store.markUnplayed(show.episodes) }
                         Button("Unfollow", systemImage: "minus.circle", role: .destructive) { confirmingUnfollow = true }
@@ -146,6 +154,12 @@ struct ShowView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("They leave Up Next and stop showing as unplayed. You can undo this with Mark all as unplayed.")
+        }
+        .alert(addAllTitle, isPresented: $confirmingAddAll) {
+            Button("Add to Up Next") { store.addBackCatalogue(of: show) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("They go at the end of Up Next, oldest first, so you can listen from the very first episode. Nothing extra downloads: each one streams or downloads as usual when it comes up.")
         }
         .alert("Unfollow \(show.title)?", isPresented: $confirmingUnfollow) {
             Button("Cancel", role: .cancel) {}

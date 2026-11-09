@@ -799,6 +799,14 @@ From the Notion notes after 6 Nov 08:10:
     row keys, show pages, menus, player panel); now they also show how far
     it has got ("TX 62%" on Up Next, "STOP TX · 62%" on show pages).
     Stopping doesn't cancel a download it started first (the file is kept).
+  - Back catalogue (Paul, 9 Nov: follow a show and listen to all of it,
+    e.g. 200+ episodes): "Add all to Up Next, oldest first" in the show
+    page's ⋯ menu (with a confirm giving the count) and in the follow
+    sheet's Older episodes section. `LibraryStore.addBackCatalogue`: every
+    unplayed episode not already queued, via `QueueEngine.playLast` (end
+    of Up Next; with Keep each show in order they sit before any newer
+    episode of the show already queued). Undo bar. Nothing extra
+    downloads. Only as many episodes as the show's feed lists.
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
