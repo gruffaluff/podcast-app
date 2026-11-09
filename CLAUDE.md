@@ -787,6 +787,9 @@ From the Notion notes after 6 Nov 08:10:
     followed (`followedAt`) plus each show's newest one (`newCards`).
   - New Episodes card: a mark-played key (✓ in a circle) beside download,
     with the Undo bar (Paul, 8 Nov).
+  - History / Continue listening rows (`HistoryRow`): the show name on
+    one line and "PLAYED · 3D AGO" / "12m LEFT · 1H AGO" on its own line
+    under it (Paul, 9 Nov: lost after long show names).
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
