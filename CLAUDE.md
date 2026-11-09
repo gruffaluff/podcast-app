@@ -741,10 +741,11 @@ From the Notion notes after 6 Nov 08:10:
   mode (that was the wrong-order redraw); long press and drag like the
   tab, swipe left to Remove (with Undo).
 
-## Queued for the next app build
+## Done in build 127 (9 Nov 2026, PR #44; Paul: "GitHub is back. Push and merge and build")
 
-- **Done on the branch, 7 Nov 2026, not pushed** (GitHub account
-  suspended; Paul: "sort with all the other fixes but don't push"):
+- Made 7–9 Nov while the GitHub account was suspended (Paul: "sort with
+  all the other fixes but don't push"); GitHub's Build check passed on
+  the whole batch before the merge:
   - New Episodes card: "54m left" pushed the ⋯ off the card (fixed
     `.fixedSize()` pill); keys now fixed width and the pill can shrink.
     The card of the episode that's on shows a light pill with pause /
@@ -811,7 +812,9 @@ From the Notion notes after 6 Nov 08:10:
     link (Paul, 9 Nov): it closes the page / player, switches to the Up
     Next tab, scrolls to the episode and opens its row keys
     (`LibraryStore.revealInUpNext`, watched by RootView and UpNextView).
-  - Built without a compiler: if the build fails, check these first.
+
+## Queued for the next app build
+
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on
   https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
