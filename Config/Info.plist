@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Tape deck type (Paul, 8 Nov 2026): Big Shoulders Display for big
+	     titles, DM Mono for labels. Open Font Licence, in App/Fonts. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>BigShouldersDisplay-Black.ttf</string>
+		<string>DMMono-Regular.ttf</string>
+		<string>DMMono-Medium.ttf</string>
+	</array>
 	<!-- Keep playing when the screen is locked or another app is open. -->
 	<key>UIBackgroundModes</key>
 	<array>

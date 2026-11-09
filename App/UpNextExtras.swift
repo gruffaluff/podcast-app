@@ -39,14 +39,29 @@ struct UpNextSheet: View {
                                 }
                             }
                         }
-                        .listRowBackground(item.episode.id == player.nowPlaying?.episodeID ? Theme.highlight : Theme.surface)
+                        // The row paints its own background edge to edge, so
+                        // the lifted copy while dragging is the whole row with
+                        // rounded corners (not white square ones).
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(rowColor(item))
                         .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(rowColor(item))
+                        .listRowSeparatorTint(Theme.hairline)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
+                            } label: {
+                                Label("Remove", systemImage: "minus.circle")
+                            }
+                        }
                     }
+                    // Long press and drag, like the Up Next tab. (Always-on
+                    // edit mode here redrew rows in the wrong order after a
+                    // move, then snapped back.)
                     .onMove { from, to in store.moveQueue(from: from, to: to) }
-                    .onDelete { offsets in
-                        let ids = offsets.map { store.queue[$0].episode.id }
-                        for id in ids { store.removeFromQueue(id) }
-                    }
                 } header: {
                     Text(summary(total: total))
                         .font(Theme.mono(12))
@@ -66,7 +81,6 @@ struct UpNextSheet: View {
                     .listRowBackground(Theme.surface)
                 }
             }
-            .environment(\.editMode, .constant(.active))
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .navigationTitle("UP NEXT")
@@ -75,6 +89,10 @@ struct UpNextSheet: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
+    }
+
+    private func rowColor(_ item: QueueItem) -> Color {
+        item.episode.id == player.nowPlaying?.episodeID ? Theme.highlight : Theme.surface
     }
 
     private func summary(total: TimeInterval) -> String {
@@ -93,12 +111,25 @@ struct EpisodeStatusRows: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
+    @Environment(\.dismiss) private var dismiss
     @State private var showingTranscript = false
 
     var body: some View {
         VStack(spacing: 8) {
             if let position = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
-                row(icon: "list.number", title: "In Up Next · \(Self.ordinal(position + 1))", detail: "Change the order in Up Next") { EmptyView() }
+                // Tap to go to it in Up Next (Paul, 9 Nov 2026).
+                Button {
+                    store.revealInUpNext = episode.episodeID
+                    dismiss()
+                } label: {
+                    row(icon: "list.number", title: "In Up Next · \(Self.ordinal(position + 1))", detail: "Show it in Up Next") {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Theme.muted)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens Up Next at this episode")
             }
             downloadRow
             transcriptRow

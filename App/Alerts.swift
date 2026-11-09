@@ -16,7 +16,8 @@ enum NewEpisodeAlerts {
         for episode in episodes {
             guard let show = episode.podcast, show.notify else { continue }
             let content = UNMutableNotificationContent()
-            content.title = "New from \(show.title)"
+            // The show as the title, the episode as the message (Paul, 7 Nov 2026).
+            content.title = show.title
             content.subtitle = placement(of: episode, show: show, queue: queue)
             content.body = episode.title
             content.sound = .default

@@ -1,0 +1,4 @@
+/* Alerts pushed through iCloud by the new-episode job. The subscription's
+   wording ("New from %1$@: %2$@") is fixed in iCloud and can't set a title,
+   so the phone shows it here as "Show · Episode" (Paul, 7 Nov 2026). */
+"New from %1$@: %2$@" = "%1$@ · %2$@";

@@ -12,6 +12,7 @@ struct ShowSettingsView: View {
     /// True when shown right after following ("Following …" heading).
     var justFollowed = false
     @State private var olderUnplayed = true
+    @State private var addedAll = false
 
     var body: some View {
         NavigationStack {
@@ -92,6 +93,16 @@ struct ShowSettingsView: View {
                             olderUnplayed.toggle()
                         }
                         .foregroundStyle(Theme.accentText)
+                        // Listen to the whole back catalogue in order
+                        // (Paul, 9 Nov 2026).
+                        if olderUnplayed {
+                            Button(addedAll ? "Added to Up Next, oldest first ✓" : "Add all to Up Next, oldest first") {
+                                store.addBackCatalogue(of: show)
+                                addedAll = true
+                            }
+                            .foregroundStyle(Theme.accentText)
+                            .disabled(addedAll)
+                        }
                     } header: {
                         DeckHeader(title: "Older episodes")
                     } footer: {
@@ -305,11 +316,6 @@ struct TopPriorityView: View {
                 .pickerStyle(.menu)
                 Button("Transcribe Up Next now") { transcripts.transcribeUpNextNow() }
                     .foregroundStyle(Theme.accentText)
-                Button("Refresh artwork") {
-                    ArtworkImageCache.shared.clear()
-                    ArtworkColors.shared.clear()
-                }
-                .foregroundStyle(Theme.accentText)
                 if transcripts.isBusy {
                     Button("Stop all transcribing", role: .destructive) { transcripts.stopAll() }
                 }
@@ -320,6 +326,20 @@ struct TopPriorityView: View {
             }
             .listRowBackground(Theme.surface)
             .tint(Theme.accentFill)
+
+            // Its own little section (Paul: it isn't about transcripts).
+            Section {
+                Button("Refresh artwork") {
+                    ArtworkImageCache.shared.clear()
+                    ArtworkColors.shared.clear()
+                }
+                .foregroundStyle(Theme.accentText)
+            } header: {
+                DeckHeader(title: "Artwork")
+            } footer: {
+                Text("Fetches every show's artwork and colours again, if one looks wrong or out of date.")
+            }
+            .listRowBackground(Theme.surface)
 
             Section {
                 Toggle("Download on Wi-Fi only", isOn: $downloads.wifiOnly)

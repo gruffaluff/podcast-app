@@ -195,8 +195,14 @@ final class TranscriptService {
     }
 
     /// Waiting in line or being transcribed now.
+    /// On "Only when I ask", episodes still sit in the line (so the
+    /// schedule can pick them up if it changes) but nothing is on its way
+    /// until Paul asks, so they don't count here (the screen said "Waiting
+    /// to transcribe" with a Stop key for an episode nobody asked for).
     func isQueued(_ episode: PodcastEpisode) -> Bool {
-        pending.contains(episode.episodeID) || current == episode.episodeID
+        let id = episode.episodeID
+        if current == id || requested.contains(id) { return true }
+        return pending.contains(id) && schedule != .onRequest
     }
 
     func isFetchingPublisher(_ episode: PodcastEpisode) -> Bool {
@@ -256,7 +262,9 @@ final class TranscriptService {
             return
         }
         guard downloaded else {
-            if !userStopped.contains(id) { episode.transcriptState = .waiting }
+            if !userStopped.contains(id), schedule != .onRequest || urgent || requested.contains(id) {
+                episode.transcriptState = .waiting
+            }
             return
         }
         // Stopped by Paul: only "Transcribe now" starts it again.
@@ -267,7 +275,11 @@ final class TranscriptService {
         } else if !pending.contains(id), current != id {
             pending.append(id)
         }
-        if !hasTranscript, episode.transcriptState != .transcribing { episode.transcriptState = .waiting }
+        // "Waiting" only when it will actually happen without Paul asking.
+        if !hasTranscript, episode.transcriptState != .transcribing,
+           schedule != .onRequest || urgent || requested.contains(id) {
+            episode.transcriptState = .waiting
+        }
         startWorker()
     }
 
@@ -275,7 +287,13 @@ final class TranscriptService {
     func prepareUpNext() {
         let episodes = store.episodes(store.queue.map(\.episode.id))
         for item in store.queue {
-            if let episode = episodes[item.episode.id] { prepare(episode) }
+            guard let episode = episodes[item.episode.id] else { continue }
+            // Earlier builds marked every Up Next episode "waiting" even on
+            // Only when I ask (TX WAIT on rows that would never start).
+            if schedule == .onRequest, episode.transcriptState == .waiting, !isQueued(episode) {
+                episode.transcriptState = .none
+            }
+            prepare(episode)
         }
     }
 

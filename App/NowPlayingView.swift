@@ -17,6 +17,9 @@ struct NowPlayingView: View {
     @Environment(\.dismiss) private var dismiss
     /// While dragging along the progress bar, where it would play from.
     @State private var scrubTime: TimeInterval?
+    /// Where the handle was when the drag began (it moves by how far the
+    /// finger travels, so touching near it never makes it jump).
+    @State private var scrubStart: TimeInterval?
     @State private var showingChapters = false
     @State private var showingNotes = false
     @State private var transcriptEpisode: PodcastEpisode?
@@ -148,20 +151,24 @@ struct NowPlayingView: View {
         .frame(height: 430 + top)
         .frame(maxWidth: .infinity)
         .background {
-            ZStack(alignment: .topTrailing) {
+            // The artwork fills the whole width from the top (Paul, 7 Nov
+            // 2026: it sat small on the right with flat colour beside it)
+            // and fades into its colour behind the titles and keys.
+            ZStack(alignment: .top) {
                 tint
-                CachedImage(url: item.artworkURL) { Color.clear }
-                    .frame(width: 300, height: 300)
-                    .offset(x: 50, y: 20)
-                    .opacity(showsTranscript ? 0.15 : 1)
-                    .mask(
-                        RadialGradient(colors: [.black, .black.opacity(0)], center: UnitPoint(x: 0.6, y: 0.42), startRadius: 70, endRadius: 200)
-                            .frame(width: 300, height: 300)
-                            .offset(x: 50, y: 20)
-                    )
-                    .accessibilityHidden(true)
+                GeometryReader { geometry in
+                    CachedImage(url: item.artworkURL) { Color.clear }
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                        .clipped()
+                }
+                .opacity(showsTranscript ? 0.15 : 1)
+                .accessibilityHidden(true)
                 // Keeps the big white titles readable over light artwork.
-                LinearGradient(colors: [tint.opacity(0), tint.opacity(0.55), tint.opacity(0.95)], startPoint: .top, endPoint: .bottom)
+                LinearGradient(stops: [.init(color: tint.opacity(0.15), location: 0),
+                                       .init(color: tint.opacity(0), location: 0.25),
+                                       .init(color: tint.opacity(0.55), location: 0.6),
+                                       .init(color: tint.opacity(0.97), location: 0.85)],
+                               startPoint: .top, endPoint: .bottom)
             }
         }
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 40, bottomTrailingRadius: 40))
@@ -238,7 +245,12 @@ struct NowPlayingView: View {
         let local = store.localAudioURL(for: episode) != nil
         let fraction = downloads.progress[episode.episodeID]
         return Button {
-            if !local && fraction == nil { downloads.download(episode) }
+            // While it downloads the key is a stop key (Paul, 9 Nov 2026).
+            if fraction != nil {
+                store.removeDownload(episode)
+            } else if !local {
+                downloads.download(episode)
+            }
         } label: {
             ZStack {
                 if let fraction {
@@ -247,6 +259,8 @@ struct NowPlayingView: View {
                         .trim(from: 0, to: max(0.04, fraction))
                         .stroke(Theme.displayText, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                         .rotationEffect(.degrees(-90))
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 8, weight: .bold))
                 } else {
                     Image(systemName: local ? "arrow.down.circle.fill" : "arrow.down")
                         .font(.system(size: 16, weight: .bold))
@@ -258,7 +272,7 @@ struct NowPlayingView: View {
         }
         .buttonStyle(.plain)
         .disabled(local)
-        .accessibilityLabel(local ? "Downloaded" : fraction.map { "Downloading, \(Int($0 * 100)) percent" } ?? "Download")
+        .accessibilityLabel(local ? "Downloaded" : fraction.map { "Stop download, \(Int($0 * 100)) percent done" } ?? "Download")
     }
 
     /// The top keys' fill: dark enough to stand out on any artwork.
@@ -392,6 +406,18 @@ struct NowPlayingView: View {
         player.nowPlaying.flatMap { ArtworkColors.shared.background(for: $0.artworkURL) } ?? Theme.display
     }
 
+    /// A long jump with the handle might be a stray touch: offer to go
+    /// back (Paul, 7 Nov 2026). Two minutes or more either way.
+    private func offerUndoJump(from start: TimeInterval, to target: TimeInterval) {
+        guard abs(target - start) >= 120 else { return }
+        let player = self.player
+        let store = self.store
+        store.undoAction = UndoAction(label: "Jumped to \(TimeFormat.clock(target))") {
+            player.seek(to: start)
+            store.undoAction = nil
+        }
+    }
+
     /// The wave progress bar. Only the outlined handle at the current
     /// position moves it (drag it), so a stray touch never jumps the episode.
     private func scrubBar(tint: Color) -> some View {
@@ -408,19 +434,28 @@ struct NowPlayingView: View {
                     .frame(width: 8, height: 32)
                     .shadow(color: .black.opacity(scrubTime == nil ? 0.1 : 0.3), radius: 4, y: 2)
                     .scaleEffect(scrubTime == nil ? 1 : 1.15)
-                    // A finger-sized touch area, centred on the handle and
-                    // moving with it.
-                    .frame(width: 44, height: 56)
+                    // A touch area just round the handle, moving with it.
+                    // The handle moves by how far the finger travels, and
+                    // only once it has travelled a little (Paul: a touch
+                    // near the bar moved it).
+                    .frame(width: 32, height: 52)
                     .contentShape(Rectangle())
-                    .offset(x: x - 22)
+                    .offset(x: x - 16)
                     .gesture(
-                        DragGesture(minimumDistance: 0, coordinateSpace: .named("scrub"))
+                        DragGesture(minimumDistance: 6, coordinateSpace: .named("scrub"))
                             .onChanged { value in
-                                scrubTime = min(1, max(0, value.location.x / width)) * duration
+                                let start = scrubStart ?? player.currentTime
+                                if scrubStart == nil { scrubStart = start }
+                                let moved = value.translation.width / width * duration
+                                scrubTime = min(duration, max(0, start + moved))
                             }
                             .onEnded { _ in
-                                if let target = scrubTime { player.seek(to: target) }
+                                if let target = scrubTime, let start = scrubStart {
+                                    player.seek(to: target)
+                                    offerUndoJump(from: start, to: target)
+                                }
                                 scrubTime = nil
+                                scrubStart = nil
                             }
                     )
             }

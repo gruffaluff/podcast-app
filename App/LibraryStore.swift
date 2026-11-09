@@ -15,6 +15,10 @@ final class LibraryStore {
     private(set) var isRefreshing = false
     /// The episode whose notes are open (any screen's menu can set it).
     var notesEpisode: PodcastEpisode?
+    /// Set to an episode to go to it in the Up Next tab (from "In Up Next ·
+    /// 2nd" on the episode page); the root view switches tab and closes
+    /// whatever is open, Up Next scrolls to it and opens its keys.
+    var revealInUpNext: String?
     /// The last change that can be undone (shown as an Undo bar for a few seconds).
     var undoAction: UndoAction?
     /// The episode playing now (set by PlayerModel), so its download is never trimmed.

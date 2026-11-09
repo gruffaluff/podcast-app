@@ -145,7 +145,7 @@ struct ClipView: View {
         }
         items.append(text)
 
-        // Keep it in My clips.
+        // Keep it in Saved (Search).
         let clip = Bookmark(episodeID: episode.episodeID, time: range.lowerBound, text: quote)
         clip.length = range.upperBound - range.lowerBound
         context.insert(clip)

@@ -8,7 +8,7 @@ struct SearchView: View {
     enum Scope: String, CaseIterable, Identifiable {
         case transcripts = "Transcripts"
         case shows = "Shows"
-        case clips = "My clips"
+        case clips = "Saved"
         var id: String { rawValue }
     }
 

@@ -26,7 +26,8 @@ which he loved but this won). Developed on the canvas
 https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d (rows "Middle ground,
 developed" and "Transcript, same height as artwork"). Warm sand page
 (#E9E3D5), paper cards (#F6F2E9), ink text, one olive accent (#45543A);
-big titles in heavy condensed capitals (system font, `Theme.big`); what's
+big titles in Big Shoulders Display capitals (`Theme.big`), labels in
+DM Mono (`Theme.mono`), body text in SF (fonts: Paul, 8 Nov 2026); what's
 playing is shown in its artwork's colour (`ArtworkColors`) with the artwork
 fading into it. Player: top area edge to edge with rounded bottom corners,
 fixed height, ARTWORK / TRANSCRIPT switch (transcript = live lines + find),
@@ -243,8 +244,8 @@ to Nowhere / Top / Bottom" on the show page.
 
 ### Library and new episode cards
 - Library tab opens with a **New Episodes** carousel of cards like Apple
-  Podcasts': 300×300, the artwork filling the card and fading into its
-  own colour, white SHOW · 4H AGO, title, one line of description, a play
+  Podcasts': 248×330, the artwork across the top fading into its own
+  colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
   pill with the time left, download and ⋯; it snaps card to card. Above it
   Continue listening; below "Your shows" (large / card / list).
 
@@ -729,7 +730,118 @@ From the Notion notes after 6 Nov 08:10:
   place (order / manual changed only when different; duplicates from old
   syncs removed). Covers the pulled-up Up Next in the player too (same
   `moveQueue` → `commit`). UBDM.
+## Done in build 126 (6 Nov 2026, PR #44; Paul: "Build")
+
+- Up Next reorder, after build 125 (Paul: main list "performing much
+  better" but white corners on the lifted row; pulled-up Up Next "still
+  janky": rows came back in the wrong order, once reversed, then snapped
+  back). Both lists: each row paints its own colour edge to edge (no
+  list insets) with a rounded drag shape, so the lifted row is the whole
+  row with rounded corners. Pulled-up Up Next: no longer always in edit
+  mode (that was the wrong-order redraw); long press and drag like the
+  tab, swipe left to Remove (with Undo).
+
+## Done in build 127 (9 Nov 2026, PR #44; Paul: "GitHub is back. Push and merge and build")
+
+- Made 7–9 Nov while the GitHub account was suspended (Paul: "sort with
+  all the other fixes but don't push"); GitHub's Build check passed on
+  the whole batch before the merge:
+  - New Episodes card: "54m left" pushed the ⋯ off the card (fixed
+    `.fixedSize()` pill); keys now fixed width and the pill can shrink.
+    The card of the episode that's on shows a light pill with pause /
+    "Playing" (or "Paused") and a moving wave; tap pauses / carries on.
+    (Continue listening leaves out the episode that's on, so no change.)
+  - Transcript "Waiting to transcribe" + Stop when nothing was asked:
+    `TranscriptService.isQueued` no longer counts episodes that only sit
+    in the line on Only when I ask; `prepare` marks "waiting" only when
+    it will happen; `prepareUpNext` clears old wrong "waiting" (TX WAIT).
+  - Scrubber: touch area 32x52 round the handle, starts after 6 points,
+    moves by how far the finger travels (no jump to the finger). A jump of
+    2 minutes or more offers "Jumped to 34:10 · UNDO" (back to where it was).
+  - Refresh artwork in its own "Artwork" section on the Shows screen.
+  - Storage: the footer note is a plain row on the sand (was a white block).
+  - Clips: CLIP key on the line playing now in the player's transcript,
+    Share clip on every line's long press; Search tab "My clips" is "Saved".
+  - Player top area: the artwork fills the width from the top and fades
+    into its colour (was a 300-point picture on the right with a radial
+    fade; Paul's Tailenders screenshot was the player, not the show page).
+  - Alerts (6, option A): the phone's own alerts have the show as the
+    title, where-it-went as subtitle, episode as the message; iCloud-pushed
+    ones read "Show · Episode" via `App/en.lproj/Localizable.strings`
+    (the subscription's fixed key "New from %1$@: %2$@"). B (a
+    notification service extension) later if wanted.
+  - No internet: `NetworkStatus` (NWPathMonitor) and an "NO INTERNET ·
+    DOWNLOADS STILL PLAY" bar above the mini player (`App/Welcome.swift`).
+  - First-open welcome (`WelcomeView`): only when nothing is followed;
+    Find shows (to Discover) or Look around first; shown once.
+  - New Episodes cards like Apple Podcasts' (Paul's screenshot of
+    Apple's card, 7 Nov): artwork across the full width at the top, shown
+    almost whole and fading out by 186 points; below it "22h ago" (no show
+    name: the art shows it), title on one line, up to 3 lines of notes,
+    then a pill with just the time ("53m"), download and ⋯ softer. Card
+    stays 248x330.
+  - New Episodes (Paul, 8 Nov): after marking a lot played the carousel
+    stayed scrolled past the cards left (empty strip until a swipe); it
+    now remembers the card in view (`scrollPosition`) and goes back to the
+    first when that card goes. Following a show filled the carousel with
+    its back catalogue: cards are now episodes out since the show was
+    followed (`followedAt`) plus each show's newest one (`newCards`).
+  - New Episodes card: a mark-played key (✓ in a circle) beside download,
+    with the Undo bar (Paul, 8 Nov).
+  - History / Continue listening rows (`HistoryRow`): the show name on
+    one line and "PLAYED · 3D AGO" / "12m LEFT · 1H AGO" on its own line
+    under it (Paul, 9 Nov: lost after long show names).
+  - Download keys stop the download while it runs (Paul, 9 Nov): the
+    player's top-row key now does (it did nothing mid-download) with a
+    stop square in the filling ring; the card's stop square is bigger.
+    Up Next ("40%" key), show pages (STOP DL) and menus already did.
+  - Transcript keys (Paul asked 9 Nov if they work like download): they
+    already turn into stop keys while a transcript is on its way (Up Next
+    row keys, show pages, menus, player panel); now they also show how far
+    it has got ("TX 62%" on Up Next, "STOP TX · 62%" on show pages).
+    Stopping doesn't cancel a download it started first (the file is kept).
+  - Back catalogue (Paul, 9 Nov: follow a show and listen to all of it,
+    e.g. 200+ episodes): "Add all to Up Next, oldest first" in the show
+    page's ⋯ menu (with a confirm giving the count) and in the follow
+    sheet's Older episodes section. `LibraryStore.addBackCatalogue`: every
+    unplayed episode not already queued, via `QueueEngine.playLast` (end
+    of Up Next; with Keep each show in order they sit before any newer
+    episode of the show already queued). Undo bar. Nothing extra
+    downloads. Only as many episodes as the show's feed lists.
+  - "In Up Next · 2nd" on the episode page (and under the player) is a
+    link (Paul, 9 Nov): it closes the page / player, switches to the Up
+    Next tab, scrolls to the episode and opens its row keys
+    (`LibraryStore.revealInUpNext`, watched by RootView and UpNextView).
+
 ## Queued for the next app build
+
+- **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
+  / C chapter) and 9 style rules, both on
+  https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
+  and saw nothing; whether to move alerts to Cloudflare (free cron
+  Worker) as a backup to GitHub; other iPhone sizes not checked yet.
+  Feeds with a username and password: later.
+- Type (Paul asked 8 Nov "do we have a consistent font?"): one family,
+  Apple's system font (SF) everywhere, in three roles: `Theme.big`
+  (heavy condensed titles), `Theme.mono` (small spaced capitals; despite
+  the name not monospaced) and plain text. Sizes are set three ways:
+  Theme helpers (~106 places), fixed `.system(size:)` (~50, don't follow
+  the iPhone's text size) and iOS text styles (~46). Proposed with the
+  style rules (9): one small type scale in Theme and every text through
+  it, so sizes match and all follow the text size setting.
+  Font options for titles and labels (body text stays SF) on
+  https://claude.ai/artifact/P61T5FHNMwcgxsDNrzmgWM: A today, B New York
+  + SF Mono (built in), C Big Shoulders + DM Mono (my pick), D Fraunces +
+  IBM Plex Mono, E Archivo wide + JetBrains Mono. **Paul picked C, tape
+  deck (8 Nov)**, done on the branch: `App/Fonts/` holds
+  BigShouldersDisplay-Black, DMMono-Regular and DMMono-Medium (from Google
+  Fonts, with their OFL licence files), listed under `UIAppFonts` in
+  Config/Info.plist. `Theme.big` uses Big Shoulders (8% larger, it's
+  narrow), `Theme.mono` uses DM Mono (regular, or medium for any heavier
+  weight); both fall back to the system font if the files don't load.
+  Body text stays SF. Still to do: move the ~50 fixed `.system(size:)`
+  labels onto Theme (with the style rules), and check nothing is too wide
+  for its space on the phone (DM Mono is a little wider than SF).
 
 - Retake the website's Up Next, show and Discover screenshots on build
   124 (new row style, skip keys without circles) and swap them in.

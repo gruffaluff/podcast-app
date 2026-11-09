@@ -31,10 +31,21 @@ struct HistoryRow: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(2)
-                Text(detail.uppercased())
-                    .font(Theme.mono(10))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
+                // The show on its own line, then played / time left and
+                // when on a line of their own (Paul, 9 Nov 2026: behind a
+                // long show name they were cut off).
+                if let show = episode.podcast?.title, !show.isEmpty {
+                    Text(show.uppercased())
+                        .font(Theme.mono(10))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                }
+                if !status.isEmpty {
+                    Text(status.uppercased())
+                        .font(Theme.mono(10, .medium))
+                        .foregroundStyle(Theme.ink.opacity(0.7))
+                        .lineLimit(1)
+                }
                 if showsProgress, !episode.played, let duration = episode.duration, duration > 0 {
                     ProgressLine(fraction: episode.position / duration)
                 }
@@ -44,8 +55,8 @@ struct HistoryRow: View {
         .contentShape(Rectangle())
     }
 
-    private var detail: String {
-        var parts = [episode.podcast?.title ?? ""]
+    private var status: String {
+        var parts: [String] = []
         if episode.played {
             parts.append("Played")
         } else if let left = episode.timeLeft, left > 0 {
@@ -273,6 +284,7 @@ struct StorageView: View {
             Section {
                 if rows.isEmpty {
                     Text("Nothing downloaded.").foregroundStyle(Theme.muted)
+                        .listRowBackground(Theme.background)
                 }
                 ForEach(rows) { row in
                     VStack(alignment: .leading, spacing: 8) {
@@ -307,10 +319,15 @@ struct StorageView: View {
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.hairline)
                 }
+                // A plain row, not a section footer: in this plain list iOS
+                // put the footer on a white block.
+                Text("Played episodes' downloads are deleted automatically (straight away, or after 24 hours if you chose that). \"Latest 3\" keeps only a show's three newest downloads.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.muted)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
             } header: {
                 DeckHeader(title: "By show")
-            } footer: {
-                Text("Played episodes' downloads are deleted automatically (straight away, or after 24 hours if you chose that). \"Latest 3\" keeps only a show's three newest downloads.")
             }
         }
         .listStyle(.plain)

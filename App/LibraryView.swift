@@ -9,6 +9,8 @@ struct LibraryView: View {
     @Query(sort: \Podcast.title) private var shows: [Podcast]
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
+    /// The New Episodes card scrolled into view.
+    @State private var cardInView: PersistentIdentifier?
     @AppStorage("showsLayout") private var showsLayout = "large"
 
     private static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
@@ -16,8 +18,27 @@ struct LibraryView: View {
             predicate: #Predicate { $0.played == false },
             sortBy: [SortDescriptor(\.published, order: .reverse)]
         )
-        descriptor.fetchLimit = 12
+        // More than are shown: `newCards` leaves some out.
+        descriptor.fetchLimit = 60
         return descriptor
+    }
+
+    /// The New Episodes cards: what came out since Paul followed each show,
+    /// plus that show's newest one. Following a show with a long back
+    /// catalogue filled the carousel with its old episodes (Paul, 8 Nov
+    /// 2026: cap it at the latest one).
+    private var newCards: [PodcastEpisode] {
+        var seen = Set<String>()
+        var cards: [PodcastEpisode] = []
+        for episode in newEpisodes {
+            guard let show = episode.podcast else { continue }
+            let firstForShow = seen.insert(show.feedURL).inserted
+            if firstForShow || episode.published >= show.followedAt {
+                cards.append(episode)
+            }
+            if cards.count == 12 { break }
+        }
+        return cards
     }
 
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
@@ -50,15 +71,26 @@ struct LibraryView: View {
                             .padding(.bottom, 8)
                         }
 
-                        if !newEpisodes.isEmpty {
-                            sectionTitle("NEW EPISODES", detail: "\(newEpisodes.count) UNPLAYED")
+                        let cards = newCards
+                        if !cards.isEmpty {
+                            sectionTitle("NEW EPISODES", detail: "\(cards.count) UNPLAYED")
                             ScrollView(.horizontal, showsIndicators: false) {
                                 LazyHStack(spacing: 12) {
-                                    ForEach(newEpisodes) { episode in
+                                    ForEach(cards) { episode in
                                         EpisodeCard(episode: episode)
                                     }
                                 }
                                 .scrollTargetLayout()
+                            }
+                            // Remembers which card is in view. After marking a
+                            // lot played the carousel stayed scrolled past the
+                            // cards that were left, showing an empty strip
+                            // until a swipe: go back to the first card then.
+                            .scrollPosition(id: $cardInView)
+                            .onChange(of: cards.map(\.persistentModelID)) { _, ids in
+                                if let shown = cardInView, !ids.contains(shown) {
+                                    cardInView = ids.first
+                                }
                             }
                             // Cards settle with their left edge on the page margin.
                             .contentMargins(.horizontal, 20, for: .scrollContent)
@@ -235,6 +267,8 @@ private struct EpisodeCard: View {
     // Option E (Paul, 5 Nov 2026): Apple Podcasts' proportions.
     private static let width: CGFloat = 248
     private static let height: CGFloat = 330
+    /// How far down the card the artwork reaches before it has faded out.
+    private static let artArea: CGFloat = 186
 
     var body: some View {
         let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
@@ -245,21 +279,26 @@ private struct EpisodeCard: View {
         tint
             .frame(width: Self.width, height: Self.height)
             .overlay(alignment: .top) {
-                // The artwork across the top, fading into the colour.
+                // Like Apple Podcasts' card (Paul's screenshot, 7 Nov 2026):
+                // the artwork across the full width at the top, shown almost
+                // whole, its lower part melting into the card's colour; the
+                // text sits below it, not over it.
                 CachedImage(url: episode.artwork) { Color.clear }
                     .frame(width: Self.width, height: Self.width)
                     .clipped()
+                    .mask(
+                        LinearGradient(stops: [.init(color: .black, location: 0),
+                                               .init(color: .black, location: 0.6),
+                                               .init(color: .black.opacity(0), location: Self.artArea / Self.width)],
+                                       startPoint: .top, endPoint: .bottom)
+                    )
                     .accessibilityHidden(true)
             }
-            .overlay {
-                LinearGradient(stops: [.init(color: tint.opacity(0), location: 0.3),
-                                       .init(color: tint.opacity(0.85), location: 0.55),
-                                       .init(color: tint, location: 0.7)],
-                               startPoint: .top, endPoint: .bottom)
-            }
             .overlay(alignment: .bottomLeading) {
+                // The text fills the part below the artwork, keys at the
+                // bottom; the notes give way first if space runs short.
                 details(tint: tint)
-                    .frame(width: Self.width, alignment: .leading)
+                    .frame(width: Self.width, height: Self.height - Self.artArea + 14, alignment: .topLeading)
             }
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .contentShape(RoundedRectangle(cornerRadius: 22))
@@ -270,61 +309,103 @@ private struct EpisodeCard: View {
     }
 
     private func details(tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("\((episode.podcast?.title ?? "").uppercased()) · \(TimeFormat.ago(episode.published).uppercased())")
-                .font(Theme.mono(10, .bold))
-                .tracking(0.6)
-                .foregroundStyle(Theme.displayText.opacity(0.75))
+        VStack(alignment: .leading, spacing: 2) {
+            // The artwork already says which show; just how new it is.
+            Text(TimeFormat.ago(episode.published))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.displayText.opacity(0.6))
                 .lineLimit(1)
             Text(episode.title)
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Theme.displayText)
-                .lineLimit(2)
-            Text(episode.summary)
-                .font(.footnote)
-                .foregroundStyle(Theme.displayText.opacity(0.8))
                 .lineLimit(1)
-            HStack(spacing: 14) {
-                Button { player.play(episode) } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "play.fill")
-                        Text(playLabel)
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Theme.displayText)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 36)
-                    .background(.white.opacity(0.22), in: Capsule())
+            // Up to three lines of the notes (it was one).
+            Text(episode.summary)
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.displayText.opacity(0.92))
+                .lineLimit(3)
+                .layoutPriority(-1)
+            Spacer(minLength: 0)
+            // Fixed-size keys on the right and a pill that can shrink a
+            // little: "54m left" pushed the ⋯ off the card's edge.
+            HStack(spacing: 4) {
+                playPill
+                Spacer(minLength: 4)
+                // Mark played straight from the card (Paul, 8 Nov 2026),
+                // with the usual Undo bar.
+                Button {
+                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                } label: {
+                    Image(systemName: "checkmark.circle")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(Theme.displayText.opacity(0.75))
+                        .frame(width: 32, height: 36)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Play, \(playLabel)")
-                Spacer(minLength: 4)
-                DownloadButton(episode: episode, tint: Theme.displayText)
-                    .font(.system(size: 20))
-                    .foregroundStyle(Theme.displayText)
+                .accessibilityLabel("Mark as played")
+                DownloadButton(episode: episode, tint: Theme.displayText.opacity(0.75))
+                    .font(.system(size: 18))
+                    .foregroundStyle(Theme.displayText.opacity(0.75))
+                    .frame(width: 32, height: 36)
                 Menu {
                     EpisodeMenuItems(episode: episode)
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Theme.displayText)
-                        .frame(width: 32, height: 36)
+                        .foregroundStyle(Theme.displayText.opacity(0.75))
+                        .frame(width: 28, height: 36)
                 }
                 .accessibilityLabel("More")
             }
-            .padding(.top, 6)
+            .padding(.top, 2)
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 12)
+    }
+
+    private var isCurrent: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+
+    /// Play, or (for the episode that's on) Playing / Paused with a moving
+    /// wave, tapping to pause and carry on.
+    private var playPill: some View {
+        let current = isCurrent
+        let playing = current && player.isPlaying
+        return Button {
+            if current { player.togglePlayPause() } else { player.play(episode) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: playing ? "pause.fill" : "play.fill")
+                Text(current ? (playing ? "Playing" : "Paused") : playLabel)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                if current {
+                    Image(systemName: "waveform")
+                        .symbolEffect(.variableColor.iterative, isActive: playing)
+                }
+            }
+            .font(.system(size: 15, weight: .bold))
+            .foregroundStyle(current ? tintForCurrent : Theme.displayText)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+            .background(current ? AnyShapeStyle(Theme.displayText) : AnyShapeStyle(Color.white.opacity(0.22)), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(current ? (playing ? "Pause" : "Carry on playing") : "Play, \(playLabel)")
+    }
+
+    /// Text on the light pill of the episode that's on: the card's colour.
+    private var tintForCurrent: Color {
+        ArtworkColors.shared.background(for: episode.artwork) ?? Theme.ink
     }
 
     private var playLabel: String {
         // "1h 16m" like Apple's cards; a long clock (1:16:31) wrapped
         // onto two lines in the pill.
         guard let left = episode.timeLeft, left > 0 else { return "PLAY" }
-        let started = episode.position > 1
-        return TimeFormat.length(left) + (started ? " left" : "")
+        // Just the time, like Apple's ("53m"); the light pill says Playing.
+        return TimeFormat.length(left)
     }
 }
 
@@ -413,7 +494,7 @@ struct DownloadButton: View {
                         Circle().trim(from: 0, to: max(0.03, fraction))
                             .stroke(tint == Theme.ink ? Theme.accentFill : tint, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                             .rotationEffect(.degrees(-90))
-                        Image(systemName: "stop.fill").font(.system(size: 8))
+                        Image(systemName: "stop.fill").font(.system(size: 9, weight: .bold))
                     }
                     .frame(width: 22, height: 22)
                 }

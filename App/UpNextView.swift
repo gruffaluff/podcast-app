@@ -18,6 +18,7 @@ struct UpNextView: View {
         let settings = store.queueSettings
 
         NavigationStack {
+            ScrollViewReader { proxy in
             List {
                 Section {
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
@@ -83,6 +84,18 @@ struct UpNextView: View {
             }
             .environment(\.editMode, .constant(editing ? .active : .inactive))
             .onChange(of: editing) { if editing { openRow = nil } }
+            // Arriving from an episode page's "In Up Next" row.
+            .onChange(of: store.revealInUpNext, initial: true) { _, id in
+                guard let id else { return }
+                editing = false
+                openRow = id
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(350))
+                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    store.revealInUpNext = nil
+                }
+            }
+            }
             .listStyle(.insetGrouped)
             .listSectionSpacing(.compact)
             .scrollContentBackground(.hidden)
@@ -144,7 +157,16 @@ struct UpNextView: View {
         // Style B drawn by iOS itself (inset grouped list), not by the rows:
         // iOS then lifts and moves a row cleanly while reordering. Drawing
         // the panel slice by slice made the lifted row clip and leave gaps.
-        .listRowBackground(player.nowPlaying?.episodeID == episode.episodeID ? Theme.highlight : Theme.surface)
+        // The row also paints its own colour edge to edge (no list insets),
+        // so the lifted copy is the whole row with rounded corners; on its
+        // own iOS put it on a white square (white corners, build 125).
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(rowColor(episode))
+        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(rowColor(episode))
         .listRowSeparatorTint(Theme.hairline)
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -163,6 +185,10 @@ struct UpNextView: View {
             }
             .tint(Theme.muted)
         }
+    }
+
+    private func rowColor(_ episode: PodcastEpisode) -> Color {
+        player.nowPlaying?.episodeID == episode.episodeID ? Theme.highlight : Theme.surface
     }
 
     private func toggleRow(_ id: String) {
@@ -334,7 +360,9 @@ private struct UpNextRowKeys: View {
 
     @ViewBuilder private var transcriptKey: some View {
         if transcripts.isQueued(episode) {
-            key("STOP TX", icon: "stop.circle") { transcripts.stop(episode) }
+            // Like the download key: how far it has got, tap to stop.
+            let label = transcripts.progress[episode.episodeID].map { "TX \(Int($0 * 100))%" } ?? "STOP TX"
+            key(label, icon: "stop.circle") { transcripts.stop(episode) }
                 .accessibilityLabel("Stop transcribing")
         } else if transcripts.canTranscribeNow(episode) {
             key("TX", icon: "text.quote") { transcripts.transcribeNow(episode) }

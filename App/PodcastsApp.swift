@@ -98,6 +98,7 @@ struct RootView: View {
     @State private var showingPlayer = false
     @State private var tab = 0
     @State private var quickActions = QuickActions.shared
+    @State private var showingWelcome = false
 
     var body: some View {
         TabView(selection: $tab) {
@@ -132,8 +133,27 @@ struct RootView: View {
         .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)
         }
-        .transcribeExplainer(enabled: !showingPlayer)
+        .sheet(isPresented: $showingWelcome) {
+            WelcomeView { tab = 2 }
+        }
+        .task {
+            // First open with nothing followed: say what the app is.
+            guard !UserDefaults.standard.bool(forKey: WelcomeView.seenKey) else { return }
+            if ((try? store.context.fetchCount(FetchDescriptor<Podcast>())) ?? 0) == 0 {
+                showingWelcome = true
+            } else {
+                UserDefaults.standard.set(true, forKey: WelcomeView.seenKey)
+            }
+        }
+        .transcribeExplainer(enabled: !showingPlayer && !showingWelcome)
         .onChange(of: player.openPlayerRequests) { showingPlayer = true }
+        // "In Up Next · 2nd" on an episode page: close what's open, go to Up Next.
+        .onChange(of: store.revealInUpNext) { _, id in
+            guard id != nil else { return }
+            store.notesEpisode = nil
+            showingPlayer = false
+            tab = 0
+        }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
                 WidgetSync.shared.flush()

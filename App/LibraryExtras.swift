@@ -222,3 +222,27 @@ extension LibraryStore {
         ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? NSNumber)?.int64Value ?? 0
     }
 }
+
+// MARK: - Back catalogue
+
+extension LibraryStore {
+    /// The show's unplayed episodes that aren't in Up Next yet.
+    func backCatalogue(of show: Podcast) -> [PodcastEpisode] {
+        let queued = Set(queue.map(\.episode.id))
+        return show.episodes.filter { !$0.played && !queued.contains($0.episodeID) }
+    }
+
+    /// Adds every unplayed episode of a show to the end of Up Next, oldest
+    /// first (Paul, 9 Nov 2026: following a show to listen to its whole
+    /// back catalogue, e.g. 200+ episodes). Nothing is downloaded for it:
+    /// they stream, or download as usual when they come up. Undo puts Up
+    /// Next back as it was.
+    func addBackCatalogue(of show: Podcast) {
+        let episodes = backCatalogue(of: show)
+        guard !episodes.isEmpty else { return }
+        let count = episodes.count
+        undoable("Added \(count) to Up Next", episodes: []) {
+            commit(QueueEngine.playLast(episodes.map(\.queueEpisode), in: queue, settings: queueSettings))
+        }
+    }
+}
