@@ -896,9 +896,19 @@ From the Notion notes after 6 Nov 08:10:
   banded by their place among the rows that aren't playing (tab and
   pulled-up `rowColor`). On the branch, goes out with the next build.
 
+- **Style rules (9) approved (Paul, 9 Nov 2026), for the next build:**
+  one look per kind of control, every screen: choose one of 2–4 = key
+  switch with the chosen one olive (replaces iOS grey segmented
+  pickers); do something = dark key for the main action, sand key for
+  the other (replaces iOS round buttons); choose from a list = sand key
+  with ▾ (like ALL ▾ on Storage; replaces olive drop-down text); on/off =
+  iOS switch in olive (already right); olive only means chosen / on / the
+  one thing to tap now; can't be undone = red text with a confirm.
+  Before/after for the Shows screen, show settings and full transcript on
+  https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX. Do the type scale
+  with it (the ~50 fixed `.system(size:)` labels onto Theme).
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
-  / C chapter) and 9 style rules, both on
-  https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
+  / C chapter) on https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
   and saw nothing; whether to move alerts to Cloudflare (free cron
   Worker) as a backup to GitHub; other iPhone sizes not checked yet.
   Feeds with a username and password: later.
