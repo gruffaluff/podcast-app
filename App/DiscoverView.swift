@@ -201,23 +201,23 @@ struct DirectoryItemRow: View {
                     .foregroundStyle(rank <= 3 ? Theme.ink : Theme.muted)
                     .frame(width: 26)
             }
-            NavigationLink(value: item) {
+            // No ">" arrow (the whole row opens the show; Paul: rows were
+            // squashed): the link sits invisibly behind the row.
             HStack(spacing: 12) {
-            ArtworkView(url: item.artworkURL, title: item.title, size: 44)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.title)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2)
-                Text([item.artist, item.genre].compactMap { $0 }.joined(separator: " · ").uppercased())
-                    .font(Theme.mono(10))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
+                ArtworkView(url: item.artworkURL, title: item.title, size: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.title)
+                        .font(Theme.text(15, .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(2)
+                    Text([item.artist, item.genre].compactMap { $0 }.joined(separator: " · ").uppercased())
+                        .font(Theme.mono(10))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 4)
             }
-            Spacer(minLength: 8)
-            }
-            }
-            .buttonStyle(.plain)
+            .background(NavigationLink(value: item) { EmptyView() }.opacity(0))
             FollowButton(item: item, follower: follower)
         }
         .sheet(item: $follower.justFollowed) { ShowSettingsView(show: $0, justFollowed: true) }
@@ -311,8 +311,8 @@ private struct FollowButton: View {
                     .padding(.horizontal, 10)
                     .frame(minHeight: 34)
             }
-            .buttonStyle(KeyButtonStyle(radius: 8))
-            .padding(.bottom, 3)
+            // A sand key, so it shows on paper and banded rows alike.
+            .buttonStyle(KeyButtonStyle(kind: .sand, radius: 8))
             .accessibilityLabel(follower.failed ? "Retry follow" : "Follow")
         }
     }

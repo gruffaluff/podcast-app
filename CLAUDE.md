@@ -861,7 +861,7 @@ From the Notion notes after 6 Nov 08:10:
   cleared `justFollowed`, and chart items have no feed link to look the
   show up by). Discover's Follow keys use the same.
 
-## Done in build 129 (9 Nov 2026; Paul: "Go for build")
+## Done in build 129 (9 Nov 2026, PR #47; Paul: "Go for build"; on TestFlight 9 Nov, VALID)
 
 - Tidy-up from the 9 Nov code review (no visible change; battery and
   smoothness): iCloud tidy-up only after changes come in (not after our
@@ -907,6 +907,20 @@ From the Notion notes after 6 Nov 08:10:
   feed links).
 
 ## Queued for the next app build
+
+- **One row style: flat banded rows everywhere** (Paul, after build 129:
+  "we are either all rounded boxes or not"; done on the branch, goes out
+  with the next build). `panelRow` is now flat full-width rows
+  alternating paper / band (`Theme.band`), 16 pt insets, no lines: show
+  episode lists, show previews, Discover search and charts, Add a show
+  results. Your shows "card" and "list" layouts and the Chapters list
+  use the same bands (were separate rounded boxes / lines / an inset
+  panel). The rounded-panel code (`PanelBackground`) is gone. Settings
+  screens keep iOS's grouped sections. Search results still plain rows.
+- Discover chart / search rows were squashed (Paul): no ">" arrow (the
+  link sits invisibly behind the row), the 32 pt the panel margins took
+  goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
+  grows without limit), + FOLLOW is a sand key so it shows on every band.
 
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of

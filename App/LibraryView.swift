@@ -142,35 +142,39 @@ struct LibraryView: View {
     /// (Paul's choice, remembered and synced).
     @ViewBuilder private var yourShows: some View {
         switch showsLayout {
+        // Flat full-width banded rows, like Up Next and every other list
+        // (Paul, build 129: separate rounded boxes didn't match).
         case "card":
-            VStack(spacing: 6) {
-                ForEach(shows) { show in
+            VStack(spacing: 0) {
+                ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         HStack(spacing: 12) {
                             ArtworkView(url: show.artworkURL, title: show.title, size: 52, radius: 10)
                             showText(show)
                             Spacer(minLength: 0)
                         }
-                        .padding(8)
-                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Theme.band(index))
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 16)
         case "list":
             VStack(spacing: 0) {
-                ForEach(shows) { show in
+                ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         showText(show)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
                             .padding(.vertical, 10)
-                            .overlay(alignment: .bottom) { Rectangle().fill(Theme.hairline).frame(height: 1) }
+                            .background(Theme.band(index))
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 20)
         default:
             LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
                 ForEach(shows) { show in
