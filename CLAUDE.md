@@ -861,7 +861,7 @@ From the Notion notes after 6 Nov 08:10:
   cleared `justFollowed`, and chart items have no feed link to look the
   show up by). Discover's Follow keys use the same.
 
-## Done in build 129 (9 Nov 2026; Paul: "Go for build")
+## Done in build 129 (9 Nov 2026, PR #47; Paul: "Go for build"; on TestFlight 9 Nov, VALID)
 
 - Tidy-up from the 9 Nov code review (no visible change; battery and
   smoothness): iCloud tidy-up only after changes come in (not after our
