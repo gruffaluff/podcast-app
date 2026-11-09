@@ -157,17 +157,19 @@ struct UpNextView: View {
         // Style B drawn by iOS itself (inset grouped list), not by the rows:
         // iOS then lifts and moves a row cleanly while reordering. Drawing
         // the panel slice by slice made the lifted row clip and leave gaps.
-        // The row also paints its own colour edge to edge (no list insets),
-        // so the lifted copy is the whole row with rounded corners; on its
-        // own iOS put it on a white square (white corners, build 125).
+        // The row paints its own colour edge to edge (no list insets), so the
+        // lifted copy is the whole row, not on a white square (build 125).
+        // Rows are banded instead of divided by lines (Paul, 9 Nov 2026),
+        // and the lifted row uses iOS's own lift: a rounded drag shape made
+        // it a separate see-through copy with the row's text showing
+        // through underneath (build 126 recordings).
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(rowColor(episode))
-        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+        .background(rowColor(episode, index: index))
         .listRowInsets(EdgeInsets())
-        .listRowBackground(rowColor(episode))
-        .listRowSeparatorTint(Theme.hairline)
+        .listRowBackground(rowColor(episode, index: index))
+        .listRowSeparator(.hidden)
         // Swipe right: notes (a full swipe opens them) and to the top.
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
@@ -187,8 +189,9 @@ struct UpNextView: View {
         }
     }
 
-    private func rowColor(_ episode: PodcastEpisode) -> Color {
-        player.nowPlaying?.episodeID == episode.episodeID ? Theme.highlight : Theme.surface
+    private func rowColor(_ episode: PodcastEpisode, index: Int) -> Color {
+        if player.nowPlaying?.episodeID == episode.episodeID { return Theme.highlight }
+        return index.isMultiple(of: 2) ? Theme.surface : Theme.surfaceBand
     }
 
     private func toggleRow(_ id: String) {
@@ -254,9 +257,10 @@ private struct QueueRow: View {
                 }
                 .font(Theme.mono(10))
                 .foregroundStyle(Theme.muted)
-                // Always takes its line (blank when there's nothing to say),
-                // so rows don't change height when one starts playing.
-                Text((status ?? " ").uppercased())
+                // When it came out (Paul, 9 Nov 2026), then playing /
+                // downloading / transcribing; the line is always there, so
+                // rows don't change height when one starts playing.
+                Text(([Self.published(episode.published)] + [status].compactMap { $0 }).joined(separator: " · ").uppercased())
                     .font(Theme.mono(10))
                     .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
                     .lineLimit(1)
@@ -271,6 +275,14 @@ private struct QueueRow: View {
             }
         }
         .contentShape(Rectangle())
+    }
+
+    /// "9 Nov", or "9 Nov 2025" for an earlier year.
+    static func published(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_GB")
+        formatter.dateFormat = Calendar.current.isDate(date, equalTo: Date(), toGranularity: .year) ? "d MMM" : "d MMM yyyy"
+        return formatter.string(from: date)
     }
 
     /// TOP1 / TOP2 (rank) or BTM for episodes added by a show's setting;

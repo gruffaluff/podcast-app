@@ -385,14 +385,28 @@ private struct EpisodeRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
+            // Unplayed: an olive dot, like a new-mail dot. Played: a tick and
+            // a faded title (the fade alone wasn't clear enough; Paul, 9 Nov 2026).
             HStack(spacing: 6) {
-                if isPlaying { LED(on: true, color: Theme.accentFill) }
+                if isPlaying {
+                    LED(on: true, color: Theme.accentFill)
+                } else if episode.played {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.muted)
+                        .accessibilityLabel("Played")
+                } else {
+                    Circle()
+                        .fill(Theme.accentFill)
+                        .frame(width: 8, height: 8)
+                        .accessibilityLabel("Unplayed")
+                }
                 Text(episode.published.formatted(date: .abbreviated, time: .omitted).uppercased())
                     .font(Theme.mono(10))
                     .foregroundStyle(Theme.muted)
             }
             Text(episode.title)
-                .font(.body.weight(.medium))
+                .font(.body.weight(episode.played ? .regular : .semibold))
                 .foregroundStyle(episode.played ? Theme.muted : Theme.ink)
                 .lineLimit(2)
             if !episode.summary.isEmpty {

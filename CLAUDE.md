@@ -730,7 +730,7 @@ From the Notion notes after 6 Nov 08:10:
   place (order / manual changed only when different; duplicates from old
   syncs removed). Covers the pulled-up Up Next in the player too (same
   `moveQueue` → `commit`). UBDM.
-## Done in build 126 (6 Nov 2026, PR #44; Paul: "Build")
+## Done in build 126 (9 Nov 2026, PR #44; Paul said "Build" on 6 Nov, but the GitHub suspension stopped the merge, so it went out with the batch below)
 
 - Up Next reorder, after build 125 (Paul: main list "performing much
   better" but white corners on the lifted row; pulled-up Up Next "still
@@ -741,7 +741,7 @@ From the Notion notes after 6 Nov 08:10:
   mode (that was the wrong-order redraw); long press and drag like the
   tab, swipe left to Remove (with Undo).
 
-## Done in build 127 (9 Nov 2026, PR #44; Paul: "GitHub is back. Push and merge and build")
+## Also in build 126 (9 Nov 2026, same PR #44; Paul: "GitHub is back. Push and merge and build"; on TestFlight 9 Nov, VALID)
 
 - Made 7–9 Nov while the GitHub account was suspended (Paul: "sort with
   all the other fixes but don't push"); GitHub's Build check passed on
@@ -812,6 +812,29 @@ From the Notion notes after 6 Nov 08:10:
     link (Paul, 9 Nov): it closes the page / player, switches to the Up
     Next tab, scrolls to the episode and opens its row keys
     (`LibraryStore.revealInUpNext`, watched by RootView and UpNextView).
+
+## Done in build 127 (9 Nov 2026; Paul: "address and build", recordings + Notion notes after 7 Nov 09:20)
+
+- Up Next (tab and pulled-up): rows banded (every other row `Theme.surfaceBand`)
+  instead of divider lines; the `.contentShape(.dragPreview…)` is gone
+  again: it made the lifted row a separate see-through copy with the
+  row's text showing through (recordings); iOS's own lift is used.
+- Up Next rows show when the episode came out ("9 NOV", or with the year)
+  on the third line, before PLAYING / downloading.
+- Player: the Undo bar floats over the page (overlay) instead of a
+  safe-area inset, which resized the scroll area and flickered.
+- Player: behind the titles the artwork is blurred and the colour fade is
+  stronger, so the titles stay clear over busy artwork; the show name
+  opens the show page. Episode page: artwork and show name open the show
+  (`LibraryStore.revealShow`: RootView closes the player / page and
+  switches to Library, LibraryView pushes the show on its path).
+- New Episodes card: the playing card's pill shows the time left (not the
+  squashed "Pla…"), with pause and the moving wave.
+- Show page episode rows: olive dot for unplayed, a tick for played, and
+  unplayed titles semibold (the fade alone wasn't clear).
+- Show settings sheet: Older episodes are key buttons (MARK OLDER PLAYED,
+  ADD ALL TO UP NEXT) and Add all shows every time, not only after
+  following (it's also in the show page's ⋯ menu).
 
 ## Queued for the next app build
 

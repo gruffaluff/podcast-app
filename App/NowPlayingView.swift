@@ -62,7 +62,15 @@ struct NowPlayingView: View {
                         .padding(.bottom, 30)
                     }
                 }
-                .safeAreaInset(edge: .bottom) { UndoBar().padding(.horizontal, 12) }
+                // Floats over the page instead of taking room at the bottom:
+                // as a safe-area inset, showing it changed the scroll area's
+                // size, which flickered (Paul's recording, build 126).
+                .overlay(alignment: .bottom) {
+                    UndoBar()
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 6)
+                        .animation(.easeOut(duration: 0.2), value: store.undoAction?.id)
+                }
                 .onChange(of: notesJump) {
                     withAnimation(.easeInOut) { proxy.scrollTo("notes", anchor: .top) }
                 }
@@ -157,17 +165,28 @@ struct NowPlayingView: View {
             ZStack(alignment: .top) {
                 tint
                 GeometryReader { geometry in
-                    CachedImage(url: item.artworkURL) { Color.clear }
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                        .clipped()
+                    ZStack {
+                        CachedImage(url: item.artworkURL) { Color.clear }
+                            .frame(width: geometry.size.width, height: geometry.size.width)
+                            .clipped()
+                        // Behind the titles the artwork is blurred, so busy
+                        // artwork doesn't fight the text (Paul, 9 Nov 2026).
+                        CachedImage(url: item.artworkURL) { Color.clear }
+                            .frame(width: geometry.size.width, height: geometry.size.width)
+                            .blur(radius: 18)
+                            .clipped()
+                            .mask(LinearGradient(stops: [.init(color: .clear, location: 0.35),
+                                                         .init(color: .black, location: 0.62)],
+                                                 startPoint: .top, endPoint: .bottom))
+                    }
                 }
                 .opacity(showsTranscript ? 0.15 : 1)
                 .accessibilityHidden(true)
                 // Keeps the big white titles readable over light artwork.
                 LinearGradient(stops: [.init(color: tint.opacity(0.15), location: 0),
-                                       .init(color: tint.opacity(0), location: 0.25),
-                                       .init(color: tint.opacity(0.55), location: 0.6),
-                                       .init(color: tint.opacity(0.97), location: 0.85)],
+                                       .init(color: tint.opacity(0), location: 0.22),
+                                       .init(color: tint.opacity(0.7), location: 0.55),
+                                       .init(color: tint.opacity(0.98), location: 0.78)],
                                startPoint: .top, endPoint: .bottom)
             }
         }
@@ -178,12 +197,20 @@ struct NowPlayingView: View {
     private func artworkContent(_ item: PlayerModel.NowPlaying) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Spacer(minLength: 0)
-            Text(item.showTitle.uppercased())
-                .font(Theme.big(58))
-                .lineLimit(3)
-                .minimumScaleFactor(0.45)
-                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
-                .accessibilityAddTraits(.isHeader)
+            // The show name opens the show (Paul, 9 Nov 2026).
+            Button {
+                if let show = currentEpisode?.podcast { store.revealShow = show }
+            } label: {
+                Text(item.showTitle.uppercased())
+                    .font(Theme.big(58))
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.45)
+                    .multilineTextAlignment(.leading)
+                    .shadow(color: .black.opacity(0.45), radius: 10, y: 2)
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityHint("Opens the show")
             Button { showingNotes = true } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(item.title)
