@@ -906,11 +906,10 @@ From the Notion notes after 6 Nov 08:10:
   app/iOS/device, counts, downloads, playing, settings, iCloud status; no
   feed links).
 
-## Queued for the next app build
+## Done in build 130 (9 Nov 2026, PR #48; Paul: "Go"; on TestFlight 9 Nov, VALID)
 
 - **One row style: flat banded rows everywhere** (Paul, after build 129:
-  "we are either all rounded boxes or not"; done on the branch, goes out
-  with the next build). `panelRow` is now flat full-width rows
+  "we are either all rounded boxes or not"). `panelRow` is now flat full-width rows
   alternating paper / band (`Theme.band`), 16 pt insets, no lines: show
   episode lists, show previews, Discover search and charts, Add a show
   results. Your shows "card" and "list" layouts and the Chapters list
@@ -922,6 +921,48 @@ From the Notion notes after 6 Nov 08:10:
   goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
   grows without limit), + FOLLOW is a sand key so it shows on every band.
 
+## Queued for the next app build
+
+- **Cards, not bands** (Paul, after build 130: "I don't think I like
+  banded, go back to the card style"; on the branch, goes out with the next
+  build). Every list row is its own rounded paper card (`Theme.surface`,
+  radius `Theme.cardRadius` 14) on the sand with a 8 pt gap: `panelRow`
+  (show pages, show previews, Discover, Add a show), Up Next tab and
+  pulled-up (playing card in `Theme.highlight`, `Theme.upNextCard`),
+  Chapters, Your shows card and list layouts. `deckCardRow()` gives the
+  cell a sand background, so the row iOS lifts to drag has sand corners,
+  not white ones. Side margins 12 pt + 12 pt inside the card. Bands
+  (`surfaceBand`, `Theme.band`) removed.
+  Card look: **B, paper cards with a soft shadow, the same everywhere**
+  (Paul, 9 Nov 2026, from https://claude.ai/artifact/JhXRL117ui7WKLjVYFomYU;
+  A flat paper and C outlined were the others). One modifier,
+  `deckCard(fill, radius)` in Deck.swift (radius 14, two light shadows),
+  used by every list row (`panelRow`, Up Next tab and pulled-up, Chapters,
+  Your shows card / list, Continue listening, History, Storage, Search
+  results, Up Next suggestions) and every card panel (player's Up Next
+  card, episode notes box, episode status rows, Stats tiles). Cards sit
+  10 pt apart. The ALL ▾ / LATEST ▾ keys inside cards are sand (style
+  rule). Settings screens keep iOS's grouped sections.
+- **Swipe keys all round** (Paul: two looks; prefers the round ones):
+  every swipe action has an icon (Played ✓, Remove, Unplayed, Play next /
+  Play last, Delete), so iOS draws them all as round icon keys with a
+  label, like Notes / To top. Text-only ones drew as rounded squares.
+
+- **Colour schemes** (Paul, 9 Nov 2026: "include all 4"; mock-up
+  https://claude.ai/artifact/HkYMMBunqi9jCSsmn8hrae). Shows screen →
+  Colours: SAND (default) / SLATE / CLAY / NIGHT (`DeckSwitch`), saved as
+  "colourScheme" and synced with the other settings. `ColourScheme` in
+  Theme.swift holds each palette; every `Theme` colour token is now
+  computed from `ColourScheme.current`. `SchemedRoot` (PodcastsApp.swift)
+  sets the current scheme before drawing, redraws the whole app when it
+  changes (`.id`, so open sheets close) and sets iOS's light / dark look
+  (Night is dark, so system controls, menus and the keyboard follow).
+  Card shadows are black in every scheme (`Theme.shadowSoft/Wide`). The
+  player, mini player and show headers keep the artwork's colour; widgets
+  keep their own Sand colours. **Default is AUTO** (Paul: "Night should be
+  the default for dark mode"): Sand when the iPhone is light, Night when
+  it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
+  AUTO / SAND / SLATE / CLAY / NIGHT.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made

@@ -81,11 +81,16 @@ struct HistoryView: View {
                     .listRowBackground(Theme.background)
             }
             ForEach(episodes) { episode in
-                Button { player.play(episode) } label: { HistoryRow(episode: episode) }
-                    .buttonStyle(.plain)
-                    .contextMenu { EpisodeMenuItems(episode: episode) }
-                    .listRowBackground(Theme.background)
-                    .listRowSeparatorTint(Theme.hairline)
+                Button { player.play(episode) } label: {
+                    HistoryRow(episode: episode)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .deckCard()
+                }
+                .buttonStyle(.plain)
+                .contextMenu { EpisodeMenuItems(episode: episode) }
+                .deckCardRow()
             }
         }
         .listStyle(.plain)
@@ -128,7 +133,7 @@ struct StatsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .deckCard()
     }
 
     /// How long transcripts take on this iPhone.
@@ -154,7 +159,7 @@ struct StatsView: View {
                 if stopped > 0 { statRow("Stopped", "\(stopped)") }
             }
             .padding(14)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
+            .deckCard()
         }
     }
 
@@ -314,12 +319,11 @@ struct StorageView: View {
                                     .foregroundStyle(Theme.ink)
                                     .padding(.horizontal, 8)
                                     .frame(minHeight: 32)
-                                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
+                                    .background(Theme.background, in: RoundedRectangle(cornerRadius: 8))
                             }
                         }
                     }
-                    .listRowBackground(Theme.background)
-                    .listRowSeparatorTint(Theme.hairline)
+                    .panelRow(0, of: rows.count)
                 }
                 // A plain row, not a section footer: in this plain list iOS
                 // put the footer on a white block.

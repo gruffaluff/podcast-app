@@ -8,51 +8,115 @@ import UIKit
 /// capitals. Mock-ups: https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d
 /// ("Middle ground, developed"). The token names are kept from Tape Deck so
 /// every screen picks the new look up.
+/// The app's colour schemes (Paul, 9 Nov 2026: all four, from
+/// https://claude.ai/artifact/HkYMMBunqi9jCSsmn8hrae). Same layout, cards
+/// and fonts in each; only these colours change. The player and mini
+/// player keep taking their colour from the artwork.
+enum ColourScheme: String, CaseIterable, Identifiable {
+    case sand, slate, clay, night
+
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+    var isDark: Bool { self == .night }
+
+    /// The settings key (synced through iCloud with the other settings).
+    /// Its default, "auto", follows the iPhone: Sand when it's light, Night
+    /// when it's in dark mode (Paul, 9 Nov 2026).
+    static let key = "colourScheme"
+    static let auto = "auto"
+
+    /// The scheme a saved setting means, given the iPhone's light / dark.
+    static func resolve(_ setting: String, systemDark: Bool) -> ColourScheme {
+        ColourScheme(rawValue: setting) ?? (systemDark ? .night : .sand)
+    }
+
+    /// The scheme in use. RootView sets it from the saved setting before
+    /// drawing, and redraws the whole app when it changes.
+    static var current: ColourScheme =
+        resolve(UserDefaults.standard.string(forKey: key) ?? auto,
+                systemDark: UITraitCollection.current.userInterfaceStyle == .dark)
+
+    static func use(_ scheme: ColourScheme) { current = scheme }
+
+    struct Palette {
+        let background, surface, hairline, controlBorder, ink, muted: UInt32
+        let accentFill, accentText, onAccent, highlight, adText: UInt32
+        let display, displayText, displayDim: UInt32
+    }
+
+    var palette: Palette {
+        switch self {
+        case .sand:
+            Palette(background: 0xE9E3D5, surface: 0xF6F2E9, hairline: 0xD6CEBD, controlBorder: 0xC9C2B4,
+                    ink: 0x1F1D19, muted: 0x5C5547, accentFill: 0x45543A, accentText: 0x45543A,
+                    onAccent: 0xF6F2E9, highlight: 0xF2DFB8, adText: 0x6E4A12,
+                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6)
+        case .slate:
+            Palette(background: 0xDCE2E7, surface: 0xF7F9FB, hairline: 0xC7D0D7, controlBorder: 0xB7C1C9,
+                    ink: 0x1A232A, muted: 0x4F5D68, accentFill: 0x1F5C63, accentText: 0x1F5C63,
+                    onAccent: 0xF2F7F8, highlight: 0xCFE5E3, adText: 0x6E4A12,
+                    display: 0x1F3A40, displayText: 0xF2F7F8, displayDim: 0xC9D8DA)
+        case .clay:
+            Palette(background: 0xEAD8CC, surface: 0xFBF4ED, hairline: 0xDCC6B7, controlBorder: 0xD0B8A8,
+                    ink: 0x2A1E18, muted: 0x6B5446, accentFill: 0x9A4426, accentText: 0x8A3C21,
+                    onAccent: 0xFBF4ED, highlight: 0xF3D3BD, adText: 0x6E4A12,
+                    display: 0x4A2416, displayText: 0xFBF4ED, displayDim: 0xE6CFC2)
+        case .night:
+            Palette(background: 0x1B1C19, surface: 0x2A2B27, hairline: 0x3A3B36, controlBorder: 0x4A4B45,
+                    ink: 0xEEE9DE, muted: 0xA39D90, accentFill: 0x9DB07F, accentText: 0xA9BC8A,
+                    onAccent: 0x1B1C19, highlight: 0x47432F, adText: 0xE0B861,
+                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6)
+        }
+    }
+}
+
+/// Colours and type: the "middle ground" look (Paul's pick, 5 Nov 2026;
+/// replaced Tape Deck). Page, cards, ink text and one accent come from the
+/// chosen `ColourScheme` (Sand by default); what's playing is shown in its
+/// artwork's colour (see `ArtworkColors`, `ThemedHero`). Big titles are
+/// heavy condensed capitals. The token names are kept from Tape Deck so
+/// every screen picks the look up.
 enum Theme {
-    /// The sand page behind everything.
-    static let background = Color(hex: 0xE9E3D5)
-    /// Paper cards and keys.
-    static let surface = Color(hex: 0xF6F2E9)
-    /// Every other row in Up Next (banded rows instead of lines; Paul, 9 Nov 2026).
-    /// (Darker than the sand page after build 127: the first band was lost.)
-    static let surfaceBand = Color(hex: 0xE2DAC7)
-    static let hairline = Color(hex: 0xD6CEBD)
+    private static var p: ColourScheme.Palette { ColourScheme.current.palette }
 
-    /// An Up Next row's colour: the playing row highlighted, the others
-    /// banded by their place among the rows that aren't playing, so moving
-    /// the playing row doesn't swap the others' colours (Paul, build 128).
-    static func upNextBand(_ index: Int, playing: Int?) -> Color {
-        if index == playing { return highlight }
-        let place = playing.map { index > $0 ? index - 1 : index } ?? index
-        return band(place)
+    /// The page behind everything.
+    static var background: Color { Color(hex: p.background) }
+    /// Cards and keys.
+    static var surface: Color { Color(hex: p.surface) }
+    static var hairline: Color { Color(hex: p.hairline) }
+
+    /// An Up Next card's colour: the playing one highlighted, the rest paper.
+    static func upNextCard(_ index: Int, playing: Int?) -> Color {
+        index == playing ? highlight : surface
     }
 
-    /// Every list's rows: flat, full width, alternating paper and band
-    /// (one row style everywhere, Paul after build 129).
-    static func band(_ index: Int) -> Color {
-        index.isMultiple(of: 2) ? surface : surfaceBand
-    }
+    /// Corner radius of every list card.
+    static let cardRadius: CGFloat = 14
     /// Outline buttons and quiet borders.
-    static let controlBorder = Color(hex: 0xC9C2B4)
-    static let ink = Color(hex: 0x1F1D19)
-    /// Secondary text (6:1 on the page).
-    static let muted = Color(hex: 0x5C5547)
-    /// Olive: keys that are on, switches; text on it is paper.
-    static let accentFill = Color(hex: 0x45543A)
-    /// Olive text on light panels (7:1).
-    static let accentText = Color(hex: 0x45543A)
-    static let onAccent = Color(hex: 0xF6F2E9)
-    /// Search matches and highlighted lines.
-    static let highlight = Color(hex: 0xF2DFB8)
+    static var controlBorder: Color { Color(hex: p.controlBorder) }
+    static var ink: Color { Color(hex: p.ink) }
+    /// Secondary text.
+    static var muted: Color { Color(hex: p.muted) }
+    /// The accent: keys that are on, switches; text on it is `onAccent`.
+    static var accentFill: Color { Color(hex: p.accentFill) }
+    /// Accent text on cards and the page.
+    static var accentText: Color { Color(hex: p.accentText) }
+    static var onAccent: Color { Color(hex: p.onAccent) }
+    /// Search matches, highlighted lines and the playing card.
+    static var highlight: Color { Color(hex: p.highlight) }
     /// Ad breaks (amber).
     static let adMarker = Color(hex: 0xD9A441)
-    static let adText = Color(hex: 0x6E4A12)
+    static var adText: Color { Color(hex: p.adText) }
 
     // The coloured "now playing" area when the artwork has no colour yet.
-    static let display = Color(hex: 0x2F3A27)
-    static let displayText = Color(hex: 0xF6F2E9)
-    static let displayDim = Color(hex: 0xD4D7C6)
+    static var display: Color { Color(hex: p.display) }
+    static var displayText: Color { Color(hex: p.displayText) }
+    static var displayDim: Color { Color(hex: p.displayDim) }
     static let displayTrack = Color.white.opacity(0.25)
+
+    /// Card shadows: black whatever the scheme (ink is light in Night).
+    static var shadowSoft: Color { Color.black.opacity(ColourScheme.current.isDark ? 0.35 : 0.06) }
+    static var shadowWide: Color { Color.black.opacity(ColourScheme.current.isDark ? 0.45 : 0.08) }
 
     /// Muted tones for artwork placeholders.
     static let placeholders: [Color] = ([0x3D5A80, 0x2F6B5E, 0x7A3F66, 0x8A6A2F, 0x5B5750, 0x6A5E86] as [UInt32]).map { Color(hex: $0) }

@@ -61,14 +61,19 @@ struct LibraryView: View {
 
                         if !continuing.isEmpty {
                             sectionTitle("CONTINUE LISTENING", detail: "\(continuing.count) STARTED")
-                            VStack(spacing: 6) {
+                            VStack(spacing: 10) {
                                 ForEach(continuing) { episode in
-                                    Button { player.play(episode) } label: { HistoryRow(episode: episode) }
+                                    Button { player.play(episode) } label: {
+                                        HistoryRow(episode: episode)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .deckCard()
+                                    }
                                         .buttonStyle(.plain)
                                         .contextMenu { EpisodeMenuItems(episode: episode) }
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 12)
                             .padding(.bottom, 8)
                         }
 
@@ -142,10 +147,9 @@ struct LibraryView: View {
     /// (Paul's choice, remembered and synced).
     @ViewBuilder private var yourShows: some View {
         switch showsLayout {
-        // Flat full-width banded rows, like Up Next and every other list
-        // (Paul, build 129: separate rounded boxes didn't match).
+        // Rounded paper cards, like every other list (Paul after build 130).
         case "card":
-            VStack(spacing: 0) {
+            VStack(spacing: 10) {
                 ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         HStack(spacing: 12) {
@@ -153,28 +157,30 @@ struct LibraryView: View {
                             showText(show)
                             Spacer(minLength: 0)
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Theme.band(index))
+                        .deckCard()
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 12)
         case "list":
-            VStack(spacing: 0) {
+            VStack(spacing: 10) {
                 ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
                     NavigationLink(value: show) {
                         showText(show)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(Theme.band(index))
+                            .deckCard()
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 12)
         default:
             LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
                 ForEach(shows) { show in

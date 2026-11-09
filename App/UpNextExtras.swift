@@ -45,16 +45,12 @@ struct UpNextSheet: View {
                                 }
                             }
                         }
-                        // Same as the Up Next tab: the row paints its own
-                        // colour edge to edge, banded rows instead of lines,
-                        // iOS's own lift (no separate see-through copy).
+                        // Cards like the Up Next tab.
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(Theme.upNextBand(index, playing: playing))
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Theme.upNextBand(index, playing: playing))
-                        .listRowSeparator(.hidden)
+                        .padding(.horizontal, 12)
+                        .deckCard(Theme.upNextCard(index, playing: playing))
+                        .deckCardRow()
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
@@ -189,7 +185,7 @@ struct EpisodeStatusRows: View {
             trailing()
         }
         .padding(12)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
+        .deckCard()
         .accessibilityElement(children: .contain)
     }
 

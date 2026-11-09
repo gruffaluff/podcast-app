@@ -218,17 +218,17 @@ struct ShowView: View {
         }
         .swipeActions(edge: .trailing) {
             if episode.played {
-                Button("Unplayed") { store.markUnplayed(episode) }.tint(Theme.muted)
+                Button("Unplayed", systemImage: "circle") { store.markUnplayed(episode) }.tint(Theme.muted)
             } else {
-                Button("Played") {
+                Button("Played", systemImage: "checkmark") {
                     store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
                 }.tint(Theme.accentFill)
             }
         }
         .swipeActions(edge: .leading) {
-            Button("Play next") { store.playNext(episode) }
+            Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { store.playNext(episode) }
                 .tint(Theme.accentFill)
-            Button("Play last") { store.playLast(episode) }
+            Button("Play last", systemImage: "text.line.last.and.arrowtriangle.forward") { store.playLast(episode) }
                 .tint(Theme.ink)
         }
     }
