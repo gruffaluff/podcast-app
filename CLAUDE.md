@@ -886,9 +886,9 @@ From the Notion notes after 6 Nov 08:10:
 
 - Lighter feed checks: send ETag / If-Modified-Since so unchanged feeds
   are skipped (data and battery), with the notes fix above.
-- Suggested from the 9 Nov review, each needs Paul's yes: a "Save for
-  later" list (star an episode without queueing it); sleep timer "end of
-  chapter"; "Copy diagnostics" in settings for bug reports. Dragging: Paul
+- "Copy diagnostics" in settings for bug reports (Paul said yes, 9 Nov
+  2026). Not now (Paul): "Save for later" list, sleep timer "end of
+  chapter". Dragging: Paul
   says it's OK now (build 128), so no hand-made reorder.
 
 - Up Next banding stays put when the playing row moves (Paul, build 128:
@@ -907,8 +907,8 @@ From the Notion notes after 6 Nov 08:10:
   Before/after for the Shows screen, show settings and full transcript on
   https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX. Do the type scale
   with it (the ~50 fixed `.system(size:)` labels onto Theme).
-- **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
-  / C chapter) on https://claude.ai/artifact/9HcT2bBo9AV49uhYLiJrjX; where he tried Undo
+- 7 time row: left as it is (Paul, 9 Nov 2026).
+- **Still waiting on Paul**: where he tried Undo
   and saw nothing; whether to move alerts to Cloudflare (free cron
   Worker) as a backup to GitHub; other iPhone sizes not checked yet.
   Feeds with a username and password: later.
