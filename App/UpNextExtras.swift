@@ -111,12 +111,25 @@ struct EpisodeStatusRows: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
+    @Environment(\.dismiss) private var dismiss
     @State private var showingTranscript = false
 
     var body: some View {
         VStack(spacing: 8) {
             if let position = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
-                row(icon: "list.number", title: "In Up Next · \(Self.ordinal(position + 1))", detail: "Change the order in Up Next") { EmptyView() }
+                // Tap to go to it in Up Next (Paul, 9 Nov 2026).
+                Button {
+                    store.revealInUpNext = episode.episodeID
+                    dismiss()
+                } label: {
+                    row(icon: "list.number", title: "In Up Next · \(Self.ordinal(position + 1))", detail: "Show it in Up Next") {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Theme.muted)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens Up Next at this episode")
             }
             downloadRow
             transcriptRow

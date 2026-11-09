@@ -147,6 +147,13 @@ struct RootView: View {
         }
         .transcribeExplainer(enabled: !showingPlayer && !showingWelcome)
         .onChange(of: player.openPlayerRequests) { showingPlayer = true }
+        // "In Up Next · 2nd" on an episode page: close what's open, go to Up Next.
+        .onChange(of: store.revealInUpNext) { _, id in
+            guard id != nil else { return }
+            store.notesEpisode = nil
+            showingPlayer = false
+            tab = 0
+        }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
                 WidgetSync.shared.flush()

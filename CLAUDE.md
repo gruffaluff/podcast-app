@@ -807,6 +807,10 @@ From the Notion notes after 6 Nov 08:10:
     of Up Next; with Keep each show in order they sit before any newer
     episode of the show already queued). Undo bar. Nothing extra
     downloads. Only as many episodes as the show's feed lists.
+  - "In Up Next · 2nd" on the episode page (and under the player) is a
+    link (Paul, 9 Nov): it closes the page / player, switches to the Up
+    Next tab, scrolls to the episode and opens its row keys
+    (`LibraryStore.revealInUpNext`, watched by RootView and UpNextView).
   - Built without a compiler: if the build fails, check these first.
 - **Still waiting on Paul**: 7 time row (A bars / B speed+sleep, my pick
   / C chapter) and 9 style rules, both on

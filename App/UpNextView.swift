@@ -18,6 +18,7 @@ struct UpNextView: View {
         let settings = store.queueSettings
 
         NavigationStack {
+            ScrollViewReader { proxy in
             List {
                 Section {
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
@@ -83,6 +84,18 @@ struct UpNextView: View {
             }
             .environment(\.editMode, .constant(editing ? .active : .inactive))
             .onChange(of: editing) { if editing { openRow = nil } }
+            // Arriving from an episode page's "In Up Next" row.
+            .onChange(of: store.revealInUpNext, initial: true) { _, id in
+                guard let id else { return }
+                editing = false
+                openRow = id
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(350))
+                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    store.revealInUpNext = nil
+                }
+            }
+            }
             .listStyle(.insetGrouped)
             .listSectionSpacing(.compact)
             .scrollContentBackground(.hidden)
