@@ -975,7 +975,9 @@ From the Notion notes after 6 Nov 08:10:
   fall slowly with peak marks, auto-level, 60 fps. Paul likes A and B
   together (10 Nov); same page now has A+B 1 (faint B either side, gap
   round A), 2 (B moves slowly behind, A snappy), 3 (B runs through, stronger
-  towards the middle). Waiting on his pick of 1–3.
+  towards the middle). Then Paul asked for B alone, bolder towards the
+  middle: B BOLD 1 (gentle, ~half strength in the middle) and 2 (strong,
+  nearly full colour). Waiting on his pick.
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
   reorder.
