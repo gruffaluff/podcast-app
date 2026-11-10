@@ -997,6 +997,13 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Sound bars vs progress bar** (Paul, 10 Nov 2026, build 133: the live
+  bars and the progress bar look like the same thing twice). Mock-ups on
+  https://claude.ai/artifact/S7TvbPMWVckktnvwGp9PEe: Now; 1 bars up top +
+  slim chapter-split progress line; 2 ripple wave up top + loudness bars;
+  3 one bar row, live at the playhead, chapter between the times; 4 tape
+  reels for progress; 5 sound ring round the play key, chapter between
+  the times. Waiting on Paul's pick.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
