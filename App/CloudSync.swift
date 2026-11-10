@@ -67,7 +67,7 @@ final class SettingsSync {
     static let keys = [
         "findAdsWhileListening", "checkIntervalHours", "downloadWifiOnly",
         "keepShowOrder", "keepPlayingNew", "keepPlayedDownloads",
-        "speed", "trimSilences", "boostVoices", "skipBack", "skipForward",
+        "speed", "trimSilences", "boostVoices", "skipBack", "skipForward", "rewindOnResume",
         "skipAds", "transcriptSchedule", "showsLayout", "showsSort", "playerShowsTranscript",
         "colourScheme",
     ]

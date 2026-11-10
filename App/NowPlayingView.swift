@@ -17,9 +17,13 @@ struct NowPlayingView: View {
     @Environment(\.dismiss) private var dismiss
     /// While dragging along the progress bar, where it would play from.
     @State private var scrubTime: TimeInterval?
-    /// Where the handle was when the drag began (it moves by how far the
-    /// finger travels, so touching near it never makes it jump).
+    /// Where it was when the drag began (it moves by how far the finger
+    /// travels, so a touch on the line never makes it jump).
     @State private var scrubStart: TimeInterval?
+    /// The finger's last position along the line while scrubbing.
+    @State private var scrubLastX: CGFloat?
+    /// "HALF-SPEED SCRUBBING" etc. while the finger is below the line.
+    @State private var scrubSpeed: String?
     @State private var showingChapters = false
     @State private var showingNotes = false
     @State private var transcriptEpisode: PodcastEpisode?
@@ -45,7 +49,6 @@ struct NowPlayingView: View {
                     VStack(spacing: 0) {
                         hero(item, tint: tint, top: geometry.safeAreaInsets.top)
                         VStack(spacing: 14) {
-                            clock
                             scrubBar(tint: tint)
                             transport(tint: tint)
                             modeKeys(tint: tint)
@@ -376,66 +379,7 @@ struct NowPlayingView: View {
 
     // MARK: Below
 
-    /// Played on the left, the chapter you're in in the middle, and time
-    /// left with when it will end (at this speed) on the right (Paul's
-    /// pick "A3+" with the chapter between the times, 10 Nov 2026).
-    private var clock: some View {
-        let shown = scrubTime ?? player.currentTime
-        let left: TimeInterval = max(0, player.duration - shown)
-        let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
-        let endsText: String = "ENDS " + endsAt.formatted(date: .omitted, time: .shortened)
-        return HStack(alignment: .center, spacing: 10) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(TimeFormat.clock(shown))
-                    .font(Theme.big(42))
-                    .monospacedDigit()
-                    .foregroundStyle(Theme.ink)
-                Text("PLAYED")
-                    .font(Theme.mono(10, .bold))
-                    .tracking(1.2)
-                    .foregroundStyle(Theme.muted)
-            }
-            .layoutPriority(1)
-            chapterMiddle(at: shown)
-                .frame(maxWidth: .infinity)
-            if player.duration > 0 {
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text("−" + TimeFormat.clock(left))
-                        .font(Theme.big(28))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.ink)
-                    Text(endsText)
-                        .font(Theme.mono(10, .bold))
-                        .tracking(1.2)
-                        .foregroundStyle(Theme.muted)
-                }
-                .layoutPriority(1)
-            }
-        }
-    }
-
-    /// "CHAPTER 2 OF 5" over the chapter's name, between the two times
-    /// (where the handle is while dragging). Empty when there are none.
-    @ViewBuilder private func chapterMiddle(at time: TimeInterval) -> some View {
-        let chapters = player.chapters
-        if let index = Chapters.index(at: time, in: chapters) {
-            VStack(spacing: 2) {
-                Text("CHAPTER \(index + 1) OF \(chapters.count)")
-                    .font(Theme.mono(9, .bold))
-                    .tracking(1)
-                    .foregroundStyle(Theme.muted)
-                Text(chapters[index].title)
-                    .font(Theme.text(13, .semibold))
-                    .foregroundStyle(Theme.ink)
-            }
-            .lineLimit(1)
-            .multilineTextAlignment(.center)
-        } else {
-            Color.clear.frame(height: 1)
-        }
-    }
-
-    /// A long jump with the handle might be a stray touch: offer to go
+    /// A long jump while scrubbing might be a stray touch: offer to go
     /// back (Paul, 7 Nov 2026). Two minutes or more either way.
     private func offerUndoJump(from start: TimeInterval, to target: TimeInterval) {
         guard abs(target - start) >= 120 else { return }
@@ -447,61 +391,54 @@ struct NowPlayingView: View {
         }
     }
 
-    /// The progress bar (Paul's pick "A3+", 10 Nov 2026): the live sound
-    /// bars are the progress line, played in the artwork's colour, with a
-    /// dashed line and a numbered dot where each chapter starts, ad breaks
-    /// amber under a bracket marked AD, and a round handle in the middle of
-    /// the playhead line. Only the handle moves it (drag it), so a stray
-    /// touch never jumps the episode.
+    /// The progress line (Paul's pick "T4 firm", 10 Nov 2026, after Apple
+    /// Podcasts' scrubber): a 10-point line split by gaps at chapters, ads
+    /// amber, no handle, and the times under each end with when it ends in
+    /// the middle. Touch it anywhere and drag: it grows to 20 points and a
+    /// little wider, a bubble shows the chapter and time, and it moves by
+    /// how far the finger travels (so a touch alone never jumps). Sliding
+    /// the finger down while dragging slows it: half, quarter, fine.
     private func scrubBar(tint: Color) -> some View {
         let shown = scrubTime ?? player.currentTime
         let duration = max(player.duration, 1)
-        let playing = player.isPlaying && scrubTime == nil
-        return GeometryReader { geometry in
-            let width = max(1, geometry.size.width)
-            let x = min(width, max(0, shown / duration * width))
-            ZStack(alignment: .topLeading) {
-                LiveScrubber(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
-                             tint: tint, playing: playing, bands: { player.outputBands })
-                Circle()
-                    .fill(Theme.surface)
-                    .overlay(Circle().inset(by: 2).stroke(tint, lineWidth: 3.5))
-                    .frame(width: 24, height: 24)
-                    .shadow(color: .black.opacity(scrubTime == nil ? 0.16 : 0.3), radius: 3, y: 2)
-                    .scaleEffect(scrubTime == nil ? 1 : 1.2)
-                    // A touch area just round the handle, moving with it.
-                    // The handle moves by how far the finger travels, and
-                    // only once it has travelled a little (Paul: a touch
-                    // near the bar moved it). Placed by its centre, so it
-                    // sits on the line whatever the touch area's size
-                    // (build 134's handle sat a few points low).
-                    .frame(width: 44, height: 52)
+        let active = scrubTime != nil
+        let left: TimeInterval = max(0, player.duration - shown)
+        let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
+        let middle: String = scrubSpeed ?? ("ENDS " + endsAt.formatted(date: .omitted, time: .shortened))
+        return VStack(spacing: 6) {
+            GeometryReader { geometry in
+                let width = max(1, geometry.size.width)
+                ScrubLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
+                             tint: tint, grow: active ? 1 : 0)
+                    .animation(.easeOut(duration: 0.2), value: active)
+                    .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
+                    .offset(x: -ScrubLine.stretch)
+                    .overlay(alignment: .topLeading) {
+                        if active { scrubBubble(at: shown, x: shown / duration * width, width: width) }
+                    }
                     .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 6, coordinateSpace: .named("scrub"))
-                            .onChanged { value in
-                                let start = scrubStart ?? player.currentTime
-                                if scrubStart == nil { scrubStart = start }
-                                let moved = value.translation.width / width * duration
-                                scrubTime = min(duration, max(0, start + moved))
-                            }
-                            .onEnded { _ in
-                                if let target = scrubTime, let start = scrubStart {
-                                    player.seek(to: target)
-                                    offerUndoJump(from: start, to: target)
-                                }
-                                scrubTime = nil
-                                scrubStart = nil
-                            }
-                    )
-                    .position(x: x, y: LiveScrubber.barCentre)
+                    .gesture(scrubGesture(width: width, duration: duration))
             }
-            .coordinateSpace(name: "scrub")
+            .frame(height: ScrubLine.height)
+            HStack(alignment: .firstTextBaseline) {
+                Text(TimeFormat.clock(shown))
+                    .font(Theme.mono(16, .bold))
+                Spacer(minLength: 6)
+                Text(middle)
+                    .font(Theme.mono(10, .bold))
+                    .tracking(1)
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+                Spacer(minLength: 6)
+                Text("−" + TimeFormat.clock(left))
+                    .font(Theme.mono(16, .bold))
+            }
+            .monospacedDigit()
+            .foregroundStyle(Theme.ink)
         }
-        .frame(height: LiveScrubber.height)
         .accessibilityElement()
         .accessibilityLabel("Position")
-        .accessibilityValue(TimeFormat.clock(shown))
+        .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment: player.skipForwardBy()
@@ -509,6 +446,64 @@ struct NowPlayingView: View {
             @unknown default: break
             }
         }
+    }
+
+    private func scrubGesture(width: CGFloat, duration: TimeInterval) -> some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                guard let lastX = scrubLastX, let current = scrubTime else {
+                    scrubStart = player.currentTime
+                    scrubTime = player.currentTime
+                    scrubLastX = value.location.x
+                    scrubSpeed = PlayerOptions.scrubSpeed(below: 0).label
+                    return
+                }
+                let below: Double = Double(value.location.y - ScrubLine.height / 2)
+                let speed = PlayerOptions.scrubSpeed(below: below)
+                scrubSpeed = speed.label
+                let moved: Double = Double((value.location.x - lastX) / width) * duration * speed.factor
+                scrubTime = min(duration, max(0, current + moved))
+                scrubLastX = value.location.x
+            }
+            .onEnded { _ in
+                if let target = scrubTime, let start = scrubStart, abs(target - start) > 0.5 {
+                    player.seek(to: target)
+                    offerUndoJump(from: start, to: target)
+                }
+                scrubTime = nil
+                scrubStart = nil
+                scrubLastX = nil
+                scrubSpeed = nil
+            }
+    }
+
+    /// The chapter and time above the finger while scrubbing: a paper card
+    /// with a shadow, so it reads clearly over the artwork area above.
+    private func scrubBubble(at time: TimeInterval, x: CGFloat, width: CGFloat) -> some View {
+        let chapters = player.chapters
+        let title: String? = Chapters.index(at: time, in: chapters).map { chapters[$0].title }
+        let bubbleWidth: CGFloat = 190
+        let centre: CGFloat = min(width - bubbleWidth / 2, max(bubbleWidth / 2, x)) + ScrubLine.stretch
+        return VStack(spacing: 1) {
+            if let title {
+                Text(title)
+                    .font(Theme.text(12, .semibold))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+                    .frame(maxWidth: bubbleWidth - 24)
+            }
+            Text(TimeFormat.clock(time))
+                .font(Theme.mono(14, .bold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.ink)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.28), radius: 8, y: 3)
+        .fixedSize()
+        .position(x: centre, y: -30)
+        .allowsHitTesting(false)
     }
 
     /// Where each chapter starts, as fractions of the episode.
@@ -690,180 +685,70 @@ struct NowPlayingView: View {
     }
 }
 
-/// The progress line made of live sound bars (see `scrubBar`). Each bar's
-/// height is a fixed shape times the live sound: bars near the playhead
-/// follow the low pitches, further ones the higher pitches, so the line
-/// ripples out from where you are. It moves while playing and settles
-/// when paused.
-private struct LiveScrubber: View {
+/// The progress line's drawing (see `scrubBar`): split by small gaps at
+/// chapters, played part in the artwork's colour, ad breaks amber. `grow`
+/// (0 at rest, 1 while scrubbing) animates it thicker and a little wider.
+private struct ScrubLine: View, Animatable {
     let progress: Double
     let chapterStarts: [Double]
     let ads: [ClosedRange<Double>]
     let tint: Color
-    let playing: Bool
-    /// Power per pitch band, low to high; all zero when it can't be measured.
-    let bands: () -> [Float]
-    @State private var meter = LevelMeter()
+    var grow: Double
 
-    /// Room above the bars for the AD brackets and tags.
-    static let top: CGFloat = 26
-    static let barHeight: CGFloat = 58
-    static let barCentre: CGFloat = top + barHeight / 2
-    /// Room below the bars for the chapter dots.
-    static let height: CGFloat = top + barHeight + 34
-    private static let barCount = 56
-    /// A fixed, uneven shape so the line reads as sound even when paused.
-    private static let shape: [Double] = (0..<barCount).map { i in
-        let x = Double(i)
-        return 0.45 + 0.4 * abs(sin(x * 1.7) * cos(x * 0.53)) + 0.12 * Double((i * 7919) % 13) / 13
+    var animatableData: Double {
+        get { grow }
+        set { grow = newValue }
     }
 
+    static let rest: CGFloat = 10
+    static let scrubbing: CGFloat = 20
+    /// How much wider each side it gets while scrubbing (the view is drawn
+    /// this much wider than its slot).
+    static let stretch: CGFloat = 8
+    static let height: CGFloat = 24
+    private static let gap: CGFloat = 3
+
     var body: some View {
-        TimelineView(.animation(paused: !playing)) { context in
-            let values: [Double] = meter.step(bands: playing ? bands() : [], playing: playing, time: context.date.timeIntervalSinceReferenceDate)
-            Canvas { graphics, size in
-                Self.drawBars(values, in: graphics, width: size.width, progress: progress, ads: ads, tint: tint)
-                Self.drawMarks(in: graphics, width: size.width, progress: progress, chapterStarts: chapterStarts, ads: ads, tint: tint)
-            }
+        Canvas { graphics, size in
+            Self.draw(in: graphics, size: size, progress: progress, chapterStarts: chapterStarts, ads: ads, tint: tint, grow: CGFloat(grow))
         }
         .accessibilityHidden(true)
     }
 
     // Split out (with explicit types) so the compiler checks it quickly.
-    private static func drawBars(_ values: [Double], in graphics: GraphicsContext, width: CGFloat, progress: Double, ads: [ClosedRange<Double>], tint: Color) {
-        let gap: CGFloat = 2.5
-        let barWidth: CGFloat = max(1, (width - gap * CGFloat(barCount - 1)) / CGFloat(barCount))
-        let last: Int = values.count - 1
-        for index in 0..<barCount {
-            let fraction: Double = (Double(index) + 0.5) / Double(barCount)
-            var live: Double = 0.45
-            if last >= 1 {
-                let position: Double = min(1, abs(fraction - progress) * 1.2) * Double(last)
-                let lower: Int = min(last, Int(position))
-                let upper: Int = min(last, lower + 1)
-                let blend: Double = position - Double(lower)
-                live = 0.45 + 0.55 * (values[lower] * (1 - blend) + values[upper] * blend)
+    private static func draw(in graphics: GraphicsContext, size: CGSize, progress: Double, chapterStarts: [Double], ads: [ClosedRange<Double>], tint: Color, grow: CGFloat) {
+        let inset: CGFloat = stretch * (1 - grow)
+        let x0: CGFloat = inset
+        let span: CGFloat = max(1, size.width - 2 * inset)
+        let thickness: CGFloat = rest + (scrubbing - rest) * grow
+        let top: CGFloat = (size.height - thickness) / 2
+        let playedX: CGFloat = x0 + span * CGFloat(min(1, max(0, progress)))
+        let inner: [Double] = chapterStarts.filter { $0 > 0.002 && $0 < 0.998 }.sorted()
+        let cuts: [Double] = [0] + inner + [1]
+        for index in 0..<(cuts.count - 1) {
+            let start: CGFloat = x0 + span * CGFloat(cuts[index]) + (index > 0 ? gap / 2 : 0)
+            let end: CGFloat = x0 + span * CGFloat(cuts[index + 1]) - (index < cuts.count - 2 ? gap / 2 : 0)
+            guard end > start else { continue }
+            let shape = Path(roundedRect: CGRect(x: start, y: top, width: end - start, height: thickness), cornerRadius: thickness / 2)
+            var segment = graphics
+            segment.clip(to: shape)
+            segment.fill(shape, with: .color(Theme.hairline))
+            for ad in ads {
+                let adStart: CGFloat = max(start, x0 + span * CGFloat(ad.lowerBound))
+                let adEnd: CGFloat = min(end, x0 + span * CGFloat(ad.upperBound))
+                guard adEnd > adStart else { continue }
+                segment.fill(Path(CGRect(x: adStart, y: top, width: adEnd - adStart, height: thickness)), with: .color(Theme.adMarker.opacity(0.45)))
             }
-            let height: CGFloat = 6 + (barHeight - 6) * CGFloat(min(1, shape[index] * live))
-            let rect = CGRect(x: CGFloat(index) * (barWidth + gap), y: barCentre - height / 2, width: barWidth, height: height)
-            let played: Bool = fraction < progress
-            let inAd: Bool = ads.contains { $0.contains(fraction) }
-            let color: Color = inAd ? Theme.adMarker.opacity(played ? 1 : 0.45) : (played ? tint : Theme.hairline)
-            graphics.fill(Path(roundedRect: rect, cornerRadius: min(2, barWidth / 2)), with: .color(color))
-        }
-    }
-
-    /// Dashed chapter lines, AD brackets and tags, the playhead line and the
-    /// numbered chapter dots (filled once reached, the current one ringed).
-    private static func drawMarks(in graphics: GraphicsContext, width: CGFloat, progress: Double, chapterStarts: [Double], ads: [ClosedRange<Double>], tint: Color) {
-        let barTop: CGFloat = top
-        let barBottom: CGFloat = top + barHeight
-        var dashes = Path()
-        for start in chapterStarts where start > 0.005 && start < 0.995 {
-            let x: CGFloat = width * CGFloat(start)
-            dashes.move(to: CGPoint(x: x, y: barTop - 6))
-            dashes.addLine(to: CGPoint(x: x, y: barBottom + 2))
-        }
-        graphics.stroke(dashes, with: .color(Theme.ink.opacity(0.35)), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
-
-        for ad in ads {
-            let start: CGFloat = width * CGFloat(ad.lowerBound)
-            let end: CGFloat = width * CGFloat(ad.upperBound)
-            let passed: Bool = ad.upperBound < progress
-            let y: CGFloat = barTop - 8
-            var bracket = Path()
-            bracket.move(to: CGPoint(x: start, y: y + 5))
-            bracket.addLine(to: CGPoint(x: start, y: y))
-            bracket.addLine(to: CGPoint(x: end, y: y))
-            bracket.addLine(to: CGPoint(x: end, y: y + 5))
-            graphics.stroke(bracket, with: .color(Theme.adMarker.opacity(passed ? 1 : 0.7)), lineWidth: 2)
-            let middle: CGFloat = min(width - 14, max(14, (start + end) / 2))
-            let tag = CGRect(x: middle - 13, y: y - 18, width: 26, height: 16)
-            graphics.fill(Path(roundedRect: tag, cornerRadius: 8), with: .color(Theme.adMarker.opacity(passed ? 1 : 0.5)))
-            graphics.draw(Text("AD").font(Theme.mono(9, .bold)).foregroundColor(Color(hex: 0x5A3B0B)), at: CGPoint(x: middle, y: tag.midY))
-        }
-
-        let playheadX: CGFloat = width * CGFloat(min(1, max(0, progress)))
-        let playhead = CGRect(x: playheadX - 1, y: barTop - 4, width: 2, height: barHeight + 8)
-        graphics.fill(Path(roundedRect: playhead, cornerRadius: 1), with: .color(Theme.ink))
-
-        drawDots(in: graphics, width: width, progress: progress, chapterStarts: chapterStarts, tint: tint)
-    }
-
-    private static func drawDots(in graphics: GraphicsContext, width: CGFloat, progress: Double, chapterStarts: [Double], tint: Color) {
-        guard chapterStarts.count > 1 else { return }
-        let y: CGFloat = top + barHeight + 18
-        let radius: CGFloat = 8
-        let current: Int = chapterStarts.lastIndex { $0 <= progress + 0.0001 } ?? 0
-        var lastDrawn: CGFloat = -.infinity
-        for (index, start) in chapterStarts.enumerated() {
-            let x: CGFloat = min(width - radius - 3, max(radius + 3, width * CGFloat(start)))
-            // Lots of short chapters: leave out dots that would overlap
-            // (always keep the one you're in).
-            guard x - lastDrawn >= 20 || index == current else { continue }
-            lastDrawn = x
-            let reached: Bool = start <= progress + 0.0001
-            let circle = Path(ellipseIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2))
-            graphics.fill(circle, with: .color(reached ? tint : Theme.surface))
-            graphics.stroke(circle, with: .color(reached ? tint : Theme.ink.opacity(0.3)), lineWidth: 1.5)
-            if index == current {
-                let ring = Path(ellipseIn: CGRect(x: x - radius - 3, y: y - radius - 3, width: (radius + 3) * 2, height: (radius + 3) * 2))
-                graphics.stroke(ring, with: .color(tint), lineWidth: 2)
-            }
-            let number = Text("\(index + 1)").font(Theme.mono(9, .bold)).foregroundColor(reached ? Theme.surface : Theme.muted)
-            graphics.draw(number, at: CGPoint(x: x, y: y))
-        }
-    }
-}
-
-/// Turns band powers into bar heights (0...1): each bar jumps up at once
-/// and falls slowly, like a real meter, and the whole meter levels itself
-/// to how loud the episode is, so quiet shows still fill the strip.
-private final class LevelMeter {
-    private var shown = [Double](repeating: 0, count: BandMeter.bandCount)
-    /// The loudest band recently, in dB; eases down over a few seconds.
-    private var peak: Double = -80
-    private var lastTime: Double = 0
-
-    /// How many dB below the recent loudest a bar reaches the bottom.
-    private static let range: Double = 38
-
-    func step(bands: [Float], playing: Bool, time: Double) -> [Double] {
-        guard playing else {
-            for index in shown.indices { shown[index] = 0 }
-            lastTime = 0
-            return shown
-        }
-        let dt: Double = lastTime == 0 ? 1.0 / 60 : min(0.05, max(0, time - lastTime))
-        lastTime = time
-        var target = [Double](repeating: 0, count: shown.count)
-        if bands.count == shown.count, bands.contains(where: { $0 > 0 }) {
-            var loudest: Double = -200
-            for index in target.indices {
-                // Speech has far more energy low down: tilt up the high bands.
-                let decibels: Double = 10 * log10(Double(bands[index]) + 1e-12) + Double(index) * 1.0
-                target[index] = decibels
-                loudest = max(loudest, decibels)
-            }
-            peak = max(loudest, peak - 1.5 * dt)
-            let floor: Double = peak - Self.range
-            for index in target.indices {
-                target[index] = min(1, max(0, (target[index] - floor) / Self.range))
-            }
-        } else {
-            // No reading (some streams): a gentle made-up motion instead.
-            for index in target.indices {
-                let i = Double(index)
-                target[index] = 0.15 + 0.3 * abs(sin(time * (2.1 + 0.15 * i) + i * 0.9))
+            if playedX > start {
+                segment.fill(Path(CGRect(x: start, y: top, width: min(end, playedX) - start, height: thickness)), with: .color(tint))
+                for ad in ads {
+                    let adStart: CGFloat = max(start, x0 + span * CGFloat(ad.lowerBound))
+                    let adEnd: CGFloat = min(end, playedX, x0 + span * CGFloat(ad.upperBound))
+                    guard adEnd > adStart else { continue }
+                    segment.fill(Path(CGRect(x: adStart, y: top, width: adEnd - adStart, height: thickness)), with: .color(Theme.adMarker))
+                }
             }
         }
-        let frames: Double = dt * 60
-        for index in shown.indices {
-            let rising: Bool = target[index] > shown[index]
-            let ease: Double = 1 - pow(1 - (rising ? 0.7 : 0.13), frames)
-            shown[index] += (target[index] - shown[index]) * ease
-        }
-        return shown
     }
 }
 

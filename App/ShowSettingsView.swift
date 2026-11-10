@@ -205,6 +205,7 @@ struct TopPriorityView: View {
     @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.auto
     @AppStorage("downloadCapGB") private var downloadCapGB = 0  // LibraryStore.downloadCapKey
     @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = false  // PlayerModel.bedtimeKey
+    @AppStorage(PlayerModel.rewindKey) private var rewindOnResume = true
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
     @State private var findAds = AdScanner.isEnabled
@@ -287,10 +288,12 @@ struct TopPriorityView: View {
             Section {
                 skipPicker("Back", selection: Binding(get: { player.skipBackSeconds }, set: { player.setSkipBack($0) }))
                 skipPicker("Forward", selection: Binding(get: { player.skipForwardSeconds }, set: { player.setSkipForward($0) }))
+                Toggle("Rewind a little when you resume", isOn: $rewindOnResume)
+                    .tint(Theme.accentFill)
             } header: {
                 DeckHeader(title: "Skip buttons")
             } footer: {
-                Text("Seconds skipped by the back and forward buttons, lock screen and headphones. You can also touch and hold a skip button in the player to change it.")
+                Text("Seconds skipped by the back and forward buttons, lock screen and headphones. You can also touch and hold a skip button in the player to change it. Rewind when you resume goes back 3 seconds after a short pause, 10 after a minute or more and 20 after an hour.")
             }
             .listRowBackground(Theme.surface)
 

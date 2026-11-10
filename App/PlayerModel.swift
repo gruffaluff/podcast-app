@@ -31,6 +31,26 @@ final class PlayerModel {
     var skipBack: TimeInterval { TimeInterval(skipBackSeconds) }
     var skipForward: TimeInterval { TimeInterval(skipForwardSeconds) }
 
+    /// Rewind a little when you carry on after a pause, so you catch the
+    /// end of the sentence (Paul, 10 Nov 2026: "like other apps do"). On by
+    /// default; Shows screen → Skip buttons.
+    static let rewindKey = "rewindOnResume"
+    /// When it paused, and where, so a resume can rewind (only if nothing
+    /// moved the playhead since).
+    private var pausedAt: Date?
+    private var pausedPosition: TimeInterval = 0
+
+    /// How far to go back after a pause of this long: none after a quick
+    /// tap, more the longer you've been away.
+    static func rewind(afterPause seconds: TimeInterval) -> TimeInterval {
+        switch seconds {
+        case ..<5: return 0
+        case ..<60: return 3
+        case ..<3600: return 10
+        default: return 20
+        }
+    }
+
     /// Playback speed, 1.0× to 2.0×: the show's own speed when it has one,
     /// otherwise the global speed.
     private(set) var speed: Double = 1.0
@@ -173,6 +193,7 @@ final class PlayerModel {
         finishingEarly = false
         currentTime = start
         lastSavedTime = start
+        pausedAt = nil
         artwork = nil
 
         // Play the downloaded copy when there is one, otherwise stream.
@@ -204,6 +225,12 @@ final class PlayerModel {
 
     func resume() {
         guard nowPlaying != nil else { return }
+        if let pausedAt, !isPlaying, abs(currentTime - pausedPosition) < 1,
+           UserDefaults.standard.object(forKey: Self.rewindKey) as? Bool ?? true {
+            let back = Self.rewind(afterPause: Date().timeIntervalSince(pausedAt))
+            if back > 0 { seek(to: max(0, currentTime - back)) }
+        }
+        pausedAt = nil
         try? AVAudioSession.sharedInstance().setActive(true)
         player.play()
         updateNowPlayingInfo()
@@ -443,10 +470,6 @@ final class PlayerModel {
 
     static let afterEpisodeKey = "afterEpisode"
 
-    /// How loud the sound is right now (0 when unknown, e.g. some streams).
-    /// Power per pitch band of what's playing now, low to high (level bars).
-    var outputBands: [Float] { tapState.bandLevels() }
-
     /// "Mark as played" from the player: finish now, as if it had ended
     /// (marks played, deletes the download, moves on to Up Next).
     func finishEarly() {
@@ -533,8 +556,13 @@ final class PlayerModel {
         statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             let playing = player.timeControlStatus != .paused
             Task { @MainActor in
-                self?.isPlaying = playing
-                self?.updateTrimTimer()
+                guard let self else { return }
+                if self.isPlaying, !playing {
+                    self.pausedAt = Date()
+                    self.pausedPosition = self.currentTime
+                }
+                self.isPlaying = playing
+                self.updateTrimTimer()
             }
         }
 

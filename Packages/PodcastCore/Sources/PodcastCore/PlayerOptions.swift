@@ -19,6 +19,18 @@ public enum PlayerOptions {
     public static func validSkip(_ seconds: Int) -> Int {
         skipLengths.contains(seconds) ? seconds : defaultSkip
     }
+
+    /// How fast the progress line moves for a finger this far below it
+    /// while scrubbing, like Apple Podcasts: normal, then half, quarter and
+    /// fine (an eighth) the further down you slide.
+    public static func scrubSpeed(below points: Double) -> (factor: Double, label: String) {
+        switch points {
+        case ..<40: return (1, "HI-SPEED SCRUBBING")
+        case ..<90: return (0.5, "HALF-SPEED SCRUBBING")
+        case ..<140: return (0.25, "QUARTER-SPEED SCRUBBING")
+        default: return (0.125, "FINE SCRUBBING")
+        }
+    }
 }
 
 /// Sleep timer choices.

@@ -2,31 +2,14 @@ import AVFoundation
 import MediaToolbox
 import PodcastCore
 
-/// Sits in the audio path of the playing episode. Applies "Boost voices",
-/// measures loudness for "Trim silences" and pitch bands for the level
-/// bars. Settings are read on the audio thread, so they're plain flags
+/// Sits in the audio path of the playing episode. Applies "Boost voices"
+/// and measures loudness for "Trim silences". Settings are read on the audio thread, so they're plain flags
 /// rather than observed properties.
 final class AudioTapState: @unchecked Sendable {
     var boostVoices = false
     var trimSilences = false
     /// Set on the audio thread; read by the player to speed through pauses.
     var inPause = false
-    /// Power per pitch band, low to high (`BandMeter`): drives the player's
-    /// level bars. Written on the audio thread, read for display only.
-    private let bands: UnsafeMutablePointer<Float> = {
-        let pointer = UnsafeMutablePointer<Float>.allocate(capacity: BandMeter.bandCount)
-        pointer.initialize(repeating: 0, count: BandMeter.bandCount)
-        return pointer
-    }()
-    fileprivate var meter: BandMeter?
-
-    deinit { bands.deallocate() }
-
-    /// A copy of the latest band powers (all zero before any sound).
-    func bandLevels() -> [Float] {
-        Array(UnsafeBufferPointer(start: bands, count: BandMeter.bandCount))
-    }
-
     fileprivate var sampleRate: Double = 44_100
     fileprivate var boosters: [VoiceBoost] = []
     fileprivate var detector = SilenceDetector()
@@ -66,21 +49,12 @@ final class AudioTapState: @unchecked Sendable {
         boosters = Array(repeating: VoiceBoost(), count: channels)
         detector = SilenceDetector()
         inPause = false
-        if meter == nil || sampleRate != meterRate {
-            // An old tap may still be using the old meter, so keep it alive.
-            if let old = meter { retiredMeters.append(old) }
-            meter = BandMeter(sampleRate: sampleRate)
-            meterRate = sampleRate
-        }
     }
-    fileprivate var meterRate: Double = 0
-    private var retiredMeters: [BandMeter] = []
 
     fileprivate func process(_ buffers: UnsafeMutableAudioBufferListPointer, frames: Int) {
         if let first = buffers.first, let data = first.mData {
             let samples = UnsafeBufferPointer(start: data.assumingMemoryBound(to: Float.self), count: Int(first.mDataByteSize) / MemoryLayout<Float>.size)
             let rms = SilenceDetector.rms(samples)
-            meter?.analyse(samples, into: bands)
             inPause = trimSilences ? detector.feed(rms: rms, duration: Double(frames) / sampleRate) : false
         } else {
             inPause = false
