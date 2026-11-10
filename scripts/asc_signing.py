@@ -39,19 +39,38 @@ def token():
 
 
 def call(method, path, body=None):
-    request = urllib.request.Request(
-        path if path.startswith("http") else API + path,
-        method=method,
-        data=json.dumps(body).encode() if body is not None else None,
-        headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            raw = response.read()
-            return json.loads(raw) if raw else {}
-    except urllib.error.HTTPError as error:
-        detail = error.read().decode(errors="replace")
-        sys.exit(f"App Store Connect said {error.code} to {method} {path}:\n{detail}")
+    """One API call. Reads and deletes are tried up to 4 times when Apple
+    is slow or busy (build 132 failed on a single timed-out read); a POST
+    is only retried when Apple answered "busy", so nothing is made twice."""
+    url = path if path.startswith("http") else API + path
+    data = json.dumps(body).encode() if body is not None else None
+    safe_to_repeat = method in ("GET", "DELETE")
+    attempts = 4
+    for attempt in range(1, attempts + 1):
+        request = urllib.request.Request(
+            url,
+            method=method,
+            data=data,
+            headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                raw = response.read()
+                return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode(errors="replace")
+            busy = error.code == 429 or error.code >= 500
+            if busy and attempt < attempts:
+                print(f"App Store Connect said {error.code} to {method} {path}; trying again", file=sys.stderr)
+                time.sleep(5 * attempt)
+                continue
+            sys.exit(f"App Store Connect said {error.code} to {method} {path}:\n{detail}")
+        except (TimeoutError, urllib.error.URLError, ConnectionError) as error:
+            if safe_to_repeat and attempt < attempts:
+                print(f"No answer from App Store Connect to {method} {path} ({error}); trying again", file=sys.stderr)
+                time.sleep(5 * attempt)
+                continue
+            raise
 
 
 def bundle_record(identifier):
