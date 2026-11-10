@@ -962,7 +962,7 @@ From the Notion notes after 6 Nov 08:10:
   the default for dark mode"): Sand when the iPhone is light, Night when
   it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
   AUTO / SAND / SLATE / CLAY / NIGHT.
-## Done in build 132 (10 Nov 2026, PR #50; Paul: "go")
+## Done in build 133 (10 Nov 2026, PR #50 + #51; Paul: "go"; 132 failed signing; on TestFlight 10 Nov, VALID)
 
 - First try failed in Codemagic's signing step (Paul's log, 10 Nov):
   one App Store Connect read timed out after 60 s ("The read operation
@@ -970,7 +970,7 @@ From the Notion notes after 6 Nov 08:10:
   `asc_signing.call` now retries reads and deletes up to 4 times (5 / 10
   / 15 s apart) on a timeout or no connection, and any call on 429 / 5xx;
   a POST that times out isn't repeated (so no second certificate). The
-  merge of that fix re-ran the build.
+  merge of that fix re-ran it as build 133.
 
 - **Level bars: "B bold 2"** (Paul, 10 Nov 2026: more sensitive, vibrant,
   animated, fill the time area; mock-ups on
