@@ -995,7 +995,7 @@ From the Notion notes after 6 Nov 08:10:
   back to the cards); the card + description rows now show TOP / BTM /
   OFF and "n NEW" like the large cards (`ShowBadges`).
 
-## On the branch for the next build (10 Nov 2026; not merged until Paul says "build")
+## Done in build 134 (10 Nov 2026, PR #52; Paul: "build")
 
 - **Progress bar: "2C"** (Paul, 10 Nov 2026: build 133's live sound bars
   and the loudness progress bar looked like the same thing twice). Mock-ups:
