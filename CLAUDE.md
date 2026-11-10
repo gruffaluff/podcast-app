@@ -1033,14 +1033,14 @@ From the Notion notes after 6 Nov 08:10:
   line. Check on the phone: long chapter names, many chapters, colours on
   light artwork.
 
-## Queued for the next app build
+## Done in build 136 (10 Nov 2026, PR #54; Paul: "Build")
 
 - **Player closed after switching apps** (Paul, build 135: open the
   player, swipe to another app, come back: it had shrunk to the mini
   player). Cause: on the AUTO colour setting, iOS briefly draws the app
   in both light and dark for the app switcher; that counted as a scheme
   change, and the whole app was redrawn from scratch (`.id(chosen)`),
-  closing the player. Fixed on the branch (not built): `SchemedRoot`
+  closing the player. `SchemedRoot`
   follows the iPhone's light / dark only while the app is in use, and
   keeps "player open" and the tab itself (`RootView` takes them as
   bindings), so even a real scheme change keeps the player open.
@@ -1048,7 +1048,7 @@ From the Notion notes after 6 Nov 08:10:
   build 135: "not sure", sent a recording of Apple Podcasts' scrubber;
   mock-ups https://claude.ai/artifact/NUUfPjhX55n9SXWRFxMAAH, he picked
   T4 of T1 3→10, T2 5→14, T3 7→16 (Apple's, measured from his recording),
-  T4 10→20, T5 14→24). On the branch, not built: `ScrubLine` in
+  T4 10→20, T5 14→24). `ScrubLine` in
   NowPlayingView.swift (replaces `LiveScrubber`, the time row and the
   chapter between the times): a 10 pt line right under the artwork area,
   split by 3 pt gaps at chapters, played in the artwork's colour, ads
@@ -1066,7 +1066,7 @@ From the Notion notes after 6 Nov 08:10:
 - **Player transcript** (Paul, 10 Nov 2026, build 135 screenshot: lines
   cut to one line with "…"; wants whole lines, the line now bigger and
   clearer, the others smaller and faded, and a smooth scroll instead of
-  jumping). On the branch, not built: the panel is a scrolling list of
+  jumping). the panel is a scrolling list of
   every line (`PlayerTranscriptPanel.window`, LazyVStack) that glides
   (0.6 s ease) to keep the line now a third of the way down; whole lines
   (`fixedSize`; the fixed-height panel had squeezed them to one line);
@@ -1074,7 +1074,7 @@ From the Notion notes after 6 Nov 08:10:
   edges fade out. Scrolling by hand pauses following until 6 s after you
   let go, or BACK TO NOW. CLIP key sits level with the time label.
 - **Rewind when you resume** (Paul, 10 Nov 2026: "smart rewind like other
-  apps"; on the branch, not built): after a pause the player goes back 3 s
+  apps"): after a pause the player goes back 3 s
   (pause of 5 s–1 min), 10 s (1 min–1 h) or 20 s (over an hour); none
   after a quick tap, and only if nothing moved the playhead while paused
   (`PlayerModel.rewind(afterPause:)`, `pausedAt`). Covers the play key,
@@ -1083,6 +1083,9 @@ From the Notion notes after 6 Nov 08:10:
   synced as "rewindOnResume"). Also seen in his build 135
   screenshot: chapter dots 1 and 4 overlapped (short first chapters),
   gone with this design.
+
+## Queued for the next app build
+
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
