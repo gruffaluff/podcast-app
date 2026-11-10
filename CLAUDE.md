@@ -1008,7 +1008,11 @@ From the Notion notes after 6 Nov 08:10:
   ad breaks (amber `Theme.adMarker`, bright when played, pale ahead): 1A
   chapter segments, 1B one line + chapter dots, 1C thick pill + striped
   ads, 1D hairline + round handle + AD labels, 1E chapter tag following
-  the handle with time left in the chapter. Waiting on his pick.
+  the handle with time left in the chapter. Paul liked 1C and 1D "but
+  thicker"; same page now has 2A 10 pt line + round handle + ticks + AD
+  labels, 2B the same with striped ads, 2C 16 pt chapter pill + round
+  handle, 2D 22 pt pill + knob inside (1C, 1D kept to compare). Waiting
+  on his pick.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
