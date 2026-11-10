@@ -965,6 +965,14 @@ From the Notion notes after 6 Nov 08:10:
 ## Queued for the next app build
 
 - 7 time row: left as it is (Paul, 9 Nov 2026).
+- **Level bars, livelier** (Paul, 10 Nov 2026: more sensitive, vibrant,
+  animated; fill the time area). Mock-ups on
+  https://claude.ai/artifact/4wc6MmmGPEK8Pko9MVGFdK: Today, A same place
+  livelier, B full width behind the numbers, C skyline from below, D
+  ripple, E tape deck L/R meters. Proposed meter for all: per-pitch bands
+  from the audio tap (Accelerate FFT) instead of one RMS for every bar
+  (`LevelBars` in NowPlayingView.swift, `AudioTapState.level`), snap up /
+  fall slowly with peak marks, auto-level, 60 fps. Waiting on Paul's pick.
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
   reorder.
