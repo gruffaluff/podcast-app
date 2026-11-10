@@ -995,7 +995,7 @@ From the Notion notes after 6 Nov 08:10:
   back to the cards); the card + description rows now show TOP / BTM /
   OFF and "n NEW" like the large cards (`ShowBadges`).
 
-## Done in build 134 (10 Nov 2026, PR #52; Paul: "build")
+## Done in build 134 (10 Nov 2026, PR #52; Paul: "build"; on TestFlight 10 Nov, Paul has it)
 
 - **Progress bar: "2C"** (Paul, 10 Nov 2026: build 133's live sound bars
   and the loudness progress bar looked like the same thing twice). Mock-ups:
@@ -1012,6 +1012,19 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Player time / progress / live sound** (Paul, 10 Nov 2026, build 134:
+  the round handle sits a few points below the pill (bug: the 44×52
+  touch frame is taller than the 44 pt row, so the ZStack grows and the
+  `barCentreOffset` is off; fix by matching the row to the handle frame or
+  overlaying the handle on the pill), and he's "still not sure" about the
+  look). Mock-ups of six layouts on
+  https://claude.ai/artifact/HGkM8MpcadQwMbk7C2vJkN: Now (134, handle
+  fixed); A the live bars are the progress bar (playhead line + knob,
+  chapter between the times); B live bars inside a fat 44 pt pill, ads as
+  an amber bottom edge; C big live bars on top, times either end of a
+  slim bar, ends + chapter under; D progress ring round the play key; E
+  played time big in the centre over the bars, slim bar with chapter
+  ticks. Waiting on Paul's pick.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
