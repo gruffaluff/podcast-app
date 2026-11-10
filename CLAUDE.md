@@ -964,6 +964,14 @@ From the Notion notes after 6 Nov 08:10:
   AUTO / SAND / SLATE / CLAY / NIGHT.
 ## Done in build 132 (10 Nov 2026, PR #50; Paul: "go")
 
+- First try failed in Codemagic's signing step (Paul's log, 10 Nov):
+  one App Store Connect read timed out after 60 s ("The read operation
+  timed out" in `asc_signing.py` `make_profile`), nothing in the app.
+  `asc_signing.call` now retries reads and deletes up to 4 times (5 / 10
+  / 15 s apart) on a timeout or no connection, and any call on 429 / 5xx;
+  a POST that times out isn't repeated (so no second certificate). The
+  merge of that fix re-ran the build.
+
 - **Level bars: "B bold 2"** (Paul, 10 Nov 2026: more sensitive, vibrant,
   animated, fill the time area; mock-ups on
   https://claude.ai/artifact/4wc6MmmGPEK8Pko9MVGFdK, he picked B bold 2
