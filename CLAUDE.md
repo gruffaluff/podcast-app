@@ -1003,7 +1003,12 @@ From the Notion notes after 6 Nov 08:10:
   slim chapter-split progress line; 2 ripple wave up top + loudness bars;
   3 one bar row, live at the playhead, chapter between the times; 4 tape
   reels for progress; 5 sound ring round the play key, chapter between
-  the times. Waiting on Paul's pick.
+  the times. **Paul picked 1** (10 Nov). Line styles on
+  https://claude.ai/artifact/VGyopsCJswak8noEutK2pX, each with chapters and
+  ad breaks (amber `Theme.adMarker`, bright when played, pale ahead): 1A
+  chapter segments, 1B one line + chapter dots, 1C thick pill + striped
+  ads, 1D hairline + round handle + AD labels, 1E chapter tag following
+  the handle with time left in the chapter. Waiting on his pick.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
