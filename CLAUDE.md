@@ -1086,6 +1086,16 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
+  a good spot", but curious if another layout is better). Mock-ups
+  https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:
+  1 Tidy (fewer top keys, tiles as a slim icon row, Up Next as one line);
+  2 Artwork first (square artwork card on a washed page, titles under,
+  tap artwork for transcript, bottom icon bar); 3 Reader (transcript fills
+  the screen, compact control dock that pulls up); 4 Deck (cassette:
+  turning reels, LCD with chapter and times, latching keys); 5 Gestures
+  (full-bleed artwork, tap to pause, double tap sides to skip, chapter
+  cards, everything else in a pull-up drawer). Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
