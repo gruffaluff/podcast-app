@@ -228,9 +228,9 @@ to Nowhere / Top / Bottom" on the show page.
   artwork's colour: ⌄ close, device (AirPlay picker), find (transcript
   mode), notes (scrolls to the episode notes), mark played; ARTWORK /
   TRANSCRIPT switch with Full transcript and download keys; chapter chip;
-  ad bar. Below: played / left / ENDS time with level bars following the
-  sound, wave progress line (real loudness once downloaded; drag only the
-  handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
+  ad bar. Below: played / left / ENDS time with live sound bars behind
+  the numbers, progress pill split at chapters with striped ads and a
+  round handle (drag only the handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
   (opens the list), episode notes. Pull down past the top to close.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
@@ -995,24 +995,23 @@ From the Notion notes after 6 Nov 08:10:
   back to the cards); the card + description rows now show TOP / BTM /
   OFF and "n NEW" like the large cards (`ShowBadges`).
 
+## On the branch for the next build (10 Nov 2026; not merged until Paul says "build")
+
+- **Progress bar: "2C"** (Paul, 10 Nov 2026: build 133's live sound bars
+  and the loudness progress bar looked like the same thing twice). Mock-ups:
+  https://claude.ai/artifact/S7TvbPMWVckktnvwGp9PEe (he picked 1: keep the
+  live bars up top, a line for progress) then
+  https://claude.ai/artifact/VGyopsCJswak8noEutK2pX (line styles; he picked
+  2C). `ProgressPill` in NowPlayingView.swift: a 16 pt pill split at
+  chapters (3 pt gaps), played part in the artwork's colour, ad breaks as
+  amber stripes (bright played, pale ahead) with "AD" above, a 30 pt round
+  handle (paper with an artwork-colour ring; same drag rules, 44×52 touch
+  area), and "CH 3 · FAN CALLS" under it (follows the handle while
+  dragging). The loudness waveform (`Waveform`, `SegmentBar`) is gone, so
+  the downloaded file is no longer read to draw the bar.
+
 ## Queued for the next app build
 
-- **Sound bars vs progress bar** (Paul, 10 Nov 2026, build 133: the live
-  bars and the progress bar look like the same thing twice). Mock-ups on
-  https://claude.ai/artifact/S7TvbPMWVckktnvwGp9PEe: Now; 1 bars up top +
-  slim chapter-split progress line; 2 ripple wave up top + loudness bars;
-  3 one bar row, live at the playhead, chapter between the times; 4 tape
-  reels for progress; 5 sound ring round the play key, chapter between
-  the times. **Paul picked 1** (10 Nov). Line styles on
-  https://claude.ai/artifact/VGyopsCJswak8noEutK2pX, each with chapters and
-  ad breaks (amber `Theme.adMarker`, bright when played, pale ahead): 1A
-  chapter segments, 1B one line + chapter dots, 1C thick pill + striped
-  ads, 1D hairline + round handle + AD labels, 1E chapter tag following
-  the handle with time left in the chapter. Paul liked 1C and 1D "but
-  thicker"; same page now has 2A 10 pt line + round handle + ticks + AD
-  labels, 2B the same with striped ads, 2C 16 pt chapter pill + round
-  handle, 2D 22 pt pill + knob inside (1C, 1D kept to compare). Waiting
-  on his pick.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made

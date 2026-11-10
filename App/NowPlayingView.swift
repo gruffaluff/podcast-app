@@ -28,7 +28,6 @@ struct NowPlayingView: View {
     /// Bumped by the notes key: scrolls down to the episode notes.
     @State private var notesJump = 0
     /// The downloaded episode's real loudness, for the progress line.
-    @State private var waveform: [CGFloat]?
     @State private var closing = false
     @AppStorage("playerShowsTranscript") private var showsTranscript = false
 
@@ -85,13 +84,6 @@ struct NowPlayingView: View {
                 }
                 }
                 .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
-                // The real shape of the episode, once it's downloaded.
-                .task(id: waveformKey) {
-                    waveform = nil
-                    if let episode = currentEpisode, let file = store.localAudioURL(for: episode) {
-                        waveform = await Waveform.levels(for: file, count: 44)
-                    }
-                }
             } else {
                 Text("Nothing playing")
                     .foregroundStyle(Theme.muted)
@@ -255,11 +247,6 @@ struct NowPlayingView: View {
         .accessibilityAddTraits(.isButton)
     }
 
-    private var waveformKey: String {
-        let id = player.nowPlaying?.episodeID ?? ""
-        let local = currentEpisode.map { store.localAudioURL(for: $0) != nil } ?? false
-        return "\(id)-\(local)"
-    }
 
     /// Download: an arrow; a ring filling while it downloads; a filled
     /// circle once it's on the phone.
@@ -446,29 +433,33 @@ struct NowPlayingView: View {
         }
     }
 
-    /// The wave progress bar. Only the outlined handle at the current
-    /// position moves it (drag it), so a stray touch never jumps the episode.
+    /// The progress bar (Paul's pick "2C", 10 Nov 2026): a 16-point pill
+    /// split at chapters, ad breaks striped amber and labelled AD, a round
+    /// handle, and the chapter you're in written underneath. It's a plain
+    /// line so it doesn't look like the live sound bars above it. Only the
+    /// handle moves it (drag it), so a stray touch never jumps the episode.
     private func scrubBar(tint: Color) -> some View {
         let shown = scrubTime ?? player.currentTime
         let duration = max(player.duration, 1)
-        return GeometryReader { geometry in
+        return VStack(alignment: .leading, spacing: 6) {
+            GeometryReader { geometry in
             let width = max(1, geometry.size.width)
             let x = min(width, max(0, shown / duration * width))
             ZStack(alignment: .leading) {
-                SegmentBar(progress: shown / duration, ads: adFractions, count: 44, height: 34, played: tint, track: Theme.hairline, levels: waveform)
-                RoundedRectangle(cornerRadius: 3)
+                ProgressPill(progress: shown / duration, chapterStarts: chapterFractions, ads: adFractions, tint: tint)
+                Circle()
                     .fill(Theme.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Theme.ink, lineWidth: 2))
-                    .frame(width: 8, height: 32)
-                    .shadow(color: .black.opacity(scrubTime == nil ? 0.1 : 0.3), radius: 4, y: 2)
+                    .overlay(Circle().inset(by: 2).stroke(tint, lineWidth: 3.5))
+                    .frame(width: 30, height: 30)
+                    .shadow(color: .black.opacity(scrubTime == nil ? 0.14 : 0.3), radius: 3, y: 2)
                     .scaleEffect(scrubTime == nil ? 1 : 1.15)
                     // A touch area just round the handle, moving with it.
                     // The handle moves by how far the finger travels, and
                     // only once it has travelled a little (Paul: a touch
                     // near the bar moved it).
-                    .frame(width: 32, height: 52)
+                    .frame(width: 44, height: 52)
                     .contentShape(Rectangle())
-                    .offset(x: x - 16)
+                    .offset(x: x - 22, y: ProgressPill.barCentreOffset)
                     .gesture(
                         DragGesture(minimumDistance: 6, coordinateSpace: .named("scrub"))
                             .onChanged { value in
@@ -488,8 +479,10 @@ struct NowPlayingView: View {
                     )
             }
             .coordinateSpace(name: "scrub")
+            }
+            .frame(height: ProgressPill.height)
+            chapterLabel(at: shown)
         }
-        .frame(height: 40)
         .accessibilityElement()
         .accessibilityLabel("Position")
         .accessibilityValue(TimeFormat.clock(shown))
@@ -500,6 +493,24 @@ struct NowPlayingView: View {
             @unknown default: break
             }
         }
+    }
+
+    /// "CH 3 · FAN CALLS" under the bar (where the handle is while dragging).
+    @ViewBuilder private func chapterLabel(at time: TimeInterval) -> some View {
+        let chapters = player.chapters
+        if let index = Chapters.index(at: time, in: chapters) {
+            Text("CH \(index + 1) · \(chapters[index].title.uppercased())")
+                .font(Theme.mono(10, .bold))
+                .tracking(1)
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+        }
+    }
+
+    /// Where each chapter after the first starts, as fractions of the episode.
+    private var chapterFractions: [Double] {
+        guard player.duration > 0 else { return [] }
+        return player.chapters.map { $0.start / player.duration }.filter { $0 > 0.005 && $0 < 0.995 }
     }
 
     private var adFractions: [ClosedRange<Double>] {
@@ -677,6 +688,79 @@ struct NowPlayingView: View {
 
 /// Little level bars between the times: they move while the episode plays
 /// and settle when it's paused.
+/// The progress bar's pill (see `scrubBar`): split at chapters, played part
+/// in the artwork's colour, ad breaks as amber stripes with AD above them.
+private struct ProgressPill: View {
+    let progress: Double
+    let chapterStarts: [Double]
+    let ads: [ClosedRange<Double>]
+    let tint: Color
+
+    static let thickness: CGFloat = 16
+    /// Room above the bar for the AD labels.
+    static let labelRoom: CGFloat = 14
+    static let height: CGFloat = labelRoom + 30
+    /// How far the bar's centre sits below the middle of the whole view.
+    static let barCentreOffset: CGFloat = (labelRoom + 15) - height / 2
+    private static let gap: CGFloat = 3
+
+    var body: some View {
+        Canvas { graphics, size in
+            Self.draw(in: graphics, size: size, progress: progress, chapterStarts: chapterStarts, ads: ads, tint: tint)
+        }
+        .accessibilityHidden(true)
+    }
+
+    // Split out (with explicit types) so the compiler checks it quickly.
+    private static func draw(in graphics: GraphicsContext, size: CGSize, progress: Double, chapterStarts: [Double], ads: [ClosedRange<Double>], tint: Color) {
+        let width: CGFloat = size.width
+        let top: CGFloat = labelRoom + 15 - thickness / 2
+        let playedX: CGFloat = width * CGFloat(min(1, max(0, progress)))
+        let cuts: [Double] = [0] + chapterStarts + [1]
+        for index in 0..<(cuts.count - 1) {
+            let start: CGFloat = width * CGFloat(cuts[index]) + (index > 0 ? gap / 2 : 0)
+            let end: CGFloat = width * CGFloat(cuts[index + 1]) - (index < cuts.count - 2 ? gap / 2 : 0)
+            guard end > start else { continue }
+            let shape = Path(roundedRect: CGRect(x: start, y: top, width: end - start, height: thickness), cornerRadius: thickness / 2)
+            var segment = graphics
+            segment.clip(to: shape)
+            segment.fill(shape, with: .color(Theme.hairline))
+            if playedX > start {
+                segment.fill(Path(CGRect(x: start, y: top, width: min(end, playedX) - start, height: thickness)), with: .color(tint))
+            }
+            for ad in ads {
+                let adStart: CGFloat = max(start, width * CGFloat(ad.lowerBound))
+                let adEnd: CGFloat = min(end, width * CGFloat(ad.upperBound))
+                guard adEnd > adStart else { continue }
+                stripes(in: segment, from: adStart, to: min(adEnd, max(adStart, playedX)), top: top, played: true)
+                stripes(in: segment, from: max(adStart, playedX), to: adEnd, top: top, played: false)
+            }
+        }
+        for ad in ads {
+            let middle: CGFloat = width * CGFloat((ad.lowerBound + ad.upperBound) / 2)
+            let label = Text("AD").font(Theme.mono(9, .bold)).foregroundColor(Theme.adText)
+            graphics.draw(label, at: CGPoint(x: middle, y: labelRoom / 2))
+        }
+    }
+
+    /// Amber diagonal stripes, bright once played and paler ahead.
+    private static func stripes(in graphics: GraphicsContext, from start: CGFloat, to end: CGFloat, top: CGFloat, played: Bool) {
+        guard end > start else { return }
+        var area = graphics
+        let rect = CGRect(x: start, y: top, width: end - start, height: thickness)
+        area.clip(to: Path(rect))
+        area.fill(Path(rect), with: .color(Theme.adMarker.opacity(played ? 0.35 : 0.18)))
+        var lines = Path()
+        var x: CGFloat = start - thickness
+        while x < end + thickness {
+            lines.move(to: CGPoint(x: x, y: top + thickness))
+            lines.addLine(to: CGPoint(x: x + thickness, y: top))
+            x += 6
+        }
+        area.stroke(lines, with: .color(Theme.adMarker.opacity(played ? 1 : 0.6)), lineWidth: 3)
+    }
+}
+
 private struct LevelBars: View {
     let playing: Bool
     let color: Color
