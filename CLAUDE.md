@@ -1011,14 +1011,14 @@ From the Notion notes after 6 Nov 08:10:
   dragging). The loudness waveform (`Waveform`, `SegmentBar`) is gone, so
   the downloaded file is no longer read to draw the bar.
 
-## Queued for the next app build
+## Done in build 135 (10 Nov 2026, PR #53; Paul: "Build")
 
 - **Player time / progress: "A3+"** (Paul, 10 Nov 2026, after build 134:
   handle sat below the pill and he wasn't sure about the look; mock-ups
   on https://claude.ai/artifact/HGkM8MpcadQwMbk7C2vJkN: Now, A–E, thinner
   lines, A1–A3, then A3+ and seven ideas M1–M7 for the space between the
   times; he liked A3+ and kept the chapter there: "let's stick with how
-  we are"). On the branch, UBDM, not built yet: the live sound bars ARE
+  we are", then "Stick with m1"). The live sound bars ARE
   the progress line (`LiveScrubber` in NowPlayingView.swift, replacing
   `ProgressPill` and the separate `LevelBars`): 56 bars, played in the
   artwork's colour, ahead pale, ad bars amber under a bracket with an AD
@@ -1032,6 +1032,9 @@ From the Notion notes after 6 Nov 08:10:
   touch area is placed by its centre (`.position`), so it sits on the
   line. Check on the phone: long chapter names, many chapters, colours on
   light artwork.
+
+## Queued for the next app build
+
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
