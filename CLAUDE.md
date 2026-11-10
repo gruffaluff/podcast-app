@@ -1024,7 +1024,12 @@ From the Notion notes after 6 Nov 08:10:
   an amber bottom edge; C big live bars on top, times either end of a
   slim bar, ends + chapter under; D progress ring round the play key; E
   played time big in the centre over the bars, slim bar with chapter
-  ticks. Waiting on Paul's pick.
+  ticks. Then thinner lines (THIN 1 8 pt, THIN 2 4 pt, THIN 3 C at 5 pt)
+  and, at Paul's ask, A with chapter callouts: numbered chapter dots (1,
+  2, 3… filled once reached, current one ringed) and amber "AD" tags /
+  ad bars: A1 dots below + AD tags above, A2 gaps in the bars at
+  chapters + dots on top + AD tags below, A3 dashed chapter lines + ad
+  brackets. Waiting on Paul's pick.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
