@@ -1060,7 +1060,16 @@ From the Notion notes after 6 Nov 08:10:
   stretches ~8 pt wider each side while held. Same link now compares
   T1 3→10, T2 5→14, T3 7→16 (Apple), T4 10→20, T5 14→24, with the line
   18 pt under the artwork area and the bubble a paper card with a shadow
-  floating over its bottom edge. Waiting on Paul's pick. Also seen in his build 135
+  floating over its bottom edge. Times under the line bigger (16 pt
+  DM Mono, Paul). Waiting on Paul's pick.
+- **Rewind when you resume** (Paul, 10 Nov 2026: "smart rewind like other
+  apps"; on the branch, not built): after a pause the player goes back 3 s
+  (pause of 5 s–1 min), 10 s (1 min–1 h) or 20 s (over an hour); none
+  after a quick tap, and only if nothing moved the playhead while paused
+  (`PlayerModel.rewind(afterPause:)`, `pausedAt`). Covers the play key,
+  lock screen, headphones and resuming after a call. Setting "Rewind a
+  little when you resume" (Shows screen → Skip buttons, on by default,
+  synced as "rewindOnResume"). Also seen in his build 135
   screenshot: chapter dots 1 and 4 overlapped (short first chapters),
   gone with this design.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
