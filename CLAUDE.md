@@ -1029,7 +1029,14 @@ From the Notion notes after 6 Nov 08:10:
   2, 3… filled once reached, current one ringed) and amber "AD" tags /
   ad bars: A1 dots below + AD tags above, A2 gaps in the bars at
   chapters + dots on top + AD tags below, A3 dashed chapter lines + ad
-  brackets. Waiting on Paul's pick.
+  brackets. Paul likes A3 with the handle moved to the middle of the
+  playhead line ("A3+", 10 Nov 2026). Then, for the space between the two
+  times, seven ideas on the same page: M1 chapter (as now), M2 chapter +
+  time left in it (small ring), M3 chapter artwork, M4 live transcript
+  line, M5 speed / trim + time saved, M6 where it's playing + sleep
+  timer, M7 the next episode in Up Next. Waiting on Paul's pick; then
+  build A3+ (replacing the 2C pill and the separate level bars) with the
+  handle fix.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
