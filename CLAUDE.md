@@ -1048,7 +1048,7 @@ From the Notion notes after 6 Nov 08:10:
   build 135: "not sure", sent a recording of Apple Podcasts' scrubber;
   mock-ups https://claude.ai/artifact/NUUfPjhX55n9SXWRFxMAAH, he picked
   T4 of T1 3→10, T2 5→14, T3 7→16 (Apple's, measured from his recording),
-  T4 10→20, T5 14→24). On the branch, not built: `ProgressLine` in
+  T4 10→20, T5 14→24). On the branch, not built: `ScrubLine` in
   NowPlayingView.swift (replaces `LiveScrubber`, the time row and the
   chapter between the times): a 10 pt line right under the artwork area,
   split by 3 pt gaps at chapters, played in the artwork's colour, ads

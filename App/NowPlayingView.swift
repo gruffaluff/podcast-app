@@ -408,18 +408,18 @@ struct NowPlayingView: View {
         return VStack(spacing: 6) {
             GeometryReader { geometry in
                 let width = max(1, geometry.size.width)
-                ProgressLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
+                ScrubLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
                              tint: tint, grow: active ? 1 : 0)
                     .animation(.easeOut(duration: 0.2), value: active)
-                    .frame(width: width + 2 * ProgressLine.stretch, height: ProgressLine.height)
-                    .offset(x: -ProgressLine.stretch)
+                    .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
+                    .offset(x: -ScrubLine.stretch)
                     .overlay(alignment: .topLeading) {
                         if active { scrubBubble(at: shown, x: shown / duration * width, width: width) }
                     }
                     .contentShape(Rectangle())
                     .gesture(scrubGesture(width: width, duration: duration))
             }
-            .frame(height: ProgressLine.height)
+            .frame(height: ScrubLine.height)
             HStack(alignment: .firstTextBaseline) {
                 Text(TimeFormat.clock(shown))
                     .font(Theme.mono(16, .bold))
@@ -458,7 +458,7 @@ struct NowPlayingView: View {
                     scrubSpeed = PlayerOptions.scrubSpeed(below: 0).label
                     return
                 }
-                let below: Double = Double(value.location.y - ProgressLine.height / 2)
+                let below: Double = Double(value.location.y - ScrubLine.height / 2)
                 let speed = PlayerOptions.scrubSpeed(below: below)
                 scrubSpeed = speed.label
                 let moved: Double = Double((value.location.x - lastX) / width) * duration * speed.factor
@@ -483,7 +483,7 @@ struct NowPlayingView: View {
         let chapters = player.chapters
         let title: String? = Chapters.index(at: time, in: chapters).map { chapters[$0].title }
         let bubbleWidth: CGFloat = 190
-        let centre: CGFloat = min(width - bubbleWidth / 2, max(bubbleWidth / 2, x)) + ProgressLine.stretch
+        let centre: CGFloat = min(width - bubbleWidth / 2, max(bubbleWidth / 2, x)) + ScrubLine.stretch
         return VStack(spacing: 1) {
             if let title {
                 Text(title)
@@ -688,7 +688,7 @@ struct NowPlayingView: View {
 /// The progress line's drawing (see `scrubBar`): split by small gaps at
 /// chapters, played part in the artwork's colour, ad breaks amber. `grow`
 /// (0 at rest, 1 while scrubbing) animates it thicker and a little wider.
-private struct ProgressLine: View, Animatable {
+private struct ScrubLine: View, Animatable {
     let progress: Double
     let chapterStarts: [Double]
     let ads: [ClosedRange<Double>]
