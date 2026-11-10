@@ -972,7 +972,10 @@ From the Notion notes after 6 Nov 08:10:
   ripple, E tape deck L/R meters. Proposed meter for all: per-pitch bands
   from the audio tap (Accelerate FFT) instead of one RMS for every bar
   (`LevelBars` in NowPlayingView.swift, `AudioTapState.level`), snap up /
-  fall slowly with peak marks, auto-level, 60 fps. Waiting on Paul's pick.
+  fall slowly with peak marks, auto-level, 60 fps. Paul likes A and B
+  together (10 Nov); same page now has A+B 1 (faint B either side, gap
+  round A), 2 (B moves slowly behind, A snappy), 3 (B runs through, stronger
+  towards the middle). Waiting on his pick of 1–3.
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
   reorder.
