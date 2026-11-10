@@ -228,10 +228,10 @@ to Nowhere / Top / Bottom" on the show page.
   artwork's colour: ⌄ close, device (AirPlay picker), find (transcript
   mode), notes (scrolls to the episode notes), mark played; ARTWORK /
   TRANSCRIPT switch with Full transcript and download keys; chapter chip;
-  ad bar. Below: played / chapter / left + ENDS time, then the
-  progress line made of live sound bars (dashed chapter lines, numbered
-  chapter dots, AD brackets, round handle mid-line; drag only the
-  handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
+  ad bar. Below: the progress line (T4: 10 pt, gaps at chapters, ads
+  amber, no handle; played / ENDS / −left under it; touch and drag
+  anywhere, it grows to 20 pt with a chapter + time bubble, slide down
+  for half / quarter / fine), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
   (opens the list), episode notes. Pull down past the top to close.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
@@ -1044,24 +1044,25 @@ From the Notion notes after 6 Nov 08:10:
   follows the iPhone's light / dark only while the app is in use, and
   keeps "player open" and the tab itself (`RootView` takes them as
   bindings), so even a real scheme change keeps the player open.
-- **Progress line, Apple style** (Paul, 10 Nov 2026, after build 135: "not
-  sure", sent a recording of Apple Podcasts' scrubber). Mock-up
-  https://claude.ai/artifact/NUUfPjhX55n9SXWRFxMAAH (try it, resting,
-  scrubbing demo, build 135 for comparison): a 5 pt line with no handle,
-  split by gaps at chapters, ads amber; played / −left under each end,
-  ENDS in the middle. Touch anywhere and drag (moves by how far the
-  finger travels): the line grows to 14 pt, a bubble above the finger
-  shows the chapter name and time, the middle text shows the speed;
-  sliding down slows it: <40 pt normal, 40–90 half, 90–140 quarter,
-  further fine (1/8). No live sound bars (`BandMeter` could go). About
-  90 pt shorter. Then (Paul: how thick is Apple's? move it up, the
-  popup may overlap the area above if it stays clear): Apple's line
-  measured from his recording is ~7 pt at rest, ~16 pt scrubbing, and
-  stretches ~8 pt wider each side while held. Same link now compares
-  T1 3→10, T2 5→14, T3 7→16 (Apple), T4 10→20, T5 14→24, with the line
-  18 pt under the artwork area and the bubble a paper card with a shadow
-  floating over its bottom edge. Times under the line bigger (16 pt
-  DM Mono, Paul). Waiting on Paul's pick.
+- **Progress line, Apple style: "T4 firm"** (Paul, 10 Nov 2026, after
+  build 135: "not sure", sent a recording of Apple Podcasts' scrubber;
+  mock-ups https://claude.ai/artifact/NUUfPjhX55n9SXWRFxMAAH, he picked
+  T4 of T1 3→10, T2 5→14, T3 7→16 (Apple's, measured from his recording),
+  T4 10→20, T5 14→24). On the branch, not built: `ProgressLine` in
+  NowPlayingView.swift (replaces `LiveScrubber`, the time row and the
+  chapter between the times): a 10 pt line right under the artwork area,
+  split by 3 pt gaps at chapters, played in the artwork's colour, ads
+  amber (pale ahead); no handle. Under it: played and −left (16 pt DM
+  Mono) at the ends, "ENDS 22:35" in the middle. Touch anywhere and drag
+  (moves by how far the finger travels, so a touch never jumps): it grows
+  to 20 pt and 8 pt wider each side, a paper bubble above the finger
+  (over the artwork area's edge) shows the chapter name and time, and the
+  middle text shows the speed; sliding down slows it
+  (`PlayerOptions.scrubSpeed(below:)`, tested: <40 pt normal, 40–90 half,
+  90–140 quarter, further an eighth). Jumps of 2 min+ still offer Undo.
+  No live sound bars any more: `BandMeter` and the tap's band analysis
+  are gone (less work on the audio thread). Paul's build 135 screenshot
+  also showed chapter dots 1 and 4 on top of each other: gone with this.
 - **Player transcript** (Paul, 10 Nov 2026, build 135 screenshot: lines
   cut to one line with "…"; wants whole lines, the line now bigger and
   clearer, the others smaller and faded, and a smooth scroll instead of

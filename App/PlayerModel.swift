@@ -470,10 +470,6 @@ final class PlayerModel {
 
     static let afterEpisodeKey = "afterEpisode"
 
-    /// How loud the sound is right now (0 when unknown, e.g. some streams).
-    /// Power per pitch band of what's playing now, low to high (level bars).
-    var outputBands: [Float] { tapState.bandLevels() }
-
     /// "Mark as played" from the player: finish now, as if it had ended
     /// (marks played, deletes the download, moves on to Up Next).
     func finishEarly() {

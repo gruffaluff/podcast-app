@@ -157,6 +157,15 @@ final class DownloadCleanupTests: XCTestCase {
 }
 
 final class PlayerOptionsTests: XCTestCase {
+    func testScrubSpeedSlowsAsTheFingerMovesDown() {
+        XCTAssertEqual(PlayerOptions.scrubSpeed(below: -10).factor, 1)
+        XCTAssertEqual(PlayerOptions.scrubSpeed(below: 39).factor, 1)
+        XCTAssertEqual(PlayerOptions.scrubSpeed(below: 40).factor, 0.5)
+        XCTAssertEqual(PlayerOptions.scrubSpeed(below: 100).factor, 0.25)
+        XCTAssertEqual(PlayerOptions.scrubSpeed(below: 300).factor, 0.125)
+        XCTAssertEqual(PlayerOptions.scrubSpeed(below: 300).label, "FINE SCRUBBING")
+    }
+
 
     func testSpeeds() {
         XCTAssertEqual(PlayerOptions.speeds.first, 1.0)
