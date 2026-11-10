@@ -228,9 +228,9 @@ to Nowhere / Top / Bottom" on the show page.
   artwork's colour: ⌄ close, device (AirPlay picker), find (transcript
   mode), notes (scrolls to the episode notes), mark played; ARTWORK /
   TRANSCRIPT switch with Full transcript and download keys; chapter chip;
-  ad bar. Below: played / left / ENDS time with level bars following the
-  sound, wave progress line (real loudness once downloaded; drag only the
-  handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
+  ad bar. Below: played / left / ENDS time with live sound bars behind
+  the numbers, progress pill split at chapters with striped ads and a
+  round handle (drag only the handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
   (opens the list), episode notes. Pull down past the top to close.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
@@ -962,7 +962,7 @@ From the Notion notes after 6 Nov 08:10:
   the default for dark mode"): Sand when the iPhone is light, Night when
   it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
   AUTO / SAND / SLATE / CLAY / NIGHT.
-## Done in build 132 (10 Nov 2026, PR #50; Paul: "go")
+## Done in build 133 (10 Nov 2026, PR #50 + #51; Paul: "go"; 132 failed signing; on TestFlight 10 Nov, VALID)
 
 - First try failed in Codemagic's signing step (Paul's log, 10 Nov):
   one App Store Connect read timed out after 60 s ("The read operation
@@ -970,7 +970,7 @@ From the Notion notes after 6 Nov 08:10:
   `asc_signing.call` now retries reads and deletes up to 4 times (5 / 10
   / 15 s apart) on a timeout or no connection, and any call on 429 / 5xx;
   a POST that times out isn't repeated (so no second certificate). The
-  merge of that fix re-ran the build.
+  merge of that fix re-ran it as build 133.
 
 - **Level bars: "B bold 2"** (Paul, 10 Nov 2026: more sensitive, vibrant,
   animated, fill the time area; mock-ups on
@@ -994,6 +994,21 @@ From the Notion notes after 6 Nov 08:10:
   sort on the right. "Description only" layout dropped (old setting falls
   back to the cards); the card + description rows now show TOP / BTM /
   OFF and "n NEW" like the large cards (`ShowBadges`).
+
+## Done in build 134 (10 Nov 2026, PR #52; Paul: "build")
+
+- **Progress bar: "2C"** (Paul, 10 Nov 2026: build 133's live sound bars
+  and the loudness progress bar looked like the same thing twice). Mock-ups:
+  https://claude.ai/artifact/S7TvbPMWVckktnvwGp9PEe (he picked 1: keep the
+  live bars up top, a line for progress) then
+  https://claude.ai/artifact/VGyopsCJswak8noEutK2pX (line styles; he picked
+  2C). `ProgressPill` in NowPlayingView.swift: a 16 pt pill split at
+  chapters (3 pt gaps), played part in the artwork's colour, ad breaks as
+  amber stripes (bright played, pale ahead) with "AD" above, a 30 pt round
+  handle (paper with an artwork-colour ring; same drag rules, 44×52 touch
+  area), and "CH 3 · FAN CALLS" under it (follows the handle while
+  dragging). The loudness waveform (`Waveform`, `SegmentBar`) is gone, so
+  the downloaded file is no longer read to draw the bar.
 
 ## Queued for the next app build
 

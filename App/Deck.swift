@@ -61,52 +61,6 @@ extension EnvironmentValues {
     }
 }
 
-/// Progress as a row of bars of varying height (a sound wave), played ones
-/// lit, ad breaks in amber. `played` / `track` default to the colours for a
-/// coloured panel.
-struct SegmentBar: View {
-    /// 0...1
-    let progress: Double
-    /// Ad breaks as fractions of the episode.
-    var ads: [ClosedRange<Double>] = []
-    var count = 28
-    var height: CGFloat = 12
-    var played: Color = Theme.displayText
-    var track: Color = Theme.displayTrack
-    /// The episode's real loudness per bar (0...1), when known; otherwise
-    /// a fixed pattern.
-    var levels: [CGFloat]? = nil
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 2) {
-            ForEach(0..<count, id: \.self) { index in
-                let start = Double(index) / Double(count)
-                let end = Double(index + 1) / Double(count)
-                let isAd = ads.contains { $0.lowerBound < end && $0.upperBound > start }
-                let isPlayed = (start + end) / 2 <= progress
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(isAd ? Theme.adMarker : (isPlayed ? played : track))
-                    .frame(height: height < 10 ? height : height * barHeight(index))
-            }
-        }
-        .frame(height: height)
-        .accessibilityElement()
-        .accessibilityLabel("Progress")
-        .accessibilityValue("\(Int(progress * 100)) percent")
-    }
-
-    private func barHeight(_ index: Int) -> CGFloat {
-        if let levels, index < levels.count { return levels[index] }
-        return Self.wave(index)
-    }
-
-    /// A fixed, natural-looking pattern of bar heights (0.35...1).
-    static func wave(_ index: Int) -> CGFloat {
-        let pattern: [CGFloat] = [0.45, 0.7, 0.95, 0.6, 1, 0.8, 0.5, 0.9, 0.65, 0.95, 0.75, 0.55, 0.85, 0.4, 0.7, 0.95, 0.6, 0.8, 0.45, 0.9]
-        return pattern[index % pattern.count]
-    }
-}
-
 /// A small status light.
 struct LED: View {
     let on: Bool
