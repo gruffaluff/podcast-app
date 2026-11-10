@@ -962,7 +962,7 @@ From the Notion notes after 6 Nov 08:10:
   the default for dark mode"): Sand when the iPhone is light, Night when
   it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
   AUTO / SAND / SLATE / CLAY / NIGHT.
-## On the branch for the next build (10 Nov 2026; not merged until Paul says "build")
+## Done in build 132 (10 Nov 2026, PR #50; Paul: "go")
 
 - **Level bars: "B bold 2"** (Paul, 10 Nov 2026: more sensitive, vibrant,
   animated, fill the time area; mock-ups on
