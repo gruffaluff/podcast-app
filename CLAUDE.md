@@ -247,7 +247,7 @@ to Nowhere / Top / Bottom" on the show page.
   Podcasts': 248×330, the artwork across the top fading into its own
   colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
   pill with the time left, download and ⋯; it snaps card to card. Above it
-  Continue listening; below "Your shows" (large / card / list).
+  Continue listening; below "Your shows" (large / card, with a sort key).
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -921,11 +921,10 @@ From the Notion notes after 6 Nov 08:10:
   goes to the text, title in `Theme.text(15, .semibold)` (was .body, which
   grows without limit), + FOLLOW is a sand key so it shows on every band.
 
-## Queued for the next app build
+## Done in build 131 (9 Nov 2026, PR #49; Paul: "Build"; on TestFlight 9 Nov, VALID)
 
 - **Cards, not bands** (Paul, after build 130: "I don't think I like
-  banded, go back to the card style"; on the branch, goes out with the next
-  build). Every list row is its own rounded paper card (`Theme.surface`,
+  banded, go back to the card style"). Every list row is its own rounded paper card (`Theme.surface`,
   radius `Theme.cardRadius` 14) on the sand with a 8 pt gap: `panelRow`
   (show pages, show previews, Discover, Add a show), Up Next tab and
   pulled-up (playing card in `Theme.highlight`, `Theme.upNextCard`),
@@ -963,6 +962,33 @@ From the Notion notes after 6 Nov 08:10:
   the default for dark mode"): Sand when the iPhone is light, Night when
   it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
   AUTO / SAND / SLATE / CLAY / NIGHT.
+## On the branch for the next build (10 Nov 2026; not merged until Paul says "build")
+
+- **Level bars: "B bold 2"** (Paul, 10 Nov 2026: more sensitive, vibrant,
+  animated, fill the time area; mock-ups on
+  https://claude.ai/artifact/4wc6MmmGPEK8Pko9MVGFdK, he picked B bold 2
+  over A, B, C ripple, D, E meters and the A+B mixes). Thin bars across
+  the whole time strip, behind the numbers: low pitches in the middle,
+  high at the edges, nearly invisible at the edges and almost full
+  artwork colour in the middle. Each bar follows its own pitch band
+  (`App/BandMeter.swift`: 1024-point FFT with Accelerate on the audio tap,
+  24 log-spaced bands 90 Hz–9 kHz, nothing allocated on the audio thread;
+  `AudioTapState.bandLevels()`, `PlayerModel.outputBands`), jumps up at
+  once and falls slowly, and levels itself to the episode's loudness
+  (`LevelMeter` in NowPlayingView.swift: recent loudest band, 38 dB range,
+  +1 dB per band tilt for speech). 60 fps while the full player is open
+  and playing; resting bars when paused. The old single loudness reading
+  (`AudioTapState.level`, `outputLevel`) is gone.
+- **Your shows sort and layouts** (Paul, 10 Nov 2026): a sort key (⇅) on
+  the strip beside the layout keys: A–Z, Z–A, latest episode newest /
+  oldest first, date followed newest / oldest first (`ShowsSort`, saved
+  as "showsSort", synced); the header reads "YOUR SHOWS · 12" with the
+  sort on the right. "Description only" layout dropped (old setting falls
+  back to the cards); the card + description rows now show TOP / BTM /
+  OFF and "n NEW" like the large cards (`ShowBadges`).
+
+## Queued for the next app build
+
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
