@@ -397,8 +397,11 @@ struct NowPlayingView: View {
         let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
         let endsText: String = "ENDS " + endsAt.formatted(date: .omitted, time: .shortened)
         return ZStack {
-            // Centred on the screen, so right above the play key.
-            LevelBars(playing: player.isPlaying && scrubTime == nil, color: heroTint, level: { player.outputLevel })
+            // Across the whole strip, behind the numbers, boldest in the
+            // middle above the play key.
+            LevelBars(playing: player.isPlaying && scrubTime == nil, color: heroTint, bands: { player.outputBands })
+                .frame(maxWidth: .infinity)
+                .frame(height: 68)
             HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(TimeFormat.clock(shown))
@@ -677,46 +680,97 @@ struct NowPlayingView: View {
 private struct LevelBars: View {
     let playing: Bool
     let color: Color
-    /// How loud the sound is right now (RMS); 0 when it can't be measured.
-    let level: () -> Float
+    /// Power per pitch band, low to high; all zero when it can't be measured.
+    let bands: () -> [Float]
+    @State private var meter = LevelMeter()
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !playing)) { context in
-            bars(at: context.date.timeIntervalSinceReferenceDate)
+        TimelineView(.animation(paused: !playing)) { context in
+            let values: [Double] = meter.step(bands: playing ? bands() : [], playing: playing, time: context.date.timeIntervalSinceReferenceDate)
+            Canvas { graphics, size in
+                Self.draw(values, in: graphics, size: size, color: color)
+            }
         }
-        .frame(width: 60, height: 30)
         .accessibilityHidden(true)
     }
 
-    // Split out (with explicit types) so the compiler checks it quickly.
-    private func bars(at time: Double) -> some View {
-        let loudness: Double = Self.loudness(level())
-        return HStack(alignment: .center, spacing: 3) {
-            ForEach(0..<9, id: \.self) { (index: Int) in
-                Capsule()
-                    .fill(color.opacity(0.85))
-                    .frame(width: 4, height: Self.height(index: index, time: time, loudness: loudness, playing: playing))
+    /// Thin bars across the whole width (Paul's pick "B bold 2", 10 Nov
+    /// 2026): low pitches in the middle, high ones at the edges, nearly
+    /// invisible at the edges behind the numbers and almost full colour in
+    /// the middle.
+    private static func draw(_ values: [Double], in graphics: GraphicsContext, size: CGSize, color: Color) {
+        let barWidth: CGFloat = 4
+        let gap: CGFloat = 3
+        let count: Int = max(1, Int((size.width + gap) / (barWidth + gap)))
+        let used: CGFloat = CGFloat(count) * barWidth + CGFloat(count - 1) * gap
+        let x0: CGFloat = (size.width - used) / 2
+        let half: CGFloat = max(1, size.width / 2)
+        let last: Int = values.count - 1
+        guard last >= 1 else { return }
+        for index in 0..<count {
+            let x: CGFloat = x0 + CGFloat(index) * (barWidth + gap)
+            let distance: Double = Double(min(1, abs(x + barWidth / 2 - half) / half))
+            let position: Double = distance * Double(last) * 0.85
+            let lower: Int = min(last, Int(position))
+            let upper: Int = min(last, lower + 1)
+            let blend: Double = position - Double(lower)
+            let value: Double = (values[lower] * (1 - blend) + values[upper] * blend) * (1 - 0.3 * distance) + 0.03
+            let height: CGFloat = 4 + (size.height - 4) * CGFloat(min(1, value))
+            let rect = CGRect(x: x, y: (size.height - height) / 2, width: barWidth, height: height)
+            let opacity: Double = 0.06 + 0.82 * pow(1 - distance, 2.2)
+            graphics.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(color.opacity(opacity)))
+        }
+    }
+}
+
+/// Turns band powers into bar heights (0...1): each bar jumps up at once
+/// and falls slowly, like a real meter, and the whole meter levels itself
+/// to how loud the episode is, so quiet shows still fill the strip.
+private final class LevelMeter {
+    private var shown = [Double](repeating: 0, count: BandMeter.bandCount)
+    /// The loudest band recently, in dB; eases down over a few seconds.
+    private var peak: Double = -80
+    private var lastTime: Double = 0
+
+    /// How many dB below the recent loudest a bar reaches the bottom.
+    private static let range: Double = 38
+
+    func step(bands: [Float], playing: Bool, time: Double) -> [Double] {
+        guard playing else {
+            for index in shown.indices { shown[index] = 0 }
+            lastTime = 0
+            return shown
+        }
+        let dt: Double = lastTime == 0 ? 1.0 / 60 : min(0.05, max(0, time - lastTime))
+        lastTime = time
+        var target = [Double](repeating: 0, count: shown.count)
+        if bands.count == shown.count, bands.contains(where: { $0 > 0 }) {
+            var loudest: Double = -200
+            for index in target.indices {
+                // Speech has far more energy low down: tilt up the high bands.
+                let decibels: Double = 10 * log10(Double(bands[index]) + 1e-12) + Double(index) * 1.0
+                target[index] = decibels
+                loudest = max(loudest, decibels)
+            }
+            peak = max(loudest, peak - 1.5 * dt)
+            let floor: Double = peak - Self.range
+            for index in target.indices {
+                target[index] = min(1, max(0, (target[index] - floor) / Self.range))
+            }
+        } else {
+            // No reading (some streams): a gentle made-up motion instead.
+            for index in target.indices {
+                let i = Double(index)
+                target[index] = 0.15 + 0.3 * abs(sin(time * (2.1 + 0.15 * i) + i * 0.9))
             }
         }
-        .frame(height: 30)
-    }
-
-    /// RMS to 0...1 (about −50 dB to −10 dB); -1 when there's no reading.
-    private static func loudness(_ rms: Float) -> Double {
-        guard rms > 0 else { return -1 }
-        let decibels: Double = 20 * log10(Double(rms))
-        return min(1, max(0, (decibels + 50) / 40))
-    }
-
-    private static func height(index: Int, time: Double, loudness: Double, playing: Bool) -> CGFloat {
-        guard playing else { return 6 }
-        let i = Double(index)
-        // Taller in the middle, with a little movement between the bars.
-        let shape: Double = 1 - abs(i - 4) / 6
-        let jitter: Double = 0.75 + 0.25 * abs(sin(time * (5 + Double(index % 3)) + i * 1.7))
-        // No reading (some streams): a gentle made-up motion instead.
-        let amount: Double = loudness < 0 ? 0.5 * abs(sin(time * 2.3 + i)) : loudness
-        return CGFloat(4 + 24 * amount * shape * jitter)
+        let frames: Double = dt * 60
+        for index in shown.indices {
+            let rising: Bool = target[index] > shown[index]
+            let ease: Double = 1 - pow(1 - (rising ? 0.7 : 0.13), frames)
+            shown[index] += (target[index] - shown[index]) * ease
+        }
+        return shown
     }
 }
 

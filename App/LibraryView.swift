@@ -13,6 +13,7 @@ struct LibraryView: View {
     @State private var cardInView: PersistentIdentifier?
     @State private var path = NavigationPath()
     @AppStorage("showsLayout") private var showsLayout = "large"
+    @AppStorage("showsSort") private var showsSort = ShowsSort.az.rawValue
 
     private static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
         var descriptor = FetchDescriptor<PodcastEpisode>(
@@ -108,7 +109,7 @@ struct LibraryView: View {
                         }
 
                         HStack(alignment: .center) {
-                            sectionTitle("YOUR SHOWS", detail: "\(shows.count) FOLLOWED")
+                            sectionTitle("YOUR SHOWS · \(shows.count)", detail: sort.short)
                             showsLayoutSwitch
                                 .padding(.trailing, 20)
                         }
@@ -143,17 +144,48 @@ struct LibraryView: View {
         }
     }
 
-    /// Large artwork tiles, small card + description, or description only
-    /// (Paul's choice, remembered and synced).
+    private var sort: ShowsSort { ShowsSort(rawValue: showsSort) ?? .az }
+
+    /// "Description only" was dropped (Paul, 10 Nov 2026); anyone who had
+    /// it gets the cards.
+    private var layout: String { showsLayout == "large" ? "large" : "card" }
+
+    /// Your shows in Paul's chosen order (sort key in the section header).
+    private var sortedShows: [Podcast] {
+        switch sort {
+        case .az:
+            return shows.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        case .za:
+            return shows.sorted { $0.title.localizedStandardCompare($1.title) == .orderedDescending }
+        case .newestEpisode, .oldestEpisode:
+            var latest: [PersistentIdentifier: Date] = [:]
+            for show in shows {
+                latest[show.persistentModelID] = show.episodes.map(\.published).max() ?? .distantPast
+            }
+            let newestFirst = sort == .newestEpisode
+            return shows.sorted { a, b in
+                let first = latest[a.persistentModelID] ?? .distantPast
+                let second = latest[b.persistentModelID] ?? .distantPast
+                return newestFirst ? first > second : first < second
+            }
+        case .followedNewest:
+            return shows.sorted { $0.followedAt > $1.followedAt }
+        case .followedOldest:
+            return shows.sorted { $0.followedAt < $1.followedAt }
+        }
+    }
+
+    /// Large artwork tiles, or small cards with the description (Paul's
+    /// choice, remembered and synced).
     @ViewBuilder private var yourShows: some View {
-        switch showsLayout {
-        // Rounded paper cards, like every other list (Paul after build 130).
-        case "card":
+        let ordered = sortedShows
+        if layout == "card" {
+            // Rounded paper cards, like every other list (Paul after build 130).
             VStack(spacing: 10) {
-                ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
+                ForEach(ordered) { show in
                     NavigationLink(value: show) {
                         HStack(spacing: 12) {
-                            ArtworkView(url: show.artworkURL, title: show.title, size: 52, radius: 10)
+                            ArtworkView(url: show.artworkURL, title: show.title, size: 56, radius: 10)
                             showText(show)
                             Spacer(minLength: 0)
                         }
@@ -166,24 +198,9 @@ struct LibraryView: View {
                 }
             }
             .padding(.horizontal, 12)
-        case "list":
-            VStack(spacing: 10) {
-                ForEach(Array(shows.enumerated()), id: \.element.id) { index, show in
-                    NavigationLink(value: show) {
-                        showText(show)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .deckCard()
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 12)
-        default:
+        } else {
             LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
-                ForEach(shows) { show in
+                ForEach(ordered) { show in
                     NavigationLink(value: show) {
                         ShowTile(show: show)
                     }
@@ -195,7 +212,7 @@ struct LibraryView: View {
     }
 
     private func showText(_ show: Podcast) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(show.title)
                 .font(Theme.text(15, .bold))
                 .foregroundStyle(Theme.ink)
@@ -207,21 +224,52 @@ struct LibraryView: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
+            // TOP / BTM and how many new, like the large cards (Paul, 10 Nov 2026).
+            ShowBadges(show: show)
+                .padding(.top, 1)
         }
     }
 
+    /// Sort key, then the two layout keys, on one paper strip.
     private var showsLayoutSwitch: some View {
         HStack(spacing: 2) {
+            sortMenu
             layoutKey("large", icon: "square.grid.2x2.fill", label: "Large cards")
             layoutKey("card", icon: "list.bullet.below.rectangle", label: "Small cards with description")
-            layoutKey("list", icon: "text.alignleft", label: "Description only")
         }
         .padding(3)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
     }
 
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort shows", selection: $showsSort) {
+                Section("Name") {
+                    Text("A–Z").tag(ShowsSort.az.rawValue)
+                    Text("Z–A").tag(ShowsSort.za.rawValue)
+                }
+                Section("Latest episode") {
+                    Text("Newest first").tag(ShowsSort.newestEpisode.rawValue)
+                    Text("Oldest first").tag(ShowsSort.oldestEpisode.rawValue)
+                }
+                Section("Date followed") {
+                    Text("Newest first").tag(ShowsSort.followedNewest.rawValue)
+                    Text("Oldest first").tag(ShowsSort.followedOldest.rawValue)
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 38, height: 32)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Sort shows")
+        .accessibilityValue(sort.short)
+    }
+
     private func layoutKey(_ value: String, icon: String, label: String) -> some View {
-        let on = showsLayout == value
+        let on = layout == value
         return Button { showsLayout = value } label: {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
@@ -248,10 +296,13 @@ struct LibraryView: View {
                 .font(Theme.mono(11, .bold))
                 .tracking(1.4)
                 .foregroundStyle(Theme.muted)
-            Spacer()
+                .lineLimit(1)
+            Spacer(minLength: 8)
             Text(detail)
                 .font(Theme.mono(11))
                 .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
         .padding(.horizontal, 20)
     }
@@ -442,14 +493,24 @@ private struct ShowTile: View {
                 .font(Theme.text(14, .semibold))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)
-            HStack(spacing: 6) {
-                DeckTag(text: tag)
-                Text("\(unplayed) NEW")
-                    .font(Theme.mono(10))
-                    .foregroundStyle(Theme.muted)
-            }
+            ShowBadges(show: show)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Where new episodes go (TOP / BTM / OFF) and how many are unplayed, under
+/// each show in Your shows (both layouts).
+private struct ShowBadges: View {
+    let show: Podcast
+
+    var body: some View {
+        HStack(spacing: 6) {
+            DeckTag(text: tag)
+            Text("\(show.episodes.filter { !$0.played }.count) NEW")
+                .font(Theme.mono(10))
+                .foregroundStyle(Theme.muted)
+        }
     }
 
     private var tag: String {
@@ -459,8 +520,23 @@ private struct ShowTile: View {
         case .off: return "OFF"
         }
     }
+}
 
-    private var unplayed: Int { show.episodes.filter { !$0.played }.count }
+/// How Your shows is ordered (Paul, 10 Nov 2026), saved as "showsSort".
+enum ShowsSort: String {
+    case az, za, newestEpisode, oldestEpisode, followedNewest, followedOldest
+
+    /// Shown beside YOUR SHOWS.
+    var short: String {
+        switch self {
+        case .az: return "A–Z"
+        case .za: return "Z–A"
+        case .newestEpisode: return "NEWEST EPISODE"
+        case .oldestEpisode: return "OLDEST EPISODE"
+        case .followedNewest: return "LAST FOLLOWED"
+        case .followedOldest: return "FIRST FOLLOWED"
+        }
+    }
 }
 
 /// Play next / Play last / played actions, shared by cards and lists.

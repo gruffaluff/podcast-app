@@ -68,7 +68,7 @@ final class SettingsSync {
         "findAdsWhileListening", "checkIntervalHours", "downloadWifiOnly",
         "keepShowOrder", "keepPlayingNew", "keepPlayedDownloads",
         "speed", "trimSilences", "boostVoices", "skipBack", "skipForward",
-        "skipAds", "transcriptSchedule", "showsLayout", "playerShowsTranscript",
+        "skipAds", "transcriptSchedule", "showsLayout", "showsSort", "playerShowsTranscript",
         "colourScheme",
     ]
 

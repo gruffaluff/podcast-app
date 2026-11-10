@@ -247,7 +247,7 @@ to Nowhere / Top / Bottom" on the show page.
   Podcasts': 248×330, the artwork across the top fading into its own
   colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
   pill with the time left, download and ⋯; it snaps card to card. Above it
-  Continue listening; below "Your shows" (large / card / list).
+  Continue listening; below "Your shows" (large / card, with a sort key).
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -962,22 +962,34 @@ From the Notion notes after 6 Nov 08:10:
   the default for dark mode"): Sand when the iPhone is light, Night when
   it's dark (`ColourScheme.resolve`); picking a scheme fixes it. Keys:
   AUTO / SAND / SLATE / CLAY / NIGHT.
+## On the branch for the next build (10 Nov 2026; not merged until Paul says "build")
+
+- **Level bars: "B bold 2"** (Paul, 10 Nov 2026: more sensitive, vibrant,
+  animated, fill the time area; mock-ups on
+  https://claude.ai/artifact/4wc6MmmGPEK8Pko9MVGFdK, he picked B bold 2
+  over A, B, C ripple, D, E meters and the A+B mixes). Thin bars across
+  the whole time strip, behind the numbers: low pitches in the middle,
+  high at the edges, nearly invisible at the edges and almost full
+  artwork colour in the middle. Each bar follows its own pitch band
+  (`App/BandMeter.swift`: 1024-point FFT with Accelerate on the audio tap,
+  24 log-spaced bands 90 Hz–9 kHz, nothing allocated on the audio thread;
+  `AudioTapState.bandLevels()`, `PlayerModel.outputBands`), jumps up at
+  once and falls slowly, and levels itself to the episode's loudness
+  (`LevelMeter` in NowPlayingView.swift: recent loudest band, 38 dB range,
+  +1 dB per band tilt for speech). 60 fps while the full player is open
+  and playing; resting bars when paused. The old single loudness reading
+  (`AudioTapState.level`, `outputLevel`) is gone.
+- **Your shows sort and layouts** (Paul, 10 Nov 2026): a sort key (⇅) on
+  the strip beside the layout keys: A–Z, Z–A, latest episode newest /
+  oldest first, date followed newest / oldest first (`ShowsSort`, saved
+  as "showsSort", synced); the header reads "YOUR SHOWS · 12" with the
+  sort on the right. "Description only" layout dropped (old setting falls
+  back to the cards); the card + description rows now show TOP / BTM /
+  OFF and "n NEW" like the large cards (`ShowBadges`).
+
 ## Queued for the next app build
 
 - 7 time row: left as it is (Paul, 9 Nov 2026).
-- **Level bars, livelier** (Paul, 10 Nov 2026: more sensitive, vibrant,
-  animated; fill the time area). Mock-ups on
-  https://claude.ai/artifact/4wc6MmmGPEK8Pko9MVGFdK: Today, A same place
-  livelier, B full width behind the numbers, C skyline from below, D
-  ripple, E tape deck L/R meters. Proposed meter for all: per-pitch bands
-  from the audio tap (Accelerate FFT) instead of one RMS for every bar
-  (`LevelBars` in NowPlayingView.swift, `AudioTapState.level`), snap up /
-  fall slowly with peak marks, auto-level, 60 fps. Paul likes A and B
-  together (10 Nov); same page now has A+B 1 (faint B either side, gap
-  round A), 2 (B moves slowly behind, A snappy), 3 (B runs through, stronger
-  towards the middle). Then Paul asked for B alone, bolder towards the
-  middle: B BOLD 1 (gentle, ~half strength in the middle) and 2 (strong,
-  nearly full colour). Waiting on his pick.
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
   reorder.
