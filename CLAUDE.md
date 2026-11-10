@@ -1054,7 +1054,13 @@ From the Notion notes after 6 Nov 08:10:
   shows the chapter name and time, the middle text shows the speed;
   sliding down slows it: <40 pt normal, 40–90 half, 90–140 quarter,
   further fine (1/8). No live sound bars (`BandMeter` could go). About
-  90 pt shorter. Waiting on Paul's verdict. Also seen in his build 135
+  90 pt shorter. Then (Paul: how thick is Apple's? move it up, the
+  popup may overlap the area above if it stays clear): Apple's line
+  measured from his recording is ~7 pt at rest, ~16 pt scrubbing, and
+  stretches ~8 pt wider each side while held. Same link now compares
+  T1 3→10, T2 5→14, T3 7→16 (Apple), T4 10→20, T5 14→24, with the line
+  18 pt under the artwork area and the bubble a paper card with a shadow
+  floating over its bottom edge. Waiting on Paul's pick. Also seen in his build 135
   screenshot: chapter dots 1 and 4 overlapped (short first chapters),
   gone with this design.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
