@@ -20,6 +20,10 @@ struct PlayerTranscriptPanel: View {
     @FocusState private var fieldFocused: Bool
     /// "Share a clip" from a line (Paul: clips were too hard to find).
     @State private var clipLine: ClipRequest?
+    /// Scrolling the lines by hand stops them following playback for a
+    /// few seconds after you let go (or until Back to now).
+    @State private var followPaused = false
+    @State private var resumeFollow: Task<Void, Never>?
 
     private var isPlayingThis: Bool { player.nowPlaying?.episodeID == episode.episodeID }
 
@@ -130,17 +134,52 @@ struct PlayerTranscriptPanel: View {
         return nowIndex ?? (lines.isEmpty ? nil : 0)
     }
 
+    /// Every line, scrolling smoothly to keep the line playing now (or the
+    /// find match) a third of the way down (Paul, 10 Nov 2026: whole lines,
+    /// the line now bigger and clearer, the rest smaller and faded, and a
+    /// smooth scroll rather than jumping line to line).
     private var window: some View {
         let focus = focusIndex
         // Read once per redraw (they're decoded from saved data each time).
         let names = episode.podcast?.speakerNames ?? [:]
-        return VStack(alignment: .leading, spacing: 12) {
-            if let focus {
-                // One line before, then the line now (or the match) and what
-                // follows; whatever doesn't fit is cut off at the bottom.
-                let shown = searching ? [focus, focus + 1, focus + 2] : [focus - 1, focus, focus + 1, focus + 2, focus + 3]
-                ForEach(shown.filter { lines.indices.contains($0) }, id: \.self) { index in
-                    lineView(lines[index], isFocus: index == focus, names: names)
+        return ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 16) {
+                    ForEach(lines.indices, id: \.self) { index in
+                        lineView(lines[index], isFocus: index == focus, isPast: focus.map { index < $0 } ?? false, names: names)
+                            .id(index)
+                    }
+                }
+                .padding(.vertical, 60)
+            }
+            .scrollIndicators(.hidden)
+            // Lines fade out at the top and bottom edges.
+            .mask(LinearGradient(stops: [
+                .init(color: .clear, location: 0), .init(color: .black, location: 0.1),
+                .init(color: .black, location: 0.82), .init(color: .clear, location: 1),
+            ], startPoint: .top, endPoint: .bottom))
+            .onScrollPhaseChange { _, phase in
+                if phase == .interacting {
+                    followPaused = true
+                    resumeFollow?.cancel()
+                } else if phase == .idle, followPaused {
+                    resumeFollow?.cancel()
+                    resumeFollow = Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(6))
+                        if !Task.isCancelled { followPaused = false }
+                    }
+                }
+            }
+            .onChange(of: focus, initial: true) { old, new in
+                guard let new, searching || !followPaused else { return }
+                withAnimation(old == new ? nil : .easeInOut(duration: 0.6)) {
+                    proxy.scrollTo(new, anchor: UnitPoint(x: 0, y: 0.3))
+                }
+            }
+            .onChange(of: followPaused) { _, paused in
+                guard !paused, let focus = focusIndex else { return }
+                withAnimation(.easeInOut(duration: 0.6)) {
+                    proxy.scrollTo(focus, anchor: UnitPoint(x: 0, y: 0.3))
                 }
             }
         }
@@ -149,13 +188,15 @@ struct PlayerTranscriptPanel: View {
     /// While finding away from the line playing: a key back to it, floating
     /// at the bottom of the area.
     @ViewBuilder private var backToNow: some View {
-        if searching, focusIndex != nowIndex, let now = nowIndex {
+        if (searching && focusIndex != nowIndex) || (followPaused && !searching), let now = nowIndex {
                 HStack {
                     Spacer()
                     Button {
                         searching = false
                         query = ""
                         fieldFocused = false
+                        resumeFollow?.cancel()
+                        followPaused = false
                     } label: {
                         Text("↓ BACK TO NOW · \(TimeFormat.clock(lines[now].start))")
                             .font(Theme.mono(12, .bold))
@@ -177,7 +218,7 @@ struct PlayerTranscriptPanel: View {
         return breaks.first { $0.contains(line.start + 0.1) }
     }
 
-    private func lineView(_ line: TranscriptLayout.Line, isFocus: Bool, names: [String: String]) -> some View {
+    private func lineView(_ line: TranscriptLayout.Line, isFocus: Bool, isPast: Bool, names: [String: String]) -> some View {
         let speaker = line.speaker.map { names[$0] ?? $0 }
         // Lines in a suspected ad: an amber bar down the side and "AD" first.
         let ad = adBreak(for: line)
@@ -192,10 +233,12 @@ struct PlayerTranscriptPanel: View {
                     .font(Theme.mono(10, .bold))
                     .tracking(1.2)
                     .foregroundStyle(isFocus ? Theme.adMarker : Theme.displayText)
+                // Whole lines, never cut short.
                 Text(highlighted(line.text))
-                    .font(Theme.text(isFocus ? 21 : 15, isFocus ? .bold : .regular))
-                    .lineLimit(isFocus ? 4 : 2)
+                    .font(Theme.text(isFocus ? 23 : 15, isFocus ? .bold : .regular))
                     .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .contentTransition(.interpolate)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, ad == nil ? 0 : 12)
@@ -206,7 +249,9 @@ struct PlayerTranscriptPanel: View {
                         .frame(width: 4)
                 }
             }
-            .opacity(isFocus ? 1 : 0.6)
+            // Lines already heard fade more than those coming up.
+            .opacity(isFocus ? 1 : (isPast ? 0.38 : 0.55))
+            .animation(.easeInOut(duration: 0.4), value: isFocus)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -223,6 +268,8 @@ struct PlayerTranscriptPanel: View {
                         .background(.black.opacity(0.28), in: Capsule())
                 }
                 .buttonStyle(.plain)
+                // Level with the time label, clear of the words below.
+                .offset(y: -6)
                 .accessibilityLabel("Share a clip of this line")
             }
         }

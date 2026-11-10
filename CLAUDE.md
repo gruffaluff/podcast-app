@@ -1062,6 +1062,16 @@ From the Notion notes after 6 Nov 08:10:
   18 pt under the artwork area and the bubble a paper card with a shadow
   floating over its bottom edge. Times under the line bigger (16 pt
   DM Mono, Paul). Waiting on Paul's pick.
+- **Player transcript** (Paul, 10 Nov 2026, build 135 screenshot: lines
+  cut to one line with "…"; wants whole lines, the line now bigger and
+  clearer, the others smaller and faded, and a smooth scroll instead of
+  jumping). On the branch, not built: the panel is a scrolling list of
+  every line (`PlayerTranscriptPanel.window`, LazyVStack) that glides
+  (0.6 s ease) to keep the line now a third of the way down; whole lines
+  (`fixedSize`; the fixed-height panel had squeezed them to one line);
+  line now 23 pt bold, others 15 pt, heard lines 38% and coming ones 55%;
+  edges fade out. Scrolling by hand pauses following until 6 s after you
+  let go, or BACK TO NOW. CLIP key sits level with the time label.
 - **Rewind when you resume** (Paul, 10 Nov 2026: "smart rewind like other
   apps"; on the branch, not built): after a pause the player goes back 3 s
   (pause of 5 s–1 min), 10 s (1 min–1 h) or 20 s (over an hour); none
