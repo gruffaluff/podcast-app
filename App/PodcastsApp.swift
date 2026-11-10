@@ -96,8 +96,10 @@ struct RootView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
-    @State private var showingPlayer = false
-    @State private var tab = 0
+    /// Kept by `SchemedRoot`, so a redraw for a colour change doesn't
+    /// close the player or change tab.
+    @Binding var showingPlayer: Bool
+    @Binding var tab: Int
     @State private var quickActions = QuickActions.shared
     @State private var showingWelcome = false
 
@@ -193,13 +195,29 @@ struct RootView: View {
 private struct SchemedRoot: View {
     @AppStorage(ColourScheme.key) private var setting = ColourScheme.auto
     @Environment(\.colorScheme) private var systemScheme
+    @Environment(\.scenePhase) private var scenePhase
+    /// The iPhone's light / dark, followed only while the app is in use:
+    /// when you leave the app, iOS briefly draws it in both looks for the
+    /// app switcher, and following that redrew everything and closed the
+    /// player (Paul, build 135).
+    @State private var systemDark: Bool?
+    /// Here, not in RootView, so a redraw keeps them.
+    @State private var showingPlayer = false
+    @State private var tab = 0
 
     var body: some View {
-        let chosen = ColourScheme.resolve(setting, systemDark: systemScheme == .dark)
+        let dark = systemDark ?? (systemScheme == .dark)
+        let chosen = ColourScheme.resolve(setting, systemDark: dark)
         // Set before anything below is drawn, so every Theme colour matches.
         let _ = ColourScheme.use(chosen)
-        RootView()
+        RootView(showingPlayer: $showingPlayer, tab: $tab)
             .id(chosen)
+            .onChange(of: systemScheme, initial: true) { _, scheme in
+                if scenePhase == .active || systemDark == nil { systemDark = scheme == .dark }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { systemDark = systemScheme == .dark }
+            }
             // Auto leaves light / dark to the iPhone; a picked scheme sets it.
             .preferredColorScheme(setting == ColourScheme.auto ? nil : (chosen.isDark ? .dark : .light))
     }

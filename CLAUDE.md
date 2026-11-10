@@ -1035,6 +1035,28 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Player closed after switching apps** (Paul, build 135: open the
+  player, swipe to another app, come back: it had shrunk to the mini
+  player). Cause: on the AUTO colour setting, iOS briefly draws the app
+  in both light and dark for the app switcher; that counted as a scheme
+  change, and the whole app was redrawn from scratch (`.id(chosen)`),
+  closing the player. Fixed on the branch (not built): `SchemedRoot`
+  follows the iPhone's light / dark only while the app is in use, and
+  keeps "player open" and the tab itself (`RootView` takes them as
+  bindings), so even a real scheme change keeps the player open.
+- **Progress line, Apple style** (Paul, 10 Nov 2026, after build 135: "not
+  sure", sent a recording of Apple Podcasts' scrubber). Mock-up
+  https://claude.ai/artifact/NUUfPjhX55n9SXWRFxMAAH (try it, resting,
+  scrubbing demo, build 135 for comparison): a 5 pt line with no handle,
+  split by gaps at chapters, ads amber; played / −left under each end,
+  ENDS in the middle. Touch anywhere and drag (moves by how far the
+  finger travels): the line grows to 14 pt, a bubble above the finger
+  shows the chapter name and time, the middle text shows the speed;
+  sliding down slows it: <40 pt normal, 40–90 half, 90–140 quarter,
+  further fine (1/8). No live sound bars (`BandMeter` could go). About
+  90 pt shorter. Waiting on Paul's verdict. Also seen in his build 135
+  screenshot: chapter dots 1 and 4 overlapped (short first chapters),
+  gone with this design.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
