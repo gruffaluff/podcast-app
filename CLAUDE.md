@@ -228,9 +228,10 @@ to Nowhere / Top / Bottom" on the show page.
   artwork's colour: ⌄ close, device (AirPlay picker), find (transcript
   mode), notes (scrolls to the episode notes), mark played; ARTWORK /
   TRANSCRIPT switch with Full transcript and download keys; chapter chip;
-  ad bar. Below: played / left / ENDS time with live sound bars behind
-  the numbers, progress pill split at chapters with striped ads and a
-  round handle (drag only the handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
+  ad bar. Below: played / chapter / left + ENDS time, then the
+  progress line made of live sound bars (dashed chapter lines, numbered
+  chapter dots, AD brackets, round handle mid-line; drag only the
+  handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
   (opens the list), episode notes. Pull down past the top to close.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
@@ -1012,31 +1013,25 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
-- **Player time / progress / live sound** (Paul, 10 Nov 2026, build 134:
-  the round handle sits a few points below the pill (bug: the 44×52
-  touch frame is taller than the 44 pt row, so the ZStack grows and the
-  `barCentreOffset` is off; fix by matching the row to the handle frame or
-  overlaying the handle on the pill), and he's "still not sure" about the
-  look). Mock-ups of six layouts on
-  https://claude.ai/artifact/HGkM8MpcadQwMbk7C2vJkN: Now (134, handle
-  fixed); A the live bars are the progress bar (playhead line + knob,
-  chapter between the times); B live bars inside a fat 44 pt pill, ads as
-  an amber bottom edge; C big live bars on top, times either end of a
-  slim bar, ends + chapter under; D progress ring round the play key; E
-  played time big in the centre over the bars, slim bar with chapter
-  ticks. Then thinner lines (THIN 1 8 pt, THIN 2 4 pt, THIN 3 C at 5 pt)
-  and, at Paul's ask, A with chapter callouts: numbered chapter dots (1,
-  2, 3… filled once reached, current one ringed) and amber "AD" tags /
-  ad bars: A1 dots below + AD tags above, A2 gaps in the bars at
-  chapters + dots on top + AD tags below, A3 dashed chapter lines + ad
-  brackets. Paul likes A3 with the handle moved to the middle of the
-  playhead line ("A3+", 10 Nov 2026). Then, for the space between the two
-  times, seven ideas on the same page: M1 chapter (as now), M2 chapter +
-  time left in it (small ring), M3 chapter artwork, M4 live transcript
-  line, M5 speed / trim + time saved, M6 where it's playing + sleep
-  timer, M7 the next episode in Up Next. Waiting on Paul's pick; then
-  build A3+ (replacing the 2C pill and the separate level bars) with the
-  handle fix.
+- **Player time / progress: "A3+"** (Paul, 10 Nov 2026, after build 134:
+  handle sat below the pill and he wasn't sure about the look; mock-ups
+  on https://claude.ai/artifact/HGkM8MpcadQwMbk7C2vJkN: Now, A–E, thinner
+  lines, A1–A3, then A3+ and seven ideas M1–M7 for the space between the
+  times; he liked A3+ and kept the chapter there: "let's stick with how
+  we are"). On the branch, UBDM, not built yet: the live sound bars ARE
+  the progress line (`LiveScrubber` in NowPlayingView.swift, replacing
+  `ProgressPill` and the separate `LevelBars`): 56 bars, played in the
+  artwork's colour, ahead pale, ad bars amber under a bracket with an AD
+  tag; dashed line + numbered dot (filled once reached, the current one
+  ringed; dots that would overlap are left out) at each chapter; ink
+  playhead line with a 24 pt round handle in its middle. Bars near the
+  playhead follow the low pitches, further ones the high, from
+  `BandMeter` / `LevelMeter` as before (60 fps only while the full player
+  is open and playing). Time row: played left, "CHAPTER 2 OF 5" + the
+  chapter's name in the middle, −left and ENDS right. Handle fix: the
+  touch area is placed by its centre (`.position`), so it sits on the
+  line. Check on the phone: long chapter names, many chapters, colours on
+  light artwork.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
