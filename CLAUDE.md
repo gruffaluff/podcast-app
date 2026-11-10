@@ -228,9 +228,10 @@ to Nowhere / Top / Bottom" on the show page.
   artwork's colour: ⌄ close, device (AirPlay picker), find (transcript
   mode), notes (scrolls to the episode notes), mark played; ARTWORK /
   TRANSCRIPT switch with Full transcript and download keys; chapter chip;
-  ad bar. Below: played / left / ENDS time with live sound bars behind
-  the numbers, progress pill split at chapters with striped ads and a
-  round handle (drag only the handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
+  ad bar. Below: played / chapter / left + ENDS time, then the
+  progress line made of live sound bars (dashed chapter lines, numbered
+  chapter dots, AD brackets, round handle mid-line; drag only the
+  handle), transport, SPEED / TRIM / BOOST / SLEEP tiles, Up Next card
   (opens the list), episode notes. Pull down past the top to close.
 - **Choose where to play**: an AirPlay/route button in the player opens the
   system device picker (AirPods, speakers, TVs, car) via AVRoutePickerView; the
@@ -995,7 +996,7 @@ From the Notion notes after 6 Nov 08:10:
   back to the cards); the card + description rows now show TOP / BTM /
   OFF and "n NEW" like the large cards (`ShowBadges`).
 
-## Done in build 134 (10 Nov 2026, PR #52; Paul: "build")
+## Done in build 134 (10 Nov 2026, PR #52; Paul: "build"; on TestFlight 10 Nov, Paul has it)
 
 - **Progress bar: "2C"** (Paul, 10 Nov 2026: build 133's live sound bars
   and the loudness progress bar looked like the same thing twice). Mock-ups:
@@ -1012,6 +1013,25 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Player time / progress: "A3+"** (Paul, 10 Nov 2026, after build 134:
+  handle sat below the pill and he wasn't sure about the look; mock-ups
+  on https://claude.ai/artifact/HGkM8MpcadQwMbk7C2vJkN: Now, A–E, thinner
+  lines, A1–A3, then A3+ and seven ideas M1–M7 for the space between the
+  times; he liked A3+ and kept the chapter there: "let's stick with how
+  we are"). On the branch, UBDM, not built yet: the live sound bars ARE
+  the progress line (`LiveScrubber` in NowPlayingView.swift, replacing
+  `ProgressPill` and the separate `LevelBars`): 56 bars, played in the
+  artwork's colour, ahead pale, ad bars amber under a bracket with an AD
+  tag; dashed line + numbered dot (filled once reached, the current one
+  ringed; dots that would overlap are left out) at each chapter; ink
+  playhead line with a 24 pt round handle in its middle. Bars near the
+  playhead follow the low pitches, further ones the high, from
+  `BandMeter` / `LevelMeter` as before (60 fps only while the full player
+  is open and playing). Time row: played left, "CHAPTER 2 OF 5" + the
+  chapter's name in the middle, −left and ENDS right. Handle fix: the
+  touch area is placed by its centre (`.position`), so it sits on the
+  line. Check on the phone: long chapter names, many chapters, colours on
+  light artwork.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
