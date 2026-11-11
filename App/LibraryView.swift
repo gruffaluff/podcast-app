@@ -59,7 +59,7 @@ struct LibraryView: View {
 
     private var caughtUp: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("ALL CAUGHT UP")
+            Text("All caught up")
                 .font(Theme.big(26))
                 .foregroundStyle(Theme.ink)
             Text("No new episodes waiting. New ones land here as they come out.")
@@ -141,7 +141,7 @@ struct LibraryView: View {
             .refreshable { await store.refreshAll() }
             .onAppear { continuing = store.continueListening(excluding: player.nowPlaying?.episodeID, limit: 3) }
             .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = store.continueListening(excluding: id, limit: 3) }
-            .tabTitle("LIBRARY")
+            .tabTitle("Library")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             // From the player's / an episode page's show name.
             .onChange(of: store.revealShow, initial: true) { _, show in
@@ -278,7 +278,7 @@ struct LibraryView: View {
 
     private func bigHeading<Trailing: View>(_ title: String, count: Int, colour: Color, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack(alignment: .lastTextBaseline, spacing: 8) {
-            Text(title.uppercased())
+            Text(title)
                 .font(Theme.big(30))
                 .foregroundStyle(Theme.ink)
             Text("\(count)")

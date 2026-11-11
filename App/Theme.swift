@@ -130,18 +130,29 @@ enum Theme {
 
     /// Whether the bundled fonts loaded (checked once).
     private static let hasTapeDeckFonts: Bool =
-        UIFont(name: "BigShouldersDisplay-Black", size: 12) != nil && UIFont(name: "DMMono-Medium", size: 12) != nil
+        UIFont(name: "BarlowCondensed-SemiBold", size: 12) != nil && UIFont(name: "BarlowCondensed-Medium", size: 12) != nil
+        && UIFont(name: "DMMono-Medium", size: 12) != nil
 
-    /// Big titles: tall, narrow industrial capitals, like the lettering on
-    /// hi-fi gear (Big Shoulders Display Black; Paul picked "tape deck",
-    /// 8 Nov 2026). Pass uppercased text. Falls back to the system font if
+    /// Headings and screen titles: Barlow Condensed SemiBold, in proper
+    /// case (Paul picked option 5, 11 Nov 2026: Big Shoulders Black in
+    /// capitals felt too bold and strong). Falls back to the system font if
     /// the font file is ever missing.
     static func big(_ size: CGFloat) -> Font {
-        let scaledSize = scaled(size * 1.08, max: 1.2)
+        let scaledSize = scaled(size, max: 1.2)
         guard hasTapeDeckFonts else {
-            return .system(size: scaled(size, max: 1.2), weight: .black).width(.condensed)
+            return .system(size: scaledSize, weight: .semibold).width(.condensed)
         }
-        return .custom("BigShouldersDisplay-Black", fixedSize: scaledSize)
+        return .custom("BarlowCondensed-SemiBold", fixedSize: scaledSize)
+    }
+
+    /// Row titles (episodes, shows, chapters) and the transcript's lines:
+    /// Barlow Condensed Medium, a step lighter than the headings.
+    static func title(_ size: CGFloat) -> Font {
+        let scaledSize = scaled(size, max: 1.25)
+        guard hasTapeDeckFonts else {
+            return .system(size: scaledSize, weight: .medium).width(.condensed)
+        }
+        return .custom("BarlowCondensed-Medium", fixedSize: scaledSize)
     }
 
     /// Follows the iPhone's text size setting (Dynamic Type), within limits

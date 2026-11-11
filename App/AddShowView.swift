@@ -57,7 +57,7 @@ struct AddShowView: View {
             .sheet(item: $justFollowed) { show in
                 ShowSettingsView(show: show, justFollowed: true)
             }
-            .navigationTitle("ADD A SHOW")
+            .navigationTitle("Add a show")
             .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .navigationBarTitleDisplayMode(.inline)

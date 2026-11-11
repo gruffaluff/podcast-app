@@ -185,7 +185,7 @@ struct NowPlayingView: View {
             .buttonStyle(.plain)
             .accessibilityHint("Opens the show")
             Button { showingNotes = true } label: {
-                Text(item.title.uppercased())
+                Text(item.title)
                     .font(Theme.big(46))
                     .lineLimit(4)
                     .minimumScaleFactor(0.55)

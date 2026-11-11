@@ -6,7 +6,8 @@
 	     titles, DM Mono for labels. Open Font Licence, in App/Fonts. -->
 	<key>UIAppFonts</key>
 	<array>
-		<string>BigShouldersDisplay-Black.ttf</string>
+		<string>BarlowCondensed-SemiBold.ttf</string>
+		<string>BarlowCondensed-Medium.ttf</string>
 		<string>DMMono-Regular.ttf</string>
 		<string>DMMono-Medium.ttf</string>
 	</array>

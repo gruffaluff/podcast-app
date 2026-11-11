@@ -30,7 +30,8 @@ screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
 his pick A + B with square stamps). Same sand page, paper cards, fonts and
 colour schemes; every list row is a poster row (`posterCard` / `showRow` /
 `PosterRowText` in `App/Poster.swift`): a strip of the show's colour down
-the left, a DM Mono label line, the title in big Big Shoulders capitals,
+the left, a DM Mono label line, the title in Barlow Condensed (type
+below),
 the artwork as a small square `Stamp` on the right. Big colour areas (Up
 Next's playing block, mini player, player, show and preview headers,
 episode page, Discover "because you listen to" tiles) are the artwork
@@ -1196,7 +1197,7 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
-- **Lighter type** (Paul, 11 Nov 2026: the font feels "a bit too bold /
+- **Lighter type: done, option 5** (Paul, 11 Nov 2026: the font feels "a bit too bold /
   strong"). Every title is Big Shoulders Black (900) in capitals. Options
   on https://claude.ai/artifact/HcvktcXpssM9FtFPNdqdFo: 1 today, 2 Big
   Shoulders Bold everywhere, 3 Display ExtraBold headings + Big Shoulders
@@ -1204,7 +1205,15 @@ From the Notion notes after 6 Nov 08:10:
   section headings, row titles in SF semibold normal case, 5 Barlow
   Condensed (SemiBold headings, Medium rows). Suggested 4. Paul: keep
   proper case (not capitals); same link re-rendered in proper case
-  (option 1 left in capitals to compare). Waiting on his pick.
+  (option 1 left in capitals to compare). **Paul picked 5** (11 Nov
+  2026), on the branch: `App/Fonts/` now holds BarlowCondensed-SemiBold
+  and -Medium (Google Fonts, OFL licence file) in place of Big Shoulders
+  (removed); `Theme.big` = Barlow Condensed SemiBold (headings, screen
+  titles, player title and time), new `Theme.title` = Barlow Condensed
+  Medium (row titles, mini player, transcript lines); every title and
+  heading in proper case (no `.uppercased()`), tab and screen titles too
+  ("Up Next", "Library", "Episode notes"…); the iOS navigation bar titles
+  use Barlow Condensed SemiBold. Labels stay DM Mono capitals, body SF.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.

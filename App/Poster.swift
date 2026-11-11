@@ -5,7 +5,7 @@ import CoreImage
 // The poster look (Paul, 11 Nov 2026: "let's rebuild it all"; mock-ups
 // https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR, his pick A + B with
 // square stamps). The page stays sand; every row gets a strip of its show's
-// colour, a big Big Shoulders title and the artwork as a small square
+// colour, a Barlow Condensed title and the artwork as a small square
 // "stamp" (A); the big colour areas (playing block, player, show and
 // episode pages, mini player) are the artwork "printed" in one ink of the
 // show's colour with a halftone dot screen (B).
@@ -164,7 +164,7 @@ struct Stamp: View {
 }
 
 /// The text of a poster row: a small DM Mono label line, then the title in
-/// big Big Shoulders capitals.
+/// Barlow Condensed Medium, in proper case.
 struct PosterRowText: View {
     let label: String
     let title: String
@@ -182,8 +182,8 @@ struct PosterRowText: View {
                     .foregroundStyle(onColour ? Poster.paper.opacity(0.8) : Theme.muted)
                     .lineLimit(1)
             }
-            Text(title.uppercased())
-                .font(Theme.big(titleSize))
+            Text(title)
+                .font(Theme.title(titleSize))
                 .foregroundStyle(onColour ? Poster.paper : (dim ? Theme.muted : Theme.ink))
                 .lineLimit(lines)
                 .fixedSize(horizontal: false, vertical: true)

@@ -77,7 +77,7 @@ struct HistoryView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("HISTORY")
+        .navigationTitle("History")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { episodes = store.listeningHistory() }
     }
@@ -201,7 +201,7 @@ struct StatsView: View {
             .padding(16)
         }
         .background(Theme.background)
-        .navigationTitle("STATS")
+        .navigationTitle("Stats")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { stats = store.listeningStats() }
     }
@@ -314,7 +314,7 @@ struct StorageView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("STORAGE")
+        .navigationTitle("Storage")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }
         .alert("Delete all downloads?", isPresented: $confirmingDeleteAll) {

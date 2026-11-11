@@ -56,7 +56,7 @@ struct WelcomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                Text("PODDECK")
+                Text("Poddeck")
                     .font(Theme.big(52))
                     .foregroundStyle(Theme.ink)
                 Text("A podcast app that runs on your iPhone. No account, no subscription, no adverts.")

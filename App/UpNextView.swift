@@ -113,7 +113,7 @@ struct UpNextView: View {
                     suggestions = await SuggestionRow.load(store: store)
                 }
             }
-            .tabTitle("UP NEXT")
+            .tabTitle("Up Next")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .toolbar {
                 // Reorder / remove mode (long press and drag works anyway).

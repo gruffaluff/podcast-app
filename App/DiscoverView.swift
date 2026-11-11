@@ -40,7 +40,7 @@ struct DiscoverView: View {
             .task(id: genre) { await loadChart() }
             .task { await loadSuggestions() }
             .refreshable { await loadChart() }
-            .tabTitle("DISCOVER")
+            .tabTitle("Discover")
             .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
         }
@@ -223,7 +223,7 @@ private struct SuggestionCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Stamp(url: item.artworkURL, title: item.title, size: 40)
                     Spacer(minLength: 0)
-                    Text(item.title.uppercased())
+                    Text(item.title)
                         .font(Theme.big(18))
                         .foregroundStyle(Poster.paper)
                         .lineLimit(3)

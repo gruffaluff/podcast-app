@@ -141,8 +141,8 @@ struct MiniPlayer: View {
                                     .monospacedDigit()
                                     .foregroundStyle(Theme.displayDim)
                                     .lineLimit(1)
-                                Text(item.title.uppercased())
-                                    .font(.custom("BigShouldersDisplay-Black", fixedSize: 19))
+                                Text(item.title)
+                                    .font(.custom("BarlowCondensed-Medium", fixedSize: 19))
                                     .foregroundStyle(Theme.displayText)
                                     .lineLimit(1)
                             }

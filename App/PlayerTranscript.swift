@@ -234,16 +234,13 @@ struct PlayerTranscriptPanel: View {
                     .tracking(1.2)
                     .foregroundStyle(isFocus ? Theme.adMarker : Theme.displayText)
                 // Whole lines, never cut short.
-                // A lyric sheet (poster look, 11 Nov 2026): the line being
-                // said in big Big Shoulders capitals, the others small.
-                // Every line is set the same (lyric-sheet capitals), so
+                // Every line is set the same (Barlow Condensed, a lyric sheet), so
                 // nothing reflows when the line changes; the others are
                 // shrunk and faded with a scale, which glides instead of
                 // jumping (the size change made the lines leap, Paul
                 // after build 138).
                 Text(highlighted(line.text))
-                    .font(Theme.big(28))
-                    .textCase(.uppercase)
+                    .font(Theme.title(26))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }

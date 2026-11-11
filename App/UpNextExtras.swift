@@ -75,7 +75,7 @@ struct UpNextSheet: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .navigationTitle("UP NEXT")
+            .navigationTitle("Up Next")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
