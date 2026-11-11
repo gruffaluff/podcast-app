@@ -1383,7 +1383,23 @@ From the Notion notes after 6 Nov 08:10:
   key; suggested), C Cassette card (what's playing as a cassette with
   turning reels), D Deck with modes (fixed faceplate, mode keys UP NEXT /
   NEW / CARRY ON / SHOWS switch the list, no tab bar), E Plain home, deck
-  player (deck saved for the full player). Waiting on Paul.
+  player (deck saved for the full player). Paul: "not feeling any of
+  those; I want to feel wowed by how well thought out this is, how
+  smartly the space is used, functional and beautiful". Instead of more
+  options: one design worked through as a clickable prototype with the
+  reasoning beside each screen, https://claude.ai/artifact/Bui2H2iQBjQMtNQogtC1XJ:
+  iOS 26's own floating tab bar with two tabs (Listen, Library) and a
+  search button; Listen = what's playing as one card (chapter, time left,
+  play, progress split at chapters) + one list switching Up Next / New /
+  Carry on, with Up Next showing when each episode starts at your speed
+  and "done by 22:10"; player = artwork square that flips to the
+  transcript in place, chapter pill, progress with chapter gaps and amber
+  ads, "ends 19:42", tools as four buttons showing their state (1.3×, On,
+  Off, 20 min), AirPlay / Up Next / Notes along the bottom; Library = one
+  search for shows, episodes and transcripts, show tiles with new counts,
+  Discover suggestions, History / Stats / Settings cards; show page =
+  setting pills (Top of Up Next, alerts, own speed), round played ticks.
+  The artwork colour is the only colour. Waiting on Paul.
 
 ## Queued for the next app build
 
