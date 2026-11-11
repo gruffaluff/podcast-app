@@ -1399,7 +1399,16 @@ From the Notion notes after 6 Nov 08:10:
   search for shows, episodes and transcripts, show tiles with new counts,
   Discover suggestions, History / Stats / Settings cards; show page =
   setting pills (Top of Up Next, alerts, own speed), round played ticks.
-  The artwork colour is the only colour. Waiting on Paul.
+  The artwork colour is the only colour. Paul: not sold;
+  asked to evolve Deck refined and look for any other angle. Three
+  evolutions on https://claude.ai/artifact/2UbLpBxfdCPjyEyvUAX3Us, each with
+  Listen, player and Library: A Hi-fi component (light panel, small amber
+  display, crisp keys with little lights for SPEED / TRIM / BOOST / SLEEP,
+  one orange; suggested), B Walkman (deep blue body, chunky keys, a cassette
+  window whose tape shows progress, Up Next as tapes, shows as spines on a
+  shelf, yellow for play), C Tape machine (Up Next as a length of tape down
+  the screen with start times and a red NOW line, chapters as edit marks,
+  Library shows the week as tape). Waiting on Paul.
 
 ## Queued for the next app build
 
