@@ -498,9 +498,11 @@ private struct NewPaperLine: View {
     var body: some View {
         let inQueue = store.isQueued(episode)
         let isCurrent = player.nowPlaying?.episodeID == episode.episodeID
-        var parts = [episode.showTitle, TimeFormat.ago(episode.published)]
-        if let length = episode.timeLeft ?? episode.duration, length > 0 { parts.append(TimeFormat.length(length)) }
+        var parts: [String] = [episode.showTitle, TimeFormat.ago(episode.published)]
+        let length: TimeInterval = episode.timeLeft ?? episode.duration ?? 0
+        if length > 0 { parts.append(TimeFormat.length(length)) }
         if isCurrent { parts.append("Playing") } else if inQueue { parts.append("In Up Next") }
+        let line: String = parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased()
         return HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
@@ -511,7 +513,7 @@ private struct NewPaperLine: View {
                         .lineLimit(2)
                 }
                 HStack(spacing: 6) {
-                    Text(parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+                    Text(line)
                         .font(Theme.mono(8.5))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
@@ -627,6 +629,11 @@ private struct CarryOnRow: View {
     let episode: PodcastEpisode
     let isCurrent: Bool
 
+    private var carryOnDetail: String {
+        let parts: [String] = [episode.showTitle, episode.carryOnLeft]
+        return parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased()
+    }
+
     var body: some View {
         let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
         let content = HStack(spacing: 10) {
@@ -639,7 +646,7 @@ private struct CarryOnRow: View {
                         .foregroundStyle(isCurrent ? Poster.paper : Theme.ink)
                         .lineLimit(1)
                 }
-                Text([episode.showTitle, episode.carryOnLeft].filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+                Text(carryOnDetail)
                     .font(Theme.mono(8.5))
                     .foregroundStyle(isCurrent ? Poster.paper.opacity(0.7) : Theme.muted)
                     .lineLimit(1)
@@ -685,10 +692,17 @@ private struct ShowPosterRow: View {
         }
     }
 
+    /// "TOP · UPDATED 2H AGO".
+    private func detail(latest: Date?) -> String {
+        var parts: [String] = [mode]
+        if let latest { parts.append("Updated " + TimeFormat.ago(latest)) }
+        return parts.joined(separator: " · ").uppercased()
+    }
+
     var body: some View {
-        let colour = Poster.colour(show.artworkURL, title: show.title)
-        let unplayed = show.episodes.reduce(0) { $0 + ($1.played ? 0 : 1) }
-        let latest = show.episodes.map(\.published).max()
+        let colour: Color = Poster.colour(show.artworkURL, title: show.title)
+        let unplayed: Int = show.episodes.reduce(0) { $0 + ($1.played ? 0 : 1) }
+        let latest: Date? = show.episodes.map(\.published).max()
         HStack(spacing: 10) {
             Stamp(url: show.artworkURL, title: show.title, size: 40)
             VStack(alignment: .leading, spacing: 3) {
@@ -696,7 +710,7 @@ private struct ShowPosterRow: View {
                     .font(Theme.title(17))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
-                Text(([mode] + [latest.map { "Updated " + TimeFormat.ago($0) }].compactMap { $0 }).joined(separator: " · ").uppercased())
+                Text(detail(latest: latest))
                     .font(Theme.mono(8.5))
                     .tracking(0.5)
                     .foregroundStyle(Theme.muted)

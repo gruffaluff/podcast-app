@@ -238,50 +238,81 @@ private struct QueueRow: View {
     /// Tapping the artwork plays straight away.
     let play: () -> Void
 
+    private var show: String { episode.podcast?.title ?? "" }
+    private var quiet: Color { isPlaying ? Poster.paper.opacity(0.7) : Theme.muted }
+
+    /// "Show · TOP1 · 45:12 left".
+    private var detailLine: String {
+        let time: String = episode.timeLeft.map { TimeFormat.clock($0) } ?? "--:--"
+        var parts: [String] = [show]
+        if let tag { parts.append(tag) }
+        parts.append(isPlaying ? time + " left" : time)
+        return parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased()
+    }
+
+    /// When it came out (Paul, 9 Nov 2026), then downloading / transcribing.
+    private var dateLine: String {
+        var parts: [String] = [Self.published(episode.published)]
+        if let status { parts.append(status) }
+        return parts.joined(separator: " · ").uppercased()
+    }
+
+    // Deck 0: artwork on the left (tap to play), the title, a small line
+    // under it, and on the right when it starts plus DL / TX. Split into
+    // pieces so the compiler checks it quickly.
     var body: some View {
-        let show = episode.podcast?.title ?? ""
-        let time = episode.timeLeft.map { TimeFormat.clock($0) } ?? "--:--"
-        let quiet: Color = isPlaying ? Poster.paper.opacity(0.7) : Theme.muted
-        // Deck 0: artwork on the left (tap to play), the title, a small line
-        // under it, and on the right when it starts plus DL / TX.
         HStack(alignment: .center, spacing: 10) {
-            Button(action: play) {
-                Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: 40)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isPlaying ? "Playing" : "Play")
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    if isPlaying { PlayingBars(active: player.isPlaying) }
-                    Text(episode.title)
-                        .font(Theme.title(17))
-                        .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Text(([show] + [tag].compactMap { $0 } + [time + (isPlaying ? " left" : "")]).filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
-                    .font(Theme.mono(8.5))
-                    .tracking(0.5)
-                    .foregroundStyle(quiet)
-                    .lineLimit(1)
-                // When it came out (Paul, 9 Nov 2026), then downloading /
-                // transcribing.
-                Text(([Self.published(episode.published)] + [status].compactMap { $0 }).joined(separator: " · ").uppercased())
-                    .font(Theme.mono(8.5))
-                    .foregroundStyle(quiet)
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            VStack(alignment: .trailing, spacing: 5) {
-                Text(start)
-                    .font(Theme.mono(10, .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
-                EpisodeLights(episode: episode, onDark: isPlaying)
-            }
-            .fixedSize()
+            artwork
+            texts
+            timeColumn
         }
         .contentShape(Rectangle())
+    }
+
+    private var artwork: some View {
+        Button(action: play) {
+            Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: 40)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isPlaying ? "Playing" : "Play")
+    }
+
+    private var titleRow: some View {
+        HStack(spacing: 6) {
+            if isPlaying { PlayingBars(active: player.isPlaying) }
+            Text(episode.title)
+                .font(Theme.title(17))
+                .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var texts: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            titleRow
+            Text(detailLine)
+                .font(Theme.mono(8.5))
+                .tracking(0.5)
+                .foregroundStyle(quiet)
+                .lineLimit(1)
+            Text(dateLine)
+                .font(Theme.mono(8.5))
+                .foregroundStyle(quiet)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var timeColumn: some View {
+        VStack(alignment: .trailing, spacing: 5) {
+            Text(start)
+                .font(Theme.mono(10, .medium))
+                .monospacedDigit()
+                .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
+            EpisodeLights(episode: episode, onDark: isPlaying)
+        }
+        .fixedSize()
     }
 
     /// "9 Nov", or "9 Nov 2025" for an earlier year.
