@@ -32,8 +32,9 @@ struct AddShowView: View {
                 // Tap a show for its page (description and episodes); the
                 // Follow key follows it straight away.
                 ForEach(Array(results.enumerated()), id: \.element.id) { index, show in
-                    DirectoryItemRow(item: DirectoryItem(show))
-                        .panelRow(index, of: results.count)
+                    let item = DirectoryItem(show)
+                    DirectoryItemRow(item: item)
+                        .showRow(item.artworkURL, title: item.title)
                 }
             }
             .listStyle(.plain)

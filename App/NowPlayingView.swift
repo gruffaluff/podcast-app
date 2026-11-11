@@ -2,13 +2,13 @@ import AVKit
 import SwiftUI
 import PodcastCore
 
-/// The full player ("middle ground" look). The top area runs edge to edge in
-/// the colour of the episode's artwork, with the artwork fading into it, and
-/// switches between ARTWORK (big show name, episode title, chapter) and
-/// TRANSCRIPT (live lines with find). Ad breaks show as a floating bar in
-/// that area, so nothing below it moves. Below, on the sand page: the
-/// counter, the wave progress bar (drag to scrub), transport keys, speed /
-/// trim / boost / sleep tiles, what's next, and the episode notes.
+/// The full player in the poster look (Paul, 11 Nov 2026): the whole screen
+/// is the episode's artwork printed in its colour. Looking at the top:
+/// the show, the episode title in big capitals and the chapter now / next
+/// (or the transcript as a lyric sheet). Doing at the bottom, within thumb
+/// reach: the time, the progress line (drag to scrub), transport, SPEED /
+/// TRIM / BOOST / SLEEP, and TRANSCRIPT / CHAPTERS / UP NEXT. The episode
+/// notes are further down; pull down past the top to close.
 struct NowPlayingView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -47,23 +47,18 @@ struct NowPlayingView: View {
                 ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
-                        hero(item, tint: tint, top: geometry.safeAreaInsets.top)
-                        VStack(spacing: 14) {
-                            scrubBar(tint: tint)
-                            transport(tint: tint)
-                            modeKeys(tint: tint)
-                            nextUp
-                            if let episode = currentEpisode {
-                                EpisodeNotesText(episode: episode)
-                                    .padding(.top, 6)
-                                    .id("notes")
-                            }
+                        poster(item, tint: tint, top: geometry.safeAreaInsets.top,
+                               height: geometry.size.height + geometry.safeAreaInsets.top)
+                        if let episode = currentEpisode {
+                            EpisodeNotesText(episode: episode)
+                                .padding(.horizontal, 14)
+                                .padding(.top, 6)
+                                .padding(.bottom, 30)
+                                .id("notes")
                         }
-                        .padding(.horizontal, 18)
-                        .padding(.top, 14)
-                        .padding(.bottom, 30)
                     }
                 }
+                .background(tint.ignoresSafeArea())
                 // Floats over the page instead of taking room at the bottom:
                 // as a safe-area inset, showing it changed the scroll area's
                 // size, which flickered (Paul's recording, build 126).
@@ -117,118 +112,217 @@ struct NowPlayingView: View {
         .transcribeExplainer()
     }
 
-    // MARK: Top area
+    // MARK: The poster
 
-    /// `top` is the status bar's height: the player fills the screen to the
-    /// top edge, so the keys start below it.
-    private func hero(_ item: PlayerModel.NowPlaying, tint: Color, top: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // One row: close, device, then (transcript) find, download, mark played.
-            HStack(spacing: 8) {
-                roundButton("chevron.down", label: "Close player") { dismiss() }
-                deviceButton
-                Spacer(minLength: 4)
-                if showsTranscript {
-                    roundButton("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
-                }
-                roundButton("doc.text", label: "Episode notes") { notesJump += 1 }
-                roundButton("checkmark", label: "Mark as played") { markPlayed() }
-            }
+    /// The first screenful: `top` is the status bar's height (the player
+    /// runs to the top edge), `height` the whole screen's.
+    private func poster(_ item: PlayerModel.NowPlaying, tint: Color, top: CGFloat, height: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            topRow(item)
             Group {
                 if showsTranscript, let episode = currentEpisode {
                     PlayerTranscriptPanel(episode: episode, searching: $searchingTranscript)
                 } else {
-                    artworkContent(item)
+                    titleBlock(item)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            if showsTranscript { chapterChip }
+            .padding(.top, 10)
             adBar
-            HStack(spacing: 8) {
-                modeSwitch(tint: tint)
-                roundButton("arrow.up.left.and.arrow.down.right", label: "Full transcript") { transcriptEpisode = currentEpisode }
-                if let episode = currentEpisode { downloadKey(episode) }
-            }
+                .padding(.top, 10)
+            controls(tint: tint)
+                .padding(.top, 14)
         }
-        .foregroundStyle(Theme.displayText)
+        .foregroundStyle(Poster.paper)
         .padding(.horizontal, 20)
-        .padding(.top, top + 8)
-        .padding(.bottom, 16)
-        .frame(height: 430 + top)
+        .padding(.top, top + 6)
+        .padding(.bottom, 18)
+        .frame(height: max(height, 660))
         .frame(maxWidth: .infinity)
-        .background {
-            // The artwork fills the whole width from the top (Paul, 7 Nov
-            // 2026: it sat small on the right with flat colour beside it)
-            // and fades into its colour behind the titles and keys.
-            ZStack(alignment: .top) {
-                tint
-                // No blur behind the titles (Paul, build 127: it smeared the
-                // artwork); the colour fade below keeps them readable.
-                GeometryReader { geometry in
-                    CachedImage(url: item.artworkURL) { Color.clear }
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                        .clipped()
-                }
-                .opacity(showsTranscript ? 0.15 : 1)
-                .accessibilityHidden(true)
-                // Keeps the big white titles readable over light artwork.
-                LinearGradient(stops: [.init(color: tint.opacity(0.15), location: 0),
-                                       .init(color: tint.opacity(0), location: 0.22),
-                                       .init(color: tint.opacity(0.7), location: 0.55),
-                                       .init(color: tint.opacity(0.98), location: 0.78)],
-                               startPoint: .top, endPoint: .bottom)
-            }
-        }
-        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 40, bottomTrailingRadius: 40))
+        .background { posterBackground(item, tint: tint) }
         .environment(\.heroTint, tint)
     }
 
-    private func artworkContent(_ item: PlayerModel.NowPlaying) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Spacer(minLength: 0)
-            // The show name opens the show (Paul, 9 Nov 2026).
+    /// The artwork printed in one ink of its colour across the top, fading
+    /// into the colour, with the dot screen over the whole poster.
+    private func posterBackground(_ item: PlayerModel.NowPlaying, tint: Color) -> some View {
+        ZStack(alignment: .top) {
+            tint
+            GeometryReader { geometry in
+                PrintedArtwork(url: item.artworkURL, colour: tint, strength: showsTranscript ? 0.25 : 0.7, dots: false)
+                    .frame(width: geometry.size.width, height: geometry.size.width * 1.1)
+                    .mask(LinearGradient(stops: [.init(color: .black, location: 0),
+                                                 .init(color: .black, location: 0.55),
+                                                 .init(color: .black.opacity(0), location: 1)],
+                                         startPoint: .top, endPoint: .bottom))
+            }
+            Halftone()
+        }
+        .accessibilityHidden(true)
+    }
+
+    /// Close, where it's playing, then (transcript) find, download, notes,
+    /// mark played, and the artwork stamp (opens the show).
+    private func topRow(_ item: PlayerModel.NowPlaying) -> some View {
+        HStack(spacing: 6) {
+            roundButton("chevron.down", label: "Close player") { dismiss() }
+            deviceButton
+            Spacer(minLength: 4)
+            if showsTranscript {
+                roundButton("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
+            }
+            if let episode = currentEpisode { downloadKey(episode) }
+            if !showsTranscript {
+                roundButton("doc.text", label: "Episode notes") { notesJump += 1 }
+            }
+            roundButton("checkmark", label: "Mark as played") { markPlayed() }
             Button {
                 if let show = currentEpisode?.podcast { store.revealShow = show }
             } label: {
-                Text(item.showTitle.uppercased())
-                    .font(Theme.big(58))
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.45)
-                    .multilineTextAlignment(.leading)
-                    .shadow(color: .black.opacity(0.45), radius: 10, y: 2)
+                Stamp(url: item.artworkURL, title: item.showTitle, size: 36)
             }
             .buttonStyle(.plain)
-            .accessibilityAddTraits(.isHeader)
-            .accessibilityHint("Opens the show")
-            Button { showingNotes = true } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(item.title)
-                        .font(Theme.text(18, .bold))
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Image(systemName: "chevron.right").font(.footnote.weight(.bold))
-                }
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint("Opens the episode notes")
-            chapterChip
+            .accessibilityLabel("Open \(item.showTitle)")
         }
     }
 
-    @ViewBuilder private var chapterChip: some View {
-        if let index = player.currentChapterIndex {
-            Button { showingChapters = true } label: {
-                Text("CH \(index + 1) OF \(player.chapters.count) · \(player.chapters[index].title.uppercased()) ›")
-                    .font(Theme.mono(11, .bold))
+    /// The show (opens it), the episode title in big capitals (opens its
+    /// notes), and the chapter now and next (opens the chapters).
+    private func titleBlock(_ item: PlayerModel.NowPlaying) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Spacer(minLength: 0)
+            Button {
+                if let show = currentEpisode?.podcast { store.revealShow = show }
+            } label: {
+                Text(([item.showTitle] + [currentEpisode.map { Self.published($0.published) }].compactMap { $0 }).joined(separator: " · ").uppercased())
+                    .font(Theme.mono(10, .bold))
+                    .tracking(1)
                     .lineLimit(1)
-                    .padding(.horizontal, 10)
-                    .frame(minHeight: 30)
-                    .background(.black.opacity(0.22), in: Capsule())
+                    .foregroundStyle(Poster.paper.opacity(0.85))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Chapter \(index + 1) of \(player.chapters.count), \(player.chapters[index].title)")
+            .accessibilityHint("Opens the show")
+            Button { showingNotes = true } label: {
+                Text(item.title.uppercased())
+                    .font(Theme.big(46))
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.55)
+                    .multilineTextAlignment(.leading)
+                    .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityHint("Opens the episode notes")
+            chapterBill
+        }
+    }
+
+    /// "NOW · CH 2 · FAN CALLS ……… NEXT · THE QUIZ" between two rules,
+    /// like the acts on a bill.
+    @ViewBuilder private var chapterBill: some View {
+        if let index = player.currentChapterIndex {
+            let chapters = player.chapters
+            Button { showingChapters = true } label: {
+                VStack(spacing: 6) {
+                    Rectangle().fill(Poster.paper.opacity(0.5)).frame(height: 1)
+                    HStack(spacing: 8) {
+                        Text("NOW · CH \(index + 1) · \(chapters[index].title.uppercased())")
+                            .lineLimit(1)
+                        Spacer(minLength: 6)
+                        if index + 1 < chapters.count {
+                            Text("NEXT · \(chapters[index + 1].title.uppercased())")
+                                .lineLimit(1)
+                                .foregroundStyle(Poster.paper.opacity(0.7))
+                                .layoutPriority(-1)
+                        }
+                    }
+                    .font(Theme.mono(10, .bold))
+                    .tracking(0.8)
+                    Rectangle().fill(Poster.paper.opacity(0.5)).frame(height: 1)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Chapter \(index + 1) of \(chapters.count), \(chapters[index].title)")
             .accessibilityHint("Shows all chapters")
         }
+    }
+
+    /// "9 Nov" or "9 Nov 2025".
+    private static func published(_ date: Date) -> String {
+        let thisYear = Calendar.current.isDate(date, equalTo: Date(), toGranularity: .year)
+        return thisYear ? date.formatted(.dateTime.day().month(.abbreviated))
+            : date.formatted(.dateTime.day().month(.abbreviated).year())
+    }
+
+    /// Everything you tap, in the bottom half.
+    private func controls(tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            timeRow
+            scrubBar(tint: tint)
+            transport(tint: tint)
+            modeKeys(tint: tint)
+            bottomRow
+        }
+    }
+
+    /// The time in big figures, then what's left and when it ends (or the
+    /// scrubbing speed while the finger is below the line).
+    private var timeRow: some View {
+        let shown = scrubTime ?? player.currentTime
+        let left: TimeInterval = max(0, player.duration - shown)
+        let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
+        let detail: String = scrubSpeed ?? "−\(TimeFormat.clock(left)) · ENDS \(endsAt.formatted(date: .omitted, time: .shortened))"
+        return VStack(alignment: .leading, spacing: 0) {
+            Text(TimeFormat.clock(shown))
+                .font(Theme.big(72))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(detail.uppercased())
+                .font(Theme.mono(11, .bold))
+                .tracking(0.8)
+                .monospacedDigit()
+                .foregroundStyle(Poster.paper.opacity(0.85))
+                .lineLimit(1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// TRANSCRIPT (or ARTWORK), CHAPTERS, FULL (transcript), UP NEXT · n.
+    private var bottomRow: some View {
+        let playingID = player.nowPlaying?.episodeID
+        let upcoming = store.queue.filter { $0.episode.id != playingID }.count
+        return HStack(spacing: 6) {
+            textKey(showsTranscript ? "ARTWORK" : "TRANSCRIPT", icon: showsTranscript ? "photo" : "text.quote") {
+                showsTranscript.toggle()
+            }
+            if !player.chapters.isEmpty {
+                textKey("CHAPTERS", icon: "list.bullet") { showingChapters = true }
+            }
+            if showsTranscript {
+                textKey("FULL", icon: "arrow.up.left.and.arrow.down.right") { transcriptEpisode = currentEpisode }
+                    .accessibilityLabel("Full transcript")
+            }
+            textKey("UP NEXT · \(upcoming)", icon: "arrow.up") { showingQueue = true }
+                .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
+                    if value.translation.height < -30 { showingQueue = true }
+                })
+                .accessibilityLabel("Up Next, \(upcoming) episodes")
+        }
+    }
+
+    private func textKey(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 11, weight: .bold))
+                Text(title).font(Theme.mono(10, .bold)).tracking(0.6).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity, minHeight: 36)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Poster.paper)
     }
 
     /// Where the sound is going; tap for the system device picker.
@@ -238,9 +332,10 @@ struct NowPlayingView: View {
             Text((player.outputName ?? "iPhone").uppercased())
                 .lineLimit(1)
         }
-        .font(Theme.mono(12, .bold))
-        .padding(.horizontal, 14)
-        .frame(height: 40)
+        .font(Theme.mono(11, .bold))
+        .padding(.horizontal, 12)
+        .frame(maxWidth: 130)
+        .frame(height: 36)
         .background(Self.keyFill, in: Capsule())
         .overlay(Capsule().stroke(Theme.displayText.opacity(0.3), lineWidth: 1))
         .allowsHitTesting(false)
@@ -279,7 +374,7 @@ struct NowPlayingView: View {
                 }
             }
             .frame(width: 22, height: 22)
-            .frame(width: 40, height: 40)
+            .frame(width: 36, height: 36)
             .background(Self.keyFill, in: Circle())
             .overlay(Circle().stroke(Theme.displayText.opacity(0.3), lineWidth: 1))
         }
@@ -288,15 +383,15 @@ struct NowPlayingView: View {
         .accessibilityLabel(local ? "Downloaded" : fraction.map { "Stop download, \(Int($0 * 100)) percent done" } ?? "Download")
     }
 
-    /// The top keys' fill: solid, so they stand out on any artwork (Paul,
-    /// build 127: they got lost on busy artwork at 45% black).
-    static var keyFill: Color { Theme.display.opacity(0.92) }
+    /// The top keys' fill on printed colour areas (the poster look's one-ink
+    /// artwork is calm enough for a see-through dark fill).
+    static var keyFill: Color { Color.black.opacity(0.3) }
 
     private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 16, weight: .bold))
-                .frame(width: 40, height: 40)
+                .font(.system(size: 15, weight: .bold))
+                .frame(width: 36, height: 36)
                 .background(Self.keyFill, in: Circle())
             .overlay(Circle().stroke(Theme.displayText.opacity(0.3), lineWidth: 1))
         }
@@ -354,29 +449,6 @@ struct NowPlayingView: View {
         }
     }
 
-    private func modeSwitch(tint: Color) -> some View {
-        HStack(spacing: 4) {
-            switchKey("ARTWORK", on: !showsTranscript, tint: tint) { showsTranscript = false }
-            switchKey("TRANSCRIPT", on: showsTranscript, tint: tint) { showsTranscript = true }
-        }
-        .padding(4)
-        .background(.black.opacity(0.22), in: Capsule())
-    }
-
-    private func switchKey(_ title: String, on: Bool, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(Theme.mono(12, .bold))
-                .tracking(1)
-                .frame(maxWidth: .infinity, minHeight: 36)
-                .foregroundStyle(on ? tint : Theme.displayText)
-                .background(on ? Theme.displayText : .clear, in: Capsule())
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(on ? .isSelected : [])
-    }
-
     // MARK: Below
 
     /// A long jump while scrubbing might be a stray touch: offer to go
@@ -403,39 +475,21 @@ struct NowPlayingView: View {
         let duration = max(player.duration, 1)
         let active = scrubTime != nil
         let left: TimeInterval = max(0, player.duration - shown)
-        let endsAt: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
-        let middle: String = scrubSpeed ?? ("ENDS " + endsAt.formatted(date: .omitted, time: .shortened))
-        return VStack(spacing: 6) {
-            GeometryReader { geometry in
-                let width = max(1, geometry.size.width)
-                ScrubLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
-                             tint: tint, grow: active ? 1 : 0)
-                    .animation(.easeOut(duration: 0.2), value: active)
-                    .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
-                    .offset(x: -ScrubLine.stretch)
-                    .overlay(alignment: .topLeading) {
-                        if active { scrubBubble(at: shown, x: shown / duration * width, width: width) }
-                    }
-                    .contentShape(Rectangle())
-                    .gesture(scrubGesture(width: width, duration: duration))
-            }
-            .frame(height: ScrubLine.height)
-            HStack(alignment: .firstTextBaseline) {
-                Text(TimeFormat.clock(shown))
-                    .font(Theme.mono(16, .bold))
-                Spacer(minLength: 6)
-                Text(middle)
-                    .font(Theme.mono(10, .bold))
-                    .tracking(1)
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
-                Spacer(minLength: 6)
-                Text("−" + TimeFormat.clock(left))
-                    .font(Theme.mono(16, .bold))
-            }
-            .monospacedDigit()
-            .foregroundStyle(Theme.ink)
+        return GeometryReader { geometry in
+            let width = max(1, geometry.size.width)
+            // Paper on the printed colour: played solid, ahead see-through.
+            ScrubLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
+                      tint: Poster.paper, track: Poster.paper.opacity(0.28), grow: active ? 1 : 0)
+                .animation(.easeOut(duration: 0.2), value: active)
+                .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
+                .offset(x: -ScrubLine.stretch)
+                .overlay(alignment: .topLeading) {
+                    if active { scrubBubble(at: shown, x: shown / duration * width, width: width) }
+                }
+                .contentShape(Rectangle())
+                .gesture(scrubGesture(width: width, duration: duration))
         }
+        .frame(height: ScrubLine.height)
         .accessibilityElement()
         .accessibilityLabel("Position")
         .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
@@ -520,8 +574,8 @@ struct NowPlayingView: View {
     private func transport(tint: Color) -> some View {
         HStack {
             // No circle (Paul): a bigger icon, in proportion with play.
-            SkipButton(direction: .back, iconSize: 36, frame: 60)
-                .foregroundStyle(Theme.ink)
+            SkipButton(direction: .back, iconSize: 34, frame: 56)
+                .foregroundStyle(Poster.paper)
             Spacer()
             // Chapter keys in the gaps, when the episode has chapters (Paul).
             if hasChapters {
@@ -531,9 +585,10 @@ struct NowPlayingView: View {
             Button { player.togglePlayPause() } label: {
                 Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 30))
-                    .foregroundStyle(Theme.displayText)
-                    .frame(width: 86, height: 86)
-                    .background(tint, in: Circle())
+                    .foregroundStyle(tint)
+                    .frame(width: 80, height: 80)
+                    .background(Poster.paper, in: Circle())
+                    .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
@@ -542,12 +597,10 @@ struct NowPlayingView: View {
                 chapterKey("forward.end.fill", label: "Next chapter") { player.nextChapter() }
                 Spacer()
             }
-            // No circle (Paul): a bigger icon, in proportion with play.
-            SkipButton(direction: .forward, iconSize: 36, frame: 60)
-                .foregroundStyle(Theme.ink)
+            SkipButton(direction: .forward, iconSize: 34, frame: 56)
+                .foregroundStyle(Poster.paper)
         }
-        .tint(Theme.ink)
-        .padding(.horizontal, 18)
+        .tint(Poster.paper)
     }
 
     private var hasChapters: Bool { !player.chapters.isEmpty }
@@ -556,7 +609,7 @@ struct NowPlayingView: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(Poster.paper)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -564,9 +617,9 @@ struct NowPlayingView: View {
         .accessibilityLabel(label)
     }
 
-    /// SPEED / TRIM / BOOST / SLEEP tiles: in the episode's colour when on.
+    /// SPEED / TRIM / BOOST / SLEEP keys: paper when on, see-through when off.
     private func modeKeys(tint: Color) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Menu {
                 Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: Binding(get: { player.speed }, set: { player.setSpeed($0) })) {
                     ForEach(PlayerOptions.speeds, id: \.self) { speed in
@@ -574,19 +627,20 @@ struct NowPlayingView: View {
                     }
                 }
             } label: {
-                tile(PlayerOptions.speedLabel(player.speed), player.speedIsForShow ? "SHOW SPEED" : "SPEED", on: player.speed != 1, tint: tint)
+                tile(player.speedIsForShow ? "SHOW " + PlayerOptions.speedLabel(player.speed) : PlayerOptions.speedLabel(player.speed),
+                     icon: "gauge.with.dots.needle.33percent", on: player.speed != 1, tint: tint)
             }
             .accessibilityLabel("Speed, \(PlayerOptions.speedLabel(player.speed))")
 
             Button { player.setTrimSilences(!player.trimSilences) } label: {
-                tile(player.trimSilences ? "ON" : "OFF", "TRIM", on: player.trimSilences, tint: tint)
+                tile("TRIM", icon: "scissors", on: player.trimSilences, tint: tint)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Trim silences: speeds through pauses")
             .accessibilityAddTraits(player.trimSilences ? .isSelected : [])
 
             Button { player.setBoostVoices(!player.boostVoices) } label: {
-                tile(player.boostVoices ? "ON" : "OFF", "BOOST", on: player.boostVoices, tint: tint)
+                tile("BOOST", icon: "waveform", on: player.boostVoices, tint: tint)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Boost voices: makes speech clearer and more even")
@@ -607,80 +661,31 @@ struct NowPlayingView: View {
         }
     }
 
-    private func tile(_ value: String, _ label: String, on: Bool, tint: Color) -> some View {
-        VStack(spacing: 2) {
-            Text(value).font(Theme.big(20)).lineLimit(1).minimumScaleFactor(0.7)
-            Text(label).font(Theme.mono(10, .bold)).tracking(0.8).lineLimit(1).minimumScaleFactor(0.7)
+    private func tile(_ title: String, icon: String, on: Bool, tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 11, weight: .bold))
+            Text(title).font(Theme.mono(11, .bold)).tracking(0.6).lineLimit(1).minimumScaleFactor(0.6)
         }
-        .foregroundStyle(on ? Theme.displayText : Theme.ink)
-        .frame(maxWidth: .infinity, minHeight: 58)
-        .background(on ? tint : Theme.surface, in: RoundedRectangle(cornerRadius: 18))
+        .foregroundStyle(on ? tint : Poster.paper)
+        .frame(maxWidth: .infinity, minHeight: 40)
+        .background(on ? Poster.paper : Self.keyFill, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Poster.paper.opacity(on ? 0 : 0.2), lineWidth: 1))
     }
 
     @ViewBuilder private func sleepTile(tint: Color) -> some View {
         if let ends = player.sleepEndsAt {
             let now = Date()
-            VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: "moon.fill").font(.system(size: 11, weight: .bold))
                 Text(timerInterval: now...max(ends, now), countsDown: true)
-                    .font(Theme.big(20))
+                    .font(Theme.mono(11, .bold))
                     .monospacedDigit()
-                Text("SLEEP").font(Theme.mono(10, .bold)).tracking(0.8)
             }
-            .foregroundStyle(Theme.displayText)
-            .frame(maxWidth: .infinity, minHeight: 58)
-            .background(tint, in: RoundedRectangle(cornerRadius: 18))
+            .foregroundStyle(tint)
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .background(Poster.paper, in: RoundedRectangle(cornerRadius: 12))
         } else {
-            tile(player.sleepTimer == .endOfEpisode ? "END" : "—", "SLEEP", on: player.sleepTimer != nil, tint: tint)
-        }
-    }
-
-    /// The next episode in Up Next; tap to go back to the queue.
-    /// What's next. Tap (or swipe up) to open Up Next over the player; the
-    /// handle and "ALL n" show that it opens.
-    @ViewBuilder private var nextUp: some View {
-        let playingID = player.nowPlaying?.episodeID
-        let upcoming = store.queue.filter { $0.episode.id != playingID }
-        if let next = upcoming.first {
-            let episode = store.episode(next.episode.id)
-            Button { showingQueue = true } label: {
-                VStack(spacing: 6) {
-                    Capsule().fill(Theme.hairline).frame(width: 34, height: 4)
-                    HStack(spacing: 12) {
-                        ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? next.episode.title, size: 42, radius: 10)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("UP NEXT")
-                                .font(Theme.mono(10, .bold))
-                                .tracking(1.2)
-                                .foregroundStyle(Theme.muted)
-                            Text(next.episode.title)
-                                .font(Theme.text(15, .bold))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(1)
-                        }
-                        Spacer(minLength: 0)
-                        HStack(spacing: 4) {
-                            Image(systemName: "list.bullet")
-                            Text("ALL \(upcoming.count)")
-                        }
-                        .font(Theme.mono(11, .bold))
-                        .foregroundStyle(Theme.ink)
-                        .padding(.horizontal, 10)
-                        .frame(minHeight: 30)
-                        .background(Theme.background, in: Capsule())
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
-                .deckCard()
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
-                if value.translation.height < -30 { showingQueue = true }
-            })
-            .accessibilityLabel("Up next: \(next.episode.title). \(upcoming.count) in Up Next")
-            .accessibilityHint("Opens Up Next")
+            tile(player.sleepTimer == .endOfEpisode ? "END" : "SLEEP", icon: "moon", on: player.sleepTimer != nil, tint: tint)
         }
     }
 }
@@ -693,6 +698,7 @@ private struct ScrubLine: View, Animatable {
     let chapterStarts: [Double]
     let ads: [ClosedRange<Double>]
     let tint: Color
+    var track: Color = Theme.hairline
     var grow: Double
 
     var animatableData: Double {
@@ -710,13 +716,13 @@ private struct ScrubLine: View, Animatable {
 
     var body: some View {
         Canvas { graphics, size in
-            Self.draw(in: graphics, size: size, progress: progress, chapterStarts: chapterStarts, ads: ads, tint: tint, grow: CGFloat(grow))
+            Self.draw(in: graphics, size: size, progress: progress, chapterStarts: chapterStarts, ads: ads, tint: tint, track: track, grow: CGFloat(grow))
         }
         .accessibilityHidden(true)
     }
 
     // Split out (with explicit types) so the compiler checks it quickly.
-    private static func draw(in graphics: GraphicsContext, size: CGSize, progress: Double, chapterStarts: [Double], ads: [ClosedRange<Double>], tint: Color, grow: CGFloat) {
+    private static func draw(in graphics: GraphicsContext, size: CGSize, progress: Double, chapterStarts: [Double], ads: [ClosedRange<Double>], tint: Color, track: Color, grow: CGFloat) {
         let inset: CGFloat = stretch * (1 - grow)
         let x0: CGFloat = inset
         let span: CGFloat = max(1, size.width - 2 * inset)
@@ -732,7 +738,7 @@ private struct ScrubLine: View, Animatable {
             let shape = Path(roundedRect: CGRect(x: start, y: top, width: end - start, height: thickness), cornerRadius: thickness / 2)
             var segment = graphics
             segment.clip(to: shape)
-            segment.fill(shape, with: .color(Theme.hairline))
+            segment.fill(shape, with: .color(track))
             for ad in ads {
                 let adStart: CGFloat = max(start, x0 + span * CGFloat(ad.lowerBound))
                 let adEnd: CGFloat = min(end, x0 + span * CGFloat(ad.upperBound))

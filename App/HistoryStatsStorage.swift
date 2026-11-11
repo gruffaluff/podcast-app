@@ -24,34 +24,18 @@ struct HistoryRow: View {
     var showsProgress = true
 
     var body: some View {
-        HStack(spacing: 12) {
-            ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 48, radius: 8)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(episode.title)
-                    .font(Theme.text(15, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2)
-                // The show on its own line, then played / time left and
-                // when on a line of their own (Paul, 9 Nov 2026: behind a
-                // long show name they were cut off).
-                if let show = episode.podcast?.title, !show.isEmpty {
-                    Text(show.uppercased())
-                        .font(Theme.mono(10))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
-                }
-                if !status.isEmpty {
-                    Text(status.uppercased())
-                        .font(Theme.mono(10, .medium))
-                        .foregroundStyle(Theme.ink.opacity(0.7))
-                        .lineLimit(1)
-                }
+        // A poster row (Paul, 11 Nov 2026): the show and how far / when on
+        // the label line, the title big, the artwork stamp on the right.
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
+                PosterRowText(label: ([episode.podcast?.title ?? ""] + [status]).filter { !$0.isEmpty }.joined(separator: " · "),
+                              title: episode.title, titleSize: 18, lines: 2, dim: episode.played)
                 if showsProgress, !episode.played, let duration = episode.duration, duration > 0 {
                     ProgressLine(fraction: episode.position / duration)
                 }
             }
+            Stamp(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 40)
         }
-        .padding(.vertical, 4)
         .contentShape(Rectangle())
     }
 
@@ -83,10 +67,7 @@ struct HistoryView: View {
             ForEach(episodes) { episode in
                 Button { player.play(episode) } label: {
                     HistoryRow(episode: episode)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .deckCard()
+                        .showCard(episode.showArtwork, title: episode.showTitle)
                 }
                 .buttonStyle(.plain)
                 .contextMenu { EpisodeMenuItems(episode: episode) }
@@ -296,15 +277,9 @@ struct StorageView: View {
                 }
                 ForEach(rows) { row in
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 12) {
-                            ArtworkView(url: row.show.artworkURL, title: row.show.title, size: 40, radius: 6)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(row.show.title).foregroundStyle(Theme.ink).lineLimit(1)
-                                Text("\(row.count) EPISODE\(row.count == 1 ? "" : "S") · \(Self.size(row.bytes))")
-                                    .font(Theme.mono(10))
-                                    .foregroundStyle(Theme.muted)
-                            }
-                            Spacer()
+                        HStack(spacing: 10) {
+                            PosterRowText(label: "\(row.count) episode\(row.count == 1 ? "" : "s") · \(Self.size(row.bytes))",
+                                          title: row.show.title, titleSize: 17, lines: 1)
                             Menu {
                                 Picker("Keep downloads", selection: Binding(get: { row.show.downloadLimit }, set: { store.setDownloadLimit($0, for: row.show); reload() })) {
                                     Text("Keep all").tag(0)
@@ -323,7 +298,7 @@ struct StorageView: View {
                             }
                         }
                     }
-                    .panelRow(0, of: rows.count)
+                    .showRow(row.show.artworkURL, title: row.show.title)
                 }
                 // A plain row, not a section footer: in this plain list iOS
                 // put the footer on a white block.

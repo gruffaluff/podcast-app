@@ -97,7 +97,7 @@ struct SearchView: View {
                 if let episode = episodes[result.episodeID] {
                     ForEach(Array(result.matches.enumerated()), id: \.offset) { _, match in
                         TranscriptResultRow(episode: episode, match: match)
-                            .panelRow(0, of: 1)
+                            .showRow(episode.showArtwork, title: episode.showTitle)
                     }
                 }
             }
@@ -138,17 +138,12 @@ struct SearchView: View {
         }
         ForEach(matchingShows) { show in
             NavigationLink(value: show) {
-                HStack(spacing: 14) {
-                    ArtworkView(url: show.artworkURL, title: show.title, size: 44, radius: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(show.title).foregroundStyle(Theme.ink)
-                        if !show.author.isEmpty {
-                            Text(show.author.uppercased()).font(Theme.mono(10)).foregroundStyle(Theme.muted).lineLimit(1)
-                        }
-                    }
+                HStack(spacing: 10) {
+                    PosterRowText(label: show.author, title: show.title, titleSize: 18, lines: 2)
+                    Stamp(url: show.artworkURL, title: show.title, size: 40)
                 }
             }
-            .panelRow(0, of: 1)
+            .showRow(show.artworkURL, title: show.title)
         }
         if text.count >= 2 {
             let episodes = matchingEpisodes(text)
@@ -159,16 +154,15 @@ struct SearchView: View {
             }
             ForEach(episodes) { episode in
                 Button { player.play(episode) } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text((episode.podcast?.title ?? "").uppercased()).font(Theme.mono(10)).foregroundStyle(Theme.muted)
-                        Text(episode.title).foregroundStyle(Theme.ink).lineLimit(2)
+                    HStack(spacing: 10) {
+                        PosterRowText(label: episode.showTitle, title: episode.title, titleSize: 18, lines: 2, dim: episode.played)
+                        Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 40)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .contextMenu { EpisodeMenuItems(episode: episode) }
-                .panelRow(0, of: 1)
+                .showRow(episode.showArtwork, title: episode.showTitle)
             }
         }
     }
@@ -194,7 +188,7 @@ struct SearchView: View {
         ForEach(matching) { bookmark in
             if let episode = episodes[bookmark.episodeID] {
                 ClipRow(bookmark: bookmark, episode: episode)
-                    .panelRow(0, of: 1)
+                    .showRow(episode.showArtwork, title: episode.showTitle)
                     .swipeActions {
                         Button("Delete", systemImage: "trash", role: .destructive) {
                             store.context.delete(bookmark)

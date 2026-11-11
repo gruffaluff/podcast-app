@@ -23,7 +23,7 @@ struct ShowPreviewView: View {
                     let shown = Array(feed.episodes.prefix(30))
                     ForEach(Array(shown.enumerated()), id: \.element.guid) { index, episode in
                         episodeRow(episode)
-                            .panelRow(index, of: shown.count)
+                            .showRow(feed.artworkURL ?? item.artworkURL, title: feed.title)
                     }
                 } else if failed {
                     Text("Couldn't load this show's episodes. Pull down to try again.")
@@ -59,16 +59,24 @@ struct ShowPreviewView: View {
         let art = feed?.artworkURL ?? item.artworkURL
         let tint = ArtworkColors.shared.background(for: art) ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 250)
-            Text((feed?.title ?? item.title).uppercased())
-                .font(Theme.big(44))
-                .lineLimit(3)
-                .minimumScaleFactor(0.5)
-                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
-                .accessibilityAddTraits(.isHeader)
-            Text([feed?.author ?? item.artist, item.genre, feed.map { "\($0.episodes.count) episodes" }].compactMap { $0 }.joined(separator: " · "))
-                .font(Theme.text(13))
-                .foregroundStyle(Theme.displayDim)
+            Spacer(minLength: 170)
+            // The show's poster, the artwork as a stamp beside the name.
+            HStack(alignment: .bottom, spacing: 12) {
+                Stamp(url: art, title: feed?.title ?? item.title, size: 72)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text([feed?.author ?? item.artist, item.genre, feed.map { "\($0.episodes.count) episodes" }].compactMap { $0 }.joined(separator: " · ").uppercased())
+                        .font(Theme.mono(9.5))
+                        .tracking(0.8)
+                        .foregroundStyle(Theme.displayDim)
+                        .lineLimit(2)
+                    Text((feed?.title ?? item.title).uppercased())
+                        .font(Theme.big(40))
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.5)
+                        .shadow(color: .black.opacity(0.3), radius: 6, y: 2)
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
             if let show = followedShow {
                 NavigationLink(value: show) {
                     Text("✓ FOLLOWING · OPEN SHOW ▸")
@@ -114,12 +122,7 @@ struct ShowPreviewView: View {
         let meta = [episode.published.map { $0.formatted(date: .abbreviated, time: .omitted) },
                     episode.duration.map { TimeFormat.clock($0) }].compactMap { $0 }.joined(separator: " · ")
         return VStack(alignment: .leading, spacing: 4) {
-            Text(meta.uppercased())
-                .font(Theme.mono(10))
-                .foregroundStyle(Theme.muted)
-            Text(episode.title)
-                .font(.body.weight(.medium))
-                .foregroundStyle(Theme.ink)
+            PosterRowText(label: meta, title: episode.title, titleSize: 18, lines: 3)
             if !summary.isEmpty {
                 Text(summary)
                     .font(isOpen ? .subheadline : .caption)

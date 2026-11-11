@@ -234,8 +234,11 @@ struct PlayerTranscriptPanel: View {
                     .tracking(1.2)
                     .foregroundStyle(isFocus ? Theme.adMarker : Theme.displayText)
                 // Whole lines, never cut short.
+                // A lyric sheet (poster look, 11 Nov 2026): the line being
+                // said in big Big Shoulders capitals, the others small.
                 Text(highlighted(line.text))
-                    .font(Theme.text(isFocus ? 23 : 15, isFocus ? .bold : .regular))
+                    .font(isFocus ? Theme.big(32) : Theme.text(15))
+                    .textCase(isFocus ? .uppercase : nil)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .contentTransition(.interpolate)

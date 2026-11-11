@@ -61,7 +61,7 @@ struct DiscoverView: View {
             }
             ForEach(Array(searchResults.enumerated()), id: \.element.id) { index, item in
                 DirectoryItemRow(item: item)
-                    .panelRow(index, of: searchResults.count)
+                    .showRow(item.artworkURL, title: item.title)
             }
         }
     }
@@ -127,7 +127,7 @@ struct DiscoverView: View {
             }
             ForEach(Array(chart.enumerated()), id: \.element.id) { index, item in
                 DirectoryItemRow(item: item, rank: index + 1)
-                    .panelRow(index, of: chart.count)
+                    .showRow(item.artworkURL, title: item.title)
             }
         } header: {
             DeckHeader(title: genre.map { "Top in \($0.name)" } ?? "UK top shows", detail: genre == nil ? "This week" : "Chart")
@@ -194,28 +194,14 @@ struct DirectoryItemRow: View {
     @State private var follower = Follower()
 
     var body: some View {
-        HStack(spacing: 12) {
-            if let rank {
-                Text(String(format: "%02d", rank))
-                    .font(Theme.mono(15, .bold))
-                    .foregroundStyle(rank <= 3 ? Theme.ink : Theme.muted)
-                    .frame(width: 26)
-            }
-            // No ">" arrow (the whole row opens the show; Paul: rows were
-            // squashed): the link sits invisibly behind the row.
-            HStack(spacing: 12) {
-                ArtworkView(url: item.artworkURL, title: item.title, size: 44)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title)
-                        .font(Theme.text(15, .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(2)
-                    Text([item.artist, item.genre].compactMap { $0 }.joined(separator: " · ").uppercased())
-                        .font(Theme.mono(10))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 4)
+        // A poster row: rank and category on the label line, the name big,
+        // the artwork stamp, then Follow. No ">" arrow: the link sits
+        // invisibly behind the row.
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                PosterRowText(label: ([rank.map { String(format: "%02d", $0) }, item.genre, item.artist].compactMap { $0 }).joined(separator: " · "),
+                              title: item.title, titleSize: 18, lines: 2)
+                Stamp(url: item.artworkURL, title: item.title, size: 40)
             }
             .background(NavigationLink(value: item) { EmptyView() }.opacity(0))
             FollowButton(item: item, follower: follower)
@@ -229,20 +215,31 @@ private struct SuggestionCard: View {
     @State private var follower = Follower()
 
     var body: some View {
+        // A colour tile: the artwork printed in its own colour with the
+        // name in big capitals (poster look), Follow underneath.
+        let colour = Poster.colour(item.artworkURL, title: item.title)
         VStack(alignment: .leading, spacing: 6) {
             NavigationLink(value: item) {
-                VStack(alignment: .leading, spacing: 6) {
-                    ArtworkView(url: item.artworkURL, title: item.title, size: 120, radius: 10)
-                    Text(item.title)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(2, reservesSpace: true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Stamp(url: item.artworkURL, title: item.title, size: 40)
+                    Spacer(minLength: 0)
+                    Text(item.title.uppercased())
+                        .font(Theme.big(18))
+                        .foregroundStyle(Poster.paper)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.7)
+                        .multilineTextAlignment(.leading)
                 }
+                .padding(10)
+                .frame(width: 140, height: 130, alignment: .topLeading)
+                .background { PrintedArtwork(url: item.artworkURL, colour: colour, strength: 0.55) }
+                .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
             }
             .buttonStyle(.plain)
             FollowButton(item: item, follower: follower)
         }
-        .frame(width: 120)
+        .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
+        .frame(width: 140)
         .sheet(item: $follower.justFollowed) { ShowSettingsView(show: $0, justFollowed: true) }
     }
 }

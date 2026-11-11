@@ -59,16 +59,20 @@ struct MiniPlayer: View {
                 HStack(spacing: 10) {
                     Button(action: open) {
                         HStack(spacing: 10) {
-                            ArtworkView(url: item.artworkURL, title: item.showTitle, size: 38, radius: 8)
+                            // The poster look: the artwork as a square stamp,
+                            // a small time / chapter line and the title in
+                            // big capitals.
+                            Stamp(url: item.artworkURL, title: item.showTitle, size: 38)
                             VStack(alignment: .leading, spacing: 1) {
-                                Text(item.title)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(Theme.displayText)
-                                    .lineLimit(1)
-                                Text(player.duration > 0 ? "\(item.showTitle) · \(TimeFormat.clock(max(0, player.duration - player.currentTime))) left" : item.showTitle)
-                                    .font(.system(size: 12))
+                                Text(miniLabel.uppercased())
+                                    .font(.custom("DMMono-Regular", fixedSize: 9.5))
+                                    .tracking(0.8)
                                     .monospacedDigit()
                                     .foregroundStyle(Theme.displayDim)
+                                    .lineLimit(1)
+                                Text(item.title.uppercased())
+                                    .font(.custom("BigShouldersDisplay-Black", fixedSize: 19))
+                                    .foregroundStyle(Theme.displayText)
                                     .lineLimit(1)
                             }
                             Spacer(minLength: 0)
@@ -122,8 +126,9 @@ struct MiniPlayer: View {
             // The card runs down behind the tab bar, like the player card
             // peeking up from below.
             .background {
-                UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26)
-                    .fill(tint)
+                // Printed in the show's colour, like the player.
+                PrintedArtwork(url: item.artworkURL, colour: tint, strength: 0.45)
+                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
                     .ignoresSafeArea(edges: .bottom)
                     .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
             }
@@ -132,6 +137,18 @@ struct MiniPlayer: View {
             })
             .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
         }
+    }
+
+    /// "16:45 · CH 4 · 32M LEFT", or the show while nothing has loaded.
+    private var miniLabel: String {
+        guard let item = player.nowPlaying else { return "" }
+        guard player.duration > 0 else { return item.showTitle }
+        var parts = [TimeFormat.clock(player.currentTime)]
+        if let chapter = player.chapters.lastIndex(where: { $0.start <= player.currentTime }) {
+            parts.append("CH \(chapter + 1)")
+        }
+        parts.append("\(TimeFormat.clock(max(0, player.duration - player.currentTime))) left")
+        return parts.joined(separator: " · ")
     }
 
     private var progress: Double {

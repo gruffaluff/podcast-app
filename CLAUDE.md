@@ -11,9 +11,13 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 5 Nov 2026): **middle-ground cassette "D"** (sand
-shell, olive label, deep-olive reels), `design/icon/middle_D.png` from
-`make_middle_icons.py`; also on the website. Other options looked at:
+screen. Icon (Paul, 11 Nov 2026): **"2b olive, soft shadow"**: sand
+cassette with spoked reels and the progress line (olive played, amber ad)
+on the olive accent with the halftone dot print and a soft card shadow;
+`design/icon/poster_2b.png` / `.svg` from `make_poster_icon.js` (node,
+Playwright; it also writes the app icon and `docs/icon.png`); also on the
+website. Replaced the middle-ground cassette "D" (5 Nov 2026,
+`middle_D.png` from `make_middle_icons.py`). Other options looked at:
 `middle_options.png` (A–D), `tape_options.png` (reel-to-reel E, big reel
 F, tilted G, ink H), `mic_options.png` (reel-to-reel + microphone I–L),
 may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
@@ -21,7 +25,29 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Middle ground"** (Paul's pick, 5 Nov 2026; replaced Tape Deck,
+**Look: "Poster"** (Paul, 11 Nov 2026: "let's rebuild it all", every
+screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
+his pick A + B with square stamps). Same sand page, paper cards, fonts and
+colour schemes; every list row is a poster row (`posterCard` / `showRow` /
+`PosterRowText` in `App/Poster.swift`): a strip of the show's colour down
+the left, a DM Mono label line, the title in big Big Shoulders capitals,
+the artwork as a small square `Stamp` on the right. Big colour areas (Up
+Next's playing block, mini player, player, show and preview headers,
+episode page, Discover "because you listen to" tiles) are the artwork
+printed in one ink of its colour with a halftone dot screen
+(`PrintedArtwork`, `Halftone`). Full-row swipes (`posterSwipe`: the action
+fills the row, its own height and corners; green add, red played) replace
+iOS's round swipe keys on Up Next (right To top, left Played), the pulled-up
+Up Next (left Remove), the Library inbox (right Up Next, left Played) and
+show pages (right Play next, left Played / Unplayed). Library's New Episodes
+carousel became an inbox (Today / Yesterday / This week / Earlier, "All
+caught up"). Player: one printed poster, title and chapter now / next at
+the top (transcript mode: lyric sheet, line now in big capitals), all
+controls in the bottom half (big time, progress line in paper, transport,
+SPEED / TRIM / BOOST / SLEEP, TRANSCRIPT / CHAPTERS / FULL / UP NEXT ·
+n), notes below. Settings screens stay plain; Top show priority rows have
+the show's colour strip. Icons stay SF Symbols (flat, tinted).
+Before that: **"Middle ground"** (Paul's pick, 5 Nov 2026; replaced Tape Deck,
 which he loved but this won). Developed on the canvas
 https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d (rows "Middle ground,
 developed" and "Transcript, same height as artwork"). Warm sand page
@@ -251,12 +277,14 @@ to Nowhere / Top / Bottom" on the show page.
     of episode. Skip lengths are set on the Shows screen ("Skip buttons") or
     by touching and holding a skip button.
 
-### Library and new episode cards
-- Library tab opens with a **New Episodes** carousel of cards like Apple
-  Podcasts': 248×330, the artwork across the top fading into its own
-  colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
-  pill with the time left, download and ⋯; it snaps card to card. Above it
-  Continue listening; below "Your shows" (small cards with the description, and a sort key).
+### Library (poster look, build 138)
+- Library tab: HISTORY / STATS keys, then the **inbox** of new episodes
+  (Today / Yesterday / This week / Earlier; tap a row for the episode
+  page, the stamp to play; swipe right to add to Up Next, left played;
+  "All caught up" when empty), Continue listening, then "Your shows"
+  (poster rows with TOP / BTM · n NEW, the description and a sort key).
+  The New Episodes card carousel (248×330, Apple-style) it replaced is
+  in the build 121–137 notes below.
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -1092,18 +1120,8 @@ From the Notion notes after 6 Nov 08:10:
   screenshot: chapter dots 1 and 4 overlapped (short first chapters),
   gone with this design.
 
-## Queued for the next app build
+## Done in build 137 (11 Nov 2026, PR #55; Paul: "Build")
 
-- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
-  New Episodes). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
-  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
-  swipe right Up Next, left played, "All caught up"), 2 Show circles like
-  Stories (ringed show icons with counts, tap for that show's new ones),
-  3 Triage deck (one big card, swipe right Up Next / left played / up
-  play now), 4 Tape shelf (episodes as cassette spines in show colours,
-  tap one to slide it out), 5 Morning digest (one front-page card, "6
-  new since yesterday", one line each, Add the rest to Up Next). Waiting
-  on Paul.
 - **Your shows sort menu** (Paul, build 136 screenshot: "Newest first" /
   "Oldest first" twice, no way to tell which sort they were). Inside a
   Picker, iOS dropped the section headings. Now three menu sections
@@ -1117,8 +1135,35 @@ From the Notion notes after 6 Nov 08:10:
   read "NAME A–Z"). Large artwork tiles dropped (Paul, 11 Nov 2026: "just
   have the card and desc view"): Your shows is always the small cards
   with the description, the layout keys and `ShowTile` are gone, the strip
-  holds only the sort key, and "showsLayout" no longer syncs. On the
-  branch, not built.
+  holds only the sort key, and "showsLayout" no longer syncs.
+- **Alerts job retries Apple blips** (11 Nov 2026; see the alerts notes
+  above: waits 20 / 60 / 120 s and tries again on UNKNOWN_CONTAINER,
+  429 or 5xx).
+
+## On the branch for build 138 (11 Nov 2026, PR #56; Paul: "let's rebuild it all", "get everything in for the next build")
+
+- **Poster look on every screen** (see "Look" at the top). Built without
+  a compiler (GitHub's check compiles it). To check on the phone: the
+  full-row swipes (they're hand-made, so check they don't fight scrolling
+  or long-press drag in Up Next), the player on a small iPhone, the dot
+  print on light artwork, text sizes in rows, Night colours.
+- **New app icon** 2b olive with a soft shadow (top of this file).
+- Removed: New Episodes cards (`EpisodeCard`), `panelRow`,
+  `Theme.upNextCard`, the player's ARTWORK / TRANSCRIPT switch and Up Next
+  card (now keys in the bottom row).
+
+## Queued for the next app build
+
+- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
+  New Episodes; 1 Inbox went in with the poster look, build 138). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
+  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
+  swipe right Up Next, left played, "All caught up"), 2 Show circles like
+  Stories (ringed show icons with counts, tap for that show's new ones),
+  3 Triage deck (one big card, swipe right Up Next / left played / up
+  play now), 4 Tape shelf (episodes as cassette spines in show colours,
+  tap one to slide it out), 5 Morning digest (one front-page card, "6
+  new since yesterday", one line each, Add the rest to Up Next). Waiting
+  on Paul.
 - **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
   a good spot", but curious if another layout is better). Mock-ups
   https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:
@@ -1170,7 +1215,46 @@ From the Notion notes after 6 Nov 08:10:
   in situ): the playing show is Wastelanders: Star-Lord, its artwork
   cropped from Paul's Apple Podcasts screen recording (Apple's directory
   is blocked from the cloud machine), poster colour #7E3F3A picked from
-  it; other shows stay made-up. Same link. Waiting on Paul.
+  it; other shows stay made-up. Same link. **Paul picked A + B**
+  (11 Nov 2026) with the stamps square, not tilted: a "Your pick: A +
+  B" section on the same link shows Up Next (printed playing block,
+  square stamp on every row, stamp in the mini player), the Library
+  inbox and Your shows rows with stamps, and a show page (printed
+  poster with the artwork as a square stamp beside the name). **Built,
+  all screens at once** (Paul, 11 Nov 2026; see build 138 above).
+  Icons (Paul, 11 Nov 2026: no emoji like the bell, "a flat 2d icon
+  themed to the colour"): the mock-ups now use one set of flat line
+  icons drawn in the surrounding text colour (bell, moon, AirPlay, trim,
+  boost, transcript, chapters, tabs, sort…), shown on
+  https://claude.ai/artifact/KA9BVpN9mzKdXxfNByQ4T1. The app itself
+  already uses SF Symbols (flat, never emoji) in those spots; building
+  the poster look would keep SF Symbols tinted to the colour, or swap in
+  this set if Paul prefers its rounder style.
+  App icon re-theme for the poster look (Paul: "the logo would need
+  rethemeing"), same link: 1 Stamp (perforated postage stamp, rust print,
+  sand cassette), 2 Printed cassette (sand cassette on halftone rust,
+  off-register amber shadow), 3 Big P (Big Shoulders P on ink over the
+  progress line), 4 Poster type (POD / DECK on amber), 5 Reels on the
+  line (two reels joined by the progress line on rust); shown on dark /
+  light home screens and at 60 / 40 / 29 pt next to today's olive
+  cassette D. Suggested 1 or 5. Paul liked 2 and 5 ("evolve them a
+  bit"): https://claude.ai/artifact/Mxf14F2Xft1No9W8NBdWNM with 2a
+  Spoked (bigger cassette, spoked reels, no offset shadow), 2b Tape line
+  (progress line across the cassette's bottom + amber print shadow), 2c
+  Reversed (rust printed cassette on sand), 5a Tape path (tape running
+  between the reels into the line), 5b Ink (reels + line on near-black),
+  5c Big reel (one spool on the line), X Blend (printed cassette outline,
+  spoked reels, line). Suggested 2b or X; 5b sharpest small. **Paul
+  picked 2b** and asked if its shading matches the app: halftone dots,
+  sand and the amber ad already do; the rust came from Star-Lord's
+  artwork (not an app colour) and the hard offset shadow isn't used
+  anywhere in the app (cards have soft shadows). Colourways of 2b next to
+  the app's pieces: https://claude.ai/artifact/Qg7fe2hJ6WYjxc2ytCCbwy
+  (rust offset / rust soft / olive offset / olive soft / ink soft / sand
+  with olive cassette). Suggested olive + soft shadow. **Paul: go for olive + soft shadow**
+  (11 Nov 2026): it is the app icon and the website's on the branch
+  (UBDM; see the icon line at the top). The rest of the poster look is
+  still waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made

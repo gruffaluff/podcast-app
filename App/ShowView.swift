@@ -89,7 +89,7 @@ struct ShowView: View {
                         }
                     }
                     .tag(episode.episodeID)
-                    .panelRow(index, of: episodes.count)
+                    .showRow(show.artworkURL, title: show.title)
                 }
             }
         }
@@ -216,21 +216,15 @@ struct ShowView: View {
                 store.undoable("Marked \(older.count) played", episodes: older) { store.markPlayed(older) }
             }
         }
-        .swipeActions(edge: .trailing) {
-            if episode.played {
-                Button("Unplayed", systemImage: "circle") { store.markUnplayed(episode) }.tint(Theme.muted)
-            } else {
-                Button("Played", systemImage: "checkmark") {
+        // Full-row swipes (poster look): right to play next, left played
+        // (or unplayed).
+        .posterSwipe(
+            leading: PosterSwipeAction(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", colour: Poster.swipeAdd) { store.playNext(episode) },
+            trailing: episode.played
+                ? PosterSwipeAction(title: "Unplayed", icon: "circle", colour: Theme.muted, action: { store.markUnplayed(episode) })
+                : PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed, action: {
                     store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                }.tint(Theme.accentFill)
-            }
-        }
-        .swipeActions(edge: .leading) {
-            Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { store.playNext(episode) }
-                .tint(Theme.accentFill)
-            Button("Play last", systemImage: "text.line.last.and.arrowtriangle.forward") { store.playLast(episode) }
-                .tint(Theme.ink)
-        }
+                }))
     }
 
     /// The show's header: the artwork filling the card, fading into its
@@ -239,16 +233,25 @@ struct ShowView: View {
     private var header: some View {
         let tint = ArtworkColors.shared.background(for: show.artworkURL) ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 250)
-            Text(show.title.uppercased())
-                .font(Theme.big(44))
-                .lineLimit(3)
-                .minimumScaleFactor(0.5)
-                .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
-                .accessibilityAddTraits(.isHeader)
-            Text([show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · "))
-                .font(Theme.text(13))
-                .foregroundStyle(Theme.displayDim)
+            Spacer(minLength: 170)
+            // The show's poster: the artwork printed in its colour, the real
+            // artwork as a square stamp beside the name (Paul's A + B).
+            HStack(alignment: .bottom, spacing: 12) {
+                Stamp(url: show.artworkURL, title: show.title, size: 72)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text([show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ").uppercased())
+                        .font(Theme.mono(9.5))
+                        .tracking(0.8)
+                        .foregroundStyle(Theme.displayDim)
+                        .lineLimit(2)
+                    Text(show.title.uppercased())
+                        .font(Theme.big(40))
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.5)
+                        .shadow(color: .black.opacity(0.3), radius: 6, y: 2)
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
             HStack(spacing: 8) {
                 Button { confirmingUnfollow = true } label: {
                     HStack(spacing: 5) {
@@ -388,42 +391,18 @@ private struct EpisodeRow: View {
     var expanded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            // Unplayed: an olive dot, like a new-mail dot. Played: a tick and
-            // a faded title (the fade alone wasn't clear enough; Paul, 9 Nov 2026).
-            HStack(spacing: 6) {
-                if isPlaying {
-                    LED(on: true, color: Theme.accentFill)
-                } else if episode.played {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.muted)
-                        .accessibilityLabel("Played")
-                } else {
-                    Circle()
-                        .fill(Theme.accentFill)
-                        .frame(width: 8, height: 8)
-                        .accessibilityLabel("Unplayed")
-                }
-                Text(episode.published.formatted(date: .abbreviated, time: .omitted).uppercased())
-                    .font(Theme.mono(10))
-                    .foregroundStyle(Theme.muted)
-            }
-            Text(episode.title)
-                .font(.body.weight(episode.played ? .regular : .semibold))
-                .foregroundStyle(episode.played ? Theme.muted : Theme.ink)
-                .lineLimit(2)
+        VStack(alignment: .leading, spacing: 4) {
+            // A poster row: when, how long and its state on the label line
+            // ("● NEW" unplayed, "✓ PLAYED" faded), then the title big.
+            PosterRowText(label: label, title: episode.title, titleSize: 18, lines: 2, dim: episode.played)
             if !episode.summary.isEmpty {
                 Text(episode.summary)
                     .font(expanded ? .subheadline : .caption)
                     .foregroundStyle(expanded ? Theme.ink : Theme.muted)
                     .lineLimit(expanded ? nil : 1)
             }
-            HStack(spacing: 10) {
+            if !episode.played {
                 EpisodeLights(episode: episode)
-                Text(meta.uppercased())
-                    .font(Theme.mono(10))
-                    .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
             }
         }
         .padding(.vertical, 2)
@@ -431,12 +410,15 @@ private struct EpisodeRow: View {
         .contentShape(Rectangle())
     }
 
+    private var label: String {
+        let date = episode.published.formatted(date: .abbreviated, time: .omitted)
+        let state = isPlaying ? "▶ Playing" : (episode.played ? "✓ Played" : "● New")
+        return ([date, state] + [meta].filter { !$0.isEmpty }).joined(separator: " · ")
+    }
+
     private var meta: String {
         var parts: [String] = []
-        if isPlaying { parts.append("Playing") }
-        if episode.played {
-            parts.append("Played")
-        } else if let left = episode.timeLeft, left > 0 {
+        if !episode.played, let left = episode.timeLeft, left > 0 {
             parts.append(episode.position > 30 ? "\(TimeFormat.length(left)) left" : TimeFormat.length(left))
         }
         if isQueued { parts.append("In Up Next") }
@@ -453,19 +435,19 @@ struct ShowHeroBackground: View {
     let tint: Color
 
     var body: some View {
+        // Printed in the show's colour (poster look, Paul 11 Nov 2026).
         ZStack(alignment: .top) {
             tint
             GeometryReader { geometry in
-                CachedImage(url: url) { Color.clear }
+                PrintedArtwork(url: url, colour: tint, strength: 0.7, dots: false)
                     .frame(width: geometry.size.width, height: geometry.size.width)
-                    .clipped()
+                    .mask(LinearGradient(stops: [.init(color: .black, location: 0),
+                                                 .init(color: .black, location: 0.5),
+                                                 .init(color: .black.opacity(0), location: 1)],
+                                         startPoint: .top, endPoint: .bottom))
             }
-            .accessibilityHidden(true)
-            LinearGradient(stops: [.init(color: tint.opacity(0), location: 0),
-                                   .init(color: tint.opacity(0.15), location: 0.25),
-                                   .init(color: tint.opacity(0.85), location: 0.55),
-                                   .init(color: tint, location: 0.8)],
-                           startPoint: .top, endPoint: .bottom)
+            Halftone()
         }
+        .accessibilityHidden(true)
     }
 }

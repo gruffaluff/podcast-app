@@ -277,18 +277,6 @@ extension View {
 // MARK: - List rows (one row style everywhere)
 
 extension View {
-    /// A list row in the app's one row style: its own rounded paper card
-    /// on the sand, with a small gap between cards (Paul after build 130:
-    /// cards, not bands; all one way or the other).
-    func panelRow(_ index: Int, of count: Int) -> some View {
-        self
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .deckCard()
-            .deckCardRow()
-    }
-
     /// The app's one card look (Paul picked B, 9 Nov 2026): a rounded
     /// paper card sitting slightly off the sand on a soft shadow. Every
     /// list row and every card-like panel uses it.

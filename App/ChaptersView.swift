@@ -28,11 +28,9 @@ struct ChaptersView: View {
                                        showTitle: player.nowPlaying?.showTitle ?? "")
                         }
                         .buttonStyle(.plain)
-                        // Cards like every other list.
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .deckCard(index == current ? Theme.highlight : Theme.surface)
-                        .deckCardRow()
+                        // Poster rows like every other list.
+                        .showRow(player.nowPlaying?.artworkURL, title: player.nowPlaying?.showTitle ?? "",
+                                 fill: index == current ? Theme.highlight : Theme.surface)
                     }
                 }
                 .listSectionSeparator(.hidden)
@@ -81,26 +79,10 @@ private struct ChapterRow: View {
     let showTitle: String
 
     var body: some View {
-        HStack(spacing: 12) {
-            ArtworkView(url: artwork, title: showTitle, size: 42, radius: 9)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(chapter.title)
-                    .font(Theme.text(15, .bold))
-                    .foregroundStyle(chapter.isAd ? Theme.muted : Theme.ink)
-                    .lineLimit(1)
-                HStack(spacing: 6) {
-                    if isCurrent {
-                        DeckTag(text: "NOW")
-                    } else if isNext {
-                        DeckTag(text: "NEXT")
-                    }
-                    Text(meta)
-                        .font(Theme.text(12))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
-                }
-            }
-            Spacer(minLength: 0)
+        HStack(spacing: 10) {
+            PosterRowText(label: ((isCurrent ? ["Now"] : (isNext ? ["Next"] : [])) + [meta]).joined(separator: " · "),
+                          title: chapter.title, titleSize: 17, lines: 2, dim: chapter.isAd)
+            Stamp(url: artwork, title: showTitle, size: 38)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)

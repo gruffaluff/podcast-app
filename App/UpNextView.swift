@@ -64,7 +64,7 @@ struct UpNextView: View {
                                 } label: {
                                     SuggestionRow(item: item)
                                 }
-                                .panelRow(0, of: 1)
+                                .showRow(item.artworkURL, title: item.title)
                             }
                         }
                     }
@@ -161,37 +161,21 @@ struct UpNextView: View {
                     .padding(.bottom, 4)
             }
         }
-        // Style B drawn by iOS itself (inset grouped list), not by the rows:
-        // iOS then lifts and moves a row cleanly while reordering. Drawing
-        // the panel slice by slice made the lifted row clip and leave gaps.
-        // Each row is its own rounded paper card on the sand (Paul after
-        // build 130: cards, not bands). The cell behind it is sand, so the
-        // row iOS lifts to drag has sand corners, never white ones; iOS's
-        // own lift is used (a drag shape made a see-through copy, build 126).
+        // Each row is a poster card (Paul, 11 Nov 2026): a strip of the
+        // show's colour, a big title and the artwork stamp; the episode
+        // that's on is a printed block in its colour. The cell behind is
+        // sand, so the row iOS lifts to drag has sand corners.
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 12)
-        .deckCard(Theme.upNextCard(index, playing: playing))
-        .deckCardRow()
-        // Swipe right: notes (a full swipe opens them) and to the top.
-        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button("Notes", systemImage: "doc.text") { store.notesEpisode = episode }
-                .tint(Theme.accentFill)
-            Button("To top", systemImage: "arrow.up.to.line") { store.playNext(episode) }
-                .tint(Theme.muted)
-        }
-        .swipeActions(edge: .trailing) {
-            // Icons on every swipe key, so all draw round like Notes /
-            // To top (Paul, build 130: text-only ones drew as squares).
-            Button("Played", systemImage: "checkmark") {
+        .modifier(QueueCard(episode: episode, isPlaying: index == playing))
+        // Full-row swipes: right to the top of Up Next, left played. Notes
+        // and Remove are in the row's keys (tap the row).
+        .posterSwipe(
+            leading: PosterSwipeAction(title: "To top", icon: "arrow.up.to.line", colour: Poster.swipeAdd) { store.playNext(episode) },
+            trailing: PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed) {
                 store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-            }
-            .tint(Theme.ink)
-            Button("Remove", systemImage: "minus.circle") {
-                store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(episode.episodeID) }
-            }
-            .tint(Theme.muted)
-        }
+            },
+            enabled: !editing)
+        .deckCardRow()
     }
 
 
@@ -235,45 +219,32 @@ private struct QueueRow: View {
     let play: () -> Void
 
     var body: some View {
+        let show = episode.podcast?.title ?? ""
+        let time = episode.timeLeft.map { TimeFormat.clock($0) } ?? "--:--"
         HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                PosterRowText(
+                    label: ((isPlaying ? ["Now"] : []) + [show] + [tag].compactMap { $0 } + [time + (isPlaying ? " left" : "")]).joined(separator: " · "),
+                    title: episode.title,
+                    titleSize: isPlaying ? 25 : 19,
+                    lines: isPlaying ? 3 : 2,
+                    onColour: isPlaying)
+                // When it came out (Paul, 9 Nov 2026), then downloading /
+                // transcribing, and the DL / TX lights.
+                HStack(spacing: 8) {
+                    Text(([Self.published(episode.published)] + [status].compactMap { $0 }).joined(separator: " · ").uppercased())
+                        .font(Theme.mono(9))
+                        .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : Theme.muted)
+                        .lineLimit(1)
+                    if !isPlaying { EpisodeLights(episode: episode) }
+                }
+            }
+            // Tapping the artwork stamp plays straight away.
             Button(action: play) {
-                ArtworkView(url: episode.artwork, title: episode.podcast?.title ?? episode.title, size: 46, radius: 8)
-                    .overlay {
-                        if isPlaying {
-                            RoundedRectangle(cornerRadius: 8).stroke(Theme.accentFill, lineWidth: 3)
-                        }
-                    }
+                Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: isPlaying ? 54 : 40)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Play number \(number)")
-            VStack(alignment: .leading, spacing: 3) {
-                Text(episode.title)
-                    .font(Theme.text(15, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2)
-                HStack(spacing: 6) {
-                    if let tag { DeckTag(text: tag) }
-                    Text(episode.podcast?.title ?? "")
-                        .lineLimit(1)
-                }
-                .font(Theme.mono(10))
-                .foregroundStyle(Theme.muted)
-                // When it came out (Paul, 9 Nov 2026), then playing /
-                // downloading / transcribing; the line is always there, so
-                // rows don't change height when one starts playing.
-                Text(([Self.published(episode.published)] + [status].compactMap { $0 }).joined(separator: " · ").uppercased())
-                    .font(Theme.mono(10))
-                    .foregroundStyle(isPlaying ? Theme.accentText : Theme.muted)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 6)
-            VStack(alignment: .trailing, spacing: 5) {
-                Text(episode.timeLeft.map { TimeFormat.clock($0) } ?? "--:--")
-                    .font(Theme.mono(12))
-                    .monospacedDigit()
-                    .foregroundStyle(Theme.ink)
-                EpisodeLights(episode: episode)
-            }
         }
         .contentShape(Rectangle())
     }
@@ -314,7 +285,6 @@ private struct QueueRow: View {
     /// Only the things worth a line: playing, downloading, transcribing.
     private var status: String? {
         var parts: [String] = []
-        if isPlaying { parts.append("Playing") }
         if let download = downloads.status(for: episode), download != "Downloaded" { parts.append(download) }
         switch episode.transcriptState {
         case .transcribing: parts.append("Transcribing")
@@ -408,5 +378,49 @@ private struct UpNextRowKeys: View {
             .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .plain, radius: 8))
+    }
+}
+
+/// An Up Next card: a poster row in the show's colour strip, or for the
+/// episode that's on, a block with its artwork printed in its colour and a
+/// line showing how far through it is.
+struct QueueCard: ViewModifier {
+    @Environment(PlayerModel.self) private var player
+    let episode: PodcastEpisode
+    let isPlaying: Bool
+
+    func body(content: Content) -> some View {
+        let showArt = episode.podcast?.artworkURL ?? episode.artwork
+        let colour = Poster.colour(showArt, title: episode.podcast?.title ?? episode.title)
+        Group {
+            if isPlaying {
+                VStack(alignment: .leading, spacing: 10) {
+                    content
+                    GeometryReader { geometry in
+                        Capsule().fill(Poster.paper.opacity(0.3))
+                            .overlay(alignment: .leading) {
+                                Capsule().fill(Poster.paper).frame(width: geometry.size.width * progress)
+                            }
+                    }
+                    .frame(height: 4)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    PrintedArtwork(url: episode.artwork, colour: colour, strength: 0.5)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+                        .shadow(color: Theme.shadowWide, radius: 4, y: 2)
+                }
+                .tint(Poster.paper)
+            } else {
+                content.posterCard(colour)
+            }
+        }
+        .task(id: showArt) { await ArtworkColors.shared.load(showArt) }
+    }
+
+    private var progress: Double {
+        guard player.nowPlaying?.episodeID == episode.episodeID, player.duration > 0 else { return 0 }
+        return min(1, player.currentTime / player.duration)
     }
 }
