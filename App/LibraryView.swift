@@ -26,10 +26,18 @@ struct LibraryView: View {
     /// plus that show's newest one. Following a show with a long back
     /// catalogue filled the carousel with its old episodes (Paul, 8 Nov
     /// 2026: cap it at the latest one).
+    /// How long an episode stays in New (Paul, 11 Nov 2026): two weeks from
+    /// when it came out. After that it's only on its show page (still
+    /// unplayed, and still in Up Next if it's there).
+    static let newFor: TimeInterval = 14 * 86_400
+
     private var newCards: [PodcastEpisode] {
         var seen = Set<String>()
         var cards: [PodcastEpisode] = []
+        let cutoff = Date().addingTimeInterval(-Self.newFor)
         for episode in newEpisodes {
+            // Newest first, so everything after this is older too.
+            if episode.published < cutoff { break }
             guard let show = episode.podcast else { continue }
             let firstForShow = seen.insert(show.feedURL).inserted
             if firstForShow || episode.published >= show.followedAt {
@@ -181,10 +189,6 @@ struct LibraryView: View {
                 let second = latest[b.persistentModelID] ?? .distantPast
                 return newestFirst ? first > second : first < second
             }
-        case .followedNewest:
-            return shows.sorted { $0.followedAt > $1.followedAt }
-        case .followedOldest:
-            return shows.sorted { $0.followedAt < $1.followedAt }
         }
     }
 
@@ -224,19 +228,21 @@ struct LibraryView: View {
     /// headings, so "Newest first" showed twice with nothing to tell the
     /// two apart; Paul, build 136), and every choice says what it sorts by.
     private var sortMenu: some View {
+        // iOS's own pickers inside the menu: the tick sits in its own
+        // column, so the chosen line's words don't move (Paul, after build
+        // 140: a tick pushed "Newest episode first" to the right). Sorting
+        // by when you followed is gone (Paul, 11 Nov 2026).
         Menu {
-            Section("Name") {
-                sortOption(.az, "Name, A to Z")
-                sortOption(.za, "Name, Z to A")
+            Picker("Name", selection: sortBinding) {
+                Text("Name, A to Z").tag(ShowsSort.az)
+                Text("Name, Z to A").tag(ShowsSort.za)
             }
-            Section("Latest episode") {
-                sortOption(.newestEpisode, "Newest episode first")
-                sortOption(.oldestEpisode, "Oldest episode first")
+            .pickerStyle(.inline)
+            Picker("Latest episode", selection: sortBinding) {
+                Text("Newest episode first").tag(ShowsSort.newestEpisode)
+                Text("Oldest episode first").tag(ShowsSort.oldestEpisode)
             }
-            Section("When you followed") {
-                sortOption(.followedNewest, "Recently followed first")
-                sortOption(.followedOldest, "Followed longest ago first")
-            }
+            .pickerStyle(.inline)
         } label: {
             Image(systemName: "arrow.up.arrow.down")
                 .font(.system(size: 14, weight: .semibold))
@@ -248,16 +254,8 @@ struct LibraryView: View {
         .accessibilityValue(sort.short)
     }
 
-    private func sortOption(_ option: ShowsSort, _ title: String) -> some View {
-        Button {
-            showsSort = option.rawValue
-        } label: {
-            if sort == option {
-                Label(title, systemImage: "checkmark")
-            } else {
-                Text(title)
-            }
-        }
+    private var sortBinding: Binding<ShowsSort> {
+        Binding(get: { sort }, set: { showsSort = $0.rawValue })
     }
 
     private func libraryKey(_ title: String, icon: String) -> some View {
@@ -336,7 +334,8 @@ enum ShowBadges {
 
 /// How Your shows is ordered (Paul, 10 Nov 2026), saved as "showsSort".
 enum ShowsSort: String {
-    case az, za, newestEpisode, oldestEpisode, followedNewest, followedOldest
+    // A saved "followed" sort from before 11 Nov 2026 falls back to A–Z.
+    case az, za, newestEpisode, oldestEpisode
 
     /// Shown beside YOUR SHOWS.
     var short: String {
@@ -345,8 +344,6 @@ enum ShowsSort: String {
         case .za: return "NAME Z–A"
         case .newestEpisode: return "NEWEST EPISODE"
         case .oldestEpisode: return "OLDEST EPISODE"
-        case .followedNewest: return "RECENTLY FOLLOWED"
-        case .followedOldest: return "FIRST FOLLOWED"
         }
     }
 }

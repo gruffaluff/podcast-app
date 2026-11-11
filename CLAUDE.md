@@ -1266,6 +1266,37 @@ From the Notion notes after 6 Nov 08:10:
   playing changes only when a different episode starts, with a 0.5 s fade
   (`AccentColour.colour` is now set by RootView inside `withAnimation`).
 
+## On the branch for the next build (11 Nov 2026; Paul's notes after build 140)
+
+- **Dead zone above the mini player** (scrolling an inch above it did
+  nothing) and **rows stuck behind the mini player** in Up Next (the
+  taller playing block pushed the list down): iOS's TabView is gone. Our
+  own tabs (`RootView.tabPage`: a ZStack, each tab made the first time
+  it's shown and kept, only the current one touchable), so no hidden iOS
+  tab bar sits under ours; the dock is a bottom safe-area inset
+  (`MiniPlayerInset`, was an overlay + content margins), so every list
+  stops above it and its last row scrolls clear. Undo / No internet bars
+  float just above the dock without taking room. Check on the phone:
+  scrolling just above the mini player, the last rows of every tab,
+  switching tabs keeps each tab's place.
+- **New in Library lasts two weeks** (Paul, 11 Nov 2026): episodes leave
+  New 14 days after they came out (`LibraryView.newFor`), as well as when
+  played; they stay unplayed on their show page (and in Up Next).
+  Leaving out episodes already in Up Next: no (Paul: everything goes to
+  Up Next by default, so New would be empty). Before the inbox, the New
+  Episodes carousel used the same rule (unplayed, since following plus
+  each show's newest, 12 at most) with no time limit.
+- **Your shows sort menu** (Paul): the tick pushed the chosen line's
+  words to the right; now two iOS pickers in the menu (Name A–Z / Z–A,
+  Newest / Oldest episode first) with iOS's own tick column. Sorting by
+  when you followed is gone (an old saved choice falls back to A–Z).
+- **Bottom of the screen** (Paul: half printed artwork behind the mini
+  player, half plain band behind the tabs "looks a little off"): options
+  on https://claude.ai/artifact/FwkMBnaiwmK8SdbGbgRgW4: Now, A one print
+  fading down, B one colour with the dot print all the way (suggested),
+  C mini player as a floating card over a dark tab bar, D printed mini
+  player over a paper tab bar. Waiting on Paul.
+
 ## Queued for the next app build
 
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /

@@ -22,23 +22,31 @@ private struct MiniPlayerInset: ViewModifier {
     private var playing: Bool { player.nowPlaying != nil }
 
     func body(content: Content) -> some View {
-        // The bar floats over the page. Lists get extra room at the bottom
-        // (content margins reach every list inside), so their last rows
-        // scroll clear of it.
+        // The dock is a bottom safe-area inset (Paul, after build 140: rows
+        // got stuck behind the mini player). With our own tabs (no iOS tab
+        // bar underneath) every list stops above it and can scroll its
+        // last row clear, however tall the rows above are.
         content
-            .contentMargins(.bottom, keyboardUp ? 0 : (playing ? MiniPlayer.height : 0) + PosterTabBar.height + 8, for: .scrollContent)
-            // iOS's own tab bar (a floating white capsule on iOS 26) is
-            // hidden; ours sits under the mini player (Paul, 11 Nov 2026).
-            .toolbarVisibility(.hidden, for: .tabBar)
-            .overlay(alignment: .bottom) {
-                VStack(spacing: 6) {
-                    OfflineBar()
-                        .padding(.horizontal, 12)
-                    UndoBar()
-                        .padding(.horizontal, 12)
-                    if !keyboardUp {
-                        dock
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !keyboardUp {
+                    dock
+                        // The Undo and No internet bars float just above the
+                        // dock without taking room (the list doesn't jump).
+                        .overlay(alignment: .top) {
+                            VStack(spacing: 6) {
+                                OfflineBar()
+                                UndoBar()
+                            }
+                            .padding(.horizontal, 12)
+                            .alignmentGuide(.top) { $0[.bottom] + 6 }
+                        }
+                } else {
+                    VStack(spacing: 6) {
+                        OfflineBar()
+                        UndoBar()
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 6)
                 }
             }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
