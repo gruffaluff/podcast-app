@@ -106,19 +106,19 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $tab) {
             UpNextView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Up Next", systemImage: "list.bullet") }
                 .tag(0)
             LibraryView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Library", systemImage: "square.grid.2x2") }
                 .tag(1)
             DiscoverView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Discover", systemImage: "safari") }
                 .tag(2)
             SearchView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
                 .tag(3)
         }

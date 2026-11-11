@@ -1184,6 +1184,15 @@ From the Notion notes after 6 Nov 08:10:
   others are shrunk / faded with a scale (no reflow), with a softer
   0.8 s scroll.
 - **Library option 3** with colour-coded rules (see Library above).
+- **Own tab bar** (Paul: the bar at the bottom was "still in a white
+  capsule", iOS 26's floating glass tab bar): iOS's tab bar is hidden
+  (`.toolbarVisibility(.hidden, for: .tabBar)`) and `PosterTabBar` (four
+  flat icons with small DM Mono labels, the current tab full strength,
+  others faded) sits under the mini player in one printed block with
+  curved top corners down to the bottom edge, in the colour of what's
+  playing, or the dark display colour with the dot screen when nothing
+  is (`MiniPlayerInset.dock`, `DockBackground`). It steps aside while the
+  keyboard is up, like the mini player did.
 
 ## Queued for the next app build
 
@@ -1193,7 +1202,9 @@ From the Notion notes after 6 Nov 08:10:
   Shoulders Bold everywhere, 3 Display ExtraBold headings + Big Shoulders
   Text SemiBold row titles, 4 Display ExtraBold only for screen titles and
   section headings, row titles in SF semibold normal case, 5 Barlow
-  Condensed (SemiBold headings, Medium rows). Suggested 4. Waiting on Paul.
+  Condensed (SemiBold headings, Medium rows). Suggested 4. Paul: keep
+  proper case (not capitals); same link re-rendered in proper case
+  (option 1 left in capitals to compare). Waiting on his pick.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
