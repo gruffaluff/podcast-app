@@ -1295,7 +1295,10 @@ From the Notion notes after 6 Nov 08:10:
   on https://claude.ai/artifact/FwkMBnaiwmK8SdbGbgRgW4: Now, A one print
   fading down, B one colour with the dot print all the way (suggested),
   C mini player as a floating card over a dark tab bar, D printed mini
-  player over a paper tab bar. Waiting on Paul.
+  player over a paper tab bar. **Paul picked A** (11 Nov 2026):
+  `DockBackground` is one `PrintedArtwork` under the whole dock with a
+  black gradient (clear for the top 40%, 34% at the bottom); nothing
+  playing: display colour + dots with the same darkening.
 
 ## Queued for the next app build
 
