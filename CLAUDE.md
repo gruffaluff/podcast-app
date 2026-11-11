@@ -256,7 +256,7 @@ to Nowhere / Top / Bottom" on the show page.
   Podcasts': 248×330, the artwork across the top fading into its own
   colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
   pill with the time left, download and ⋯; it snaps card to card. Above it
-  Continue listening; below "Your shows" (large / card, with a sort key).
+  Continue listening; below "Your shows" (small cards with the description, and a sort key).
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -1104,7 +1104,11 @@ From the Notion notes after 6 Nov 08:10:
   the sort name beside the count squeezed "YOUR SHOWS · 12" down to
   "YOUR SHOWS ·…"; now the count always shows and "SORTED BY NEWEST
   EPISODE" sits on a small line under it (`yourShowsTitle`; A–Z / Z–A
-  read "NAME A–Z"). On the branch, not built.
+  read "NAME A–Z"). Large artwork tiles dropped (Paul, 11 Nov 2026: "just
+  have the card and desc view"): Your shows is always the small cards
+  with the description, the layout keys and `ShowTile` are gone, the strip
+  holds only the sort key, and "showsLayout" no longer syncs. On the
+  branch, not built.
 - **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
   a good spot", but curious if another layout is better). Mock-ups
   https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:
