@@ -1166,7 +1166,11 @@ From the Notion notes after 6 Nov 08:10:
   with halftone, on big colour areas), C Slice (row strip widens into a
   slice of the artwork), D Gallery moments (artwork big only on show
   pages and player), E Wall of sleeves (Your shows as artwork tiles).
-  Suggested A + B. Waiting on Paul.
+  Suggested A + B. Then real artwork in place (Paul asked to see one
+  in situ): the playing show is Wastelanders: Star-Lord, its artwork
+  cropped from Paul's Apple Podcasts screen recording (Apple's directory
+  is blocked from the cloud machine), poster colour #7E3F3A picked from
+  it; other shows stay made-up. Same link. Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
