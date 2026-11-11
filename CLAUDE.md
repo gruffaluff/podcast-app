@@ -1094,6 +1094,13 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Your shows sort menu** (Paul, build 136 screenshot: "Newest first" /
+  "Oldest first" twice, no way to tell which sort they were). Inside a
+  Picker, iOS dropped the section headings. Now three menu sections
+  (Name / Latest episode / When you followed) of plain buttons with a
+  tick, each saying what it sorts by: "Name, A to Z", "Newest episode
+  first", "Recently followed first", "Followed longest ago first" etc.
+  (`LibraryView.sortOption`). On the branch, not built.
 - **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
   a good spot", but curious if another layout is better). Mock-ups
   https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:

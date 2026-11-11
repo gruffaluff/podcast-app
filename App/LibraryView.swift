@@ -241,21 +241,22 @@ struct LibraryView: View {
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
     }
 
+    /// Sections sit straight in the menu (inside a Picker iOS dropped their
+    /// headings, so "Newest first" showed twice with nothing to tell the
+    /// two apart; Paul, build 136), and every choice says what it sorts by.
     private var sortMenu: some View {
         Menu {
-            Picker("Sort shows", selection: $showsSort) {
-                Section("Name") {
-                    Text("A–Z").tag(ShowsSort.az.rawValue)
-                    Text("Z–A").tag(ShowsSort.za.rawValue)
-                }
-                Section("Latest episode") {
-                    Text("Newest first").tag(ShowsSort.newestEpisode.rawValue)
-                    Text("Oldest first").tag(ShowsSort.oldestEpisode.rawValue)
-                }
-                Section("Date followed") {
-                    Text("Newest first").tag(ShowsSort.followedNewest.rawValue)
-                    Text("Oldest first").tag(ShowsSort.followedOldest.rawValue)
-                }
+            Section("Name") {
+                sortOption(.az, "Name, A to Z")
+                sortOption(.za, "Name, Z to A")
+            }
+            Section("Latest episode") {
+                sortOption(.newestEpisode, "Newest episode first")
+                sortOption(.oldestEpisode, "Oldest episode first")
+            }
+            Section("When you followed") {
+                sortOption(.followedNewest, "Recently followed first")
+                sortOption(.followedOldest, "Followed longest ago first")
             }
         } label: {
             Image(systemName: "arrow.up.arrow.down")
@@ -266,6 +267,18 @@ struct LibraryView: View {
         }
         .accessibilityLabel("Sort shows")
         .accessibilityValue(sort.short)
+    }
+
+    private func sortOption(_ option: ShowsSort, _ title: String) -> some View {
+        Button {
+            showsSort = option.rawValue
+        } label: {
+            if sort == option {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(title)
+            }
+        }
     }
 
     private func layoutKey(_ value: String, icon: String, label: String) -> some View {
@@ -533,7 +546,7 @@ enum ShowsSort: String {
         case .za: return "Z–A"
         case .newestEpisode: return "NEWEST EPISODE"
         case .oldestEpisode: return "OLDEST EPISODE"
-        case .followedNewest: return "LAST FOLLOWED"
+        case .followedNewest: return "RECENTLY FOLLOWED"
         case .followedOldest: return "FIRST FOLLOWED"
         }
     }
