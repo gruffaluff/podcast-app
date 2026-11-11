@@ -1463,7 +1463,16 @@ From the Notion notes after 6 Nov 08:10:
   "All 6 new"; suggested), B Front page (one dark card with Add all /
   Mark all played, like today's New), C By day (Today / Yesterday / This
   week compact lines with colour dots), D Row of squares (sideways
-  artwork with +). Waiting on Paul.
+  artwork with +). Paul: DL / TX must be subtler (just the small
+  letters, faded or not); see more of B and C with the show art on the
+  right so New looks different from Carry on. Same link updated: DL / TX
+  are plain small mono letters (dark when done, faded when not, dotted
+  while on the way); New lines have the words left and the artwork on the
+  right; B Front page in dark and in paper (newest four, Add all / Mark
+  all played, "All ›" opens the full New list with both actions on the
+  deck at the bottom); C By day plain lines plus one mid-swipe (green
+  + UP NEXT). Suggested B on paper (dark stays for what's playing).
+  Waiting on Paul.
 
 ## Queued for the next app build
 
