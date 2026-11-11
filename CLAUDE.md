@@ -1420,7 +1420,17 @@ From the Notion notes after 6 Nov 08:10:
   mode keys, no tab bar; pull down = player), 3 Quiet deck (plain lists,
   deck only in the mini player and player), 4 Display does more (a DISP
   key switches the player's display between TIME / TEXT / CHAP).
-  Suggested 0 with 4's player. Waiting on Paul.
+  Suggested 0 with 4's player. Paul: for reach, the player and keys
+  must be at the bottom of the screen. All five reworked bottom up on
+  https://claude.ai/artifact/XftkojHeUgsmXaSYTuGH1e (rule: top is for
+  reading, bottom is for pressing): a fixed deck along the bottom of every
+  screen (display, play / skips, tabs), lists scroll above it with Up Next
+  sitting on the deck (next episode nearest the thumb), Library and show
+  search boxes on the deck, show settings keys on the deck, the player =
+  the same deck pulled up (artwork up top; display, transport, tools and
+  ⌄ Close key in the bottom half). Faceplate keeps its mode keys at the
+  very bottom; DISP display sits just above the keys. A "Show thumb
+  reach" switch overlays the easy / stretch / hard zones. Waiting on Paul.
 
 ## Queued for the next app build
 
