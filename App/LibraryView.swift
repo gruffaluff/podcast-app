@@ -87,46 +87,50 @@ struct LibraryView: View {
                         .buttonStyle(KeyButtonStyle(kind: .plain, radius: 8))
                         .padding(.horizontal, 12)
 
-                        // New episodes as an inbox (Paul picked the poster
-                        // look, 11 Nov 2026): Today / Yesterday / This week /
-                        // Earlier; swipe right for Up Next, left for played.
+                        // Option 3 (Paul, 11 Nov 2026): each section opens
+                        // with a big heading on a heavy rule in its own colour
+                        // (olive new, amber carry on, ink shows), and the rows
+                        // get quieter down the page: full poster rows for new,
+                        // slim lines with a progress ring for started, a plain
+                        // list for shows.
                         let groups = inboxGroups
+                        bigHeading("New", count: groups.reduce(0) { $0 + $1.episodes.count }, colour: Theme.accentFill)
                         if groups.isEmpty {
                             caughtUp
                         }
                         ForEach(groups, id: \.title) { group in
-                            sectionTitle("NEW · " + group.title, detail: "\(group.episodes.count)")
+                            if groups.count > 1 {
+                                subLabel(group.title)
+                            }
                             VStack(spacing: 8) {
                                 ForEach(group.episodes) { episode in
                                     InboxRow(episode: episode)
                                 }
                             }
                             .padding(.horizontal, 12)
-                            .padding(.bottom, 6)
                         }
 
                         if !continuing.isEmpty {
-                            sectionTitle("CONTINUE LISTENING", detail: "\(continuing.count) STARTED")
-                            VStack(spacing: 8) {
+                            bigHeading("Carry on", count: continuing.count, colour: Theme.adMarker)
+                                .padding(.top, 8)
+                            VStack(spacing: 0) {
                                 ForEach(continuing) { episode in
                                     Button { player.play(episode) } label: {
-                                        HistoryRow(episode: episode)
-                                            .showCard(episode.showArtwork, title: episode.showTitle)
+                                        CarryOnLine(episode: episode)
                                     }
-                                        .buttonStyle(.plain)
-                                        .contextMenu { EpisodeMenuItems(episode: episode) }
+                                    .buttonStyle(.plain)
+                                    .contextMenu { EpisodeMenuItems(episode: episode) }
                                 }
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.bottom, 8)
+                            .padding(.horizontal, 20)
                         }
 
-                        HStack(alignment: .center) {
-                            yourShowsTitle
-                            sortKey
-                                .padding(.trailing, 20)
+                        bigHeading("Your shows", count: shows.count, colour: Theme.ink) {
+                            sortMenu
                         }
-                        .padding(.top, 14)
+                        .padding(.top, 8)
+                        subLabel("Sorted by " + sort.short)
+                            .padding(.top, -6)
                         yourShows
                     }
                 }
@@ -189,41 +193,31 @@ struct LibraryView: View {
     /// tiles (11 Nov 2026; "description only" went on 10 Nov).
     private var yourShows: some View {
         let ordered = sortedShows
-        return LazyVStack(spacing: 10) {
+        return LazyVStack(spacing: 0) {
             ForEach(ordered) { show in
                 NavigationLink(value: show) {
+                    // A plain list line: the quietest of the three sections.
                     HStack(spacing: 10) {
-                        showText(show)
-                        Stamp(url: show.artworkURL, title: show.title, size: 44)
+                        Stamp(url: show.artworkURL, title: show.title, size: 30)
+                        Text(show.title)
+                            .font(Theme.text(15, .semibold))
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                        Spacer(minLength: 6)
+                        Text(ShowBadges.text(show).uppercased())
+                            .font(Theme.mono(9))
+                            .foregroundStyle(Theme.muted)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
-                    .showCard(show.artworkURL, title: show.title)
+                    .padding(.vertical, 9)
+                    .overlay(alignment: .bottom) { Theme.hairline.frame(height: 1) }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 12)
-    }
-
-    private func showText(_ show: Podcast) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            // TOP / BTM and how many new (Paul, 10 Nov 2026), then the name.
-            PosterRowText(label: ShowBadges.text(show), title: show.title, titleSize: 19, lines: 2)
-            if !show.summary.isEmpty {
-                Text(show.summary)
-                    .font(Theme.text(12))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
-                    .multilineTextAlignment(.leading)
-            }
-        }
-    }
-
-    /// The sort key on a small paper strip.
-    private var sortKey: some View {
-        sortMenu
-            .padding(3)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 20)
     }
 
     /// Sections sit straight in the menu (inside a Picker iOS dropped their
@@ -275,43 +269,39 @@ struct LibraryView: View {
         .frame(minHeight: 32)
     }
 
-    private func sectionTitle(_ title: String, detail: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(Theme.mono(11, .bold))
-                .tracking(1.4)
-                .foregroundStyle(Theme.muted)
-                .lineLimit(1)
-            Spacer(minLength: 8)
-            Text(detail)
-                .font(Theme.mono(11))
-                .foregroundStyle(Theme.muted)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-        }
-        .padding(.horizontal, 20)
+    /// A section's big heading (option 3): the name and count in Big
+    /// Shoulders on a heavy rule, rule and count in the section's colour,
+    /// with anything else (the sort key) on the right.
+    private func bigHeading(_ title: String, count: Int, colour: Color) -> some View {
+        bigHeading(title, count: count, colour: colour) { EmptyView() }
     }
 
-    /// "YOUR SHOWS · 12" with the sort on its own small line underneath
-    /// (beside the keys on one line, the count was cut to "·…"; Paul,
-    /// build 136).
-    private var yourShowsTitle: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("YOUR SHOWS · \(shows.count)")
-                .font(Theme.mono(11, .bold))
-                .tracking(1.4)
-                .foregroundStyle(Theme.muted)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-            Text("SORTED BY " + sort.short)
-                .font(Theme.mono(9))
-                .tracking(0.8)
-                .foregroundStyle(Theme.muted.opacity(0.8))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+    private func bigHeading<Trailing: View>(_ title: String, count: Int, colour: Color, @ViewBuilder trailing: () -> Trailing) -> some View {
+        HStack(alignment: .lastTextBaseline, spacing: 8) {
+            Text(title.uppercased())
+                .font(Theme.big(30))
+                .foregroundStyle(Theme.ink)
+            Text("\(count)")
+                .font(Theme.big(30))
+                .foregroundStyle(colour)
+            Spacer(minLength: 8)
+            trailing()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, 20)
+        .padding(.bottom, 3)
+        .overlay(alignment: .bottom) { colour.frame(height: 3) }
+        .padding(.horizontal, 20)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    /// A small label inside a section ("TODAY", "SORTED BY NAME A–Z").
+    private func subLabel(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(Theme.mono(9))
+            .tracking(1)
+            .foregroundStyle(Theme.muted)
+            .padding(.horizontal, 20)
+            .padding(.top, 2)
     }
 
     private var emptyState: some View {
@@ -476,5 +466,45 @@ private struct InboxRow: View {
             trailing: PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed) {
                 store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
             })
+    }
+}
+
+/// A started episode in Carry on: a slim line with a ring showing how far
+/// through it is (in the show's colour), the title and time left.
+private struct CarryOnLine: View {
+    let episode: PodcastEpisode
+
+    var body: some View {
+        let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
+        let fraction = episode.duration.map { $0 > 0 ? min(1, episode.position / $0) : 0 } ?? 0
+        HStack(spacing: 10) {
+            ZStack {
+                Circle().stroke(Theme.hairline, lineWidth: 4)
+                Circle().trim(from: 0, to: max(0.02, fraction))
+                    .stroke(colour, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 24, height: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(episode.title)
+                    .font(Theme.text(15, .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Text(([episode.showTitle] + [episode.timeLeft.map { "\(TimeFormat.length($0)) left" }].compactMap { $0 }).filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+                    .font(Theme.mono(9))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "play.fill")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(Theme.muted)
+        }
+        .padding(.vertical, 9)
+        .overlay(alignment: .bottom) { Theme.hairline.frame(height: 1) }
+        .contentShape(Rectangle())
+        .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
+        .accessibilityLabel("\(episode.title), \(Int(fraction * 100)) percent played")
+        .accessibilityHint("Plays from where you stopped")
     }
 }

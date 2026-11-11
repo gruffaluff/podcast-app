@@ -238,22 +238,48 @@ private struct PosterSwipe: ViewModifier {
     let trailing: PosterSwipeAction?
     let enabled: Bool
     @State private var offset: CGFloat = 0
-    /// Decided on the first movement: sideways swipes move the row, upward
-    /// or downward ones are left to the list's scrolling.
-    @State private var sideways: Bool?
     @State private var armed = false
 
-    private static let trigger: CGFloat = 96
+    /// How far to pull before letting go does it (a quick flick needs less).
+    private static let trigger: CGFloat = 80
 
     func body(content: Content) -> some View {
         content
             .offset(x: offset)
             .background { actionBlock }
-            .simultaneousGesture(drag, including: enabled ? .all : .subviews)
+            // An iOS pan that only starts when the finger moves sideways, so
+            // up / down drags go straight to the list's own scrolling (a
+            // SwiftUI drag on every row fought the scrolling and the
+            // long-press reorder: swipes and scrolls were hit and miss).
+            .gesture(SidewaysPan(isEnabled: enabled && (leading != nil || trailing != nil),
+                                 changed: moved, ended: released))
             .accessibilityActions {
                 if let leading { Button(leading.title, action: leading.action) }
                 if let trailing { Button(trailing.title, action: trailing.action) }
             }
+    }
+
+    private func moved(_ translation: CGFloat) {
+        var x = translation
+        if x > 0, leading == nil { x = 0 }
+        if x < 0, trailing == nil { x = 0 }
+        // Resists a little past the line.
+        if abs(x) > Self.trigger { x = (x > 0 ? 1 : -1) * (Self.trigger + (abs(x) - Self.trigger) * 0.35) }
+        offset = x
+        let nowArmed = abs(x) >= Self.trigger
+        if nowArmed != armed {
+            armed = nowArmed
+            if nowArmed { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
+        }
+    }
+
+    private func released(_ velocity: CGFloat) {
+        // Past the line, or a quick flick the same way once it has moved.
+        let flick = abs(offset) > 36 && abs(velocity) > 700 && (velocity > 0) == (offset > 0)
+        let fire = (armed || flick) ? (offset > 0 ? leading : trailing) : nil
+        armed = false
+        withAnimation(.spring(duration: 0.3)) { offset = 0 }
+        fire?.action()
     }
 
     @ViewBuilder private var actionBlock: some View {
@@ -278,33 +304,49 @@ private struct PosterSwipe: ViewModifier {
     private func label(_ action: PosterSwipeAction) -> some View {
         Text(action.title.uppercased()).font(Theme.mono(11, .bold)).tracking(1)
     }
+}
 
-    private var drag: some Gesture {
-        DragGesture(minimumDistance: 18)
-            .onChanged { value in
-                if sideways == nil {
-                    sideways = abs(value.translation.width) > abs(value.translation.height) * 1.6
-                }
-                guard sideways == true else { return }
-                var x = value.translation.width
-                if x > 0, leading == nil { x = 0 }
-                if x < 0, trailing == nil { x = 0 }
-                // Resists a little past the line.
-                if abs(x) > Self.trigger { x = (x > 0 ? 1 : -1) * (Self.trigger + (abs(x) - Self.trigger) * 0.35) }
-                offset = x
-                let nowArmed = abs(x) >= Self.trigger
-                if nowArmed != armed {
-                    armed = nowArmed
-                    if nowArmed { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
-                }
-            }
-            .onEnded { _ in
-                let fire = armed ? (offset > 0 ? leading : trailing) : nil
-                sideways = nil
-                armed = false
-                withAnimation(.spring(duration: 0.3)) { offset = 0 }
-                fire?.action()
-            }
+/// A pan that begins only when the finger starts moving sideways; anything
+/// more up-and-down than that never begins, so it can't hold up scrolling.
+private struct SidewaysPan: UIGestureRecognizerRepresentable {
+    let isEnabled: Bool
+    /// How far it has moved sideways.
+    let changed: (CGFloat) -> Void
+    /// Sideways speed when the finger lifts (points per second).
+    let ended: (CGFloat) -> Void
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator { Coordinator() }
+
+    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
+        let pan = UIPanGestureRecognizer()
+        pan.delegate = context.coordinator
+        pan.isEnabled = isEnabled
+        return pan
+    }
+
+    func updateUIGestureRecognizer(_ recognizer: UIPanGestureRecognizer, context: Context) {
+        recognizer.isEnabled = isEnabled
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
+        switch recognizer.state {
+        case .changed:
+            changed(recognizer.translation(in: recognizer.view).x)
+        case .ended:
+            ended(recognizer.velocity(in: recognizer.view).x)
+        case .cancelled, .failed:
+            ended(0)
+        default:
+            break
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = pan.velocity(in: pan.view)
+            return abs(velocity.x) > abs(velocity.y) * 1.2
+        }
     }
 }
 

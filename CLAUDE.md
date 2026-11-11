@@ -277,14 +277,18 @@ to Nowhere / Top / Bottom" on the show page.
     of episode. Skip lengths are set on the Shows screen ("Skip buttons") or
     by touching and holding a skip button.
 
-### Library (poster look, build 138)
-- Library tab: HISTORY / STATS keys, then the **inbox** of new episodes
-  (Today / Yesterday / This week / Earlier; tap a row for the episode
-  page, the stamp to play; swipe right to add to Up Next, left played;
-  "All caught up" when empty), Continue listening, then "Your shows"
-  (poster rows with TOP / BTM · n NEW, the description and a sort key).
-  The New Episodes card carousel (248×330, Apple-style) it replaced is
-  in the build 121–137 notes below.
+### Library (option 3, Paul 11 Nov 2026)
+- Library tab: HISTORY / STATS keys, then three sections, each opening
+  with a big Big Shoulders heading and count on a heavy rule in the
+  section's colour (`bigHeading`): **NEW** (olive; the inbox of poster
+  rows, small TODAY / YESTERDAY / THIS WEEK / EARLIER labels when more than
+  one; tap a row for the episode page, the stamp to play; swipe right to
+  add to Up Next, left played; "All caught up" when empty), **CARRY ON**
+  (amber; started episodes as slim lines with a progress ring in the
+  show's colour, tap to play, `CarryOnLine`) and **YOUR SHOWS** (ink; a
+  plain list: small stamp, name, TOP / BTM · n NEW; sort key on the
+  heading). Rows get quieter down the page. Mock-ups
+  https://claude.ai/artifact/Q8eAX58QyJb4cgPQYqyqAZ.
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -1167,24 +1171,25 @@ From the Notion notes after 6 Nov 08:10:
   main thread and saved the whole list after each one); Library builds
   rows only as they scroll into view (`LazyVStack`).
 
+- **Swipes and scrolling** (Paul: swipes and up / down scrolling "really
+  inconsistent and hard to trigger"): the full-row swipes used a SwiftUI
+  drag on every row that fought the lists' scrolling and the long-press
+  reorder. They now use an iOS pan that only begins when the finger
+  starts moving sideways (`SidewaysPan`), so up / down goes straight to
+  the list; the line is 80 points (was 96) and a quick flick counts. The
+  mini player's swipe up no longer blocks its keys' taps.
+- **Transcript glides** (Paul: it "pages away"): the line now changed
+  size (15 pt text to 32 pt capitals), so every line below leapt as the
+  layout changed. All lines are now the same lyric-sheet capitals and the
+  others are shrunk / faded with a scale (no reflow), with a softer
+  0.8 s scroll.
+- **Library option 3** with colour-coded rules (see Library above).
+
 ## Queued for the next app build
 
-- **Library sections** (Paul, 11 Nov 2026, after build 138: inbox,
-  Continue listening and Your shows "all look the same with only the
-  headers defining each section"). Mock-ups
-  https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ: 1 Three shapes (inbox
-  rows to swipe, Continue listening as a sideways shelf of printed cards
-  with progress, Your shows as a 3-across wall of artwork), 2 Zones (inbox
-  on a paper panel, Continue on an ink band, shows on the sand), 3 Big
-  headings with rows getting quieter down the page, 4 One section at a
-  time (NEW / STARTED / SHOWS switch), 5 Summary tiles + section colours.
-  Suggested 1. Paul liked 3 and 5 and asked for a mix:
-  https://claude.ai/artifact/Q8eAX58QyJb4cgPQYqyqAZ shows 3, 5 and 3/5
-  (a slim strip of 5's count tiles that jump to each section, then 3's
-  big headings coloured per section with an icon: olive new, amber
-  started, ink shows; rows keep 3's densities and each show's colour).
-  Waiting on Paul. Dot texture: kept (it was how it was
-  drawn, not the dots; now a repeated tile).
+- Library sections: decided, option 3 with each section's rule in its
+  own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
+  options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
 
 - **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
   New Episodes; 1 Inbox went in with the poster look, build 138). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC

@@ -132,7 +132,8 @@ struct MiniPlayer: View {
                     .ignoresSafeArea(edges: .bottom)
                     .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
             }
-            .gesture(DragGesture(minimumDistance: 20).onEnded { value in
+            // Alongside the keys' taps, not instead of them.
+            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
                 if value.translation.height < -20 { open() }
             })
             .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
