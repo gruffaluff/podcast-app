@@ -1350,6 +1350,21 @@ From the Notion notes after 6 Nov 08:10:
   colour, F2 soft tone (light-to-dark wash; suggested), F3 artwork glow
   (blurred blooms, like Apple Music), F4 paper grain, F5 smooth print (no
   dot screen), F6 flat colour with a darker top edge. Waiting on Paul.
+- **Fresh start?** (Paul, 11 Nov 2026: "I feel like I'm overthinking and
+  over engineering … happy for you to completely scrap whatever we've got
+  and redesign from the ground up"; keep every feature, minimal but very
+  functional, look and feel good). Five directions, each with Up Next,
+  player and Library, on https://claude.ai/artifact/LkL7nrKf76XCi77TH28Xb3:
+  1 Native warm (iOS's own lists, swipes, tab bar, sheets on off-white
+  with Fraunces titles; suggested: fewest bugs, smooth), 2 Paper
+  (magazine page: numbered ruled lines, no cards, colour only in the
+  player), 3 Night studio (dark, artwork glow behind what's playing),
+  4 One screen (playing card + Up Next with filters on home; two tabs,
+  Listen and Library), 5 Deck refined (cassette deck: LCD, chunky keys).
+  Common to all: three tabs (Up Next, Library, Discover; search inside
+  Library / Discover), one main thing per screen, player tools (speed,
+  trim, boost, sleep) in one Tools sheet, iOS's own parts where possible.
+  Supersedes the dots question if Paul picks one. Waiting on Paul.
 
 ## Queued for the next app build
 
