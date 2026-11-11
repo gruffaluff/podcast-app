@@ -1329,6 +1329,22 @@ From the Notion notes after 6 Nov 08:10:
   episode already in it moved it to the end; now it does nothing
   (`LibraryStore.playLast` returns early). Play next still moves it up.
 
+## On the branch for the next build (11 Nov 2026; Paul's notes after build 141)
+
+- **Dead spot still there** (Paul's build 141 screenshot: swiping up /
+  down did nothing from about the dock's height above the mini player
+  down to it). Both earlier tries put the dock over the lists (an
+  overlay, then a bottom safe-area inset), and each left a strip about
+  the dock's height that scrolling ignored. Now the dock isn't attached
+  to the tabs at all: RootView is a VStack of the tabs (ZStack) and
+  `BottomDock` underneath (`App/MiniPlayer.swift`, was the
+  `MiniPlayerInset` modifier on every tab), so nothing overlaps any list.
+  Undo / No internet bars float over the bottom of the tabs. Check on
+  the phone: scrolling right down to the mini player on every tab.
+- **ADD ALL TO UP NEXT invisible** when every new episode was already
+  queued (a dimmed paper key on the card): it now reads "✓ ALL IN UP
+  NEXT" in the same light-on-dark style as Mark all played.
+
 ## Queued for the next app build
 
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /

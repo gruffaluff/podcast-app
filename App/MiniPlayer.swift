@@ -3,15 +3,13 @@ import UIKit
 import Combine
 import PodcastCore
 
-extension View {
-    /// The bottom of every tab: the "now playing" bar (while something is
-    /// loaded) joined to the app's own tab bar, in one printed block.
-    func miniPlayer(_ showingPlayer: Binding<Bool>, tab: Binding<Int>) -> some View {
-        modifier(MiniPlayerInset(showingPlayer: showingPlayer, tab: tab))
-    }
-}
-
-private struct MiniPlayerInset: ViewModifier {
+/// The bottom of the app: the "now playing" bar (while something is
+/// loaded) joined to the app's own tab bar, in one printed block. It sits
+/// under the tabs in RootView's VStack, not over them (Paul, builds 140
+/// and 141: a dead spot about the dock's height above it where scrolling
+/// did nothing, first with the dock as an overlay, then as a safe-area
+/// inset; now nothing of it overlaps any list).
+struct BottomDock: View {
     @Environment(PlayerModel.self) private var player
     @Binding var showingPlayer: Bool
     @Binding var tab: Int
@@ -21,34 +19,14 @@ private struct MiniPlayerInset: ViewModifier {
 
     private var playing: Bool { player.nowPlaying != nil }
 
-    func body(content: Content) -> some View {
-        // The dock is a bottom safe-area inset (Paul, after build 140: rows
-        // got stuck behind the mini player). With our own tabs (no iOS tab
-        // bar underneath) every list stops above it and can scroll its
-        // last row clear, however tall the rows above are.
-        content
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !keyboardUp {
-                    dock
-                        // The Undo and No internet bars float just above the
-                        // dock without taking room (the list doesn't jump).
-                        .overlay(alignment: .top) {
-                            VStack(spacing: 6) {
-                                OfflineBar()
-                                UndoBar()
-                            }
-                            .padding(.horizontal, 12)
-                            .alignmentGuide(.top) { $0[.bottom] + 6 }
-                        }
-                } else {
-                    VStack(spacing: 6) {
-                        OfflineBar()
-                        UndoBar()
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 6)
-                }
+    var body: some View {
+        Group {
+            if keyboardUp {
+                Color.clear.frame(height: 0)
+            } else {
+                dock
             }
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
     }

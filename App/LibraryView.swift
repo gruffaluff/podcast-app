@@ -404,16 +404,19 @@ private struct NewPaper: View {
                 NewPaperLine(episode: episode, colour: colour)
             }
             HStack(spacing: 8) {
+                // When every one is already queued it says so, in the same
+                // light-on-dark style as Mark all played (Paul, build 141:
+                // the dimmed paper key was invisible on the card).
+                let allQueued = episodes.allSatisfy { store.isQueued($0) }
                 Button(action: addAll) {
-                    Text("ADD ALL TO UP NEXT")
+                    Text(allQueued ? "✓ ALL IN UP NEXT" : "ADD ALL TO UP NEXT")
                         .font(Theme.mono(10, .bold))
-                        .foregroundStyle(colour)
+                        .foregroundStyle(allQueued ? Poster.paper.opacity(0.85) : colour)
                         .frame(maxWidth: .infinity, minHeight: 38)
-                        .background(Poster.paper, in: RoundedRectangle(cornerRadius: 10))
+                        .background(allQueued ? AnyShapeStyle(.black.opacity(0.25)) : AnyShapeStyle(Poster.paper), in: RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
-                .disabled(episodes.allSatisfy { store.isQueued($0) })
-                .opacity(episodes.allSatisfy { store.isQueued($0) } ? 0.5 : 1)
+                .disabled(allQueued)
                 Button(action: markAll) {
                     Text("MARK ALL PLAYED")
                         .font(Theme.mono(10, .bold))
