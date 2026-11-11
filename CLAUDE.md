@@ -1100,7 +1100,11 @@ From the Notion notes after 6 Nov 08:10:
   (Name / Latest episode / When you followed) of plain buttons with a
   tick, each saying what it sorts by: "Name, A to Z", "Newest episode
   first", "Recently followed first", "Followed longest ago first" etc.
-  (`LibraryView.sortOption`). On the branch, not built.
+  (`LibraryView.sortOption`). Also the header (Paul: "what's the ·…"):
+  the sort name beside the count squeezed "YOUR SHOWS · 12" down to
+  "YOUR SHOWS ·…"; now the count always shows and "SORTED BY NEWEST
+  EPISODE" sits on a small line under it (`yourShowsTitle`; A–Z / Z–A
+  read "NAME A–Z"). On the branch, not built.
 - **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
   a good spot", but curious if another layout is better). Mock-ups
   https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:

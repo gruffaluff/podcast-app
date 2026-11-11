@@ -109,7 +109,7 @@ struct LibraryView: View {
                         }
 
                         HStack(alignment: .center) {
-                            sectionTitle("YOUR SHOWS · \(shows.count)", detail: sort.short)
+                            yourShowsTitle
                             showsLayoutSwitch
                                 .padding(.trailing, 20)
                         }
@@ -318,6 +318,28 @@ struct LibraryView: View {
                 .minimumScaleFactor(0.75)
         }
         .padding(.horizontal, 20)
+    }
+
+    /// "YOUR SHOWS · 12" with the sort on its own small line underneath
+    /// (beside the keys on one line, the count was cut to "·…"; Paul,
+    /// build 136).
+    private var yourShowsTitle: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("YOUR SHOWS · \(shows.count)")
+                .font(Theme.mono(11, .bold))
+                .tracking(1.4)
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            Text("SORTED BY " + sort.short)
+                .font(Theme.mono(9))
+                .tracking(0.8)
+                .foregroundStyle(Theme.muted.opacity(0.8))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 20)
     }
 
     private var emptyState: some View {
@@ -542,8 +564,8 @@ enum ShowsSort: String {
     /// Shown beside YOUR SHOWS.
     var short: String {
         switch self {
-        case .az: return "A–Z"
-        case .za: return "Z–A"
+        case .az: return "NAME A–Z"
+        case .za: return "NAME Z–A"
         case .newestEpisode: return "NEWEST EPISODE"
         case .oldestEpisode: return "OLDEST EPISODE"
         case .followedNewest: return "RECENTLY FOLLOWED"
