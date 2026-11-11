@@ -1110,7 +1110,17 @@ From the Notion notes after 6 Nov 08:10:
   opens with the controls), 8 Dial (progress as a ring round play, drag
   round to scrub), 9 Dashboard (tiles: said just now, chapter left, up
   next, time saved, sleep), 10 Poster (no picture: artwork colour, huge
-  time and title in Big Shoulders). Waiting on Paul.
+  time and title in Big Shoulders). Paul liked 8 (Dial) and 10 (Poster).
+  Round 3, https://claude.ai/artifact/LAGJTUdpda11cHuwEJ6LrL: new 11
+  Moving tape (fixed playhead, loudness strip slides under it, pinch to
+  zoom), 12 Chapter cards (stack, flick to the next chapter), 13
+  Conversation (transcript as chat bubbles, controls where you'd type);
+  then 8 across the app (8a ring round the artwork with chapter ticks,
+  8b scrubbing round the ring, slide inward for finer, 8c progress rings
+  on Up Next rows and round the mini player's play key) and 10 across
+  the app (10a refined poster player, 10b transcript as big lyric type,
+  10c Library New Episodes as colour posters, poster mini player).
+  Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
