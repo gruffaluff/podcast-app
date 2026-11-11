@@ -1187,6 +1187,13 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Lighter type** (Paul, 11 Nov 2026: the font feels "a bit too bold /
+  strong"). Every title is Big Shoulders Black (900) in capitals. Options
+  on https://claude.ai/artifact/HcvktcXpssM9FtFPNdqdFo: 1 today, 2 Big
+  Shoulders Bold everywhere, 3 Display ExtraBold headings + Big Shoulders
+  Text SemiBold row titles, 4 Display ExtraBold only for screen titles and
+  section headings, row titles in SF semibold normal case, 5 Barlow
+  Condensed (SemiBold headings, Medium rows). Suggested 4. Waiting on Paul.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
