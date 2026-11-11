@@ -114,9 +114,9 @@ struct NowPlayingView: View {
             adBar
                 .padding(.top, 8)
             VStack(spacing: 11) {
-                timeDisplay
-                DeckTransport(height: 46)
-                toolsStrip
+                progressSection
+                transport
+                toolsRow
                 modeButtons
             }
             .padding(.top, 10)
@@ -247,76 +247,86 @@ struct NowPlayingView: View {
         withAnimation(.spring(duration: 0.45, bounce: 0.12)) { topModeRaw = next.rawValue }
     }
 
-    // MARK: The deck
+    // MARK: The controls
 
-    /// The time, when it ends and what's left, over the progress (drag from
-    /// the play point to scrub).
-    private var timeDisplay: some View {
-        let shown = scrubTime ?? player.currentTime
+    /// Apple-style progress line (split at chapters, ads amber) with a dot
+    /// at the play point; drag from the dot to scrub (it grows, a bubble
+    /// shows the chapter and time, finger below the line slows it). The
+    /// time, when it ends and what's left underneath.
+    private var progressSection: some View {
+        let shown: TimeInterval = scrubTime ?? player.currentTime
+        let duration: TimeInterval = max(player.duration, 1)
+        let active: Bool = scrubTime != nil
         let left: TimeInterval = max(0, player.duration - shown)
         let ends: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
-        return LCDPanel(vertical: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(TimeFormat.clock(shown))
-                    .font(Theme.mono(24, .medium))
-                    .foregroundStyle(Deck0.lcdBright)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Spacer(minLength: 4)
-                Text((scrubSpeed ?? "Ends " + UpNextTimes.clock(ends)).uppercased())
-                    .foregroundStyle(Deck0.lcdDim)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Spacer(minLength: 4)
-                Text("−" + TimeFormat.clock(left))
-                    .font(Theme.mono(13, .medium))
-                    .lineLimit(1)
-            }
-            .monospacedDigit()
-            .accessibilityElement(children: .combine)
-            scrubRow
-        }
-    }
-
-    /// The display's progress blocks with a bright mark at the play point.
-    /// Drag from the mark: it moves by how far the finger travels; sliding
-    /// the finger down while dragging slows it (half, quarter, fine).
-    private var scrubRow: some View {
-        let shown = scrubTime ?? player.currentTime
-        let duration = max(player.duration, 1)
-        let active = scrubTime != nil
-        let left: TimeInterval = max(0, player.duration - shown)
-        return GeometryReader { geometry in
-            let width = max(1, geometry.size.width)
-            let x: CGFloat = CGFloat(shown / duration) * width
-            LCDProgress(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions)
-                .frame(height: active ? 9 : 5)
-                .frame(maxHeight: .infinity)
-                .overlay(alignment: .leading) {
-                    Capsule()
-                        .fill(Deck0.lcdBright)
-                        .frame(width: 3, height: active ? 22 : 14)
-                        .offset(x: x - 1.5)
+        return VStack(spacing: 4) {
+            GeometryReader { geometry in
+                let width: CGFloat = max(1, geometry.size.width)
+                let x: CGFloat = CGFloat(shown / duration) * width
+                ZStack(alignment: .leading) {
+                    ScrubLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
+                              tint: Theme.ink, track: Theme.ink.opacity(0.14), grow: active ? 1 : 0)
+                        .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
+                        .offset(x: -ScrubLine.stretch)
+                    Circle()
+                        .fill(Theme.ink)
+                        .frame(width: active ? 20 : 12, height: active ? 20 : 12)
+                        .offset(x: x - (active ? 10 : 6))
                         .allowsHitTesting(false)
-                }
-                .overlay(alignment: .topLeading) {
                     if active { scrubBubble(at: shown, x: x, width: width) }
                 }
+                .frame(width: width, height: ScrubLine.height, alignment: .leading)
                 .animation(.easeOut(duration: 0.15), value: active)
                 .contentShape(Rectangle())
                 .gesture(scrubGesture(width: width, duration: duration))
-        }
-        .frame(height: 24)
-        .accessibilityElement()
-        .accessibilityLabel("Position")
-        .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: player.skipForwardBy()
-            case .decrement: player.skipBackward()
-            @unknown default: break
             }
+            .frame(height: ScrubLine.height)
+            .accessibilityElement()
+            .accessibilityLabel("Position")
+            .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: player.skipForwardBy()
+                case .decrement: player.skipBackward()
+                @unknown default: break
+                }
+            }
+            HStack {
+                Text(TimeFormat.clock(shown))
+                Spacer(minLength: 6)
+                Text(scrubSpeed ?? "Ends " + UpNextTimes.clock(ends))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 6)
+                Text("−" + TimeFormat.clock(left))
+            }
+            .font(.system(size: 12, weight: .medium))
+            .monospacedDigit()
+            .foregroundStyle(Theme.muted)
         }
+    }
+
+    /// Skip back, play / pause, skip forward: big plain symbols, like
+    /// Apple's own players.
+    private var transport: some View {
+        HStack {
+            Spacer()
+            SkipButton(direction: .back, iconSize: 30, frame: 60)
+            Spacer()
+            Button { player.togglePlayPause() } label: {
+                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 46))
+                    .frame(width: 76, height: 70)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+            Spacer()
+            SkipButton(direction: .forward, iconSize: 30, frame: 60)
+            Spacer()
+        }
+        .foregroundStyle(Theme.ink)
+        .tint(Theme.ink)
     }
 
     private func scrubGesture(width: CGFloat, duration: TimeInterval) -> some Gesture {
@@ -368,10 +378,9 @@ struct NowPlayingView: View {
         return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
     }
 
-    /// Speed, Trim, Boost and Sleep as one quiet strip, each with its value
-    /// and a light (Paul: keep the keys, but not like a calculator).
-    private var toolsStrip: some View {
-        ToolsStrip {
+    /// Speed, Trim, Boost and Sleep: small buttons, filled when on.
+    private var toolsRow: some View {
+        HStack(spacing: 8) {
             Menu {
                 Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: Binding(get: { player.speed }, set: { player.setSpeed($0) })) {
                     ForEach(PlayerOptions.speeds, id: \.self) { speed in
@@ -379,19 +388,19 @@ struct NowPlayingView: View {
                     }
                 }
             } label: {
-                ToolCell(value: PlayerOptions.speedLabel(player.speed), label: player.speedIsForShow ? "SHOW" : "SPEED", on: player.speed != 1)
+                toolLabel(PlayerOptions.speedLabel(player.speed), icon: "gauge.with.dots.needle.50percent", on: player.speed != 1)
             }
             .accessibilityLabel("Speed, \(PlayerOptions.speedLabel(player.speed))")
 
             Button { player.setTrimSilences(!player.trimSilences) } label: {
-                ToolCell(value: player.trimSilences ? "ON" : "OFF", label: "TRIM", on: player.trimSilences)
+                toolLabel("Trim", icon: "scissors", on: player.trimSilences)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Trim silences: speeds through pauses")
             .accessibilityAddTraits(player.trimSilences ? .isSelected : [])
 
             Button { player.setBoostVoices(!player.boostVoices) } label: {
-                ToolCell(value: player.boostVoices ? "ON" : "OFF", label: "BOOST", on: player.boostVoices)
+                toolLabel("Boost", icon: "waveform", on: player.boostVoices)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Boost voices: makes speech clearer and more even")
@@ -406,26 +415,38 @@ struct NowPlayingView: View {
                     Button(option.label) { player.chooseSleepTimer(option) }
                 }
             } label: {
-                ToolCell(value: sleepValue, label: "SLEEP", on: player.sleepTimer != nil)
+                toolLabel(player.sleepTimer == nil ? "Sleep" : sleepValue, icon: "moon", on: player.sleepTimer != nil)
             }
             .accessibilityLabel(player.sleepTimer == nil ? "Sleep timer" : "Sleep timer on, \(sleepValue)")
         }
     }
 
+    private func toolLabel(_ title: String, icon: String, on: Bool) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 12, weight: .semibold))
+            Text(title).font(.system(size: 13, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(on ? Theme.surface : Theme.ink)
+        .frame(maxWidth: .infinity, minHeight: 36)
+        .background(on ? Theme.ink : Theme.surface, in: Capsule())
+        .contentShape(Capsule())
+    }
+
     /// "OFF", "END" or the minutes left ("20M").
     private var sleepValue: String {
         if let ends = player.sleepEndsAt {
-            return "\(max(1, Int((ends.timeIntervalSinceNow / 60).rounded(.up))))M"
+            return "\(max(1, Int((ends.timeIntervalSinceNow / 60).rounded(.up))))m"
         }
-        return player.sleepTimer == .endOfEpisode ? "END" : (player.sleepTimer == nil ? "OFF" : "ON")
+        return player.sleepTimer == .endOfEpisode ? "End" : (player.sleepTimer == nil ? "Off" : "On")
     }
 
-    /// TRANSCRIPT, CHAPTERS and where it's playing (Paul, 11 Nov 2026).
+    /// Transcript, chapters and where it's playing (Paul, 11 Nov 2026), as
+    /// plain icons like the row under Apple Music's player; lit when on.
     private var modeButtons: some View {
-        HStack(spacing: 8) {
-            modeButton("TRANSCRIPT", icon: "text.quote", lit: topMode == .transcript) { setMode(.transcript) }
+        HStack {
+            modeButton("Transcript", icon: "quote.bubble", lit: topMode == .transcript) { setMode(.transcript) }
                 .accessibilityLabel(topMode == .transcript ? "Show artwork" : "Show transcript")
-            modeButton("CHAPTERS", icon: "list.bullet", lit: topMode == .chapters) { setMode(.chapters) }
+            modeButton("Chapters", icon: "list.bullet", lit: topMode == .chapters) { setMode(.chapters) }
                 .disabled(player.chapters.isEmpty)
                 .accessibilityLabel(topMode == .chapters ? "Show artwork" : "Show chapters")
             deviceButton
@@ -434,13 +455,17 @@ struct NowPlayingView: View {
 
     private func modeButton(_ title: String, icon: String, lit: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon).font(.system(size: 16, weight: .semibold))
-                Text(title).font(Theme.mono(8.5, .bold)).tracking(0.8).lineLimit(1).minimumScaleFactor(0.7)
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(lit ? Theme.surface : Theme.ink)
+                    .frame(width: 40, height: 32)
+                    .background(lit ? Theme.ink : Color.clear, in: Capsule())
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Theme.muted)
             }
-            .foregroundStyle(lit ? Poster.paper : Theme.ink)
             .frame(maxWidth: .infinity, minHeight: 50)
-            .background(lit ? Theme.playingCard : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(DimWhenDisabled())
@@ -448,10 +473,14 @@ struct NowPlayingView: View {
 
     /// Where the sound is going; tap for the system device picker.
     private var deviceButton: some View {
-        VStack(spacing: 4) {
-            Image(systemName: "airplayaudio").font(.system(size: 16, weight: .semibold))
-            Text((player.outputName ?? "iPhone").uppercased())
-                .font(Theme.mono(8.5, .bold)).tracking(0.8).lineLimit(1).minimumScaleFactor(0.7)
+        VStack(spacing: 3) {
+            Image(systemName: "airplayaudio")
+                .font(.system(size: 17, weight: .medium))
+                .frame(width: 40, height: 32)
+            Text(player.outputName ?? "iPhone")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
         }
         .foregroundStyle(Theme.ink)
         .frame(maxWidth: .infinity, minHeight: 50)

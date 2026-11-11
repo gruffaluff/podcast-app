@@ -51,11 +51,13 @@ enum ColourScheme: String, CaseIterable, Identifiable {
     var palette: Palette {
         switch self {
         case .sand:
-            Palette(background: 0xE9E3D5, surface: 0xF6F2E9, hairline: 0xD6CEBD, controlBorder: 0xC9C2B4,
-                    ink: 0x1F1D19, muted: 0x5C5547, accentFill: 0x45543A, accentText: 0x45543A,
-                    onAccent: 0xF6F2E9, highlight: 0xF2DFB8, adText: 0x6E4A12,
-                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6,
-                    plate: 0xD9D2C2, playing: 0x2F2C26)
+            // Native warm (Paul, 11 Nov 2026): a warm off-white page, white
+            // rows, near-black text; colour comes from the artwork.
+            Palette(background: 0xF5F2EC, surface: 0xFFFFFF, hairline: 0xE6E1D7, controlBorder: 0xD6D0C4,
+                    ink: 0x1C1B19, muted: 0x6B665D, accentFill: 0x2B2925, accentText: 0x2B2925,
+                    onAccent: 0xFFFFFF, highlight: 0xF2E6CC, adText: 0x6E4A12,
+                    display: 0x2C2A26, displayText: 0xF6F2E9, displayDim: 0xD4D7C6,
+                    plate: 0xEDE8DE, playing: 0x2C2A26)
         case .slate:
             Palette(background: 0xDCE2E7, surface: 0xF7F9FB, hairline: 0xC7D0D7, controlBorder: 0xB7C1C9,
                     ink: 0x1A232A, muted: 0x4F5D68, accentFill: 0x1F5C63, accentText: 0x1F5C63,
@@ -170,34 +172,16 @@ enum Theme {
         return String(words.prefix(2).compactMap(\.first)).uppercased()
     }
 
-    /// Whether the bundled fonts loaded (checked once).
-    private static let hasTapeDeckFonts: Bool =
-        UIFont(name: "FrauncesSoft-SemiBold", size: 12) != nil && UIFont(name: "FrauncesSoft-Medium", size: 12) != nil
-        && UIFont(name: "DMMono-Medium", size: 12) != nil
-
-    /// Headings and screen titles: Fraunces Soft SemiBold (a soft serif
-    /// with rounded ends), in proper case (Paul, 11 Nov 2026, after trying
-    /// Big Shoulders, Barlow Condensed, New York and Bricolage Grotesque).
-    /// Made from the variable Fraunces with SOFT 100 at a heading optical
-    /// size. Falls back to the system serif if the file is ever missing.
+    /// Headings and screen titles: Apple's own font, SF Pro, bold (Native
+    /// warm, Paul 11 Nov 2026: "just use a standard Apple font").
     static func big(_ size: CGFloat) -> Font {
-        let scaledSize = scaled(size * 0.92, max: 1.2)
-        guard hasTapeDeckFonts else {
-            return .system(size: scaledSize, weight: .semibold, design: .serif)
-        }
-        return .custom("FrauncesSoft-SemiBold", fixedSize: scaledSize)
+        .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
     }
 
     /// Row titles (episodes, shows, chapters) and the transcript's lines:
-    /// Fraunces Soft Medium, drawn at a text optical size, a step lighter
-    /// than the headings. Fraunces is wider than the condensed faces the
-    /// sizes were set for, so it's drawn a little smaller.
+    /// SF Pro semibold.
     static func title(_ size: CGFloat) -> Font {
-        let scaledSize = scaled(size * 0.85, max: 1.25)
-        guard hasTapeDeckFonts else {
-            return .system(size: scaledSize, weight: .medium, design: .serif)
-        }
-        return .custom("FrauncesSoft-Medium", fixedSize: scaledSize)
+        .system(size: scaled(size * 0.9, max: 1.25), weight: .semibold)
     }
 
     /// Follows the iPhone's text size setting (Dynamic Type), within limits
@@ -218,17 +202,11 @@ enum Theme {
         .system(size: scaled(size), weight: weight)
     }
 
-    /// Labels, times and counters: DM Mono, like the printing beside the
-    /// buttons on a cassette deck (Paul picked "tape deck", 8 Nov 2026).
-    /// DM Mono has two weights: regular, and medium for anything heavier.
+    /// Labels, times and counters: SF Pro, small and a little heavier,
+    /// with figures that don't jump about as they change.
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        let name = weight == .regular || weight == .light || weight == .thin || weight == .ultraLight
-            ? "DMMono-Regular" : "DMMono-Medium"
-        let scaledSize = scaled(size)
-        guard hasTapeDeckFonts else {
-            return .system(size: scaledSize, weight: weight)
-        }
-        return .custom(name, fixedSize: scaledSize)
+        let heavier: Font.Weight = (weight == .regular || weight == .light || weight == .thin || weight == .ultraLight) ? .medium : .semibold
+        return .system(size: scaled(size + 0.5), weight: heavier).monospacedDigit()
     }
 }
 

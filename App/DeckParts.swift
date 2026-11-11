@@ -208,7 +208,7 @@ struct DeckTabs: View {
                 Button { tab = index } label: {
                     VStack(spacing: 4) {
                         Text(Self.titles[index].uppercased())
-                            .font(.custom("DMMono-Medium", fixedSize: 10))
+                            .font(.system(size: 11, weight: .semibold))
                             .tracking(1.2)
                             .foregroundStyle(selected ? Theme.ink : Theme.muted)
                         Capsule()

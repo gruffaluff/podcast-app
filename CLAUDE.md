@@ -25,10 +25,35 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
+**Look: "Native warm"** (Paul, 11 Nov 2026, late, after build 142: "it
+just feels like a lost mess now"; picked direction 1 Native warm from
+https://claude.ai/artifact/LkL7nrKf76XCi77TH28Xb3, "just use a standard
+Apple font, SF something", rebuild overnight and go straight to a build).
+iOS's own parts wherever possible: iOS's tab bar (`TabView` with `Tab`s:
+Up Next, Library, Discover, Search as the search tab; it shrinks while
+scrolling, `tabBarMinimizeBehavior(.onScrollDown)`) with the mini player
+as its bottom accessory like Apple Music (`NowPlayingBar` in
+`App/MiniPlayer.swift`: artwork, title, show · time left, play / pause,
+skip; tap or swipe up for the player; with nothing playing it offers the
+top of Up Next); iOS large titles (`tabTitle`). All type is SF Pro
+(`Theme.big` bold, `Theme.title` semibold, `Theme.mono` small medium with
+steady figures; the bundled Fraunces / DM Mono files are no longer used).
+Sand scheme is now a warm off-white page (#F5F2EC) with plain white rows
+(`posterCard` / `deckCard`: white, rounded 12, no colour band, no
+shadow). Kept from Deck 0: the dark card for the episode playing, quiet
+DL / TX letters, Up Next start times / done-by, Library New / Carry on /
+Shows order, the player's artwork top half with TRANSCRIPT / CHAPTERS
+swapping in. Player now Apple style: the progress line (`ScrubLine`, ink,
+dot at the play point; drag from it to scrub, same rules), time / ends /
+left under it, big plain skip / play / skip symbols, Speed / Trim / Boost
+/ Sleep as small capsules (filled when on), Transcript / Chapters /
+output device as icons; swipe down to close. Deck 0's display, chunky
+keys, plate and word tabs are no longer used (parts left in
+`DeckParts.swift`).
+Before that: **"Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
 mock-ups https://claude.ai/artifact/4o3aSsUdjsA7xxsXYXdVAP and
-https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA; on the branch, see "On
-the branch for the next build"). Everything pressed is in the bottom half
+https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA; see "Done in build
+142"). In build 142. Everything pressed is in the bottom half
 on a deck (`BottomDock` in `App/MiniPlayer.swift`, parts in
 `App/DeckParts.swift`): a plate (`Theme.plate`) with the green display
 (`LCDPanel`, `LCDProgress`: chapter, time, ends, left, progress blocks
@@ -1348,7 +1373,7 @@ From the Notion notes after 6 Nov 08:10:
   episode already in it moved it to the end; now it does nothing
   (`LibraryStore.playLast` returns early). Play next still moves it up.
 
-## On the branch for the next build (11 Nov 2026; Paul's notes after build 141)
+## Done in build 142 (11 Nov 2026, PR #60; Paul: "Build"; Paul's notes after build 141 + the Deck 0 rebuild)
 
 - **Dead spot still there** (Paul's build 141 screenshot: swiping up /
   down did nothing from about the dock's height above the mini player
@@ -1545,6 +1570,16 @@ From the Notion notes after 6 Nov 08:10:
     in the show's colour; Discover and Search rows keep the artwork on the
     right. To check on the phone: deck height on smaller iPhones, the
     player's top half with long titles, scrubbing on the display, Night.
+
+## On the branch for the next build (11 Nov 2026, night; Paul: rebuild overnight in Native warm, then build)
+
+- **Native warm** (see "Look" at the top). Built without a compiler;
+  GitHub's check compiles it, then straight to a build (Paul's say-so).
+  To check on the phone: the iOS tab bar and mini player (Paul disliked
+  iOS 26's floating glass tab bar in build 138; this is the native look
+  he asked for, but say if the capsule still bothers him), Undo bar
+  placement above the tab bar (fixed 128 pt lift), text sizes now in SF,
+  the player's progress line and buttons, Night.
 
 ## Queued for the next app build
 
