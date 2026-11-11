@@ -1183,6 +1183,22 @@ From the Notion notes after 6 Nov 08:10:
   poster with the artwork as a square stamp beside the name). Not built
   yet: waiting on Paul to say go, and whether all screens at once or in
   stages (player + Up Next first).
+  Icons (Paul, 11 Nov 2026: no emoji like the bell, "a flat 2d icon
+  themed to the colour"): the mock-ups now use one set of flat line
+  icons drawn in the surrounding text colour (bell, moon, AirPlay, trim,
+  boost, transcript, chapters, tabs, sort…), shown on
+  https://claude.ai/artifact/KA9BVpN9mzKdXxfNByQ4T1. The app itself
+  already uses SF Symbols (flat, never emoji) in those spots; building
+  the poster look would keep SF Symbols tinted to the colour, or swap in
+  this set if Paul prefers its rounder style.
+  App icon re-theme for the poster look (Paul: "the logo would need
+  rethemeing"), same link: 1 Stamp (perforated postage stamp, rust print,
+  sand cassette), 2 Printed cassette (sand cassette on halftone rust,
+  off-register amber shadow), 3 Big P (Big Shoulders P on ink over the
+  progress line), 4 Poster type (POD / DECK on amber), 5 Reels on the
+  line (two reels joined by the progress line on rust); shown on dark /
+  light home screens and at 60 / 40 / 29 pt next to today's olive
+  cassette D. Suggested 1 or 5. Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
