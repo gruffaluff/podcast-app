@@ -1140,7 +1140,7 @@ From the Notion notes after 6 Nov 08:10:
   above: waits 20 / 60 / 120 s and tries again on UNKNOWN_CONTAINER,
   429 or 5xx).
 
-## On the branch for build 138 (11 Nov 2026, PR #56; Paul: "let's rebuild it all", "get everything in for the next build")
+## Done in build 138 (11 Nov 2026, PR #56; Paul: "let's rebuild it all", then "build")
 
 - **Poster look on every screen** (see "Look" at the top). Built without
   a compiler (GitHub's check compiles it). To check on the phone: the
