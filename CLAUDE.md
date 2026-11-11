@@ -1472,7 +1472,19 @@ From the Notion notes after 6 Nov 08:10:
   all played, "All ›" opens the full New list with both actions on the
   deck at the bottom); C By day plain lines plus one mid-swipe (green
   + UP NEXT). Suggested B on paper (dark stays for what's playing).
-  Waiting on Paul.
+  **Paul picked B on paper** (11 Nov 2026). The Deck 0 design is now
+  settled (summary): bottom deck on every screen (green display, chunky
+  skip / red play / skip, tabs as words); colour-band boxes for episode
+  rows and shows; playing episode as a dark highlight card with moving
+  bars everywhere; quiet DL / TX letters; Up Next top-down, no numbers,
+  start times + done-by; player artwork top half, TRANSCRIPT / CHAPTERS /
+  output device buttons (transcript and chapters swap into the top half),
+  tools strip with lights, swipe down to close; Library = New (paper
+  front-page card, art on the right, newest four, Add all / Mark all
+  played, All › full list with actions on the deck), Carry on, Shows
+  (recently updated, TOP / BTM, n NEW pill); search and show settings on
+  the deck. Not built yet: waiting on Paul's go to start the rebuild
+  (new branch, separate from PR #60).
 
 ## Queued for the next app build
 
