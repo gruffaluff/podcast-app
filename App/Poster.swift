@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import CoreImage
 
 // The poster look (Paul, 11 Nov 2026: "let's rebuild it all"; mock-ups
 // https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR, his pick A + B with
@@ -26,35 +27,32 @@ enum Poster {
     }
 }
 
-/// The halftone dot screen printed over colour areas.
+/// The halftone dot screen printed over colour areas: one small tile with
+/// a dot, repeated by the GPU. (Drawing every dot in a Canvas, tens of
+/// thousands on the player, on each redraw made scrolling stutter.)
 struct Halftone: View {
-    var spacing: CGFloat = 4
-    var radius: CGFloat = 0.95
-    var opacity: Double = 0.22
-
     var body: some View {
-        Canvas { context, size in
-            var path = Path()
-            var y = spacing / 2
-            while y < size.height {
-                var x = spacing / 2
-                while x < size.width {
-                    path.addEllipse(in: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2))
-                    x += spacing
-                }
-                y += spacing
-            }
-            context.fill(path, with: .color(.black.opacity(opacity)))
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+        Image(uiImage: Self.tile)
+            .resizable(resizingMode: .tile)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
+
+    private static let tile: UIImage = {
+        let spacing: CGFloat = 4, radius: CGFloat = 0.95
+        return UIGraphicsImageRenderer(size: CGSize(width: spacing, height: spacing)).image { context in
+            UIColor.black.withAlphaComponent(0.22).setFill()
+            context.cgContext.fillEllipse(in: CGRect(x: spacing / 2 - radius, y: spacing / 2 - radius, width: radius * 2, height: radius * 2))
+        }
+    }()
 }
 
 /// Artwork "screen-printed" in one ink of the show's colour (idea B): the
 /// picture in greys multiplied onto the colour, with the dot screen on top.
-/// Fills whatever space it's given.
-struct PrintedArtwork: View {
+/// Fills whatever space it's given. The print is made once per artwork,
+/// colour and strength (`PrintedImages`) and then shown as a plain
+/// picture, so nothing is blended live while scrolling.
+struct PrintedArtwork: View, Equatable {
     let url: URL?
     let colour: Color
     /// How strongly the picture shows through (0 = flat colour).
@@ -63,18 +61,91 @@ struct PrintedArtwork: View {
 
     var body: some View {
         colour
-            .overlay {
-                CachedImage(url: url) { Color.clear }
-                    .grayscale(1)
-                    .contrast(1.15)
-                    .blendMode(.multiply)
-                    .opacity(strength)
-            }
+            .overlay { PrintedImage(url: url, colour: colour, strength: strength) }
             .overlay { if dots { Halftone() } }
-            .compositingGroup()
             .clipped()
             .accessibilityHidden(true)
     }
+}
+
+private struct PrintedImage: View {
+    let url: URL?
+    let colour: Color
+    let strength: Double
+    @State private var image: UIImage?
+
+    init(url: URL?, colour: Color, strength: Double) {
+        self.url = url
+        self.colour = colour
+        self.strength = strength
+        _image = State(initialValue: PrintedImages.shared.cached(url: url, colour: colour, strength: strength))
+    }
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                Color.clear
+            }
+        }
+        .task(id: PrintedImages.key(url: url, colour: colour, strength: strength)) {
+            image = await PrintedImages.shared.image(url: url, colour: colour, strength: strength)
+        }
+    }
+}
+
+/// Printed artwork, made off the main thread and kept in memory.
+@MainActor
+final class PrintedImages {
+    static let shared = PrintedImages()
+    private let memory = NSCache<NSString, UIImage>()
+
+    init() { memory.totalCostLimit = 40 * 1024 * 1024 }
+
+    nonisolated static func key(url: URL?, colour: Color, strength: Double) -> String {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(colour).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return "\(url?.absoluteString ?? "-")|\(Int(r * 255)),\(Int(g * 255)),\(Int(b * 255))|\(Int(strength * 100))"
+    }
+
+    func cached(url: URL?, colour: Color, strength: Double) -> UIImage? {
+        memory.object(forKey: Self.key(url: url, colour: colour, strength: strength) as NSString)
+    }
+
+    func image(url: URL?, colour: Color, strength: Double) async -> UIImage? {
+        guard let url else { return nil }
+        let key = Self.key(url: url, colour: colour, strength: strength) as NSString
+        if let done = memory.object(forKey: key) { return done }
+        guard let source = await ArtworkImageCache.shared.image(for: url) else { return nil }
+        let tint = UIColor(colour)
+        let printed = await Task.detached(priority: .userInitiated) {
+            Self.makePrint(source, tint: tint, strength: strength)
+        }.value
+        if let printed {
+            memory.setObject(printed, forKey: key, cost: Int(printed.size.width * printed.size.height * printed.scale * printed.scale * 4))
+        }
+        return printed
+    }
+
+    /// The picture in greys (a little more contrast), multiplied onto the
+    /// colour at the given strength: one ink, like a screen print.
+    nonisolated private static func makePrint(_ source: UIImage, tint: UIColor, strength: Double) -> UIImage? {
+        guard let input = CIImage(image: source) else { return nil }
+        let grey = input.applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0, kCIInputContrastKey: 1.15])
+        guard let cgGrey = context.createCGImage(grey, from: input.extent) else { return nil }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let size = CGSize(width: cgGrey.width, height: cgGrey.height)
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            tint.setFill()
+            UIRectFill(CGRect(origin: .zero, size: size))
+            UIImage(cgImage: cgGrey).draw(in: CGRect(origin: .zero, size: size), blendMode: .multiply, alpha: CGFloat(strength))
+        }
+    }
+
+    nonisolated(unsafe) private static let context = CIContext()
 }
 
 /// The artwork as a small square "stamp" (idea A): square, a thin paper
@@ -86,8 +157,9 @@ struct Stamp: View {
 
     var body: some View {
         ArtworkView(url: url, title: title, size: size, radius: size * 0.16)
-            .overlay(RoundedRectangle(cornerRadius: size * 0.16).stroke(Poster.paper.opacity(0.7), lineWidth: 1))
-            .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+            // A thin edge instead of a shadow: a shadow on every stamp in a
+            // list cost frames while scrolling.
+            .overlay(RoundedRectangle(cornerRadius: size * 0.16).stroke(Color.black.opacity(0.12), lineWidth: 1))
     }
 }
 

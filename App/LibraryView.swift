@@ -73,7 +73,8 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                // Lazy: rows are only made as they scroll into view.
+                LazyVStack(alignment: .leading, spacing: 10) {
                     if shows.isEmpty {
                         emptyState
                     } else {
@@ -188,7 +189,7 @@ struct LibraryView: View {
     /// tiles (11 Nov 2026; "description only" went on 10 Nov).
     private var yourShows: some View {
         let ordered = sortedShows
-        return VStack(spacing: 10) {
+        return LazyVStack(spacing: 10) {
             ForEach(ordered) { show in
                 NavigationLink(value: show) {
                     HStack(spacing: 10) {

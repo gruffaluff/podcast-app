@@ -139,26 +139,8 @@ struct NowPlayingView: View {
         .padding(.bottom, 18)
         .frame(height: max(height, 660))
         .frame(maxWidth: .infinity)
-        .background { posterBackground(item, tint: tint) }
+        .background { PosterBackdrop(url: item.artworkURL, tint: tint, strength: showsTranscript ? 0.25 : 0.7) }
         .environment(\.heroTint, tint)
-    }
-
-    /// The artwork printed in one ink of its colour across the top, fading
-    /// into the colour, with the dot screen over the whole poster.
-    private func posterBackground(_ item: PlayerModel.NowPlaying, tint: Color) -> some View {
-        ZStack(alignment: .top) {
-            tint
-            GeometryReader { geometry in
-                PrintedArtwork(url: item.artworkURL, colour: tint, strength: showsTranscript ? 0.25 : 0.7, dots: false)
-                    .frame(width: geometry.size.width, height: geometry.size.width * 1.1)
-                    .mask(LinearGradient(stops: [.init(color: .black, location: 0),
-                                                 .init(color: .black, location: 0.55),
-                                                 .init(color: .black.opacity(0), location: 1)],
-                                         startPoint: .top, endPoint: .bottom))
-            }
-            Halftone()
-        }
-        .accessibilityHidden(true)
     }
 
     /// Close, where it's playing, then (transcript) find, download, notes,
@@ -771,4 +753,30 @@ private struct RoutePicker: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
+}
+
+/// Behind the player's poster: the artwork printed in one ink of its
+/// colour across the top, fading into the colour, with the dot screen over
+/// the whole poster. Its own view with plain inputs, so the player's
+/// twice-a-second clock doesn't redraw it.
+private struct PosterBackdrop: View, Equatable {
+    let url: URL?
+    let tint: Color
+    let strength: Double
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            tint
+            GeometryReader { geometry in
+                PrintedArtwork(url: url, colour: tint, strength: strength, dots: false)
+                    .frame(width: geometry.size.width, height: geometry.size.width * 1.1)
+                    .mask(LinearGradient(stops: [.init(color: .black, location: 0),
+                                                 .init(color: .black, location: 0.55),
+                                                 .init(color: .black.opacity(0), location: 1)],
+                                         startPoint: .top, endPoint: .bottom))
+            }
+            Halftone()
+        }
+        .accessibilityHidden(true)
+    }
 }

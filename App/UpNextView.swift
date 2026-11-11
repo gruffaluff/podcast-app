@@ -385,7 +385,6 @@ private struct UpNextRowKeys: View {
 /// episode that's on, a block with its artwork printed in its colour and a
 /// line showing how far through it is.
 struct QueueCard: ViewModifier {
-    @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
     let isPlaying: Bool
 
@@ -396,13 +395,8 @@ struct QueueCard: ViewModifier {
             if isPlaying {
                 VStack(alignment: .leading, spacing: 10) {
                     content
-                    GeometryReader { geometry in
-                        Capsule().fill(Poster.paper.opacity(0.3))
-                            .overlay(alignment: .leading) {
-                                Capsule().fill(Poster.paper).frame(width: geometry.size.width * progress)
-                            }
-                    }
-                    .frame(height: 4)
+                    // Its own view: only the line redraws as the episode plays.
+                    PlayingProgress(episodeID: episode.episodeID)
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -418,9 +412,22 @@ struct QueueCard: ViewModifier {
         }
         .task(id: showArt) { await ArtworkColors.shared.load(showArt) }
     }
+}
 
-    private var progress: Double {
-        guard player.nowPlaying?.episodeID == episode.episodeID, player.duration > 0 else { return 0 }
-        return min(1, player.currentTime / player.duration)
+/// How far through the episode that's on, as a paper line.
+private struct PlayingProgress: View {
+    @Environment(PlayerModel.self) private var player
+    let episodeID: String
+
+    var body: some View {
+        let fraction = player.nowPlaying?.episodeID == episodeID && player.duration > 0
+            ? min(1, player.currentTime / player.duration) : 0
+        GeometryReader { geometry in
+            Capsule().fill(Poster.paper.opacity(0.3))
+                .overlay(alignment: .leading) {
+                    Capsule().fill(Poster.paper).frame(width: geometry.size.width * fraction)
+                }
+        }
+        .frame(height: 4)
     }
 }

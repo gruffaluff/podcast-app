@@ -35,6 +35,19 @@ final class ArtworkColors {
         UserDefaults.standard.set(stored, forKey: Self.savedKey)
     }
 
+    /// Saves once things go quiet (scrolling past many new shows saved the
+    /// whole list each time).
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
+
+    private func persistSoon() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.persist()
+        }
+    }
+
     func clear() {
         colors.removeAll()
         UserDefaults.standard.removeObject(forKey: Self.savedKey)
@@ -49,11 +62,15 @@ final class ArtworkColors {
         loading.insert(url)
         defer { loading.remove(url) }
         // From the artwork cache, so the picture isn't downloaded twice.
-        guard let image = await ArtworkImageCache.shared.image(for: url), let data = image.jpegData(compressionQuality: 0.8) else { return }
+        // A tiny copy is enough for an average colour; making a JPEG of the
+        // full picture here, on the main thread, cost frames while
+        // scrolling past new artwork.
+        guard let image = await ArtworkImageCache.shared.image(for: url),
+              let data = image.preparingThumbnail(of: CGSize(width: 48, height: 48))?.jpegData(compressionQuality: 0.8) else { return }
         let average = await Task.detached(priority: .utility) { ArtworkColors.averageColor(of: data) }.value
         if let average {
             colors[url] = ColorContrast.themedBackground(from: average)
-            persist()
+            persistSoon()
         }
     }
 

@@ -1152,6 +1152,21 @@ From the Notion notes after 6 Nov 08:10:
   `Theme.upNextCard`, the player's ARTWORK / TRANSCRIPT switch and Up Next
   card (now keys in the bottom row).
 
+## On the branch for the next build (11 Nov 2026; Paul after build 138: scrolling "a little jerky / low frameratey")
+
+- **Smoother scrolling**: the dot screen is one small tile repeated by the
+  GPU (`Halftone`; it drew every dot, ~22,000 on the player, on each
+  redraw); printed artwork is made once per artwork / colour / strength
+  off the main thread and shown as a plain picture (`PrintedImages`; it
+  was a live grey + multiply blend on every frame); the player's printed
+  background is its own view, so the twice-a-second clock no longer
+  redraws it (`PosterBackdrop`); only the progress line of Up Next's
+  playing block follows the clock (`PlayingProgress`); stamps have a thin
+  edge instead of a shadow; artwork colours are measured from a tiny copy
+  and saved once things go quiet (it made a JPEG of each picture on the
+  main thread and saved the whole list after each one); Library builds
+  rows only as they scroll into view (`LazyVStack`).
+
 ## Queued for the next app build
 
 - **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
