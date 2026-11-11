@@ -1205,8 +1205,14 @@ From the Notion notes after 6 Nov 08:10:
   Reversed (rust printed cassette on sand), 5a Tape path (tape running
   between the reels into the line), 5b Ink (reels + line on near-black),
   5c Big reel (one spool on the line), X Blend (printed cassette outline,
-  spoked reels, line). Suggested 2b or X; 5b sharpest small. Waiting on
-  Paul.
+  spoked reels, line). Suggested 2b or X; 5b sharpest small. **Paul
+  picked 2b** and asked if its shading matches the app: halftone dots,
+  sand and the amber ad already do; the rust came from Star-Lord's
+  artwork (not an app colour) and the hard offset shadow isn't used
+  anywhere in the app (cards have soft shadows). Colourways of 2b next to
+  the app's pieces: https://claude.ai/artifact/Qg7fe2hJ6WYjxc2ytCCbwy
+  (rust offset / rust soft / olive offset / olive soft / ink soft / sand
+  with olive cassette). Suggested olive + soft shadow. Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
