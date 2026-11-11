@@ -27,8 +27,8 @@ Overcast. Goal: **minimal to look at, fully functional underneath**.
 
 **Look: "Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
 mock-ups https://claude.ai/artifact/4o3aSsUdjsA7xxsXYXdVAP and
-https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA; on the branch, see "On
-the branch for the next build"). Everything pressed is in the bottom half
+https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA; see "Done in build
+142"). In build 142. Everything pressed is in the bottom half
 on a deck (`BottomDock` in `App/MiniPlayer.swift`, parts in
 `App/DeckParts.swift`): a plate (`Theme.plate`) with the green display
 (`LCDPanel`, `LCDProgress`: chapter, time, ends, left, progress blocks
@@ -1348,7 +1348,7 @@ From the Notion notes after 6 Nov 08:10:
   episode already in it moved it to the end; now it does nothing
   (`LibraryStore.playLast` returns early). Play next still moves it up.
 
-## On the branch for the next build (11 Nov 2026; Paul's notes after build 141)
+## Done in build 142 (11 Nov 2026, PR #60; Paul: "Build"; Paul's notes after build 141 + the Deck 0 rebuild)
 
 - **Dead spot still there** (Paul's build 141 screenshot: swiping up /
   down did nothing from about the dock's height above the mini player
