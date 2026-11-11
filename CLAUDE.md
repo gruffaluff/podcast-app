@@ -1157,7 +1157,7 @@ From the Notion notes after 6 Nov 08:10:
   `Theme.upNextCard`, the player's ARTWORK / TRANSCRIPT switch and Up Next
   card (now keys in the bottom row).
 
-## On the branch for the next build (11 Nov 2026; Paul after build 138: scrolling "a little jerky / low frameratey")
+## Done in build 139 (11 Nov 2026, PR #57; Paul after build 138: scrolling "a little jerky / low frameratey"; then "if it's rendering well, let's build")
 
 - **Smoother scrolling**: the dot screen is one small tile repeated by the
   GPU (`Halftone`; it drew every dot, ~22,000 on the player, on each
@@ -1185,6 +1185,7 @@ From the Notion notes after 6 Nov 08:10:
   others are shrunk / faded with a scale (no reflow), with a softer
   0.8 s scroll.
 - **Library option 3** with colour-coded rules (see Library above).
+- **Type: Fraunces Soft** in proper case (see the queue entry below).
 - **Own tab bar** (Paul: the bar at the bottom was "still in a white
   capsule", iOS 26's floating glass tab bar): iOS's tab bar is hidden
   (`.toolbarVisibility(.hidden, for: .tabBar)`) and `PosterTabBar` (four
@@ -1225,8 +1226,7 @@ From the Notion notes after 6 Nov 08:10:
   sizes were set for), static fonts made from Google Fonts' variable
   Fraunces with fontTools (SOFT 100, WONK 1, opsz 36 / 18, wght 600 /
   500; OFL, no reserved name); Barlow removed. Navigation bar titles use
-  Fraunces Soft SemiBold. Proper case throughout. PR #57 not merged
-  until Paul says build.
+  Fraunces Soft SemiBold. Proper case throughout. Went out in build 139.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
