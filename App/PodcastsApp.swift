@@ -44,15 +44,15 @@ struct PodcastsApp: App {
         .modelContainer(container)
     }
 
-    /// Barlow Condensed titles (Paul's type pick 5) and plain tab labels.
+    /// Fraunces Soft titles (Paul's type pick) and plain tab labels.
     private static func styleSystemBars() {
         // Follows the scheme's light / dark (Night is dark).
         let ink = UIColor.label
         UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont(name: "BarlowCondensed-SemiBold", size: 40) ?? UIFont.systemFont(ofSize: 40, weight: .semibold, width: .condensed), .foregroundColor: ink
+            .font: UIFont(name: "FrauncesSoft-SemiBold", size: 34) ?? UIFont.systemFont(ofSize: 34, weight: .semibold), .foregroundColor: ink
         ]
         UINavigationBar.appearance().titleTextAttributes = [
-            .font: UIFont(name: "BarlowCondensed-SemiBold", size: 20) ?? UIFont.systemFont(ofSize: 17, weight: .semibold, width: .condensed), .foregroundColor: ink
+            .font: UIFont(name: "FrauncesSoft-SemiBold", size: 17) ?? UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: ink
         ]
         UITabBarItem.appearance().setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 10, weight: .semibold)], for: .normal)
     }

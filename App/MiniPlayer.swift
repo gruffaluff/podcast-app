@@ -142,7 +142,7 @@ struct MiniPlayer: View {
                                     .foregroundStyle(Theme.displayDim)
                                     .lineLimit(1)
                                 Text(item.title)
-                                    .font(.custom("BarlowCondensed-Medium", fixedSize: 19))
+                                    .font(.custom("FrauncesSoft-Medium", fixedSize: 16))
                                     .foregroundStyle(Theme.displayText)
                                     .lineLimit(1)
                             }

@@ -30,7 +30,7 @@ screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
 his pick A + B with square stamps). Same sand page, paper cards, fonts and
 colour schemes; every list row is a poster row (`posterCard` / `showRow` /
 `PosterRowText` in `App/Poster.swift`): a strip of the show's colour down
-the left, a DM Mono label line, the title in Barlow Condensed (type
+the left, a DM Mono label line, the title in Fraunces Soft (type
 below),
 the artwork as a small square `Stamp` on the right. Big colour areas (Up
 Next's playing block, mini player, player, show and preview headers,
@@ -1197,7 +1197,7 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
-- **Lighter type: done, option 5** (Paul, 11 Nov 2026: the font feels "a bit too bold /
+- **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /
   strong"). Every title is Big Shoulders Black (900) in capitals. Options
   on https://claude.ai/artifact/HcvktcXpssM9FtFPNdqdFo: 1 today, 2 Big
   Shoulders Bold everywhere, 3 Display ExtraBold headings + Big Shoulders
@@ -1217,8 +1217,16 @@ From the Notion notes after 6 Nov 08:10:
   Then Paul held the build ("hold on build") and asked to see Fraunces
   Soft, New York and Bricolage Grotesque:
   https://claude.ai/artifact/RS87QNtkmwBu4QaRFnXYpu (Barlow beside them;
-  New York is Apple's built-in serif, nothing to bundle). Waiting on
-  Paul; PR #57 not merged until he says build.
+  New York is Apple's built-in serif, nothing to bundle). **Paul picked
+  Fraunces (Soft)**, 11 Nov 2026, on the branch: `App/Fonts/` holds
+  FrauncesSoft-SemiBold (headings, `Theme.big`, drawn at 92%) and
+  FrauncesSoft-Medium (row titles, mini player, transcript lines,
+  `Theme.title`, drawn at 85% as it's wider than the condensed faces the
+  sizes were set for), static fonts made from Google Fonts' variable
+  Fraunces with fontTools (SOFT 100, WONK 1, opsz 36 / 18, wght 600 /
+  500; OFL, no reserved name); Barlow removed. Navigation bar titles use
+  Fraunces Soft SemiBold. Proper case throughout. PR #57 not merged
+  until Paul says build.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.

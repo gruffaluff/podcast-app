@@ -5,7 +5,7 @@ import CoreImage
 // The poster look (Paul, 11 Nov 2026: "let's rebuild it all"; mock-ups
 // https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR, his pick A + B with
 // square stamps). The page stays sand; every row gets a strip of its show's
-// colour, a Barlow Condensed title and the artwork as a small square
+// colour, a Fraunces Soft title and the artwork as a small square
 // "stamp" (A); the big colour areas (playing block, player, show and
 // episode pages, mini player) are the artwork "printed" in one ink of the
 // show's colour with a halftone dot screen (B).
@@ -164,7 +164,7 @@ struct Stamp: View {
 }
 
 /// The text of a poster row: a small DM Mono label line, then the title in
-/// Barlow Condensed Medium, in proper case.
+/// Fraunces Soft Medium, in proper case.
 struct PosterRowText: View {
     let label: String
     let title: String

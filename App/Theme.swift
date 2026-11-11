@@ -130,29 +130,32 @@ enum Theme {
 
     /// Whether the bundled fonts loaded (checked once).
     private static let hasTapeDeckFonts: Bool =
-        UIFont(name: "BarlowCondensed-SemiBold", size: 12) != nil && UIFont(name: "BarlowCondensed-Medium", size: 12) != nil
+        UIFont(name: "FrauncesSoft-SemiBold", size: 12) != nil && UIFont(name: "FrauncesSoft-Medium", size: 12) != nil
         && UIFont(name: "DMMono-Medium", size: 12) != nil
 
-    /// Headings and screen titles: Barlow Condensed SemiBold, in proper
-    /// case (Paul picked option 5, 11 Nov 2026: Big Shoulders Black in
-    /// capitals felt too bold and strong). Falls back to the system font if
-    /// the font file is ever missing.
+    /// Headings and screen titles: Fraunces Soft SemiBold (a soft serif
+    /// with rounded ends), in proper case (Paul, 11 Nov 2026, after trying
+    /// Big Shoulders, Barlow Condensed, New York and Bricolage Grotesque).
+    /// Made from the variable Fraunces with SOFT 100 at a heading optical
+    /// size. Falls back to the system serif if the file is ever missing.
     static func big(_ size: CGFloat) -> Font {
-        let scaledSize = scaled(size, max: 1.2)
+        let scaledSize = scaled(size * 0.92, max: 1.2)
         guard hasTapeDeckFonts else {
-            return .system(size: scaledSize, weight: .semibold).width(.condensed)
+            return .system(size: scaledSize, weight: .semibold, design: .serif)
         }
-        return .custom("BarlowCondensed-SemiBold", fixedSize: scaledSize)
+        return .custom("FrauncesSoft-SemiBold", fixedSize: scaledSize)
     }
 
     /// Row titles (episodes, shows, chapters) and the transcript's lines:
-    /// Barlow Condensed Medium, a step lighter than the headings.
+    /// Fraunces Soft Medium, drawn at a text optical size, a step lighter
+    /// than the headings. Fraunces is wider than the condensed faces the
+    /// sizes were set for, so it's drawn a little smaller.
     static func title(_ size: CGFloat) -> Font {
-        let scaledSize = scaled(size, max: 1.25)
+        let scaledSize = scaled(size * 0.85, max: 1.25)
         guard hasTapeDeckFonts else {
-            return .system(size: scaledSize, weight: .medium).width(.condensed)
+            return .system(size: scaledSize, weight: .medium, design: .serif)
         }
-        return .custom("BarlowCondensed-Medium", fixedSize: scaledSize)
+        return .custom("FrauncesSoft-Medium", fixedSize: scaledSize)
     }
 
     /// Follows the iPhone's text size setting (Dynamic Type), within limits
