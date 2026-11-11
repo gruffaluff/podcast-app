@@ -1157,7 +1157,7 @@ From the Notion notes after 6 Nov 08:10:
   `Theme.upNextCard`, the player's ARTWORK / TRANSCRIPT switch and Up Next
   card (now keys in the bottom row).
 
-## On the branch for the next build (11 Nov 2026; Paul after build 138: scrolling "a little jerky / low frameratey")
+## Done in build 139 (11 Nov 2026, PR #57; Paul after build 138: scrolling "a little jerky / low frameratey"; then "if it's rendering well, let's build")
 
 - **Smoother scrolling**: the dot screen is one small tile repeated by the
   GPU (`Halftone`; it drew every dot, ~22,000 on the player, on each
@@ -1185,6 +1185,7 @@ From the Notion notes after 6 Nov 08:10:
   others are shrunk / faded with a scale (no reflow), with a softer
   0.8 s scroll.
 - **Library option 3** with colour-coded rules (see Library above).
+- **Type: Fraunces Soft** in proper case (see the queue entry below).
 - **Own tab bar** (Paul: the bar at the bottom was "still in a white
   capsule", iOS 26's floating glass tab bar): iOS's tab bar is hidden
   (`.toolbarVisibility(.hidden, for: .tabBar)`) and `PosterTabBar` (four
@@ -1194,6 +1195,76 @@ From the Notion notes after 6 Nov 08:10:
   playing, or the dark display colour with the dot screen when nothing
   is (`MiniPlayerInset.dock`, `DockBackground`). It steps aside while the
   keyboard is up, like the mini player did.
+
+## Done in build 140 (11 Nov 2026, PR #58; Paul's notes after build 139, then "add them, merge, build")
+
+- **Player bottom row steady**: four fixed slots that never change their
+  words or come and go (TRANSCRIPT lights up while showing; CHAPTERS and
+  FULL TEXT dim when they can't be used; UP NEXT n), icon above label,
+  no animation on the switch (they jumped about between artwork and
+  transcript).
+- **Scrubber only from the play point**: a drag must start within 30
+  points of where it's playing (`scrubRefused`); a small paper marker
+  shows the point and grows while scrubbing.
+- **Tab bar readable**: behind the tabs a plain darker band of the dock's
+  colour, no artwork or dots (`DockBackground`); unselected tabs 72%;
+  a small bar under the current tab; bar 56 pt.
+- **Library Your shows** rule and count in rust (`Poster.rust`), not ink.
+- **Opened-row keys visible**: show page episode keys (`EpisodeActions`)
+  are sand on the paper rows (paper keys were lost); Up Next row keys
+  (`RowKeyStyle`): ink + sand on paper rows, paper main key + dark
+  see-through others on the playing block's printed colour.
+- **Swipes** (Paul's video, show page): the swipe measured the finger in
+  the moving row's own space, so each movement counted twice: the row ran
+  ahead of the finger, overshot and jerked. It now measures against the
+  window (`translation(in: nil)`). The action block stays on the side the
+  swipe began on for the whole swipe and its return (`side`; it flipped
+  from Unplayed to Play next as the row sprang back). When a swipe goes
+  through, the row slides away first, then the action happens and it
+  springs back. Paul's screenshot confirmed the show page keys were paper
+  on paper (now sand).
+- **Accent question** (Paul: olive clashes with the artwork colours; follow
+  the artwork, or neutral soft black?): mock-up
+  https://claude.ai/artifact/7VA6NoHBaRi5MSLoEEETMA (olive / soft black /
+  follows what's playing). Suggested soft black; following the artwork
+  costs nothing noticeable in speed but changes the whole app per
+  episode. **Paul: follow the artwork, soft black when nothing plays**
+  (11 Nov 2026), on the branch: `Theme.accentFill` / `accentText` read
+  `AccentColour.shared` (an `@Observable` holding the playing episode's
+  artwork link, set by RootView; its colour comes from `ArtworkColors`,
+  already measured for the player), so only views using the accent
+  redraw, once per episode. Nothing playing: soft black #2B2925. Night
+  scheme: fills follow the artwork, accent text stays Night's light
+  green (dark artwork colours would be lost as text on the dark page),
+  and with nothing playing it keeps its own accent. Text on the accent is
+  paper (artwork colours are darkened for light text).
+- **Play key in the show's colour** (Paul, 11 Nov 2026: yes to it, the
+  other keys stay neutral ink / sand / paper): the ▶ PLAY / RESUME key
+  under an opened show-page episode is filled with that show's artwork
+  colour (paper text); on the episode page, which is printed in that
+  colour, it's paper with the colour as text (`EpisodeActions.playKey`,
+  `ColourKeyStyle`). Ink until the colour is known.
+- **Colour rule for keys** (Paul, 11 Nov 2026, "follow that guidance"):
+  on a screen about one show (show page, episode page, show settings
+  sheet) the colour comes from that show; everywhere else from what's
+  playing, soft black when nothing is. Only the main "do it" key (play)
+  and keys / switches that are on or chosen get colour; every other key
+  stays neutral ink / sand / paper. Built with `\.showColour` (an
+  environment value set by ShowView, EpisodeNotesView and
+  ShowSettingsView) read by `KeyButtonStyle(.accent)`, `DeckSwitch` and
+  `DeckTag` through `Theme.showAccentFill / showAccentText /
+  showOnAccent`. Night keeps its light accent text.
+- **Nothing changes colour on screen** (Paul, 11 Nov 2026: "I don't want
+  someone to open a page and the colour changes"): show page, show
+  preview, episode page and show settings fix their colour when they open
+  (`pageColour` / `colour` set in `init` from the saved colour); if it
+  isn't known yet the page stays neutral for that visit and it's measured
+  for next time. Every followed show's colour is measured ahead at launch
+  and after each feed check (`LibraryStore.preloadShowColours`; tiny copy,
+  once per show, saved), and rows with a stamp measure theirs as they
+  appear, so pages normally open in their colour. The colour of what's
+  playing changes only when a different episode starts, with a 0.5 s fade
+  (`AccentColour.colour` is now set by RootView inside `withAnimation`).
 
 ## Queued for the next app build
 
@@ -1225,8 +1296,7 @@ From the Notion notes after 6 Nov 08:10:
   sizes were set for), static fonts made from Google Fonts' variable
   Fraunces with fontTools (SOFT 100, WONK 1, opsz 36 / 18, wght 600 /
   500; OFL, no reserved name); Barlow removed. Navigation bar titles use
-  Fraunces Soft SemiBold. Proper case throughout. PR #57 not merged
-  until Paul says build.
+  Fraunces Soft SemiBold. Proper case throughout. Went out in build 139.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.

@@ -125,7 +125,7 @@ struct LibraryView: View {
                             .padding(.horizontal, 20)
                         }
 
-                        bigHeading("Your shows", count: shows.count, colour: Theme.ink) {
+                        bigHeading("Your shows", count: shows.count, colour: Poster.rust) {
                             sortMenu
                         }
                         .padding(.top, 8)

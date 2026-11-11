@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Observation
 
 /// Colours and type: the "middle ground" look (Paul's pick, 5 Nov 2026;
 /// replaced Tape Deck). Warm sand page, paper cards, ink text, one olive
@@ -93,10 +94,39 @@ enum Theme {
     /// Secondary text.
     static var muted: Color { Color(hex: p.muted) }
     /// The accent: keys that are on, switches; text on it is `onAccent`.
-    static var accentFill: Color { Color(hex: p.accentFill) }
+    /// It follows the colour of the episode that's playing (Paul, 11 Nov
+    /// 2026: the scheme's olive clashed with the artwork colours), with a
+    /// soft black when nothing is playing (Night keeps its own light
+    /// accent then, as black wouldn't show on the dark page). Reading it
+    /// inside a view tracks `AccentColour`, so only views that use the
+    /// accent redraw, once, when the episode changes.
+    @MainActor static var accentFill: Color {
+        if let playing = AccentColour.shared.colour { return playing }
+        return ColourScheme.current.isDark ? Color(hex: p.accentFill) : softBlack
+    }
     /// Accent text on cards and the page.
-    static var accentText: Color { Color(hex: p.accentText) }
-    static var onAccent: Color { Color(hex: p.onAccent) }
+    /// Night keeps light accent text: artwork colours are dark, made for
+    /// light text on them, so as text on the dark page they'd be lost.
+    @MainActor static var accentText: Color {
+        if ColourScheme.current.isDark { return Color(hex: p.accentText) }
+        return AccentColour.shared.colour ?? softBlack
+    }
+    /// On a screen about one show (show page, episode page, show settings),
+    /// that show's colour wins over what's playing (Paul, 11 Nov 2026).
+    @MainActor static func showAccentFill(_ show: Color?) -> Color { show ?? accentFill }
+    /// Night keeps its light accent text (dark show colours vanish on it).
+    @MainActor static func showAccentText(_ show: Color?) -> Color {
+        ColourScheme.current.isDark ? accentText : (show ?? accentText)
+    }
+    @MainActor static func showOnAccent(_ show: Color?) -> Color { show == nil ? onAccent : Color(hex: 0xF6F2E9) }
+    /// Artwork colours are darkened for light text on them, as is the soft
+    /// black; only Night's own light accent takes dark text.
+    @MainActor static var onAccent: Color {
+        if AccentColour.shared.colour == nil, ColourScheme.current.isDark { return Color(hex: p.onAccent) }
+        return Color(hex: 0xF6F2E9)
+    }
+    /// The accent when nothing is playing.
+    static let softBlack = Color(hex: 0x2B2925)
     /// Search matches, highlighted lines and the playing card.
     static var highlight: Color { Color(hex: p.highlight) }
     /// Ad breaks (amber).
@@ -198,4 +228,17 @@ extension Color {
             blue: Double(hex & 0xFF) / 255
         )
     }
+}
+
+/// The colour of the episode playing, for the app's accent (`Theme.accentFill`).
+/// RootView sets `artwork` as episodes change; the colour itself comes from
+/// `ArtworkColors` (already measured for the player), so this costs no
+/// extra work.
+@MainActor
+@Observable
+final class AccentColour {
+    static let shared = AccentColour()
+    /// Set by RootView with a short fade, only when what's playing changes
+    /// (and once its colour is measured), so the app never jumps colour.
+    var colour: Color?
 }

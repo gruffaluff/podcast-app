@@ -16,6 +16,9 @@ enum Poster {
     /// Full-row swipe colours: add (green) and played (red).
     static let swipeAdd = Color(hex: 0x45543A)
     static let swipePlayed = Color(hex: 0xB4472E)
+    /// Library's Your shows heading (Paul, after build 139: ink matched
+    /// the text and didn't stand out).
+    static let rust = Color(hex: 0xB4472E)
     /// The strip down the left of every row.
     static let stripWidth: CGFloat = 8
 
@@ -239,6 +242,10 @@ private struct PosterSwipe: ViewModifier {
     let enabled: Bool
     @State private var offset: CGFloat = 0
     @State private var armed = false
+    /// Which side's action shows, fixed for the whole swipe and its return,
+    /// so the block never flips to the other action while the row springs
+    /// back (it showed Unplayed, then Play next, in Paul's video).
+    @State private var side: CGFloat = 0
 
     /// How far to pull before letting go does it (a quick flick needs less).
     private static let trigger: CGFloat = 80
@@ -261,6 +268,9 @@ private struct PosterSwipe: ViewModifier {
 
     private func moved(_ translation: CGFloat) {
         var x = translation
+        if side == 0, x != 0 { side = x > 0 ? 1 : -1 }
+        // Stays on the side the swipe began on.
+        if side > 0 { x = max(0, x) } else if side < 0 { x = min(0, x) }
         if x > 0, leading == nil { x = 0 }
         if x < 0, trailing == nil { x = 0 }
         // Resists a little past the line.
@@ -278,20 +288,30 @@ private struct PosterSwipe: ViewModifier {
         let flick = abs(offset) > 36 && abs(velocity) > 700 && (velocity > 0) == (offset > 0)
         let fire = (armed || flick) ? (offset > 0 ? leading : trailing) : nil
         armed = false
-        withAnimation(.spring(duration: 0.3)) { offset = 0 }
-        fire?.action()
+        guard let fire else {
+            withAnimation(.spring(duration: 0.3)) { offset = 0 } completion: { side = 0 }
+            return
+        }
+        // Let the row finish sliding away before the list changes under
+        // it (springing back while the row moved or vanished looked jerky).
+        let direction: CGFloat = offset > 0 ? 1 : -1
+        withAnimation(.easeOut(duration: 0.18)) { offset = direction * 480 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            fire.action()
+            withAnimation(.spring(duration: 0.35)) { offset = 0 } completion: { side = 0 }
+        }
     }
 
     @ViewBuilder private var actionBlock: some View {
-        let action = offset > 0 ? leading : (offset < 0 ? trailing : nil)
+        let action = side > 0 ? leading : (side < 0 ? trailing : nil)
         if let action {
             RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
                 .fill(action.colour)
-                .overlay(alignment: offset > 0 ? .leading : .trailing) {
+                .overlay(alignment: side > 0 ? .leading : .trailing) {
                     HStack(spacing: 6) {
-                        if offset < 0 { label(action) }
+                        if side < 0 { label(action) }
                         Image(systemName: action.icon).font(.system(size: 14, weight: .bold))
-                        if offset > 0 { label(action) }
+                        if side > 0 { label(action) }
                     }
                     .foregroundStyle(Poster.paper)
                     .padding(.horizontal, 18)
@@ -330,10 +350,13 @@ private struct SidewaysPan: UIGestureRecognizerRepresentable {
 
     func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
         switch recognizer.state {
+        // Measured against the window, not the row: the row moves with the
+        // finger, so measuring in its own space counted each movement twice
+        // (the row ran ahead of the finger and jerked; Paul's video).
         case .changed:
-            changed(recognizer.translation(in: recognizer.view).x)
+            changed(recognizer.translation(in: nil).x)
         case .ended:
-            ended(recognizer.velocity(in: recognizer.view).x)
+            ended(recognizer.velocity(in: nil).x)
         case .cancelled, .failed:
             ended(0)
         default:
@@ -344,7 +367,7 @@ private struct SidewaysPan: UIGestureRecognizerRepresentable {
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
             guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
-            let velocity = pan.velocity(in: pan.view)
+            let velocity = pan.velocity(in: nil)
             return abs(velocity.x) > abs(velocity.y) * 1.2
         }
     }

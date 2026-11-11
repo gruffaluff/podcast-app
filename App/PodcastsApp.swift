@@ -162,6 +162,19 @@ struct RootView: View {
                 store.revealShow = nil
             }
         }
+        // The app's accent follows the episode playing (Theme.accentFill).
+        .onChange(of: player.nowPlaying?.artworkURL, initial: true) { _, url in
+            // A soft half-second fade to the new colour (Paul, 11 Nov 2026:
+            // nothing should jump colour).
+            Task {
+                await ArtworkColors.shared.load(url)
+                let colour = url.flatMap { ArtworkColors.shared.background(for: $0) }
+                withAnimation(.easeInOut(duration: 0.5)) { AccentColour.shared.colour = colour }
+            }
+        }
+        // Every followed show's colour is measured ahead, so a show's page
+        // opens in its own colour (it's fixed when the page opens).
+        .task { await store.preloadShowColours() }
         // "In Up Next · 2nd" on an episode page: close what's open, go to Up Next.
         .onChange(of: store.revealInUpNext) { _, id in
             guard id != nil else { return }

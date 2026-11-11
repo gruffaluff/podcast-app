@@ -7,13 +7,14 @@ struct KeyButtonStyle: ButtonStyle {
     var kind: Kind = .plain
     var radius: CGFloat = 14
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.showColour) private var showColour
 
     func makeBody(configuration: Configuration) -> some View {
         let (fill, text): (Color, Color) = {
             switch kind {
             case .plain: return (Theme.surface, Theme.ink)
             case .dark: return (Theme.ink, Theme.surface)
-            case .accent: return (Theme.accentFill, Theme.onAccent)
+            case .accent: return (Theme.showAccentFill(showColour), Theme.showOnAccent(showColour))
             case .sand: return (Theme.background, Theme.ink)
             }
         }()
@@ -48,6 +49,19 @@ struct DeckDisplay<Content: View>: View {
     @Environment(\.heroTint) private var tint
 }
 
+private struct ShowColourKey: EnvironmentKey {
+    static let defaultValue: Color? = nil
+}
+
+extension EnvironmentValues {
+    /// Set on a screen about one show: its artwork colour, used by the
+    /// "on" keys there instead of the colour of what's playing.
+    var showColour: Color? {
+        get { self[ShowColourKey.self] }
+        set { self[ShowColourKey.self] = newValue }
+    }
+}
+
 private struct HeroTintKey: EnvironmentKey {
     static let defaultValue: Color? = nil
 }
@@ -76,14 +90,15 @@ struct LED: View {
 /// A boxed monospaced tag, e.g. "TOP1", "BTM", "YOU".
 struct DeckTag: View {
     let text: String
+    @Environment(\.showColour) private var showColour
 
     var body: some View {
         Text(text)
             .font(Theme.mono(10, .bold))
-            .foregroundStyle(Theme.accentText)
+            .foregroundStyle(Theme.showAccentText(showColour))
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
-            .overlay(Capsule().stroke(Theme.accentText, lineWidth: 1.5))
+            .overlay(Capsule().stroke(Theme.showAccentText(showColour), lineWidth: 1.5))
     }
 }
 
@@ -116,6 +131,7 @@ struct DeckHeader: View {
 struct DeckSwitch<Value: Hashable>: View {
     let options: [(label: String, value: Value)]
     @Binding var selection: Value
+    @Environment(\.showColour) private var showColour
 
     var body: some View {
         HStack(spacing: 4) {
@@ -128,8 +144,8 @@ struct DeckSwitch<Value: Hashable>: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                         .frame(maxWidth: .infinity, minHeight: 38)
-                        .foregroundStyle(selected ? Theme.onAccent : Theme.ink)
-                        .background(selected ? Theme.accentFill : .clear, in: RoundedRectangle(cornerRadius: 11))
+                        .foregroundStyle(selected ? Theme.showOnAccent(showColour) : Theme.ink)
+                        .background(selected ? Theme.showAccentFill(showColour) : .clear, in: RoundedRectangle(cornerRadius: 11))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
