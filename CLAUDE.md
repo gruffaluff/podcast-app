@@ -1175,7 +1175,14 @@ From the Notion notes after 6 Nov 08:10:
   in situ): the playing show is Wastelanders: Star-Lord, its artwork
   cropped from Paul's Apple Podcasts screen recording (Apple's directory
   is blocked from the cloud machine), poster colour #7E3F3A picked from
-  it; other shows stay made-up. Same link. Waiting on Paul.
+  it; other shows stay made-up. Same link. **Paul picked A + B**
+  (11 Nov 2026) with the stamps square, not tilted: a "Your pick: A +
+  B" section on the same link shows Up Next (printed playing block,
+  square stamp on every row, stamp in the mini player), the Library
+  inbox and Your shows rows with stamps, and a show page (printed
+  poster with the artwork as a square stamp beside the name). Not built
+  yet: waiting on Paul to say go, and whether all screens at once or in
+  stages (player + Up Next first).
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
