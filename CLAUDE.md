@@ -1228,7 +1228,16 @@ From the Notion notes after 6 Nov 08:10:
   https://claude.ai/artifact/7VA6NoHBaRi5MSLoEEETMA (olive / soft black /
   follows what's playing). Suggested soft black; following the artwork
   costs nothing noticeable in speed but changes the whole app per
-  episode. Waiting on Paul.
+  episode. **Paul: follow the artwork, soft black when nothing plays**
+  (11 Nov 2026), on the branch: `Theme.accentFill` / `accentText` read
+  `AccentColour.shared` (an `@Observable` holding the playing episode's
+  artwork link, set by RootView; its colour comes from `ArtworkColors`,
+  already measured for the player), so only views using the accent
+  redraw, once per episode. Nothing playing: soft black #2B2925. Night
+  scheme: fills follow the artwork, accent text stays Night's light
+  green (dark artwork colours would be lost as text on the dark page),
+  and with nothing playing it keeps its own accent. Text on the accent is
+  paper (artwork colours are darkened for light text).
 
 ## Queued for the next app build
 

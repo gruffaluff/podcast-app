@@ -162,6 +162,11 @@ struct RootView: View {
                 store.revealShow = nil
             }
         }
+        // The app's accent follows the episode playing (Theme.accentFill).
+        .onChange(of: player.nowPlaying?.artworkURL, initial: true) { _, url in
+            AccentColour.shared.artwork = url
+            Task { await ArtworkColors.shared.load(url) }
+        }
         // "In Up Next · 2nd" on an episode page: close what's open, go to Up Next.
         .onChange(of: store.revealInUpNext) { _, id in
             guard id != nil else { return }
