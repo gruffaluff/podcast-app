@@ -1430,7 +1430,24 @@ From the Notion notes after 6 Nov 08:10:
   the same deck pulled up (artwork up top; display, transport, tools and
   ⌄ Close key in the bottom half). Faceplate keeps its mode keys at the
   very bottom; DISP display sits just above the keys. A "Show thumb
-  reach" switch overlays the easy / stretch / hard zones. Waiting on Paul.
+  reach" switch overlays the easy / stretch / hard zones.
+  **Paul picked 0** (11 Nov 2026) with notes: no shows as tapes on a
+  shelf; Up Next as 1's colour-coded boxes but without the paper effect;
+  shows like 1 (two-across boxes); keep the keys but don't let it feel
+  like a calculator; player artwork takes the top half and shrinks for
+  the transcript, like Apple Podcasts. Refined 0 on
+  https://claude.ai/artifact/4o3aSsUdjsA7xxsXYXdVAP (player clickable):
+  plain cards with a 4 pt band in the show's colour (Up Next, Carry on,
+  New, show episodes; played ones grey), shows as two-across boxes with
+  the band; three weights of control: chunky keys only for skip / red
+  play / skip, Speed / Trim / Boost / Sleep (and the show page's Goes to
+  / Alerts / Speed / Keep) as one quiet strip with a light each, Text /
+  Chapters / Up Next / AirPlay / Close as plain icons, tabs as words with
+  a red underline; the green display stays. Player: artwork ~196 pt in
+  the top half with the title under it; TEXT (or tapping the artwork)
+  shrinks it to a 44 pt square beside the title and the transcript fills
+  the top half (speaker label, line now bigger and dark, others faded).
+  Waiting on Paul.
 
 ## Queued for the next app build
 
