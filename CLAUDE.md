@@ -1447,7 +1447,23 @@ From the Notion notes after 6 Nov 08:10:
   the top half with the title under it; TEXT (or tapping the artwork)
   shrinks it to a 44 pt square beside the title and the transcript fills
   the top half (speaker label, line now bigger and dark, others faded).
-  Waiting on Paul.
+  Paul's notes on that (11 Nov 2026), round 2 on
+  https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA: player has no Close
+  (swipe down) and no Up Next key (swipe down, Listen tab); three
+  buttons: TRANSCRIPT, CHAPTERS, output device (AirPlay); transcript and
+  chapters each fill the top half and replace each other (tap again for
+  the artwork). Keep the DL / TX lights (`EpisodeLights`) and similar
+  bits: on every episode row and under the player's title. Playing
+  episode highlighted in the theme's highlight colour (a dark card with
+  moving bars) wherever it shows: Up Next, Carry on, New, show pages.
+  Up Next: no numbers, reads top-down (playing first, then the top of the
+  queue), start times and "done 22:10" stay. Library order: New, Carry
+  on, Shows (most recently updated first, TOP / BTM and n NEW pill like
+  today). New styles mocked: A Boxes (colour-band boxes, newest three +
+  "All 6 new"; suggested), B Front page (one dark card with Add all /
+  Mark all played, like today's New), C By day (Today / Yesterday / This
+  week compact lines with colour dots), D Row of squares (sideways
+  artwork with +). Waiting on Paul.
 
 ## Queued for the next app build
 
