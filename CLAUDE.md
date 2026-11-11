@@ -1312,7 +1312,22 @@ From the Notion notes after 6 Nov 08:10:
   link): Now (poster rows by day), N1 compact inbox, one line each on a
   paper card (suggested), N2 printed cards sideways, N3 grouped by show,
   N4 "morning paper" card with Add all / Mark all played, N5 stamp shelf
-  three across. Waiting on Paul.
+  three across. **Paul picked N4, C2, S3** (11 Nov 2026), built in
+  LibraryView.swift: `NewPaper` (one printed card in the colour of
+  what's playing, display colour when nothing is: "n new episodes",
+  "LAST TWO WEEKS · 2H 20M TO LISTEN", a line per episode
+  (`NewPaperLine`: tap for the episode page, stamp plays, swipe right Up
+  Next / left played, hold for the menu), ADD ALL TO UP NEXT (only those
+  not queued, oldest first, Undo) and MARK ALL PLAYED (Undo));
+  `CarryOnBlock` (`CarryOnCard` printed in the show's colour with a big
+  play key and progress, then `CarryOnSmall` rows with a thin bar);
+  `ShowPosterRow` (colour strip, where new episodes go, name in the title
+  font, n NEW pill in the show's colour, stamp). The day-grouped inbox
+  rows (`InboxRow`) and `CarryOnLine` are gone.
+- **Add to Up Next never duplicates or moves** (Paul, 11 Nov 2026): Up
+  Next never held duplicates, but Play last / Add to Up Next on an
+  episode already in it moved it to the end; now it does nothing
+  (`LibraryStore.playLast` returns early). Play next still moves it up.
 
 ## Queued for the next app build
 

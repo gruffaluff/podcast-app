@@ -349,7 +349,11 @@ final class LibraryStore {
         commit(rest)
     }
 
+    /// Add to Up Next / Play last. An episode already in Up Next stays where
+    /// it is (Paul, 11 Nov 2026: adding one that's there does nothing; it
+    /// used to move it to the end). Play next still moves it up.
     func playLast(_ episode: PodcastEpisode) {
+        guard !isQueued(episode) else { return }
         commit(QueueEngine.playLast(episode.queueEpisode, in: queue, settings: queueSettings))
     }
 

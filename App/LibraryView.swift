@@ -49,22 +49,6 @@ struct LibraryView: View {
     }
 
 
-    /// The inbox: new episodes by when they came out.
-    private var inboxGroups: [(title: String, episodes: [PodcastEpisode])] {
-        let calendar = Calendar.current
-        let now = Date()
-        var today: [PodcastEpisode] = [], yesterday: [PodcastEpisode] = [], week: [PodcastEpisode] = [], earlier: [PodcastEpisode] = []
-        for episode in newCards {
-            if calendar.isDateInToday(episode.published) { today.append(episode) }
-            else if calendar.isDateInYesterday(episode.published) { yesterday.append(episode) }
-            else if now.timeIntervalSince(episode.published) < 7 * 86_400 { week.append(episode) }
-            else { earlier.append(episode) }
-        }
-        return [("TODAY", today), ("YESTERDAY", yesterday), ("THIS WEEK", week), ("EARLIER", earlier)]
-            .filter { !$0.1.isEmpty }
-            .map { (title: $0.0, episodes: $0.1) }
-    }
-
     private var caughtUp: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("All caught up")
@@ -101,36 +85,24 @@ struct LibraryView: View {
                         // get quieter down the page: full poster rows for new,
                         // slim lines with a progress ring for started, a plain
                         // list for shows.
-                        let groups = inboxGroups
-                        bigHeading("New", count: groups.reduce(0) { $0 + $1.episodes.count }, colour: Theme.accentFill)
-                        if groups.isEmpty {
+                        // New as one "morning paper" card, Carry on as one
+                        // big card then small rows, Your shows as poster
+                        // rows (Paul, 11 Nov 2026: N4, C2, S3 on
+                        // https://claude.ai/artifact/SbZUnVKhQJPYuS8Hv4hZKw).
+                        let fresh = newCards
+                        bigHeading("New", count: fresh.count, colour: Theme.accentFill)
+                        if fresh.isEmpty {
                             caughtUp
-                        }
-                        ForEach(groups, id: \.title) { group in
-                            if groups.count > 1 {
-                                subLabel(group.title)
-                            }
-                            VStack(spacing: 8) {
-                                ForEach(group.episodes) { episode in
-                                    InboxRow(episode: episode)
-                                }
-                            }
-                            .padding(.horizontal, 12)
+                        } else {
+                            NewPaper(episodes: fresh)
+                                .padding(.horizontal, 12)
                         }
 
                         if !continuing.isEmpty {
                             bigHeading("Carry on", count: continuing.count, colour: Theme.adMarker)
                                 .padding(.top, 8)
-                            VStack(spacing: 0) {
-                                ForEach(continuing) { episode in
-                                    Button { player.play(episode) } label: {
-                                        CarryOnLine(episode: episode)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .contextMenu { EpisodeMenuItems(episode: episode) }
-                                }
-                            }
-                            .padding(.horizontal, 20)
+                            CarryOnBlock(episodes: continuing)
+                                .padding(.horizontal, 12)
                         }
 
                         bigHeading("Your shows", count: shows.count, colour: Poster.rust) {
@@ -197,31 +169,15 @@ struct LibraryView: View {
     /// tiles (11 Nov 2026; "description only" went on 10 Nov).
     private var yourShows: some View {
         let ordered = sortedShows
-        return LazyVStack(spacing: 0) {
+        return LazyVStack(spacing: 8) {
             ForEach(ordered) { show in
                 NavigationLink(value: show) {
-                    // A plain list line: the quietest of the three sections.
-                    HStack(spacing: 10) {
-                        Stamp(url: show.artworkURL, title: show.title, size: 30)
-                        Text(show.title)
-                            .font(Theme.text(15, .semibold))
-                            .foregroundStyle(Theme.ink)
-                            .lineLimit(1)
-                        Spacer(minLength: 6)
-                        Text(ShowBadges.text(show).uppercased())
-                            .font(Theme.mono(9))
-                            .foregroundStyle(Theme.muted)
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
-                    .padding(.vertical, 9)
-                    .overlay(alignment: .bottom) { Theme.hairline.frame(height: 1) }
-                    .contentShape(Rectangle())
+                    ShowPosterRow(show: show)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 12)
     }
 
     /// Sections sit straight in the menu (inside a Picker iOS dropped their
@@ -421,38 +377,123 @@ struct DownloadButton: View {
     }
 }
 
-/// A row in the Library inbox: a poster row with the artwork stamp (tap the
-/// stamp to play, the row for the episode page); swipe right to add it to
-/// Up Next, left to mark it played.
-private struct InboxRow: View {
+/// New as one printed card, the "morning paper" (Paul's pick N4, 11 Nov
+/// 2026): how many new episodes and how long they'd take, one line each
+/// (tap for the episode page, the stamp to play, swipe right for Up Next
+/// and left for played, as before), then Add all to Up Next and Mark all
+/// played. Printed in the colour of what's playing, or the dark display
+/// colour when nothing is.
+private struct NewPaper: View {
+    @Environment(LibraryStore.self) private var store
+    let episodes: [PodcastEpisode]
+
+    var body: some View {
+        let colour = AccentColour.shared.colour ?? Theme.display
+        let total = episodes.reduce(0.0) { $0 + ($1.timeLeft ?? $1.duration ?? 0) }
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Last two weeks · \(TimeFormat.length(total)) to listen".uppercased())
+                .font(Theme.mono(9))
+                .tracking(0.8)
+                .foregroundStyle(Poster.paper.opacity(0.8))
+            Text(episodes.count == 1 ? "1 new episode" : "\(episodes.count) new episodes")
+                .font(Theme.big(26))
+                .foregroundStyle(Poster.paper)
+                .padding(.top, 2)
+                .padding(.bottom, 8)
+            ForEach(episodes) { episode in
+                NewPaperLine(episode: episode, colour: colour)
+            }
+            HStack(spacing: 8) {
+                Button(action: addAll) {
+                    Text("ADD ALL TO UP NEXT")
+                        .font(Theme.mono(10, .bold))
+                        .foregroundStyle(colour)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .background(Poster.paper, in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+                .disabled(episodes.allSatisfy { store.isQueued($0) })
+                .opacity(episodes.allSatisfy { store.isQueued($0) } ? 0.5 : 1)
+                Button(action: markAll) {
+                    Text("MARK ALL PLAYED")
+                        .font(Theme.mono(10, .bold))
+                        .foregroundStyle(Poster.paper)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                        .background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 12)
+        }
+        .padding(14)
+        .background { PrintedArtwork(url: nil, colour: colour, strength: 0) }
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    /// Only the ones not already in Up Next, oldest first.
+    private func addAll() {
+        let missing = episodes.filter { !store.isQueued($0) }
+        guard !missing.isEmpty else { return }
+        store.undoable("Added \(missing.count) to Up Next", episodes: []) {
+            store.commit(QueueEngine.playLast(missing.map(\.queueEpisode), in: store.queue, settings: store.queueSettings))
+        }
+    }
+
+    private func markAll() {
+        let list = episodes
+        store.undoable("Marked \(list.count) played", episodes: list) { store.markPlayed(list) }
+    }
+}
+
+/// One line of the New card.
+private struct NewPaperLine: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
+    let colour: Color
 
     var body: some View {
-        let inQueue = store.queue.contains { $0.episode.id == episode.episodeID }
+        let inQueue = store.isQueued(episode)
         let isCurrent = player.nowPlaying?.episodeID == episode.episodeID
-        var parts = [episode.showTitle]
-        if let left = episode.timeLeft, left > 0 { parts.append(TimeFormat.clock(left)) }
+        var parts = [episode.showTitle, TimeFormat.ago(episode.published)]
         if isCurrent { parts.append("Playing") } else if inQueue { parts.append("In Up Next") }
         return HStack(spacing: 10) {
-            PosterRowText(label: parts.filter { !$0.isEmpty }.joined(separator: " · "), title: episode.title, titleSize: 19, lines: 2)
             Button {
                 if isCurrent { player.togglePlayPause() } else { player.play(episode) }
             } label: {
-                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 44)
+                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 34)
                     .overlay {
                         Image(systemName: isCurrent && player.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(Poster.paper)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 20, height: 20)
                             .background(.black.opacity(0.45), in: Circle())
                     }
             }
             .buttonStyle(.plain)
             .accessibilityLabel(isCurrent && player.isPlaying ? "Pause" : "Play")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(episode.title)
+                    .font(Theme.title(16))
+                    .foregroundStyle(Poster.paper)
+                    .lineLimit(2)
+                Text(parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+                    .font(Theme.mono(8.5))
+                    .foregroundStyle(Poster.paper.opacity(0.75))
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            if let length = episode.timeLeft ?? episode.duration, length > 0 {
+                Text(TimeFormat.length(length).uppercased())
+                    .font(Theme.mono(9))
+                    .foregroundStyle(Poster.paper.opacity(0.8))
+                    .fixedSize()
+            }
         }
-        .showCard(episode.showArtwork, title: episode.showTitle)
+        .padding(.vertical, 8)
+        .overlay(alignment: .top) { Poster.paper.opacity(0.18).frame(height: 1) }
+        // Solid behind the line, so a swipe slides it over its action.
+        .background { PrintedArtwork(url: nil, colour: colour, strength: 0) }
         .contentShape(Rectangle())
         .onTapGesture { store.notesEpisode = episode }
         .accessibilityAddTraits(.isButton)
@@ -466,42 +507,157 @@ private struct InboxRow: View {
     }
 }
 
-/// A started episode in Carry on: a slim line with a ring showing how far
-/// through it is (in the show's colour), the title and time left.
-private struct CarryOnLine: View {
+/// Carry on (Paul's pick C2, 11 Nov 2026): the episode you're most likely
+/// to go back to as a printed card in its show's colour with a big play
+/// key and its progress, the others as small rows with a thin bar.
+private struct CarryOnBlock: View {
+    @Environment(PlayerModel.self) private var player
+    let episodes: [PodcastEpisode]
+
+    var body: some View {
+        VStack(spacing: 10) {
+            if let first = episodes.first {
+                Button { player.play(first) } label: { CarryOnCard(episode: first) }
+                    .buttonStyle(.plain)
+                    .contextMenu { EpisodeMenuItems(episode: first) }
+            }
+            ForEach(episodes.dropFirst()) { episode in
+                Button { player.play(episode) } label: { CarryOnSmall(episode: episode) }
+                    .buttonStyle(.plain)
+                    .contextMenu { EpisodeMenuItems(episode: episode) }
+            }
+        }
+    }
+}
+
+private extension PodcastEpisode {
+    var carryOnFraction: Double {
+        guard let duration, duration > 0 else { return 0 }
+        return min(1, max(0.02, position / duration))
+    }
+    var carryOnLeft: String {
+        timeLeft.map { "\(TimeFormat.length($0)) left" } ?? ""
+    }
+}
+
+private struct CarryOnCard: View {
     let episode: PodcastEpisode
 
     var body: some View {
         let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
-        let fraction = episode.duration.map { $0 > 0 ? min(1, episode.position / $0) : 0 } ?? 0
-        HStack(spacing: 10) {
-            ZStack {
-                Circle().stroke(Theme.hairline, lineWidth: 4)
-                Circle().trim(from: 0, to: max(0.02, fraction))
-                    .stroke(colour, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-            }
-            .frame(width: 24, height: 24)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(episode.title)
-                    .font(Theme.text(15, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                Text(([episode.showTitle] + [episode.timeLeft.map { "\(TimeFormat.length($0)) left" }].compactMap { $0 }).filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+        HStack(spacing: 12) {
+            Stamp(url: episode.artwork, title: episode.showTitle, size: 54)
+            VStack(alignment: .leading, spacing: 3) {
+                Text([episode.showTitle, episode.carryOnLeft].filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
                     .font(Theme.mono(9))
-                    .foregroundStyle(Theme.muted)
+                    .foregroundStyle(Poster.paper.opacity(0.8))
                     .lineLimit(1)
+                Text(episode.title)
+                    .font(Theme.title(19))
+                    .foregroundStyle(Poster.paper)
+                    .lineLimit(2)
+                Capsule().fill(Poster.paper.opacity(0.3))
+                    .frame(height: 4)
+                    .overlay(alignment: .leading) {
+                        GeometryReader { geometry in
+                            Capsule().fill(Poster.paper).frame(width: geometry.size.width * episode.carryOnFraction)
+                        }
+                    }
+                    .padding(.top, 5)
             }
             Spacer(minLength: 0)
             Image(systemName: "play.fill")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(Theme.muted)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(colour)
+                .frame(width: 44, height: 44)
+                .background(Poster.paper, in: Circle())
         }
-        .padding(.vertical, 9)
-        .overlay(alignment: .bottom) { Theme.hairline.frame(height: 1) }
+        .padding(12)
+        .background { PrintedArtwork(url: episode.artwork, colour: colour, strength: 0.45) }
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .contentShape(Rectangle())
         .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
-        .accessibilityLabel("\(episode.title), \(Int(fraction * 100)) percent played")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(episode.title), \(Int(episode.carryOnFraction * 100)) percent played")
         .accessibilityHint("Plays from where you stopped")
+    }
+}
+
+private struct CarryOnSmall: View {
+    let episode: PodcastEpisode
+
+    var body: some View {
+        let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
+        HStack(spacing: 10) {
+            Stamp(url: episode.artwork, title: episode.showTitle, size: 30)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(episode.title)
+                    .font(Theme.text(14, .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Capsule().fill(Theme.hairline)
+                    .frame(height: 3)
+                    .overlay(alignment: .leading) {
+                        GeometryReader { geometry in
+                            Capsule().fill(colour).frame(width: geometry.size.width * episode.carryOnFraction)
+                        }
+                    }
+            }
+            Text(episode.carryOnLeft.uppercased())
+                .font(Theme.mono(9))
+                .foregroundStyle(Theme.muted)
+                .fixedSize()
+        }
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
+        .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(episode.title), \(Int(episode.carryOnFraction * 100)) percent played")
+        .accessibilityHint("Plays from where you stopped")
+    }
+}
+
+/// Your shows as poster rows like New (Paul's pick S3, 11 Nov 2026): the
+/// show's colour strip, where its new episodes go, its name in the title
+/// font, a NEW pill in its colour and its stamp.
+private struct ShowPosterRow: View {
+    let show: Podcast
+
+    private var mode: String {
+        switch show.autoAdd {
+        case .top: return "Top of Up Next"
+        case .bottom: return "Bottom of Up Next"
+        case .off: return "Not adding"
+        }
+    }
+
+    var body: some View {
+        let colour = Poster.colour(show.artworkURL, title: show.title)
+        let unplayed = show.episodes.reduce(0) { $0 + ($1.played ? 0 : 1) }
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(mode.uppercased())
+                    .font(Theme.mono(8.5))
+                    .tracking(0.6)
+                    .foregroundStyle(Theme.muted)
+                Text(show.title)
+                    .font(Theme.title(18))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 6)
+            if unplayed > 0 {
+                Text("\(unplayed) NEW")
+                    .font(Theme.mono(8.5, .bold))
+                    .foregroundStyle(Poster.paper)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(colour, in: Capsule())
+                    .fixedSize()
+            }
+            Stamp(url: show.artworkURL, title: show.title, size: 40)
+        }
+        .showCard(show.artworkURL, title: show.title)
+        .contentShape(Rectangle())
     }
 }
