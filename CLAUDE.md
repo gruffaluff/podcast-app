@@ -149,6 +149,14 @@ to Nowhere / Top / Bottom" on the show page.
   GitHub's 15-minute schedule actually runs much less often; Paul is fine
   with that for now (a free outside timer such as cron-job.org could
   trigger it if ever wanted).
+  Apple blips (11 Nov 2026): two runs in a row failed with "CloudKit
+  records/lookup failed (400) UNKNOWN_CONTAINER: Invalid container to get
+  container key" and the next ones worked with no change; nothing was
+  missed (each run catches up on what the last one didn't do). The job now
+  waits and tries again (20 s, 60 s, 120 s) on that kind of answer, 429 or
+  5xx (safe: Apple did nothing), and on no answer at all for reads only (a
+  repeated save could send an alert twice); it still fails if the trouble
+  lasts past the retries.
   Known limits (told Paul 5 Nov 2026): GitHub turns off scheduled jobs in
   a repo with no commits for 60 days (it emails first; re-enable in the
   Actions tab, or any commit keeps it alive); the quiet "refresh Up
@@ -248,7 +256,7 @@ to Nowhere / Top / Bottom" on the show page.
   Podcasts': 248×330, the artwork across the top fading into its own
   colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
   pill with the time left, download and ⋯; it snaps card to card. Above it
-  Continue listening; below "Your shows" (large / card, with a sort key).
+  Continue listening; below "Your shows" (small cards with the description, and a sort key).
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -1033,14 +1041,14 @@ From the Notion notes after 6 Nov 08:10:
   line. Check on the phone: long chapter names, many chapters, colours on
   light artwork.
 
-## Queued for the next app build
+## Done in build 136 (10 Nov 2026, PR #54; Paul: "Build")
 
 - **Player closed after switching apps** (Paul, build 135: open the
   player, swipe to another app, come back: it had shrunk to the mini
   player). Cause: on the AUTO colour setting, iOS briefly draws the app
   in both light and dark for the app switcher; that counted as a scheme
   change, and the whole app was redrawn from scratch (`.id(chosen)`),
-  closing the player. Fixed on the branch (not built): `SchemedRoot`
+  closing the player. `SchemedRoot`
   follows the iPhone's light / dark only while the app is in use, and
   keeps "player open" and the tab itself (`RootView` takes them as
   bindings), so even a real scheme change keeps the player open.
@@ -1048,7 +1056,7 @@ From the Notion notes after 6 Nov 08:10:
   build 135: "not sure", sent a recording of Apple Podcasts' scrubber;
   mock-ups https://claude.ai/artifact/NUUfPjhX55n9SXWRFxMAAH, he picked
   T4 of T1 3→10, T2 5→14, T3 7→16 (Apple's, measured from his recording),
-  T4 10→20, T5 14→24). On the branch, not built: `ScrubLine` in
+  T4 10→20, T5 14→24). `ScrubLine` in
   NowPlayingView.swift (replaces `LiveScrubber`, the time row and the
   chapter between the times): a 10 pt line right under the artwork area,
   split by 3 pt gaps at chapters, played in the artwork's colour, ads
@@ -1066,7 +1074,7 @@ From the Notion notes after 6 Nov 08:10:
 - **Player transcript** (Paul, 10 Nov 2026, build 135 screenshot: lines
   cut to one line with "…"; wants whole lines, the line now bigger and
   clearer, the others smaller and faded, and a smooth scroll instead of
-  jumping). On the branch, not built: the panel is a scrolling list of
+  jumping). the panel is a scrolling list of
   every line (`PlayerTranscriptPanel.window`, LazyVStack) that glides
   (0.6 s ease) to keep the line now a third of the way down; whole lines
   (`fixedSize`; the fixed-height panel had squeezed them to one line);
@@ -1074,7 +1082,7 @@ From the Notion notes after 6 Nov 08:10:
   edges fade out. Scrolling by hand pauses following until 6 s after you
   let go, or BACK TO NOW. CLIP key sits level with the time label.
 - **Rewind when you resume** (Paul, 10 Nov 2026: "smart rewind like other
-  apps"; on the branch, not built): after a pause the player goes back 3 s
+  apps"): after a pause the player goes back 3 s
   (pause of 5 s–1 min), 10 s (1 min–1 h) or 20 s (over an hour); none
   after a quick tap, and only if nothing moved the playhead while paused
   (`PlayerModel.rewind(afterPause:)`, `pausedAt`). Covers the play key,
@@ -1083,6 +1091,86 @@ From the Notion notes after 6 Nov 08:10:
   synced as "rewindOnResume"). Also seen in his build 135
   screenshot: chapter dots 1 and 4 overlapped (short first chapters),
   gone with this design.
+
+## Queued for the next app build
+
+- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
+  New Episodes). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
+  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
+  swipe right Up Next, left played, "All caught up"), 2 Show circles like
+  Stories (ringed show icons with counts, tap for that show's new ones),
+  3 Triage deck (one big card, swipe right Up Next / left played / up
+  play now), 4 Tape shelf (episodes as cassette spines in show colours,
+  tap one to slide it out), 5 Morning digest (one front-page card, "6
+  new since yesterday", one line each, Add the rest to Up Next). Waiting
+  on Paul.
+- **Your shows sort menu** (Paul, build 136 screenshot: "Newest first" /
+  "Oldest first" twice, no way to tell which sort they were). Inside a
+  Picker, iOS dropped the section headings. Now three menu sections
+  (Name / Latest episode / When you followed) of plain buttons with a
+  tick, each saying what it sorts by: "Name, A to Z", "Newest episode
+  first", "Recently followed first", "Followed longest ago first" etc.
+  (`LibraryView.sortOption`). Also the header (Paul: "what's the ·…"):
+  the sort name beside the count squeezed "YOUR SHOWS · 12" down to
+  "YOUR SHOWS ·…"; now the count always shows and "SORTED BY NEWEST
+  EPISODE" sits on a small line under it (`yourShowsTitle`; A–Z / Z–A
+  read "NAME A–Z"). Large artwork tiles dropped (Paul, 11 Nov 2026: "just
+  have the card and desc view"): Your shows is always the small cards
+  with the description, the layout keys and `ShowTile` are gone, the strip
+  holds only the sort key, and "showsLayout" no longer syncs. On the
+  branch, not built.
+- **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
+  a good spot", but curious if another layout is better). Mock-ups
+  https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:
+  1 Tidy (fewer top keys, tiles as a slim icon row, Up Next as one line);
+  2 Artwork first (square artwork card on a washed page, titles under,
+  tap artwork for transcript, bottom icon bar); 3 Reader (transcript fills
+  the screen, compact control dock that pulls up); 4 Deck (cassette:
+  turning reels, LCD with chapter and times, latching keys); 5 Gestures
+  (full-bleed artwork, tap to pause, double tap sides to skip, chapter
+  cards, everything else in a pull-up drawer). Paul: none improve on
+  136. Round 2, https://claude.ai/artifact/LaxiGxbUhYrBwvFQHdMrQZ: 6 Pages
+  (fixed controls below, swipe the top between Art / Chapters / Text /
+  Next), 7 Timeline (chapters as stops down the screen, the current one
+  opens with the controls), 8 Dial (progress as a ring round play, drag
+  round to scrub), 9 Dashboard (tiles: said just now, chapter left, up
+  next, time saved, sleep), 10 Poster (no picture: artwork colour, huge
+  time and title in Big Shoulders). Paul liked 8 (Dial) and 10 (Poster).
+  Round 3, https://claude.ai/artifact/LAGJTUdpda11cHuwEJ6LrL: new 11
+  Moving tape (fixed playhead, loudness strip slides under it, pinch to
+  zoom), 12 Chapter cards (stack, flick to the next chapter), 13
+  Conversation (transcript as chat bubbles, controls where you'd type);
+  then 8 across the app (8a ring round the artwork with chapter ticks,
+  8b scrubbing round the ring, slide inward for finer, 8c progress rings
+  on Up Next rows and round the mini player's play key) and 10 across
+  the app (10a refined poster player, 10b transcript as big lyric type,
+  10c Library New Episodes as colour posters, poster mini player).
+  Then (Paul: "flesh out poster with screens of each page", with the
+  Inbox and Up Next): https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
+  every screen in the poster look: Up Next (playing episode as a colour
+  block, rows with a show-colour strip and big Big Shoulders titles),
+  Library with the Inbox (Today / Yesterday rows, swipe for Up Next /
+  played, Your shows as colour tiles), player, transcript as lyric
+  sheet, show page and episode page as colour posters, Discover (chips,
+  "because you listen to" tiles, chart rows), Search (shows, episodes,
+  quotes), Shows settings (plain, Top priority as colour rows), poster
+  mini player strip. Paul: "could work as a calmer and less busy
+  version of the app". Refreshed on the same link: swipe actions are
+  full-row blocks the row's own height and corners (right: To top / Up
+  Next, green; left: Played, red); player reorganised for reach (top
+  half = artwork printed in the show's colour with the title and
+  chapter on it; line, play, skips, SPEED / TRIM / BOOST / SLEEP keys,
+  transcript / chapters / Up Next all in the bottom half; no empty
+  band). Artwork ideas: A Stamp (small tilted artwork on each row and
+  the playing block), B Print (artwork as one ink in the show's colour
+  with halftone, on big colour areas), C Slice (row strip widens into a
+  slice of the artwork), D Gallery moments (artwork big only on show
+  pages and player), E Wall of sleeves (Your shows as artwork tiles).
+  Suggested A + B. Then real artwork in place (Paul asked to see one
+  in situ): the playing show is Wastelanders: Star-Lord, its artwork
+  cropped from Paul's Apple Podcasts screen recording (Apple's directory
+  is blocked from the cloud machine), poster colour #7E3F3A picked from
+  it; other shows stay made-up. Same link. Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
