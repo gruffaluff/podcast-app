@@ -1154,7 +1154,19 @@ From the Notion notes after 6 Nov 08:10:
   sheet, show page and episode page as colour posters, Discover (chips,
   "because you listen to" tiles, chart rows), Search (shows, episodes,
   quotes), Shows settings (plain, Top priority as colour rows), poster
-  mini player strip. Waiting on Paul.
+  mini player strip. Paul: "could work as a calmer and less busy
+  version of the app". Refreshed on the same link: swipe actions are
+  full-row blocks the row's own height and corners (right: To top / Up
+  Next, green; left: Played, red); player reorganised for reach (top
+  half = artwork printed in the show's colour with the title and
+  chapter on it; line, play, skips, SPEED / TRIM / BOOST / SLEEP keys,
+  transcript / chapters / Up Next all in the bottom half; no empty
+  band). Artwork ideas: A Stamp (small tilted artwork on each row and
+  the playing block), B Print (artwork as one ink in the show's colour
+  with halftone, on big colour areas), C Slice (row strip widens into a
+  slice of the artwork), D Gallery moments (artwork big only on show
+  pages and player), E Wall of sleeves (Your shows as artwork tiles).
+  Suggested A + B. Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
