@@ -1299,6 +1299,15 @@ From the Notion notes after 6 Nov 08:10:
   `DockBackground` is one `PrintedArtwork` under the whole dock with a
   black gradient (clear for the top 40%, 34% at the bottom); nothing
   playing: display colour + dots with the same darkening.
+- **Carry on and Your shows look** (Paul, 11 Nov 2026: doesn't like how
+  they're shown): options on
+  https://claude.ai/artifact/SbZUnVKhQJPYuS8Hv4hZKw. Carry on: Now (slim
+  lines with a ring), C1 small printed cards sideways, C2 one big printed
+  card for the latest then small rows (suggested), C3 poster rows with a
+  progress edge, C4 progress rings round the artwork. Your shows: Now
+  (plain list), S1 artwork grid three across, S2 colour tiles two across
+  (suggested), S3 poster rows like New, S4 record shelf of spines.
+  Waiting on Paul.
 
 ## Queued for the next app build
 
