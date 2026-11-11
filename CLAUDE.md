@@ -25,7 +25,29 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Middle ground"** (Paul's pick, 5 Nov 2026; replaced Tape Deck,
+**Look: "Poster"** (Paul, 11 Nov 2026: "let's rebuild it all", every
+screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
+his pick A + B with square stamps). Same sand page, paper cards, fonts and
+colour schemes; every list row is a poster row (`posterCard` / `showRow` /
+`PosterRowText` in `App/Poster.swift`): a strip of the show's colour down
+the left, a DM Mono label line, the title in big Big Shoulders capitals,
+the artwork as a small square `Stamp` on the right. Big colour areas (Up
+Next's playing block, mini player, player, show and preview headers,
+episode page, Discover "because you listen to" tiles) are the artwork
+printed in one ink of its colour with a halftone dot screen
+(`PrintedArtwork`, `Halftone`). Full-row swipes (`posterSwipe`: the action
+fills the row, its own height and corners; green add, red played) replace
+iOS's round swipe keys on Up Next (right To top, left Played), the pulled-up
+Up Next (left Remove), the Library inbox (right Up Next, left Played) and
+show pages (right Play next, left Played / Unplayed). Library's New Episodes
+carousel became an inbox (Today / Yesterday / This week / Earlier, "All
+caught up"). Player: one printed poster, title and chapter now / next at
+the top (transcript mode: lyric sheet, line now in big capitals), all
+controls in the bottom half (big time, progress line in paper, transport,
+SPEED / TRIM / BOOST / SLEEP, TRANSCRIPT / CHAPTERS / FULL / UP NEXT ·
+n), notes below. Settings screens stay plain; Top show priority rows have
+the show's colour strip. Icons stay SF Symbols (flat, tinted).
+Before that: **"Middle ground"** (Paul's pick, 5 Nov 2026; replaced Tape Deck,
 which he loved but this won). Developed on the canvas
 https://claude.ai/artifact/F5YT74YVLaxwJfGb56E42d (rows "Middle ground,
 developed" and "Transcript, same height as artwork"). Warm sand page
@@ -255,12 +277,14 @@ to Nowhere / Top / Bottom" on the show page.
     of episode. Skip lengths are set on the Shows screen ("Skip buttons") or
     by touching and holding a skip button.
 
-### Library and new episode cards
-- Library tab opens with a **New Episodes** carousel of cards like Apple
-  Podcasts': 248×330, the artwork across the top fading into its own
-  colour, text below it ("22h ago", title, 3 lines of notes), white SHOW · 4H AGO, title, one line of description, a play
-  pill with the time left, download and ⋯; it snaps card to card. Above it
-  Continue listening; below "Your shows" (small cards with the description, and a sort key).
+### Library (poster look, build 138)
+- Library tab: HISTORY / STATS keys, then the **inbox** of new episodes
+  (Today / Yesterday / This week / Earlier; tap a row for the episode
+  page, the stamp to play; swipe right to add to Up Next, left played;
+  "All caught up" when empty), Continue listening, then "Your shows"
+  (poster rows with TOP / BTM · n NEW, the description and a sort key).
+  The New Episodes card carousel (248×330, Apple-style) it replaced is
+  in the build 121–137 notes below.
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -1116,10 +1140,22 @@ From the Notion notes after 6 Nov 08:10:
   above: waits 20 / 60 / 120 s and tries again on UNKNOWN_CONTAINER,
   429 or 5xx).
 
+## On the branch for build 138 (11 Nov 2026, PR #56; Paul: "let's rebuild it all", "get everything in for the next build")
+
+- **Poster look on every screen** (see "Look" at the top). Built without
+  a compiler (GitHub's check compiles it). To check on the phone: the
+  full-row swipes (they're hand-made, so check they don't fight scrolling
+  or long-press drag in Up Next), the player on a small iPhone, the dot
+  print on light artwork, text sizes in rows, Night colours.
+- **New app icon** 2b olive with a soft shadow (top of this file).
+- Removed: New Episodes cards (`EpisodeCard`), `panelRow`,
+  `Theme.upNextCard`, the player's ARTWORK / TRANSCRIPT switch and Up Next
+  card (now keys in the bottom row).
+
 ## Queued for the next app build
 
 - **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
-  New Episodes). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
+  New Episodes; 1 Inbox went in with the poster look, build 138). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
   next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
   swipe right Up Next, left played, "All caught up"), 2 Show circles like
   Stories (ringed show icons with counts, tap for that show's new ones),
@@ -1184,9 +1220,8 @@ From the Notion notes after 6 Nov 08:10:
   B" section on the same link shows Up Next (printed playing block,
   square stamp on every row, stamp in the mini player), the Library
   inbox and Your shows rows with stamps, and a show page (printed
-  poster with the artwork as a square stamp beside the name). Not built
-  yet: waiting on Paul to say go, and whether all screens at once or in
-  stages (player + Up Next first).
+  poster with the artwork as a square stamp beside the name). **Built,
+  all screens at once** (Paul, 11 Nov 2026; see build 138 above).
   Icons (Paul, 11 Nov 2026: no emoji like the bell, "a flat 2d icon
   themed to the colour"): the mock-ups now use one set of flat line
   icons drawn in the surrounding text colour (bell, moon, AirPlay, trim,

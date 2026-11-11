@@ -85,11 +85,6 @@ enum Theme {
     static var surface: Color { Color(hex: p.surface) }
     static var hairline: Color { Color(hex: p.hairline) }
 
-    /// An Up Next card's colour: the playing one highlighted, the rest paper.
-    static func upNextCard(_ index: Int, playing: Int?) -> Color {
-        index == playing ? highlight : surface
-    }
-
     /// Corner radius of every list card.
     static let cardRadius: CGFloat = 14
     /// Outline buttons and quiet borders.

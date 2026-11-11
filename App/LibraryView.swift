@@ -9,8 +9,6 @@ struct LibraryView: View {
     @Query(sort: \Podcast.title) private var shows: [Podcast]
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
-    /// The New Episodes card scrolled into view.
-    @State private var cardInView: PersistentIdentifier?
     @State private var path = NavigationPath()
     @AppStorage("showsSort") private var showsSort = ShowsSort.az.rawValue
 
@@ -43,6 +41,35 @@ struct LibraryView: View {
     }
 
 
+    /// The inbox: new episodes by when they came out.
+    private var inboxGroups: [(title: String, episodes: [PodcastEpisode])] {
+        let calendar = Calendar.current
+        let now = Date()
+        var today: [PodcastEpisode] = [], yesterday: [PodcastEpisode] = [], week: [PodcastEpisode] = [], earlier: [PodcastEpisode] = []
+        for episode in newCards {
+            if calendar.isDateInToday(episode.published) { today.append(episode) }
+            else if calendar.isDateInYesterday(episode.published) { yesterday.append(episode) }
+            else if now.timeIntervalSince(episode.published) < 7 * 86_400 { week.append(episode) }
+            else { earlier.append(episode) }
+        }
+        return [("TODAY", today), ("YESTERDAY", yesterday), ("THIS WEEK", week), ("EARLIER", earlier)]
+            .filter { !$0.1.isEmpty }
+            .map { (title: $0.0, episodes: $0.1) }
+    }
+
+    private var caughtUp: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("ALL CAUGHT UP")
+                .font(Theme.big(26))
+                .foregroundStyle(Theme.ink)
+            Text("No new episodes waiting. New ones land here as they come out.")
+                .font(Theme.text(13))
+                .foregroundStyle(Theme.muted)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
@@ -50,23 +77,40 @@ struct LibraryView: View {
                     if shows.isEmpty {
                         emptyState
                     } else {
-                        HStack(spacing: 8) {
+                        // HISTORY · STATS as small keys on the right.
+                        HStack(spacing: 6) {
+                            Spacer()
                             NavigationLink { HistoryView() } label: { libraryKey("HISTORY", icon: "clock.arrow.circlepath") }
                             NavigationLink { StatsView() } label: { libraryKey("STATS", icon: "chart.bar") }
                         }
-                        .buttonStyle(KeyButtonStyle(radius: 8))
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 3)
+                        .buttonStyle(KeyButtonStyle(kind: .plain, radius: 8))
+                        .padding(.horizontal, 12)
+
+                        // New episodes as an inbox (Paul picked the poster
+                        // look, 11 Nov 2026): Today / Yesterday / This week /
+                        // Earlier; swipe right for Up Next, left for played.
+                        let groups = inboxGroups
+                        if groups.isEmpty {
+                            caughtUp
+                        }
+                        ForEach(groups, id: \.title) { group in
+                            sectionTitle("NEW · " + group.title, detail: "\(group.episodes.count)")
+                            VStack(spacing: 8) {
+                                ForEach(group.episodes) { episode in
+                                    InboxRow(episode: episode)
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 6)
+                        }
 
                         if !continuing.isEmpty {
                             sectionTitle("CONTINUE LISTENING", detail: "\(continuing.count) STARTED")
-                            VStack(spacing: 10) {
+                            VStack(spacing: 8) {
                                 ForEach(continuing) { episode in
                                     Button { player.play(episode) } label: {
                                         HistoryRow(episode: episode)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .deckCard()
+                                            .showCard(episode.showArtwork, title: episode.showTitle)
                                     }
                                         .buttonStyle(.plain)
                                         .contextMenu { EpisodeMenuItems(episode: episode) }
@@ -74,36 +118,6 @@ struct LibraryView: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.bottom, 8)
-                        }
-
-                        let cards = newCards
-                        if !cards.isEmpty {
-                            sectionTitle("NEW EPISODES", detail: "\(cards.count) UNPLAYED")
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                LazyHStack(spacing: 12) {
-                                    ForEach(cards) { episode in
-                                        EpisodeCard(episode: episode)
-                                    }
-                                }
-                                .scrollTargetLayout()
-                            }
-                            // Remembers which card is in view. After marking a
-                            // lot played the carousel stayed scrolled past the
-                            // cards that were left, showing an empty strip
-                            // until a swipe: go back to the first card then.
-                            .scrollPosition(id: $cardInView)
-                            .onChange(of: cards.map(\.persistentModelID)) { _, ids in
-                                if let shown = cardInView, !ids.contains(shown) {
-                                    cardInView = ids.first
-                                }
-                            }
-                            // Cards settle with their left edge on the page margin.
-                            .contentMargins(.horizontal, 20, for: .scrollContent)
-                            // The scroll view cut the cards' shadow off in a
-                            // hard line (the "two tone" band under them).
-                            .scrollClipDisabled()
-                            // Settles on a card after a swipe, like Apple Podcasts.
-                            .scrollTargetBehavior(.viewAligned)
                         }
 
                         HStack(alignment: .center) {
@@ -177,14 +191,11 @@ struct LibraryView: View {
         return VStack(spacing: 10) {
             ForEach(ordered) { show in
                 NavigationLink(value: show) {
-                    HStack(spacing: 12) {
-                        ArtworkView(url: show.artworkURL, title: show.title, size: 56, radius: 10)
+                    HStack(spacing: 10) {
                         showText(show)
-                        Spacer(minLength: 0)
+                        Stamp(url: show.artworkURL, title: show.title, size: 44)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .deckCard()
+                    .showCard(show.artworkURL, title: show.title)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -195,20 +206,15 @@ struct LibraryView: View {
 
     private func showText(_ show: Podcast) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(show.title)
-                .font(Theme.text(15, .bold))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(1)
+            // TOP / BTM and how many new (Paul, 10 Nov 2026), then the name.
+            PosterRowText(label: ShowBadges.text(show), title: show.title, titleSize: 19, lines: 2)
             if !show.summary.isEmpty {
                 Text(show.summary)
                     .font(Theme.text(12))
                     .foregroundStyle(Theme.muted)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .multilineTextAlignment(.leading)
             }
-            // TOP / BTM and how many new, like the large cards (Paul, 10 Nov 2026).
-            ShowBadges(show: show)
-                .padding(.top, 1)
         }
     }
 
@@ -260,11 +266,12 @@ struct LibraryView: View {
     }
 
     private func libraryKey(_ title: String, icon: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-            Text(title).font(Theme.mono(12, .bold))
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 11, weight: .semibold))
+            Text(title).font(Theme.mono(10, .bold)).tracking(0.8)
         }
-        .frame(maxWidth: .infinity, minHeight: 40)
+        .padding(.horizontal, 10)
+        .frame(minHeight: 32)
     }
 
     private func sectionTitle(_ title: String, detail: String) -> some View {
@@ -323,182 +330,16 @@ struct LibraryView: View {
     }
 }
 
-/// A card in the New Episodes carousel, like Apple Podcasts': the artwork
-/// fills the card and fades into its own colour, with the time ago, title,
-/// description and keys in white over the colour.
-private struct EpisodeCard: View {
-    @Environment(PlayerModel.self) private var player
-    @Environment(LibraryStore.self) private var store
-    let episode: PodcastEpisode
-
-    // Option E (Paul, 5 Nov 2026): Apple Podcasts' proportions.
-    private static let width: CGFloat = 248
-    private static let height: CGFloat = 330
-    /// How far down the card the artwork reaches before it has faded out.
-    private static let artArea: CGFloat = 186
-
-    var body: some View {
-        let tint = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.podcast?.title ?? "")
-
-        // Every layer is pinned to the card's size (overlays never resize
-        // the card): a ZStack grew to its widest child, which pushed the
-        // artwork sideways and left a strip of colour on one edge.
-        tint
-            .frame(width: Self.width, height: Self.height)
-            .overlay(alignment: .top) {
-                // Like Apple Podcasts' card (Paul's screenshot, 7 Nov 2026):
-                // the artwork across the full width at the top, shown almost
-                // whole, its lower part melting into the card's colour; the
-                // text sits below it, not over it.
-                CachedImage(url: episode.artwork) { Color.clear }
-                    .frame(width: Self.width, height: Self.width)
-                    .clipped()
-                    .mask(
-                        LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: 0.6),
-                                               .init(color: .black.opacity(0), location: Self.artArea / Self.width)],
-                                       startPoint: .top, endPoint: .bottom)
-                    )
-                    .accessibilityHidden(true)
-            }
-            .overlay(alignment: .bottomLeading) {
-                // The text fills the part below the artwork, keys at the
-                // bottom; the notes give way first if space runs short.
-                details(tint: tint)
-                    .frame(width: Self.width, height: Self.height - Self.artArea + 14, alignment: .topLeading)
-            }
-        .clipShape(RoundedRectangle(cornerRadius: 22))
-        .contentShape(RoundedRectangle(cornerRadius: 22))
-        .onTapGesture { store.notesEpisode = episode }
-        .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
-        .padding(.bottom, 6)
-        .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
-    }
-
-    private func details(tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            // The artwork already says which show; just how new it is.
-            Text(TimeFormat.ago(episode.published))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.displayText.opacity(0.6))
-                .lineLimit(1)
-            Text(episode.title)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.displayText)
-                .lineLimit(1)
-            // Up to three lines of the notes (it was one).
-            Text(episode.summary)
-                .font(.system(size: 14))
-                .foregroundStyle(Theme.displayText.opacity(0.92))
-                .lineLimit(3)
-                .layoutPriority(-1)
-            Spacer(minLength: 0)
-            // Fixed-size keys on the right and a pill that can shrink a
-            // little: "54m left" pushed the ⋯ off the card's edge.
-            HStack(spacing: 4) {
-                playPill
-                Spacer(minLength: 4)
-                // Mark played straight from the card (Paul, 8 Nov 2026),
-                // with the usual Undo bar.
-                Button {
-                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                } label: {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(Theme.displayText.opacity(0.75))
-                        .frame(width: 32, height: 36)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Mark as played")
-                DownloadButton(episode: episode, tint: Theme.displayText.opacity(0.75))
-                    .font(.system(size: 18))
-                    .foregroundStyle(Theme.displayText.opacity(0.75))
-                    .frame(width: 32, height: 36)
-                Menu {
-                    EpisodeMenuItems(episode: episode)
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Theme.displayText.opacity(0.75))
-                        .frame(width: 28, height: 36)
-                }
-                .accessibilityLabel("More")
-            }
-            .padding(.top, 2)
+/// Where new episodes go (TOP / BTM / OFF) and how many are unplayed, on
+/// each show in Your shows: "TOP · 3 NEW".
+enum ShowBadges {
+    static func text(_ show: Podcast) -> String {
+        let tag: String = switch show.autoAdd {
+        case .top: "Top"
+        case .bottom: "Btm"
+        case .off: "Off"
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .padding(.bottom, 12)
-    }
-
-    private var isCurrent: Bool { player.nowPlaying?.episodeID == episode.episodeID }
-
-    /// Play, or (for the episode that's on) Playing / Paused with a moving
-    /// wave, tapping to pause and carry on.
-    private var playPill: some View {
-        let current = isCurrent
-        let playing = current && player.isPlaying
-        return Button {
-            if current { player.togglePlayPause() } else { player.play(episode) }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: playing ? "pause.fill" : "play.fill")
-                // The episode that's on shows its time left like the others
-                // (with the light pill and wave); "Playing" got squashed
-                // to "Pla…" (Paul, 9 Nov 2026).
-                Text(playLabel)
-                    .lineLimit(1)
-                    .fixedSize()
-                if current {
-                    Image(systemName: "waveform")
-                        .symbolEffect(.variableColor.iterative, isActive: playing)
-                }
-            }
-            .font(.system(size: 15, weight: .bold))
-            .foregroundStyle(current ? tintForCurrent : Theme.displayText)
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-            .background(current ? AnyShapeStyle(Theme.displayText) : AnyShapeStyle(Color.white.opacity(0.22)), in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(current ? (playing ? "Pause" : "Carry on playing") : "Play, \(playLabel)")
-    }
-
-    /// Text on the light pill of the episode that's on: the card's colour.
-    private var tintForCurrent: Color {
-        ArtworkColors.shared.background(for: episode.artwork) ?? Theme.ink
-    }
-
-    private var playLabel: String {
-        // "1h 16m" like Apple's cards; a long clock (1:16:31) wrapped
-        // onto two lines in the pill.
-        guard let left = episode.timeLeft, left > 0 else { return "PLAY" }
-        // Just the time, like Apple's ("53m"); the light pill says Playing.
-        return TimeFormat.length(left)
-    }
-}
-
-/// Where new episodes go (TOP / BTM / OFF) and how many are unplayed, under
-/// each show in Your shows.
-private struct ShowBadges: View {
-    let show: Podcast
-
-    var body: some View {
-        HStack(spacing: 6) {
-            DeckTag(text: tag)
-            Text("\(show.episodes.filter { !$0.played }.count) NEW")
-                .font(Theme.mono(10))
-                .foregroundStyle(Theme.muted)
-        }
-    }
-
-    private var tag: String {
-        switch show.autoAdd {
-        case .top: return "TOP"
-        case .bottom: return "BTM"
-        case .off: return "OFF"
-        }
+        return "\(tag) · \(show.episodes.filter { !$0.played }.count) new"
     }
 }
 
@@ -589,5 +430,50 @@ struct DownloadButton: View {
         .font(.title3)
         .foregroundStyle(tint)
         .frame(width: 44, height: 44)
+    }
+}
+
+/// A row in the Library inbox: a poster row with the artwork stamp (tap the
+/// stamp to play, the row for the episode page); swipe right to add it to
+/// Up Next, left to mark it played.
+private struct InboxRow: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    let episode: PodcastEpisode
+
+    var body: some View {
+        let inQueue = store.queue.contains { $0.episode.id == episode.episodeID }
+        let isCurrent = player.nowPlaying?.episodeID == episode.episodeID
+        var parts = [episode.showTitle]
+        if let left = episode.timeLeft, left > 0 { parts.append(TimeFormat.clock(left)) }
+        if isCurrent { parts.append("Playing") } else if inQueue { parts.append("In Up Next") }
+        return HStack(spacing: 10) {
+            PosterRowText(label: parts.filter { !$0.isEmpty }.joined(separator: " · "), title: episode.title, titleSize: 19, lines: 2)
+            Button {
+                if isCurrent { player.togglePlayPause() } else { player.play(episode) }
+            } label: {
+                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 44)
+                    .overlay {
+                        Image(systemName: isCurrent && player.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Poster.paper)
+                            .frame(width: 24, height: 24)
+                            .background(.black.opacity(0.45), in: Circle())
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isCurrent && player.isPlaying ? "Pause" : "Play")
+        }
+        .showCard(episode.showArtwork, title: episode.showTitle)
+        .contentShape(Rectangle())
+        .onTapGesture { store.notesEpisode = episode }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Opens the episode page")
+        .contextMenu { EpisodeMenuItems(episode: episode) }
+        .posterSwipe(
+            leading: inQueue ? nil : PosterSwipeAction(title: "Up next", icon: "plus", colour: Poster.swipeAdd, action: { store.playLast(episode) }),
+            trailing: PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed) {
+                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+            })
     }
 }

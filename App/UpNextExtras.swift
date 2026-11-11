@@ -29,35 +29,26 @@ struct UpNextSheet: View {
                         let episode = episodes[item.episode.id]
                         // No numbers (the top is next); a small NEXT tag on the
                         // first one instead.
-                        HStack(spacing: 12) {
-                            ArtworkView(url: episode?.artwork, title: episode?.podcast?.title ?? item.episode.title, size: 42, radius: 9)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(item.episode.title)
-                                    .font(Theme.text(15, .bold))
-                                    .foregroundStyle(Theme.ink)
-                                    .lineLimit(1)
-                                HStack(spacing: 6) {
-                                    if index == nextIndex { DeckTag(text: "NEXT") }
-                                    Text([episode?.podcast?.title, episode?.timeLeft.map { TimeFormat.clock($0) }].compactMap { $0 }.joined(separator: " · "))
-                                        .font(Theme.text(12))
-                                        .foregroundStyle(Theme.muted)
-                                        .lineLimit(1)
+                        let show = episode?.podcast?.title ?? ""
+                        Group {
+                            if let episode {
+                                HStack(spacing: 10) {
+                                    PosterRowText(
+                                        label: ((index == playing ? ["Now"] : (index == nextIndex ? ["Next"] : [])) + [show, episode.timeLeft.map { TimeFormat.clock($0) }].compactMap { $0 }).joined(separator: " · "),
+                                        title: item.episode.title,
+                                        titleSize: 17,
+                                        lines: 1,
+                                        onColour: index == playing)
+                                    Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: 34)
                                 }
+                                .modifier(QueueCard(episode: episode, isPlaying: index == playing))
                             }
                         }
-                        // Cards like the Up Next tab.
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .deckCard(Theme.upNextCard(index, playing: playing))
+                        // Poster cards like the Up Next tab; swipe left to remove.
+                        .posterSwipe(trailing: PosterSwipeAction(title: "Remove", icon: "minus.circle", colour: Poster.swipePlayed) {
+                            store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
+                        })
                         .deckCardRow()
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
-                            } label: {
-                                Label("Remove", systemImage: "minus.circle")
-                            }
-                        }
                     }
                     // Long press and drag, like the Up Next tab. (Always-on
                     // edit mode here redrew rows in the wrong order after a
@@ -213,12 +204,9 @@ struct SuggestionRow: View {
     let item: DirectoryItem
 
     var body: some View {
-        HStack(spacing: 12) {
-            ArtworkView(url: item.artworkURL, title: item.title, size: 44, radius: 8)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(item.title).font(Theme.text(14, .bold)).foregroundStyle(Theme.ink).lineLimit(1)
-                Text(item.artist ?? item.genre ?? "").font(Theme.text(12)).foregroundStyle(Theme.muted).lineLimit(1)
-            }
+        HStack(spacing: 10) {
+            PosterRowText(label: item.artist ?? item.genre ?? "", title: item.title, titleSize: 18, lines: 2)
+            Stamp(url: item.artworkURL, title: item.title, size: 40)
         }
     }
 

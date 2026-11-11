@@ -220,21 +220,29 @@ struct TopPriorityView: View {
                 if shows.isEmpty {
                     Text("No shows are set to Top yet. Set a show to Top in its settings.")
                         .foregroundStyle(Theme.muted)
+                        .listRowBackground(Theme.surface)
                 }
                 ForEach(Array(shows.enumerated()), id: \.element.feedURL) { index, show in
-                    HStack(spacing: 14) {
-                        Text(String(format: "%02d", index + 1))
-                            .font(Theme.mono(15, .bold))
-                            .foregroundStyle(Theme.accentText)
-                            .frame(width: 26)
-                        ArtworkView(url: show.artworkURL, title: show.title, size: 40, radius: 8)
-                        Text(show.title)
+                    // Poster rows in each show's colour (Paul, 11 Nov 2026):
+                    // the rank and name in big capitals beside the stamp.
+                    HStack(spacing: 10) {
+                        Text("\(index + 1) ·")
+                            .font(Theme.big(20))
+                            .foregroundStyle(Theme.ink)
+                        Text(show.title.uppercased())
+                            .font(Theme.big(20))
                             .foregroundStyle(Theme.ink)
                             .lineLimit(1)
+                        Spacer(minLength: 4)
+                        Stamp(url: show.artworkURL, title: show.title, size: 34)
                     }
-                    // A lifted row keeps rounded corners (it showed white
-                    // square corners while dragging).
-                    .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 12))
+                    .padding(.leading, Poster.stripWidth)
+                    .listRowBackground(
+                        Theme.surface.overlay(alignment: .leading) {
+                            Poster.colour(show.artworkURL, title: show.title).frame(width: Poster.stripWidth)
+                        }
+                    )
+                    .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }
                 }
                 .onMove { from, to in
                     shows.move(fromOffsets: from, toOffset: to)
@@ -245,7 +253,6 @@ struct TopPriorityView: View {
             } footer: {
                 Text("Your favourite goes first. Its new episodes always land above lower-ranked Top shows, whenever they arrive.")
             }
-            .listRowBackground(Theme.surface)
 
             Section {
                 ForEach(allShows) { show in
