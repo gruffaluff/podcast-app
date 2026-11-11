@@ -149,6 +149,14 @@ to Nowhere / Top / Bottom" on the show page.
   GitHub's 15-minute schedule actually runs much less often; Paul is fine
   with that for now (a free outside timer such as cron-job.org could
   trigger it if ever wanted).
+  Apple blips (11 Nov 2026): two runs in a row failed with "CloudKit
+  records/lookup failed (400) UNKNOWN_CONTAINER: Invalid container to get
+  container key" and the next ones worked with no change; nothing was
+  missed (each run catches up on what the last one didn't do). The job now
+  waits and tries again (20 s, 60 s, 120 s) on that kind of answer, 429 or
+  5xx (safe: Apple did nothing), and on no answer at all for reads only (a
+  repeated save could send an alert twice); it still fails if the trouble
+  lasts past the retries.
   Known limits (told Paul 5 Nov 2026): GitHub turns off scheduled jobs in
   a repo with no commits for 60 days (it emails first; re-enable in the
   Actions tab, or any commit keeps it alive); the quiet "refresh Up

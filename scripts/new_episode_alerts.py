@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -41,8 +42,29 @@ FRESH_FOR = dt.timedelta(days=2)
 USER_AGENT = "Poddeck-alerts/1.0 (personal podcast app)"
 
 
+# Apple's side sometimes refuses a call for a few minutes and then recovers
+# (11 Nov 2026: "UNKNOWN_CONTAINER ... Invalid container to get container key"
+# for two runs, fine before and after). These answers mean nothing was done,
+# so the call is safe to send again.
+PASSING_TROUBLE = ("UNKNOWN_CONTAINER", "SERVICE_UNAVAILABLE", "THROTTLED", "TRY_AGAIN_LATER", "INTERNAL_ERROR")
+RETRY_WAITS = (20, 60, 120)
+
+
 def cloudkit(operation, body):
-    """Signed CloudKit Web Services call on the public database."""
+    """Signed CloudKit Web Services call on the public database. Waits and
+    tries again (up to 3 more times, about 3½ minutes) when Apple's side is
+    briefly unavailable; fails the run only if it stays that way."""
+    for attempt, wait in enumerate((0,) + RETRY_WAITS):
+        if wait:
+            print(f"  CloudKit {operation}: Apple's side unavailable, trying again in {wait}s")
+            time.sleep(wait)
+        outcome = _cloudkit_once(operation, body, last=attempt == len(RETRY_WAITS))
+        if outcome is not None:
+            return outcome
+
+
+def _cloudkit_once(operation, body, last):
+    """The result, or None to try again. Ends the run on a real error."""
     subpath = f"/database/1/{CONTAINER}/{ENVIRONMENT}/public/{operation}"
     data = json.dumps(body).encode()
     date = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -58,7 +80,17 @@ def cloudkit(operation, body):
         with urllib.request.urlopen(request, timeout=30) as response:
             return json.loads(response.read())
     except urllib.error.HTTPError as error:
-        sys.exit(f"CloudKit {operation} failed ({error.code}): {error.read().decode(errors='replace')[:500]}")
+        text = error.read().decode(errors="replace")[:500]
+        passing = error.code == 429 or error.code >= 500 or any(code in text for code in PASSING_TROUBLE)
+        if passing and not last:
+            return None
+        sys.exit(f"CloudKit {operation} failed ({error.code}): {text}")
+    except (urllib.error.URLError, TimeoutError) as error:
+        # No answer at all: a save might have gone through, so only reads
+        # are sent again (a repeated save could send an alert twice).
+        if operation.endswith("lookup") and not last:
+            return None
+        sys.exit(f"CloudKit {operation} failed: {error}")
 
 
 def lookup(record_name):
