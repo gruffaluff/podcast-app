@@ -1374,7 +1374,16 @@ From the Notion notes after 6 Nov 08:10:
   steps, mini player / player / player + Up Next, transcript, chapters),
   9 Utility (like Overcast: white, one orange, text buttons, big
   targets), 10 Reader (transcript-first player with a small dark dock;
-  saved quotes in Library). Waiting on Paul's mix.
+  saved quotes in Library). Paul: likes 1 for simplicity, 4 for the one
+  screen idea, 5 for the look; asked for blends of those three. Five on
+  https://claude.ai/artifact/WpuLkbzDfjtBqTpHsUBNMP (two tabs, Listen and Library; Listen = what's playing + a
+  list switching Up Next / New / Carry on): A Deck on top (faceplate with
+  display + keys above the list), B Quiet deck (calm white-card app,
+  deck only in a slim dark display strip, mono labels and one red play
+  key; suggested), C Cassette card (what's playing as a cassette with
+  turning reels), D Deck with modes (fixed faceplate, mode keys UP NEXT /
+  NEW / CARRY ON / SHOWS switch the list, no tab bar), E Plain home, deck
+  player (deck saved for the full player). Waiting on Paul.
 
 ## Queued for the next app build
 
