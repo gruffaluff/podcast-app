@@ -1145,7 +1145,16 @@ From the Notion notes after 6 Nov 08:10:
   on Up Next rows and round the mini player's play key) and 10 across
   the app (10a refined poster player, 10b transcript as big lyric type,
   10c Library New Episodes as colour posters, poster mini player).
-  Waiting on Paul.
+  Then (Paul: "flesh out poster with screens of each page", with the
+  Inbox and Up Next): https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
+  every screen in the poster look: Up Next (playing episode as a colour
+  block, rows with a show-colour strip and big Big Shoulders titles),
+  Library with the Inbox (Today / Yesterday rows, swipe for Up Next /
+  played, Your shows as colour tiles), player, transcript as lyric
+  sheet, show page and episode page as colour posters, Discover (chips,
+  "because you listen to" tiles, chart rows), Search (shows, episodes,
+  quotes), Shows settings (plain, Top priority as colour rows), poster
+  mini player strip. Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
