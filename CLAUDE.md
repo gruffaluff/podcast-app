@@ -1169,6 +1169,18 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Library sections** (Paul, 11 Nov 2026, after build 138: inbox,
+  Continue listening and Your shows "all look the same with only the
+  headers defining each section"). Mock-ups
+  https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ: 1 Three shapes (inbox
+  rows to swipe, Continue listening as a sideways shelf of printed cards
+  with progress, Your shows as a 3-across wall of artwork), 2 Zones (inbox
+  on a paper panel, Continue on an ink band, shows on the sand), 3 Big
+  headings with rows getting quieter down the page, 4 One section at a
+  time (NEW / STARTED / SHOWS switch), 5 Summary tiles + section colours.
+  Suggested 1. Waiting on Paul. Dot texture: kept (it was how it was
+  drawn, not the dots; now a repeated tile).
+
 - **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
   New Episodes; 1 Inbox went in with the poster look, build 138). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
   next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
