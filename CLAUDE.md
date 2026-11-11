@@ -1178,7 +1178,12 @@ From the Notion notes after 6 Nov 08:10:
   on a paper panel, Continue on an ink band, shows on the sand), 3 Big
   headings with rows getting quieter down the page, 4 One section at a
   time (NEW / STARTED / SHOWS switch), 5 Summary tiles + section colours.
-  Suggested 1. Waiting on Paul. Dot texture: kept (it was how it was
+  Suggested 1. Paul liked 3 and 5 and asked for a mix:
+  https://claude.ai/artifact/Q8eAX58QyJb4cgPQYqyqAZ shows 3, 5 and 3/5
+  (a slim strip of 5's count tiles that jump to each section, then 3's
+  big headings coloured per section with an icon: olive new, amber
+  started, ink shows; rows keep 3's densities and each show's colour).
+  Waiting on Paul. Dot texture: kept (it was how it was
   drawn, not the dots; now a repeated tile).
 
 - **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
