@@ -1571,10 +1571,11 @@ From the Notion notes after 6 Nov 08:10:
     right. To check on the phone: deck height on smaller iPhones, the
     player's top half with long titles, scrubbing on the display, Night.
 
-## On the branch for the next build (11 Nov 2026, night; Paul: rebuild overnight in Native warm, then build)
+## Done in build 143 (11 Nov 2026, night, PR #61; Paul: rebuild overnight in Native warm, then build)
 
 - **Native warm** (see "Look" at the top). Built without a compiler;
-  GitHub's check compiles it, then straight to a build (Paul's say-so).
+  GitHub's check passed first time; merged straight to a build (Paul's
+  say-so).
   To check on the phone: the iOS tab bar and mini player (Paul disliked
   iOS 26's floating glass tab bar in build 138; this is the native look
   he asked for, but say if the capsule still bothers him), Undo bar
