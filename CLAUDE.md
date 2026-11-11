@@ -1266,7 +1266,7 @@ From the Notion notes after 6 Nov 08:10:
   playing changes only when a different episode starts, with a 0.5 s fade
   (`AccentColour.colour` is now set by RootView inside `withAnimation`).
 
-## On the branch for the next build (11 Nov 2026; Paul's notes after build 140)
+## Done in build 141 (11 Nov 2026, PR #59; Paul's notes after build 140, then "build")
 
 - **Dead zone above the mini player** (scrolling an inch above it did
   nothing) and **rows stuck behind the mini player** in Up Next (the
