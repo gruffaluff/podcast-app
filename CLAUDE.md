@@ -11,9 +11,13 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 5 Nov 2026): **middle-ground cassette "D"** (sand
-shell, olive label, deep-olive reels), `design/icon/middle_D.png` from
-`make_middle_icons.py`; also on the website. Other options looked at:
+screen. Icon (Paul, 11 Nov 2026): **"2b olive, soft shadow"**: sand
+cassette with spoked reels and the progress line (olive played, amber ad)
+on the olive accent with the halftone dot print and a soft card shadow;
+`design/icon/poster_2b.png` / `.svg` from `make_poster_icon.js` (node,
+Playwright; it also writes the app icon and `docs/icon.png`); also on the
+website. Replaced the middle-ground cassette "D" (5 Nov 2026,
+`middle_D.png` from `make_middle_icons.py`). Other options looked at:
 `middle_options.png` (A–D), `tape_options.png` (reel-to-reel E, big reel
 F, tilted G, ink H), `mic_options.png` (reel-to-reel + microphone I–L),
 may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
@@ -1212,7 +1216,10 @@ From the Notion notes after 6 Nov 08:10:
   anywhere in the app (cards have soft shadows). Colourways of 2b next to
   the app's pieces: https://claude.ai/artifact/Qg7fe2hJ6WYjxc2ytCCbwy
   (rust offset / rust soft / olive offset / olive soft / ink soft / sand
-  with olive cassette). Suggested olive + soft shadow. Waiting on Paul.
+  with olive cassette). Suggested olive + soft shadow. **Paul: go for olive + soft shadow**
+  (11 Nov 2026): it is the app icon and the website's on the branch
+  (UBDM; see the icon line at the top). The rest of the poster look is
+  still waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
