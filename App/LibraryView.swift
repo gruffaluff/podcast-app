@@ -10,9 +10,11 @@ struct LibraryView: View {
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
     @State private var path = NavigationPath()
-    @AppStorage("showsSort") private var showsSort = ShowsSort.az.rawValue
+    /// Most recently updated first by default (Paul, 11 Nov 2026); a new
+    /// key so an older saved A–Z doesn't stick.
+    @AppStorage("showsOrder") private var showsSort = ShowsSort.newestEpisode.rawValue
 
-    private static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
+    static var newEpisodesQuery: FetchDescriptor<PodcastEpisode> {
         var descriptor = FetchDescriptor<PodcastEpisode>(
             predicate: #Predicate { $0.played == false },
             sortBy: [SortDescriptor(\.published, order: .reverse)]
@@ -31,7 +33,16 @@ struct LibraryView: View {
     /// unplayed, and still in Up Next if it's there).
     static let newFor: TimeInterval = 14 * 86_400
 
-    private var newCards: [PodcastEpisode] {
+    private var newCards: [PodcastEpisode] { Self.pickNew(from: newEpisodes, limit: 12) }
+
+    /// The query for the full New list (more than the card shows).
+    static var newEpisodesQueryForList: FetchDescriptor<PodcastEpisode> {
+        var descriptor = newEpisodesQuery
+        descriptor.fetchLimit = 200
+        return descriptor
+    }
+
+    static func pickNew(from newEpisodes: [PodcastEpisode], limit: Int) -> [PodcastEpisode] {
         var seen = Set<String>()
         var cards: [PodcastEpisode] = []
         let cutoff = Date().addingTimeInterval(-Self.newFor)
@@ -43,7 +54,7 @@ struct LibraryView: View {
             if firstForShow || episode.published >= show.followedAt {
                 cards.append(episode)
             }
-            if cards.count == 12 { break }
+            if cards.count == limit { break }
         }
         return cards
     }
@@ -52,13 +63,13 @@ struct LibraryView: View {
     private var caughtUp: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("All caught up")
-                .font(Theme.big(26))
+                .font(Theme.title(19))
                 .foregroundStyle(Theme.ink)
             Text("No new episodes waiting. New ones land here as they come out.")
                 .font(Theme.text(13))
                 .foregroundStyle(Theme.muted)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
@@ -79,18 +90,12 @@ struct LibraryView: View {
                         .buttonStyle(KeyButtonStyle(kind: .plain, radius: 8))
                         .padding(.horizontal, 12)
 
-                        // Option 3 (Paul, 11 Nov 2026): each section opens
-                        // with a big heading on a heavy rule in its own colour
-                        // (olive new, amber carry on, ink shows), and the rows
-                        // get quieter down the page: full poster rows for new,
-                        // slim lines with a progress ring for started, a plain
-                        // list for shows.
-                        // New as one "morning paper" card, Carry on as one
-                        // big card then small rows, Your shows as poster
-                        // rows (Paul, 11 Nov 2026: N4, C2, S3 on
-                        // https://claude.ai/artifact/SbZUnVKhQJPYuS8Hv4hZKw).
+                        // Deck 0 (Paul, 11 Nov 2026): New first, as one paper
+                        // "front page" card (B on paper, artwork on the right
+                        // so it never looks like Carry on), then Carry on as
+                        // boxes, then Your shows by most recently updated.
                         let fresh = newCards
-                        bigHeading("New", count: fresh.count, colour: Theme.accentFill)
+                        bigHeading("New", count: fresh.count, colour: Theme.ink)
                         if fresh.isEmpty {
                             caughtUp
                         } else {
@@ -99,18 +104,18 @@ struct LibraryView: View {
                         }
 
                         if !continuing.isEmpty {
-                            bigHeading("Carry on", count: continuing.count, colour: Theme.adMarker)
-                                .padding(.top, 8)
+                            bigHeading("Carry on", count: continuing.count, colour: Theme.ink)
+                                .padding(.top, 6)
                             CarryOnBlock(episodes: continuing)
                                 .padding(.horizontal, 12)
                         }
 
-                        bigHeading("Your shows", count: shows.count, colour: Poster.rust) {
+                        bigHeading("Your shows", count: shows.count, colour: Theme.ink) {
                             sortMenu
                         }
-                        .padding(.top, 8)
+                        .padding(.top, 6)
                         subLabel("Sorted by " + sort.short)
-                            .padding(.top, -6)
+                            .padding(.top, -8)
                         yourShows
                     }
                 }
@@ -119,8 +124,8 @@ struct LibraryView: View {
             }
             .background(Theme.background)
             .refreshable { await store.refreshAll() }
-            .onAppear { continuing = store.continueListening(excluding: player.nowPlaying?.episodeID, limit: 3) }
-            .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = store.continueListening(excluding: id, limit: 3) }
+            .onAppear { continuing = carryOn(playing: player.nowPlaying?.episodeID) }
+            .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = carryOn(playing: id) }
             .tabTitle("Library")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             // From the player's / an episode page's show name.
@@ -141,7 +146,17 @@ struct LibraryView: View {
         }
     }
 
-    private var sort: ShowsSort { ShowsSort(rawValue: showsSort) ?? .az }
+    private var sort: ShowsSort { ShowsSort(rawValue: showsSort) ?? .newestEpisode }
+
+    /// Started episodes, the one playing first (it's shown as the dark
+    /// playing card, like everywhere else).
+    private func carryOn(playing: String?) -> [PodcastEpisode] {
+        var list = store.continueListening(excluding: nil, limit: 3)
+        if let index = list.firstIndex(where: { $0.episodeID == playing }), index > 0 {
+            list.insert(list.remove(at: index), at: 0)
+        }
+        return list
+    }
 
     /// Your shows in Paul's chosen order (sort key in the section header).
     private var sortedShows: [Podcast] {
@@ -195,8 +210,8 @@ struct LibraryView: View {
             }
             .pickerStyle(.inline)
             Picker("Latest episode", selection: sortBinding) {
-                Text("Newest episode first").tag(ShowsSort.newestEpisode)
-                Text("Oldest episode first").tag(ShowsSort.oldestEpisode)
+                Text("Recently updated first").tag(ShowsSort.newestEpisode)
+                Text("Least recently updated first").tag(ShowsSort.oldestEpisode)
             }
             .pickerStyle(.inline)
         } label: {
@@ -231,19 +246,17 @@ struct LibraryView: View {
     }
 
     private func bigHeading<Trailing: View>(_ title: String, count: Int, colour: Color, @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack(alignment: .lastTextBaseline, spacing: 8) {
-            Text(title)
-                .font(Theme.big(30))
-                .foregroundStyle(Theme.ink)
-            Text("\(count)")
-                .font(Theme.big(30))
+        // Deck 0: a small mono label and count, like the deck's printing.
+        HStack(alignment: .center, spacing: 8) {
+            Text("\(title.uppercased()) · \(String(format: "%02d", count))")
+                .font(Theme.mono(11, .medium))
+                .tracking(1.4)
                 .foregroundStyle(colour)
             Spacer(minLength: 8)
             trailing()
         }
-        .padding(.bottom, 3)
-        .overlay(alignment: .bottom) { colour.frame(height: 3) }
-        .padding(.horizontal, 20)
+        .frame(minHeight: 32)
+        .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -254,7 +267,7 @@ struct LibraryView: View {
             .font(Theme.mono(9))
             .tracking(1)
             .foregroundStyle(Theme.muted)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
             .padding(.top, 2)
     }
 
@@ -288,7 +301,8 @@ enum ShowBadges {
     }
 }
 
-/// How Your shows is ordered (Paul, 10 Nov 2026), saved as "showsSort".
+/// How Your shows is ordered (Paul, 10 Nov 2026), saved as "showsOrder"
+/// (most recently updated first by default, Paul 11 Nov 2026).
 enum ShowsSort: String {
     // A saved "followed" sort from before 11 Nov 2026 falls back to A–Z.
     case az, za, newestEpisode, oldestEpisode
@@ -298,8 +312,8 @@ enum ShowsSort: String {
         switch self {
         case .az: return "NAME A–Z"
         case .za: return "NAME Z–A"
-        case .newestEpisode: return "NEWEST EPISODE"
-        case .oldestEpisode: return "OLDEST EPISODE"
+        case .newestEpisode: return "RECENTLY UPDATED"
+        case .oldestEpisode: return "LEAST RECENTLY UPDATED"
         }
     }
 }
@@ -377,63 +391,74 @@ struct DownloadButton: View {
     }
 }
 
-/// New as one printed card, the "morning paper" (Paul's pick N4, 11 Nov
-/// 2026): how many new episodes and how long they'd take, one line each
-/// (tap for the episode page, the stamp to play, swipe right for Up Next
-/// and left for played, as before), then Add all to Up Next and Mark all
-/// played. Printed in the colour of what's playing, or the dark display
-/// colour when nothing is.
+/// New as one paper "front page" card (Deck 0, Paul's pick B on paper, 11
+/// Nov 2026): how many new episodes and how long they'd take, the newest
+/// four as lines with the show's artwork on the right (tap a line for the
+/// episode page, the artwork to play; swipe right for Up Next, left for
+/// played), then Add all to Up Next and Mark all played. ALL › opens the
+/// whole list, with both actions at the bottom by your thumb.
 private struct NewPaper: View {
     @Environment(LibraryStore.self) private var store
     let episodes: [PodcastEpisode]
 
     var body: some View {
-        let colour = AccentColour.shared.colour ?? Theme.display
         let total = episodes.reduce(0.0) { $0 + ($1.timeLeft ?? $1.duration ?? 0) }
         VStack(alignment: .leading, spacing: 0) {
-            Text("Last two weeks · \(TimeFormat.length(total)) to listen".uppercased())
-                .font(Theme.mono(9))
-                .tracking(0.8)
-                .foregroundStyle(Poster.paper.opacity(0.8))
-            Text(episodes.count == 1 ? "1 new episode" : "\(episodes.count) new episodes")
-                .font(Theme.big(26))
-                .foregroundStyle(Poster.paper)
-                .padding(.top, 2)
-                .padding(.bottom, 8)
-            ForEach(episodes) { episode in
-                NewPaperLine(episode: episode, colour: colour)
-            }
-            HStack(spacing: 8) {
-                // When every one is already queued it says so, in the same
-                // light-on-dark style as Mark all played (Paul, build 141:
-                // the dimmed paper key was invisible on the card).
-                let allQueued = episodes.allSatisfy { store.isQueued($0) }
-                Button(action: addAll) {
-                    Text(allQueued ? "✓ ALL IN UP NEXT" : "ADD ALL TO UP NEXT")
-                        .font(Theme.mono(10, .bold))
-                        .foregroundStyle(allQueued ? Poster.paper.opacity(0.85) : colour)
-                        .frame(maxWidth: .infinity, minHeight: 38)
-                        .background(allQueued ? AnyShapeStyle(.black.opacity(0.25)) : AnyShapeStyle(Poster.paper), in: RoundedRectangle(cornerRadius: 10))
+            HStack(alignment: .firstTextBaseline) {
+                Text(episodes.count == 1 ? "1 new episode" : "\(episodes.count) new episodes")
+                    .font(Theme.title(19))
+                    .foregroundStyle(Theme.ink)
+                Spacer(minLength: 6)
+                NavigationLink {
+                    NewListView()
+                } label: {
+                    Text("\(TimeFormat.length(total)) · All ›".uppercased())
+                        .font(Theme.mono(9, .medium))
+                        .tracking(0.6)
+                        .foregroundStyle(Theme.muted)
+                        .frame(minHeight: 32)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(allQueued)
-                Button(action: markAll) {
-                    Text("MARK ALL PLAYED")
-                        .font(Theme.mono(10, .bold))
-                        .foregroundStyle(Poster.paper)
-                        .frame(maxWidth: .infinity, minHeight: 38)
-                        .background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
-                }
-                .buttonStyle(.plain)
+                .accessibilityLabel("All new episodes")
             }
-            .padding(.top, 12)
+            .padding(.bottom, 2)
+            ForEach(Array(episodes.prefix(4).enumerated()), id: \.element.episodeID) { index, episode in
+                NewPaperLine(episode: episode, first: index == 0)
+            }
+            NewActions(episodes: episodes)
+                .padding(.top, 10)
         }
-        .padding(14)
-        .background { PrintedArtwork(url: nil, colour: colour, strength: 0) }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .deckCard()
+    }
+}
+
+/// Add all to Up Next (only those not already in it, oldest first) and
+/// Mark all played, both with Undo.
+private struct NewActions: View {
+    @Environment(LibraryStore.self) private var store
+    let episodes: [PodcastEpisode]
+
+    var body: some View {
+        // When every one is already queued it says so (Paul, build 141).
+        let allQueued = episodes.allSatisfy { store.isQueued($0) }
+        HStack(spacing: 8) {
+            Button(action: addAll) {
+                Text(allQueued ? "✓ All in Up Next" : "+ All to Up Next")
+                    .modifier(OutlineKeyLabel())
+            }
+            .buttonStyle(.plain)
+            .disabled(allQueued)
+            Button(action: markAll) {
+                Text("✓ Mark all played")
+                    .modifier(OutlineKeyLabel())
+            }
+            .buttonStyle(.plain)
+        }
     }
 
-    /// Only the ones not already in Up Next, oldest first.
     private func addAll() {
         let missing = episodes.filter { !store.isQueued($0) }
         guard !missing.isEmpty else { return }
@@ -448,55 +473,66 @@ private struct NewPaper: View {
     }
 }
 
-/// One line of the New card.
+/// A quiet outlined key label (small mono capitals).
+private struct OutlineKeyLabel: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(Theme.mono(9.5, .bold))
+            .tracking(0.6)
+            .textCase(.uppercase)
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity, minHeight: 38)
+            .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).stroke(Theme.controlBorder, lineWidth: 1))
+            .contentShape(Rectangle())
+    }
+}
+
+/// One line of New: the title and a small line under it on the left, the
+/// show's artwork on the right (tap to play).
 private struct NewPaperLine: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
-    let colour: Color
+    var first = false
 
     var body: some View {
         let inQueue = store.isQueued(episode)
         let isCurrent = player.nowPlaying?.episodeID == episode.episodeID
         var parts = [episode.showTitle, TimeFormat.ago(episode.published)]
+        if let length = episode.timeLeft ?? episode.duration, length > 0 { parts.append(TimeFormat.length(length)) }
         if isCurrent { parts.append("Playing") } else if inQueue { parts.append("In Up Next") }
         return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    if isCurrent { PlayingBars(active: player.isPlaying) }
+                    Text(episode.title)
+                        .font(Theme.title(16))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(2)
+                }
+                HStack(spacing: 6) {
+                    Text(parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+                        .font(Theme.mono(8.5))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                    EpisodeLights(episode: episode)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Button {
                 if isCurrent { player.togglePlayPause() } else { player.play(episode) }
             } label: {
-                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 34)
-                    .overlay {
-                        Image(systemName: isCurrent && player.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(Poster.paper)
-                            .frame(width: 20, height: 20)
-                            .background(.black.opacity(0.45), in: Circle())
-                    }
+                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 36)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(isCurrent && player.isPlaying ? "Pause" : "Play")
-            VStack(alignment: .leading, spacing: 2) {
-                Text(episode.title)
-                    .font(Theme.title(16))
-                    .foregroundStyle(Poster.paper)
-                    .lineLimit(2)
-                Text(parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
-                    .font(Theme.mono(8.5))
-                    .foregroundStyle(Poster.paper.opacity(0.75))
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            if let length = episode.timeLeft ?? episode.duration, length > 0 {
-                Text(TimeFormat.length(length).uppercased())
-                    .font(Theme.mono(9))
-                    .foregroundStyle(Poster.paper.opacity(0.8))
-                    .fixedSize()
-            }
         }
         .padding(.vertical, 8)
-        .overlay(alignment: .top) { Poster.paper.opacity(0.18).frame(height: 1) }
+        .overlay(alignment: .top) {
+            if !first { Theme.hairline.frame(height: 1) }
+        }
         // Solid behind the line, so a swipe slides it over its action.
-        .background { PrintedArtwork(url: nil, colour: colour, strength: 0) }
+        .background(Theme.surface)
         .contentShape(Rectangle())
         .onTapGesture { store.notesEpisode = episode }
         .accessibilityAddTraits(.isButton)
@@ -510,24 +546,67 @@ private struct NewPaperLine: View {
     }
 }
 
-/// Carry on (Paul's pick C2, 11 Nov 2026): the episode you're most likely
-/// to go back to as a printed card in its show's colour with a big play
-/// key and its progress, the others as small rows with a thin bar.
+/// Every new episode (the last two weeks), with Add all and Mark all
+/// played at the bottom, in thumb reach.
+private struct NewListView: View {
+    @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
+
+    private var episodes: [PodcastEpisode] { LibraryView.pickNew(from: unplayed, limit: 60) }
+
+    var body: some View {
+        let list = episodes
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(list.enumerated()), id: \.element.episodeID) { index, episode in
+                    NewPaperLine(episode: episode, first: index == 0)
+                }
+                if list.isEmpty {
+                    Text("All caught up")
+                        .font(Theme.title(18))
+                        .foregroundStyle(Theme.muted)
+                        .padding(.vertical, 20)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .deckCard()
+            .padding(12)
+            Text("Swipe right for Up Next, left for played".uppercased())
+                .font(Theme.mono(8.5))
+                .foregroundStyle(Theme.muted)
+                .frame(maxWidth: .infinity)
+        }
+        .background(Theme.background)
+        .safeAreaInset(edge: .bottom) {
+            if !list.isEmpty {
+                NewActions(episodes: list)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Theme.plate)
+            }
+        }
+        .navigationTitle("New · last two weeks")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// Carry on (Deck 0): boxes like Up Next, artwork on the left, how far
+/// through as a thin line; the episode playing is the dark playing card.
 private struct CarryOnBlock: View {
     @Environment(PlayerModel.self) private var player
     let episodes: [PodcastEpisode]
 
     var body: some View {
-        VStack(spacing: 10) {
-            if let first = episodes.first {
-                Button { player.play(first) } label: { CarryOnCard(episode: first) }
-                    .buttonStyle(.plain)
-                    .contextMenu { EpisodeMenuItems(episode: first) }
-            }
-            ForEach(episodes.dropFirst()) { episode in
-                Button { player.play(episode) } label: { CarryOnSmall(episode: episode) }
-                    .buttonStyle(.plain)
-                    .contextMenu { EpisodeMenuItems(episode: episode) }
+        VStack(spacing: 8) {
+            ForEach(episodes) { episode in
+                let isCurrent = player.nowPlaying?.episodeID == episode.episodeID
+                Button {
+                    if isCurrent { player.togglePlayPause() } else { player.play(episode) }
+                } label: {
+                    CarryOnRow(episode: episode, isCurrent: isCurrent)
+                }
+                .buttonStyle(.plain)
+                .contextMenu { EpisodeMenuItems(episode: episode) }
             }
         }
     }
@@ -543,112 +622,87 @@ private extension PodcastEpisode {
     }
 }
 
-private struct CarryOnCard: View {
+private struct CarryOnRow: View {
+    @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
+    let isCurrent: Bool
 
     var body: some View {
         let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
-        HStack(spacing: 12) {
-            Stamp(url: episode.artwork, title: episode.showTitle, size: 54)
-            VStack(alignment: .leading, spacing: 3) {
+        let content = HStack(spacing: 10) {
+            Stamp(url: episode.artwork, title: episode.showTitle, size: 40)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    if isCurrent { PlayingBars(active: player.isPlaying) }
+                    Text(episode.title)
+                        .font(Theme.title(16))
+                        .foregroundStyle(isCurrent ? Poster.paper : Theme.ink)
+                        .lineLimit(1)
+                }
                 Text([episode.showTitle, episode.carryOnLeft].filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
-                    .font(Theme.mono(9))
-                    .foregroundStyle(Poster.paper.opacity(0.8))
+                    .font(Theme.mono(8.5))
+                    .foregroundStyle(isCurrent ? Poster.paper.opacity(0.7) : Theme.muted)
                     .lineLimit(1)
-                Text(episode.title)
-                    .font(Theme.title(19))
-                    .foregroundStyle(Poster.paper)
-                    .lineLimit(2)
-                Capsule().fill(Poster.paper.opacity(0.3))
-                    .frame(height: 4)
-                    .overlay(alignment: .leading) {
-                        GeometryReader { geometry in
-                            Capsule().fill(Poster.paper).frame(width: geometry.size.width * episode.carryOnFraction)
-                        }
-                    }
-                    .padding(.top, 5)
-            }
-            Spacer(minLength: 0)
-            Image(systemName: "play.fill")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(colour)
-                .frame(width: 44, height: 44)
-                .background(Poster.paper, in: Circle())
-        }
-        .padding(12)
-        .background { PrintedArtwork(url: episode.artwork, colour: colour, strength: 0.45) }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .contentShape(Rectangle())
-        .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(episode.title), \(Int(episode.carryOnFraction * 100)) percent played")
-        .accessibilityHint("Plays from where you stopped")
-    }
-}
-
-private struct CarryOnSmall: View {
-    let episode: PodcastEpisode
-
-    var body: some View {
-        let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
-        HStack(spacing: 10) {
-            Stamp(url: episode.artwork, title: episode.showTitle, size: 30)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(episode.title)
-                    .font(Theme.text(14, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                Capsule().fill(Theme.hairline)
+                Capsule().fill(isCurrent ? Poster.paper.opacity(0.25) : Theme.hairline)
                     .frame(height: 3)
                     .overlay(alignment: .leading) {
                         GeometryReader { geometry in
-                            Capsule().fill(colour).frame(width: geometry.size.width * episode.carryOnFraction)
+                            Capsule().fill(isCurrent ? Poster.paper : colour)
+                                .frame(width: geometry.size.width * episode.carryOnFraction)
                         }
                     }
+                    .padding(.top, 2)
             }
-            Text(episode.carryOnLeft.uppercased())
-                .font(Theme.mono(9))
-                .foregroundStyle(Theme.muted)
-                .fixedSize()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            EpisodeLights(episode: episode, onDark: isCurrent)
         }
-        .padding(.horizontal, 4)
         .contentShape(Rectangle())
+        Group {
+            if isCurrent {
+                content.playingCard()
+            } else {
+                content.posterCard(colour)
+            }
+        }
         .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(episode.title), \(Int(episode.carryOnFraction * 100)) percent played")
-        .accessibilityHint("Plays from where you stopped")
+        .accessibilityHint(isCurrent ? "Plays or pauses" : "Plays from where you stopped")
     }
 }
 
-/// Your shows as poster rows like New (Paul's pick S3, 11 Nov 2026): the
-/// show's colour strip, where its new episodes go, its name in the title
-/// font, a NEW pill in its colour and its stamp.
+/// Your shows as boxes (Deck 0): the band in the show's colour, artwork on
+/// the left, the name, where its new episodes go and when it last had one,
+/// and a NEW pill in its colour.
 private struct ShowPosterRow: View {
     let show: Podcast
 
     private var mode: String {
         switch show.autoAdd {
-        case .top: return "Top of Up Next"
-        case .bottom: return "Bottom of Up Next"
-        case .off: return "Not adding"
+        case .top: return "Top"
+        case .bottom: return "Btm"
+        case .off: return "Off"
         }
     }
 
     var body: some View {
         let colour = Poster.colour(show.artworkURL, title: show.title)
         let unplayed = show.episodes.reduce(0) { $0 + ($1.played ? 0 : 1) }
+        let latest = show.episodes.map(\.published).max()
         HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(mode.uppercased())
-                    .font(Theme.mono(8.5))
-                    .tracking(0.6)
-                    .foregroundStyle(Theme.muted)
+            Stamp(url: show.artworkURL, title: show.title, size: 40)
+            VStack(alignment: .leading, spacing: 3) {
                 Text(show.title)
-                    .font(Theme.title(18))
+                    .font(Theme.title(17))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
+                Text(([mode] + [latest.map { "Updated " + TimeFormat.ago($0) }].compactMap { $0 }).joined(separator: " · ").uppercased())
+                    .font(Theme.mono(8.5))
+                    .tracking(0.5)
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
             }
-            Spacer(minLength: 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
             if unplayed > 0 {
                 Text("\(unplayed) NEW")
                     .font(Theme.mono(8.5, .bold))
@@ -658,7 +712,6 @@ private struct ShowPosterRow: View {
                     .background(colour, in: Capsule())
                     .fixedSize()
             }
-            Stamp(url: show.artworkURL, title: show.title, size: 40)
         }
         .showCard(show.artworkURL, title: show.title)
         .contentShape(Rectangle())

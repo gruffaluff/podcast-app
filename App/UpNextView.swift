@@ -17,6 +17,11 @@ struct UpNextView: View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
         let settings = store.queueSettings
         let playing = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
+        // When each one starts at the current speed (Deck 0): the list reads
+        // from the top, the first (or the one playing) is now.
+        let lengths: [TimeInterval] = Self.lengths(of: store.queue, episodes: episodes)
+        let starts: [Date] = UpNextTimes.starts(lengths: lengths, speed: player.speed)
+        let nowIndex: Int = playing ?? 0
 
         NavigationStack {
             ScrollViewReader { proxy in
@@ -29,7 +34,8 @@ struct UpNextView: View {
                         .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
-                            queueRow(index: index, item: item, episode: episode, settings: settings, playing: playing)
+                            queueRow(index: index, item: item, episode: episode, settings: settings, playing: playing,
+                                     start: index == nowIndex ? "NOW" : UpNextTimes.clock(starts[index]))
                         }
                     }
                     // Long press and drag to reorder (Paul); the reorder key
@@ -145,11 +151,11 @@ struct UpNextView: View {
 
     /// One Up Next row: tap for its keys, artwork to play, swipe right for
     /// notes / to the top, swipe left for played / remove.
-    private func queueRow(index: Int, item: QueueItem, episode: PodcastEpisode, settings: QueueSettings, playing: Int?) -> some View {
+    private func queueRow(index: Int, item: QueueItem, episode: PodcastEpisode, settings: QueueSettings, playing: Int?, start: String) -> some View {
         let isOpen = openRow == episode.episodeID
         return VStack(spacing: 8) {
             // Tap a row for its keys; the artwork plays (Paul, A + C).
-            QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID) {
+            QueueRow(number: index + 1, item: item, episode: episode, settings: settings, isPlaying: player.nowPlaying?.episodeID == episode.episodeID, start: start) {
                 player.play(episode)
             }
             // While reordering, taps do nothing (rows growing mid-drag jumped).
@@ -161,10 +167,9 @@ struct UpNextView: View {
                     .padding(.bottom, 4)
             }
         }
-        // Each row is a poster card (Paul, 11 Nov 2026): a strip of the
-        // show's colour, a big title and the artwork stamp; the episode
-        // that's on is a printed block in its colour. The cell behind is
-        // sand, so the row iOS lifts to drag has sand corners.
+        // Each row is a box with a band of the show's colour (Deck 0, Paul
+        // 11 Nov 2026); the episode that's on is a dark card. The cell
+        // behind is sand, so the row iOS lifts to drag has sand corners.
         .frame(maxWidth: .infinity, alignment: .leading)
         .modifier(QueueCard(episode: episode, isPlaying: index == playing))
         // Full-row swipes: right to the top of Up Next, left played. Notes
@@ -179,6 +184,16 @@ struct UpNextView: View {
     }
 
 
+    /// How long each Up Next episode has left (its length if not started).
+    private static func lengths(of queue: [QueueItem], episodes: [String: PodcastEpisode]) -> [TimeInterval] {
+        var result: [TimeInterval] = []
+        for item in queue {
+            let episode: PodcastEpisode? = episodes[item.episode.id]
+            result.append(episode?.timeLeft ?? episode?.duration ?? 0)
+        }
+        return result
+    }
+
     private func toggleRow(_ id: String) {
         // No animation: List resizing rows animates jerkily.
         var transaction = Transaction()
@@ -187,9 +202,11 @@ struct UpNextView: View {
     }
 
     private func header(episodes: [String: PodcastEpisode]) -> some View {
-        let total = store.queue.compactMap { episodes[$0.episode.id]?.timeLeft }.reduce(0, +)
+        let lengths: [TimeInterval] = Self.lengths(of: store.queue, episodes: episodes)
         var counts = "\(store.queue.count) EPISODE\(store.queue.count == 1 ? "" : "S")"
-        if total > 0 { counts += " · TOTAL \(TimeFormat.clock(total))" }
+        if lengths.reduce(0, +) > 0 {
+            counts += " · DONE BY \(UpNextTimes.clock(UpNextTimes.doneBy(lengths: lengths, speed: player.speed)))"
+        }
 
         return VStack(alignment: .leading, spacing: 4) {
             Text(counts)
@@ -210,41 +227,59 @@ struct UpNextView: View {
 private struct QueueRow: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
+    @Environment(PlayerModel.self) private var player
     let number: Int
     let item: QueueItem
     let episode: PodcastEpisode
     let settings: QueueSettings
     let isPlaying: Bool
+    /// When it starts at the current speed ("NOW" for the first).
+    let start: String
     /// Tapping the artwork plays straight away.
     let play: () -> Void
 
     var body: some View {
         let show = episode.podcast?.title ?? ""
         let time = episode.timeLeft.map { TimeFormat.clock($0) } ?? "--:--"
+        let quiet: Color = isPlaying ? Poster.paper.opacity(0.7) : Theme.muted
+        // Deck 0: artwork on the left (tap to play), the title, a small line
+        // under it, and on the right when it starts plus DL / TX.
         HStack(alignment: .center, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                PosterRowText(
-                    label: ((isPlaying ? ["Now"] : []) + [show] + [tag].compactMap { $0 } + [time + (isPlaying ? " left" : "")]).joined(separator: " · "),
-                    title: episode.title,
-                    titleSize: isPlaying ? 25 : 19,
-                    lines: isPlaying ? 3 : 2,
-                    onColour: isPlaying)
-                // When it came out (Paul, 9 Nov 2026), then downloading /
-                // transcribing, and the DL / TX lights.
-                HStack(spacing: 8) {
-                    Text(([Self.published(episode.published)] + [status].compactMap { $0 }).joined(separator: " · ").uppercased())
-                        .font(Theme.mono(9))
-                        .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : Theme.muted)
-                        .lineLimit(1)
-                    if !isPlaying { EpisodeLights(episode: episode) }
-                }
-            }
-            // Tapping the artwork stamp plays straight away.
             Button(action: play) {
-                Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: isPlaying ? 54 : 40)
+                Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: 40)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Play number \(number)")
+            .accessibilityLabel(isPlaying ? "Playing" : "Play")
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    if isPlaying { PlayingBars(active: player.isPlaying) }
+                    Text(episode.title)
+                        .font(Theme.title(17))
+                        .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(([show] + [tag].compactMap { $0 } + [time + (isPlaying ? " left" : "")]).filter { !$0.isEmpty }.joined(separator: " · ").uppercased())
+                    .font(Theme.mono(8.5))
+                    .tracking(0.5)
+                    .foregroundStyle(quiet)
+                    .lineLimit(1)
+                // When it came out (Paul, 9 Nov 2026), then downloading /
+                // transcribing.
+                Text(([Self.published(episode.published)] + [status].compactMap { $0 }).joined(separator: " · ").uppercased())
+                    .font(Theme.mono(8.5))
+                    .foregroundStyle(quiet)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .trailing, spacing: 5) {
+                Text(start)
+                    .font(Theme.mono(10, .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
+                EpisodeLights(episode: episode, onDark: isPlaying)
+            }
+            .fixedSize()
         }
         .contentShape(Rectangle())
     }
@@ -401,9 +436,9 @@ private struct RowKeyStyle: ButtonStyle {
     }
 }
 
-/// An Up Next card: a poster row in the show's colour strip, or for the
-/// episode that's on, a block with its artwork printed in its colour and a
-/// line showing how far through it is.
+/// An Up Next card: a box with a band of the show's colour, or for the
+/// episode that's on, the dark playing card with a line showing how far
+/// through it is.
 struct QueueCard: ViewModifier {
     let episode: PodcastEpisode
     let isPlaying: Bool
@@ -418,14 +453,7 @@ struct QueueCard: ViewModifier {
                     // Its own view: only the line redraws as the episode plays.
                     PlayingProgress(episodeID: episode.episodeID)
                 }
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background {
-                    PrintedArtwork(url: episode.artwork, colour: colour, strength: 0.5)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
-                        .shadow(color: Theme.shadowWide, radius: 4, y: 2)
-                }
-                .tint(Poster.paper)
+                .playingCard()
             } else {
                 content.posterCard(colour)
             }

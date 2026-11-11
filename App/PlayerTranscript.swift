@@ -13,6 +13,12 @@ struct PlayerTranscriptPanel: View {
     let episode: PodcastEpisode
     /// Find is opened from the magnifier in the player's top row.
     @Binding var searching: Bool
+    /// On the sand page (Deck 0 player) rather than a coloured area.
+    var light = false
+
+    private var textColour: Color { light ? Theme.ink : Theme.displayText }
+    private var labelColour: Color { light ? Theme.muted : Theme.displayText }
+    private var keyBackground: Color { light ? Theme.surface : NowPlayingView.keyFill }
 
     @State private var lines: [TranscriptLayout.Line] = []
     @State private var query = ""
@@ -32,7 +38,7 @@ struct PlayerTranscriptPanel: View {
         // them down); the lines fill the area from the top.
         ZStack(alignment: .top) {
             if lines.isEmpty {
-                TranscriptStatusView(episode: episode, onDark: true)
+                TranscriptStatusView(episode: episode, onDark: !light)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 window
@@ -82,7 +88,7 @@ struct PlayerTranscriptPanel: View {
                     .submitLabel(.search)
                     .onSubmit { step(1) }
                     .textInputAutocapitalization(.never)
-                    .foregroundStyle(Theme.displayText)
+                    .foregroundStyle(textColour)
                 Text(found.isEmpty ? (trimmedQuery.isEmpty ? "" : "0") : "\(matchIndex % found.count + 1) of \(found.count)")
                     .font(Theme.mono(12, .bold))
                     .monospacedDigit()
@@ -90,7 +96,7 @@ struct PlayerTranscriptPanel: View {
             }
             .padding(.horizontal, 12)
             .frame(height: 40)
-            .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 12))
+            .background(keyBackground, in: RoundedRectangle(cornerRadius: 12))
             roundKey("chevron.up", label: "Previous match") { step(-1) }.disabled(found.isEmpty)
             roundKey("chevron.down", label: "Next match") { step(1) }.disabled(found.isEmpty)
             roundKey("xmark", label: "Close find") {
@@ -106,7 +112,7 @@ struct PlayerTranscriptPanel: View {
             Image(systemName: symbol)
                 .font(.system(size: 14, weight: .bold))
                 .frame(width: 40, height: 40)
-                .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 12))
+                .background(keyBackground, in: RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -202,8 +208,8 @@ struct PlayerTranscriptPanel: View {
                             .font(Theme.mono(12, .bold))
                             .padding(.horizontal, 14)
                             .frame(minHeight: 36)
-                            .foregroundStyle(Theme.ink)
-                            .background(Theme.displayText, in: Capsule())
+                            .foregroundStyle(light ? Poster.paper : Theme.ink)
+                            .background(light ? Theme.playingCard : Theme.displayText, in: Capsule())
                             .shadow(color: .black.opacity(0.25), radius: 8, y: 4)
                     }
                     .buttonStyle(.plain)
@@ -232,7 +238,7 @@ struct PlayerTranscriptPanel: View {
                 Text(label)
                     .font(Theme.mono(10, .bold))
                     .tracking(1.2)
-                    .foregroundStyle(isFocus ? Theme.adMarker : Theme.displayText)
+                    .foregroundStyle(isFocus ? (light ? Deck0.red : Theme.adMarker) : labelColour)
                 // Whole lines, never cut short.
                 // Every line is set the same (Fraunces Soft, a lyric sheet), so
                 // nothing reflows when the line changes; the others are
@@ -240,7 +246,8 @@ struct PlayerTranscriptPanel: View {
                 // jumping (the size change made the lines leap, Paul
                 // after build 138).
                 Text(highlighted(line.text))
-                    .font(Theme.title(26))
+                    .font(Theme.title(light ? 22 : 26))
+                    .foregroundStyle(textColour)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -267,10 +274,10 @@ struct PlayerTranscriptPanel: View {
                 Button { clipLine = ClipRequest(line: line, quote: line.text) } label: {
                     Label("CLIP", systemImage: "waveform")
                         .font(Theme.mono(10, .bold))
-                        .foregroundStyle(Theme.displayText)
+                        .foregroundStyle(light ? Theme.ink : Theme.displayText)
                         .padding(.horizontal, 9)
                         .frame(minHeight: 26)
-                        .background(.black.opacity(0.28), in: Capsule())
+                        .background(light ? AnyShapeStyle(Theme.surface) : AnyShapeStyle(.black.opacity(0.28)), in: Capsule())
                 }
                 .buttonStyle(.plain)
                 // Level with the time label, clear of the words below.

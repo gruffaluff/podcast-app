@@ -121,8 +121,8 @@ struct RootView: View {
     var body: some View {
         // Our own tabs, not iOS's TabView (Paul, after build 140: a dead
         // zone above the mini player where scrolling did nothing; iOS's
-        // hidden tab bar was still there under ours). The tab bar is
-        // `PosterTabBar`, in the dock at the bottom of each tab.
+        // hidden tab bar was still there under ours). The tabs are words on
+        // the deck at the bottom (`BottomDock`, `DeckTabs`).
         VStack(spacing: 0) {
             ZStack {
                 tabPage(0) { UpNextView() }
@@ -150,7 +150,7 @@ struct RootView: View {
         }
         .tint(Theme.ink)
         // The player fills the whole screen (Paul: no page showing through
-        // at the top); close with its ⌄ key or a swipe down on the top area.
+        // at the top); swipe down to close it.
         .fullScreenCover(isPresented: $showingPlayer) {
             NowPlayingView()
         }

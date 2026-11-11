@@ -43,6 +43,9 @@ enum ColourScheme: String, CaseIterable, Identifiable {
         let background, surface, hairline, controlBorder, ink, muted: UInt32
         let accentFill, accentText, onAccent, highlight, adText: UInt32
         let display, displayText, displayDim: UInt32
+        /// Deck 0: the plate the bottom deck sits on, and the card of the
+        /// episode playing (dark in every scheme, so it always stands out).
+        let plate, playing: UInt32
     }
 
     var palette: Palette {
@@ -51,22 +54,26 @@ enum ColourScheme: String, CaseIterable, Identifiable {
             Palette(background: 0xE9E3D5, surface: 0xF6F2E9, hairline: 0xD6CEBD, controlBorder: 0xC9C2B4,
                     ink: 0x1F1D19, muted: 0x5C5547, accentFill: 0x45543A, accentText: 0x45543A,
                     onAccent: 0xF6F2E9, highlight: 0xF2DFB8, adText: 0x6E4A12,
-                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6)
+                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6,
+                    plate: 0xD9D2C2, playing: 0x2F2C26)
         case .slate:
             Palette(background: 0xDCE2E7, surface: 0xF7F9FB, hairline: 0xC7D0D7, controlBorder: 0xB7C1C9,
                     ink: 0x1A232A, muted: 0x4F5D68, accentFill: 0x1F5C63, accentText: 0x1F5C63,
                     onAccent: 0xF2F7F8, highlight: 0xCFE5E3, adText: 0x6E4A12,
-                    display: 0x1F3A40, displayText: 0xF2F7F8, displayDim: 0xC9D8DA)
+                    display: 0x1F3A40, displayText: 0xF2F7F8, displayDim: 0xC9D8DA,
+                    plate: 0xC9D1D8, playing: 0x1F2A31)
         case .clay:
             Palette(background: 0xEAD8CC, surface: 0xFBF4ED, hairline: 0xDCC6B7, controlBorder: 0xD0B8A8,
                     ink: 0x2A1E18, muted: 0x6B5446, accentFill: 0x9A4426, accentText: 0x8A3C21,
                     onAccent: 0xFBF4ED, highlight: 0xF3D3BD, adText: 0x6E4A12,
-                    display: 0x4A2416, displayText: 0xFBF4ED, displayDim: 0xE6CFC2)
+                    display: 0x4A2416, displayText: 0xFBF4ED, displayDim: 0xE6CFC2,
+                    plate: 0xDCC5B5, playing: 0x3A2720)
         case .night:
             Palette(background: 0x1B1C19, surface: 0x2A2B27, hairline: 0x3A3B36, controlBorder: 0x4A4B45,
                     ink: 0xEEE9DE, muted: 0xA39D90, accentFill: 0x9DB07F, accentText: 0xA9BC8A,
                     onAccent: 0x1B1C19, highlight: 0x47432F, adText: 0xE0B861,
-                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6)
+                    display: 0x2F3A27, displayText: 0xF6F2E9, displayDim: 0xD4D7C6,
+                    plate: 0x24251F, playing: 0x4A4C42)
         }
     }
 }
@@ -87,7 +94,12 @@ enum Theme {
     static var hairline: Color { Color(hex: p.hairline) }
 
     /// Corner radius of every list card.
-    static let cardRadius: CGFloat = 14
+    static let cardRadius: CGFloat = 12
+    /// Deck 0: the plate under the bottom deck.
+    static var plate: Color { Color(hex: p.plate) }
+    /// Deck 0: the card of the episode playing, wherever it shows (Up Next,
+    /// Carry on, New, a show's page). Text on it is `Poster.paper`.
+    static var playingCard: Color { Color(hex: p.playing) }
     /// Outline buttons and quiet borders.
     static var controlBorder: Color { Color(hex: p.controlBorder) }
     static var ink: Color { Color(hex: p.ink) }

@@ -25,7 +25,26 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Poster"** (Paul, 11 Nov 2026: "let's rebuild it all", every
+**Look: "Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
+mock-ups https://claude.ai/artifact/4o3aSsUdjsA7xxsXYXdVAP and
+https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA; on the branch, see "On
+the branch for the next build"). Everything pressed is in the bottom half
+on a deck (`BottomDock` in `App/MiniPlayer.swift`, parts in
+`App/DeckParts.swift`): a plate (`Theme.plate`) with the green display
+(`LCDPanel`, `LCDProgress`: chapter, time, ends, left, progress blocks
+with chapter gaps and amber ads), chunky keys only for skip / red play /
+skip (`DeckTransport`, `DeckKeyStyle`), and the tabs as words with a red
+underline (`DeckTabs`: Listen, Library, Discover, Search). On Listen the
+full deck; other tabs a slim display + play. Rows are paper boxes with a
+4 pt band of the show's colour across the top (`posterCard` now draws the
+band; `Theme.cardRadius` 12); the episode playing is a dark card
+(`playingCard()`, `Theme.playingCard`, moving `PlayingBars`) wherever it
+shows. DL / TX are just small letters (`EpisodeLights`). Player: artwork
+in the top half, TRANSCRIPT / CHAPTERS shrink it beside the title and fill
+the top half (swap with each other), Speed / Trim / Boost / Sleep as one
+quiet strip with lights (`ToolsStrip`, `ToolCell`), TRANSCRIPT /
+CHAPTERS / output device buttons, swipe down to close.
+Before that: **"Poster"** (Paul, 11 Nov 2026: "let's rebuild it all", every
 screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
 his pick A + B with square stamps). Same sand page, paper cards, fonts and
 colour schemes; every list row is a poster row (`posterCard` / `showRow` /
@@ -1485,6 +1504,47 @@ From the Notion notes after 6 Nov 08:10:
   (recently updated, TOP / BTM, n NEW pill); search and show settings on
   the deck. Not built yet: waiting on Paul's go to start the rebuild
   (new branch, separate from PR #60).
+- **Deck 0 built** (Paul, 11 Nov 2026: "lets get the rebuild moving"). On
+  this branch with PR #60 (this session can only push to its one branch,
+  so the dead-spot fix and the rebuild go out together). Built without a
+  compiler: GitHub's check compiles it. What changed:
+  - Bottom deck (`BottomDock`): plate, grab handle, full deck on Listen
+    (`DeckNowDisplay` + `DeckTransport`), slim on other tabs (`SlimDeck`:
+    small display + red play), tabs as words (`DeckTabs`); tap the display
+    or swipe up for the player; Skip ad sits on the display during an ad.
+    The printed dock, `MiniPlayer` and `PosterTabBar` are gone.
+  - Up Next: no numbers, top-down, each row artwork left (tap plays),
+    title, show · tag · length, date + status, and on the right when it
+    starts at the current speed ("NOW" for the one playing / first) with
+    the DL / TX letters; header "n EPISODES · DONE BY 22:10"
+    (`UpNextTimes`); playing row = dark card with bars and its progress.
+  - Player (`NowPlayingView` rewritten): no close key (pull down) and no
+    Up Next key; top keys find (transcript) / download / mark played; the
+    artwork (matched move) and centred title, show · chapter line (opens
+    the show) and DL / TX; TRANSCRIPT and CHAPTERS modes fill the top half
+    (`PlayerTranscriptPanel(light: true)`, new `PlayerChaptersPanel` with
+    the playing chapter as the dark card and a link to the full Chapters
+    list with its From the show / Auto switch); saved as "playerTopMode"
+    (synced, replaces "playerShowsTranscript"). The display shows the time,
+    ends and left over the progress; drag from the bright mark to scrub
+    (same rules as before: only from the play point, finger below slows
+    it, Undo for 2 min+ jumps, chapter + time bubble). Chapter skip keys
+    left out of the transport (chapters panel, headphones and lock screen
+    still skip chapters). Episode notes still below.
+  - Library: small mono section labels (NEW · 06 …); New = paper card
+    (`NewPaper`: newest four, artwork on the right, "4H 10M · ALL ›" opens
+    `NewListView` with Add all / Mark all played at the bottom); Carry on
+    = boxes with a progress line, the playing one first as the dark card;
+    Your shows = boxes (artwork left, TOP / BTM · UPDATED 2H AGO, n NEW
+    pill), most recently updated first by default (new key "showsOrder",
+    synced; menu says "Recently updated first").
+  - Show pages: the playing episode's row is the dark card.
+  - Every other list (Discover, Search, history, storage, chapters…)
+    picks up the colour-band boxes through `posterCard`.
+  - Not changed yet: show / preview / episode page headers still printed
+    in the show's colour; Discover and Search rows keep the artwork on the
+    right. To check on the phone: deck height on smaller iPhones, the
+    player's top half with long titles, scrubbing on the display, Night.
 
 ## Queued for the next app build
 

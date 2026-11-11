@@ -229,7 +229,7 @@ struct EpisodeLights: View {
 
     var body: some View {
         let progress = downloads.progress[episode.episodeID]
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             light(progress.map { $0 > 0 ? "DL \(Int($0 * 100))%" : "DL …" } ?? "DL",
                   state: episode.downloadFile != nil ? .on : (progress != nil ? .busy : .off),
                   color: onDark ? Theme.displayText : Theme.ink)
@@ -243,18 +243,17 @@ struct EpisodeLights: View {
 
     private enum LightState { case on, busy, off }
 
+    /// Deck 0 (Paul, 11 Nov 2026: "more subtle"): just the small letters,
+    /// dark when done, faded when not, dotted underneath while on its way.
     private func light(_ text: String, state: LightState, color: Color) -> some View {
-        HStack(spacing: 3) {
-            Circle()
-                .fill(state == .off ? (onDark ? Theme.displayTrack : Theme.controlBorder) : color)
-                .opacity(state == .busy ? 0.5 : 1)
-                .frame(width: 7, height: 7)
-            Text(text)
-                .font(Theme.mono(9, .semibold))
-                .lineLimit(1)
-                .fixedSize()
-                .foregroundStyle(state == .off ? (onDark ? Theme.displayDim : Theme.muted) : (onDark ? Theme.displayText : Theme.ink))
-        }
+        Text(text)
+            .font(Theme.mono(8.5, .semibold))
+            .tracking(0.6)
+            .underline(state == .busy, pattern: .dot)
+            .lineLimit(1)
+            .fixedSize()
+            .foregroundStyle(onDark ? Poster.paper : Theme.ink)
+            .opacity(state == .on ? 0.85 : (state == .busy ? 0.55 : 0.22))
     }
 
     private func label(progress: Double?) -> String {
