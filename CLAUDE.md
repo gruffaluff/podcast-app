@@ -1307,7 +1307,12 @@ From the Notion notes after 6 Nov 08:10:
   progress edge, C4 progress rings round the artwork. Your shows: Now
   (plain list), S1 artwork grid three across, S2 colour tiles two across
   (suggested), S3 poster rows like New, S4 record shelf of spines.
-  Waiting on Paul.
+  The same page now shows the whole Library at full size with pickers.
+  Paul likes C2 and S2 or S3, and asked for New options first (same
+  link): Now (poster rows by day), N1 compact inbox, one line each on a
+  paper card (suggested), N2 printed cards sideways, N3 grouped by show,
+  N4 "morning paper" card with Add all / Mark all played, N5 stamp shelf
+  three across. Waiting on Paul.
 
 ## Queued for the next app build
 
