@@ -1344,6 +1344,12 @@ From the Notion notes after 6 Nov 08:10:
 - **ADD ALL TO UP NEXT invisible** when every new episode was already
   queued (a dimmed paper key on the card): it now reads "✓ ALL IN UP
   NEXT" in the same light-on-dark style as Mark all played.
+- **Instead of the dots?** (Paul, 11 Nov 2026: "do we drop this dot
+  image stuff"): finishes for the big colour areas on
+  https://claude.ai/artifact/28nNe6nbWSbieb2u55qxuo: Now dots, F1 flat
+  colour, F2 soft tone (light-to-dark wash; suggested), F3 artwork glow
+  (blurred blooms, like Apple Music), F4 paper grain, F5 smooth print (no
+  dot screen), F6 flat colour with a darker top edge. Waiting on Paul.
 
 ## Queued for the next app build
 
