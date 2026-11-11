@@ -3,256 +3,200 @@ import UIKit
 import Combine
 import PodcastCore
 
-extension View {
-    /// The bottom of every tab: the "now playing" bar (while something is
-    /// loaded) joined to the app's own tab bar, in one printed block.
-    func miniPlayer(_ showingPlayer: Binding<Bool>, tab: Binding<Int>) -> some View {
-        modifier(MiniPlayerInset(showingPlayer: showingPlayer, tab: tab))
-    }
-}
-
-private struct MiniPlayerInset: ViewModifier {
+/// The bottom of the app (Deck 0, Paul 11 Nov 2026): a deck on a plate
+/// along the bottom of every screen, so everything you press is in thumb
+/// reach. On Listen it's the full deck: the green display (chapter, time,
+/// when it ends, what's left, progress), skip / play / skip, then the tabs.
+/// On the other tabs a slim strip: a small display and the play key above
+/// the tabs. Tap the display, or swipe up on the deck, for the player.
+/// It sits under the tabs in RootView's VStack, not over them (a dead spot
+/// above it where scrolling did nothing, builds 140 and 141).
+struct BottomDock: View {
     @Environment(PlayerModel.self) private var player
     @Binding var showingPlayer: Bool
     @Binding var tab: Int
-    /// The bar steps aside while typing, so search results and their play
+    /// The deck steps aside while typing, so search results and their play
     /// keys are never hidden under it.
     @State private var keyboardUp = false
 
     private var playing: Bool { player.nowPlaying != nil }
 
-    func body(content: Content) -> some View {
-        // The dock is a bottom safe-area inset (Paul, after build 140: rows
-        // got stuck behind the mini player). With our own tabs (no iOS tab
-        // bar underneath) every list stops above it and can scroll its
-        // last row clear, however tall the rows above are.
-        content
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !keyboardUp {
-                    dock
-                        // The Undo and No internet bars float just above the
-                        // dock without taking room (the list doesn't jump).
-                        .overlay(alignment: .top) {
-                            VStack(spacing: 6) {
-                                OfflineBar()
-                                UndoBar()
-                            }
-                            .padding(.horizontal, 12)
-                            .alignmentGuide(.top) { $0[.bottom] + 6 }
-                        }
-                } else {
-                    VStack(spacing: 6) {
-                        OfflineBar()
-                        UndoBar()
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 6)
-                }
+    var body: some View {
+        Group {
+            if keyboardUp {
+                Color.clear.frame(height: 0)
+            } else {
+                deck
             }
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
     }
 
-    /// The mini player and the tab bar in one block with curved top
-    /// corners, running down to the bottom edge: printed in the colour of
-    /// what's playing, or the dark display colour when nothing is.
-    private var dock: some View {
+    private var deck: some View {
         VStack(spacing: 0) {
             if playing {
-                MiniPlayer { showingPlayer = true }
-            }
-            PosterTabBar(tab: $tab)
-        }
-        .padding(.top, playing ? 0 : 6)
-        .background {
-            DockBackground(url: player.nowPlaying?.artworkURL, playing: playing)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
-                .ignoresSafeArea(edges: .bottom)
-                .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
-        }
-    }
-}
-
-/// Behind the dock: one print running under both the mini player and the
-/// tabs, darkening towards the bottom so the tab buttons stay readable
-/// (Paul, 11 Nov 2026, option A on
-/// https://claude.ai/artifact/FwkMBnaiwmK8SdbGbgRgW4; it was printed
-/// artwork above a plain band, which looked half and half). Nothing
-/// playing: the dark display colour with the dot print.
-private struct DockBackground: View {
-    let url: URL?
-    let playing: Bool
-
-    var body: some View {
-        let colour = url.flatMap { ArtworkColors.shared.background(for: $0) } ?? Theme.display
-        Group {
-            if playing {
-                PrintedArtwork(url: url, colour: colour, strength: 0.45)
-            } else {
-                PrintedArtwork(url: nil, colour: colour, strength: 0)
-            }
-        }
-        .overlay {
-            // Clear behind the mini player, darker down behind the tabs.
-            LinearGradient(stops: [
-                .init(color: .black.opacity(0), location: 0),
-                .init(color: .black.opacity(0), location: playing ? 0.4 : 0),
-                .init(color: .black.opacity(0.34), location: 1),
-            ], startPoint: .top, endPoint: .bottom)
-        }
-    }
-}
-
-/// The app's own tab bar: four flat icons with small DM Mono labels on the
-/// printed dock; the one you're on full strength, the others faded.
-struct PosterTabBar: View {
-    @Binding var tab: Int
-    static let height: CGFloat = 56
-
-    private static let tabs: [(title: String, icon: String)] = [
-        ("Up Next", "list.bullet"), ("Library", "square.grid.2x2"), ("Discover", "safari"), ("Search", "magnifyingglass"),
-    ]
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Self.tabs.indices, id: \.self) { index in
-                let item = Self.tabs[index]
-                let selected = tab == index
-                Button { tab = index } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 18, weight: selected ? .bold : .medium))
-                        Text(item.title.uppercased())
-                            .font(.custom("DMMono-Medium", fixedSize: 9))
-                            .tracking(0.8)
-                        // A small bar under the tab you're on.
-                        Capsule()
-                            .fill(Poster.paper.opacity(selected ? 1 : 0))
-                            .frame(width: 18, height: 3)
-                    }
-                    .foregroundStyle(Poster.paper.opacity(selected ? 1 : 0.72))
-                    .frame(maxWidth: .infinity, minHeight: Self.height)
-                    .contentShape(Rectangle())
+                Capsule().fill(Theme.controlBorder).frame(width: 34, height: 4)
+                    .padding(.bottom, 8)
+                if tab == 0 {
+                    DeckNowDisplay { showingPlayer = true }
+                    DeckTransport()
+                        .padding(.top, 10)
+                } else {
+                    SlimDeck { showingPlayer = true }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(item.title)
-                .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
             }
+            DeckTabs(tab: $tab)
+                .padding(.top, playing ? 6 : 0)
+                .overlay(alignment: .top) {
+                    if playing { Rectangle().fill(Theme.ink.opacity(0.07)).frame(height: 1) }
+                }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .background {
+            UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22, style: .continuous)
+                .fill(Theme.plate)
+                .shadow(color: .black.opacity(0.08), radius: 10, y: -3)
+                .ignoresSafeArea(edges: .bottom)
+        }
+        .contentShape(Rectangle())
+        // Swipe up on the deck for the player (alongside the keys' taps).
+        .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { value in
+            if playing, value.translation.height < -30 { showingPlayer = true }
+        })
+        .animation(.easeInOut(duration: 0.2), value: tab == 0)
     }
 }
 
-/// The "now playing" bar: the top of the player card peeking up above the
-/// tabs, full width with curved top corners, in the colour of the
-/// episode's artwork. Tap (or swipe up) to open the player.
-struct MiniPlayer: View {
+/// The full deck's display: chapter and speed, the episode, the time with
+/// when it ends and what's left, and the progress blocks. Tap for the player.
+struct DeckNowDisplay: View {
     @Environment(PlayerModel.self) private var player
     let open: () -> Void
-    /// The bar's height above the tab bar.
-    static let height: CGFloat = 76
 
     var body: some View {
         if let item = player.nowPlaying {
-            let tint = ArtworkColors.shared.background(for: item.artworkURL) ?? Theme.display
-            VStack(spacing: 6) {
-                Capsule().fill(Theme.displayText.opacity(0.45)).frame(width: 34, height: 4)
-                HStack(spacing: 10) {
-                    Button(action: open) {
-                        HStack(spacing: 10) {
-                            // The poster look: the artwork as a square stamp,
-                            // a small time / chapter line and the title in
-                            // big capitals.
-                            Stamp(url: item.artworkURL, title: item.showTitle, size: 38)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(miniLabel.uppercased())
-                                    .font(.custom("DMMono-Regular", fixedSize: 9.5))
-                                    .tracking(0.8)
-                                    .monospacedDigit()
-                                    .foregroundStyle(Theme.displayDim)
-                                    .lineLimit(1)
-                                Text(item.title)
-                                    .font(.custom("FrauncesSoft-Medium", fixedSize: 16))
-                                    .foregroundStyle(Theme.displayText)
-                                    .lineLimit(1)
-                            }
-                            Spacer(minLength: 0)
-                        }
-                        .contentShape(Rectangle())
+            let left = max(0, player.duration - player.currentTime)
+            Button(action: open) {
+                LCDPanel {
+                    HStack {
+                        Text(chapterLine.uppercased()).lineLimit(1)
+                        Spacer(minLength: 6)
+                        Text(PlayerOptions.speedLabel(player.speed))
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Opens the player")
-
-                    if player.currentAd != nil {
-                        Button { player.skipCurrentAd() } label: {
-                            Text("SKIP AD")
-                                .font(Theme.mono(11, .bold))
-                                .foregroundStyle(Theme.adText)
-                                .padding(.horizontal, 10)
-                                .frame(minHeight: 32)
-                                .background(Theme.highlight, in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Skip ad")
+                    Text(item.title.uppercased())
+                        .font(Theme.mono(12, .medium))
+                        .foregroundStyle(Deck0.lcdBright)
+                        .lineLimit(1)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(TimeFormat.clock(player.currentTime))
+                            .font(Theme.mono(14, .medium))
+                            .foregroundStyle(Deck0.lcdBright)
+                        Spacer(minLength: 6)
+                        Text("ENDS " + UpNextTimes.clock(Date().addingTimeInterval(left / max(player.speed, 0.5))))
+                            .foregroundStyle(Deck0.lcdDim)
+                        Spacer(minLength: 6)
+                        Text("−" + TimeFormat.clock(left))
                     }
-                    // Skip back, play, skip forward (Paul); chapter keys are in
-                    // the full player and the chapter list.
-                    SkipButton(direction: .back, iconSize: 16, frame: 40)
-                        .foregroundStyle(Theme.displayText)
-                    Button { player.togglePlayPause() } label: {
-                        Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(tint)
-                            .frame(width: 40, height: 40)
-                            .background(Theme.displayText, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-                    SkipButton(direction: .forward, iconSize: 16, frame: 40)
-                        .foregroundStyle(Theme.displayText)
+                    .monospacedDigit()
+                    LCDProgress(progress: player.duration > 0 ? player.currentTime / player.duration : 0,
+                                chapterStarts: chapterStarts, ads: adFractions)
+                        .padding(.top, 2)
                 }
-                GeometryReader { geometry in
-                    Capsule().fill(Theme.displayText.opacity(0.25))
-                        .overlay(alignment: .leading) {
-                            Capsule().fill(Theme.displayText).frame(width: geometry.size.width * progress)
-                        }
-                }
-                .frame(height: 3)
+                .overlay(alignment: .topTrailing) { skipAd }
             }
-            .tint(Theme.displayText)
-            .padding(.horizontal, 16)
-            .padding(.top, 6)
-            .padding(.bottom, 10)
-            .frame(height: MiniPlayer.height, alignment: .top)
-            // Its printed background is drawn by the dock it sits in, which
-            // runs on down behind the tab bar.
-            .contentShape(Rectangle())
-            // Alongside the keys' taps, not instead of them.
-            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
-                if value.translation.height < -20 { open() }
-            })
-            .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(item.title), \(TimeFormat.clock(left)) left")
+            .accessibilityHint("Opens the player")
         }
     }
 
-    /// "16:45 · CH 4 · 32M LEFT", or the show while nothing has loaded.
-    private var miniLabel: String {
-        guard let item = player.nowPlaying else { return "" }
-        guard player.duration > 0 else { return item.showTitle }
-        var parts = [TimeFormat.clock(player.currentTime)]
-        if let chapter = player.chapters.lastIndex(where: { $0.start <= player.currentTime }) {
-            parts.append("CH \(chapter + 1)")
+    private var chapterLine: String {
+        if let index = player.currentChapterIndex, player.chapters.indices.contains(index) {
+            return "Ch \(index + 1) · \(player.chapters[index].title)"
         }
-        parts.append("\(TimeFormat.clock(max(0, player.duration - player.currentTime))) left")
-        return parts.joined(separator: " · ")
+        return player.nowPlaying?.showTitle ?? ""
     }
 
-    private var progress: Double {
-        player.duration > 0 ? min(1, player.currentTime / player.duration) : 0
+    private var chapterStarts: [Double] {
+        guard player.duration > 0 else { return [] }
+        return player.chapters.map { $0.start / player.duration }
     }
 
     private var adFractions: [ClosedRange<Double>] {
         guard player.duration > 0 else { return [] }
         return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
+    }
+
+    @ViewBuilder private var skipAd: some View {
+        if player.currentAd != nil {
+            Button { player.skipCurrentAd() } label: {
+                Text("SKIP AD")
+                    .font(Theme.mono(10, .bold))
+                    .foregroundStyle(Deck0.lcd)
+                    .padding(.horizontal, 10)
+                    .frame(minHeight: 28)
+                    .background(Deck0.lcdAd, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .padding(6)
+            .accessibilityLabel("Skip ad")
+        }
+    }
+}
+
+/// On the other tabs: a small display (tap for the player) and play.
+private struct SlimDeck: View {
+    @Environment(PlayerModel.self) private var player
+    let open: () -> Void
+
+    var body: some View {
+        if let item = player.nowPlaying {
+            let left = max(0, player.duration - player.currentTime)
+            HStack(spacing: 10) {
+                Button(action: open) {
+                    LCDPanel(vertical: 7) {
+                        Text(item.title.uppercased())
+                            .font(Theme.mono(10.5, .medium))
+                            .foregroundStyle(Deck0.lcdBright)
+                            .lineLimit(1)
+                        HStack {
+                            Text(TimeFormat.clock(player.currentTime))
+                            Spacer(minLength: 4)
+                            Text("−" + TimeFormat.clock(left)).foregroundStyle(Deck0.lcdDim)
+                        }
+                        .font(Theme.mono(9.5))
+                        .monospacedDigit()
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(item.title), \(TimeFormat.clock(left)) left")
+                .accessibilityHint("Opens the player")
+                if player.currentAd != nil {
+                    Button { player.skipCurrentAd() } label: {
+                        Text("SKIP AD")
+                            .font(Theme.mono(10, .bold))
+                            .foregroundStyle(Deck0.lcd)
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 44)
+                            .background(Deck0.lcdAd, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Skip ad")
+                }
+                Button { player.togglePlayPause() } label: {
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 17, weight: .bold))
+                        .frame(width: 58, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(DeckKeyStyle(red: true, radius: 12))
+                .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+            }
+            .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
+        }
     }
 }

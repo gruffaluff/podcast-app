@@ -19,8 +19,10 @@ enum Poster {
     /// Library's Your shows heading (Paul, after build 139: ink matched
     /// the text and didn't stand out).
     static let rust = Color(hex: 0xB4472E)
-    /// The strip down the left of every row.
+    /// The strip down the left of a few settings rows.
     static let stripWidth: CGFloat = 8
+    /// The band of the show's colour across the top of every row card.
+    static let bandHeight: CGFloat = 4
 
     /// A show's colour: measured from its artwork (dark enough for paper
     /// text), or a steady placeholder colour until that's done.
@@ -196,19 +198,20 @@ struct PosterRowText: View {
 }
 
 extension View {
-    /// A poster row card: paper with a strip of the show's colour down the
-    /// left, rounded, on a soft shadow (the app's card look).
+    /// A row card (Deck 0, Paul 11 Nov 2026): plain paper with a band of
+    /// the show's colour across the top ("colour-coded boxes", without the
+    /// paper texture), rounded, on a soft shadow. Every list row uses it.
     func posterCard(_ strip: Color, fill: Color = Theme.surface) -> some View {
         self
-            .padding(.leading, Poster.stripWidth + 12)
-            .padding(.trailing, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .padding(.top, 10 + Poster.bandHeight)
+            .padding(.bottom, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
                     .fill(fill)
-                    .overlay(alignment: .leading) {
-                        strip.frame(width: Poster.stripWidth)
+                    .overlay(alignment: .top) {
+                        strip.frame(height: Poster.bandHeight)
                     }
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
                     .shadow(color: Theme.shadowSoft, radius: 0.5, y: 1)

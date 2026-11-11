@@ -82,7 +82,6 @@ struct RootView: View {
         let current = tab == index
         if current || visited.contains(index) {
             page()
-                .miniPlayer($showingPlayer, tab: $tab)
                 .opacity(current ? 1 : 0)
                 .allowsHitTesting(current)
                 .accessibilityHidden(!current)
@@ -122,14 +121,28 @@ struct RootView: View {
     var body: some View {
         // Our own tabs, not iOS's TabView (Paul, after build 140: a dead
         // zone above the mini player where scrolling did nothing; iOS's
-        // hidden tab bar was still there under ours). The tab bar is
-        // `PosterTabBar`, in the dock at the bottom of each tab.
-        ZStack {
-            tabPage(0) { UpNextView() }
-            tabPage(1) { LibraryView() }
-            tabPage(2) { DiscoverView() }
-            tabPage(3) { SearchView() }
+        // hidden tab bar was still there under ours). The tabs are words on
+        // the deck at the bottom (`BottomDock`, `DeckTabs`).
+        VStack(spacing: 0) {
+            ZStack {
+                tabPage(0) { UpNextView() }
+                tabPage(1) { LibraryView() }
+                tabPage(2) { DiscoverView() }
+                tabPage(3) { SearchView() }
+            }
+            // Undo and No internet float just above the dock, over the
+            // list, only while they show.
+            .overlay(alignment: .bottom) {
+                VStack(spacing: 6) {
+                    OfflineBar()
+                    UndoBar()
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 6)
+            }
+            BottomDock(showingPlayer: $showingPlayer, tab: $tab)
         }
+        .background(Theme.background.ignoresSafeArea())
         .onChange(of: quickActions.pending, initial: true) { _, action in
             guard let action else { return }
             quickActions.pending = nil
@@ -137,7 +150,7 @@ struct RootView: View {
         }
         .tint(Theme.ink)
         // The player fills the whole screen (Paul: no page showing through
-        // at the top); close with its ⌄ key or a swipe down on the top area.
+        // at the top); swipe down to close it.
         .fullScreenCover(isPresented: $showingPlayer) {
             NowPlayingView()
         }

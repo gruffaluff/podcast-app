@@ -98,7 +98,8 @@ struct ShowView: View {
                         }
                     }
                     .tag(episode.episodeID)
-                    .showRow(show.artworkURL, title: show.title)
+                    .modifier(ShowEpisodeCard(url: show.artworkURL, title: show.title,
+                                              playing: player.nowPlaying?.episodeID == episode.episodeID))
                 }
             }
         }
@@ -439,15 +440,15 @@ private struct EpisodeRow: View {
         VStack(alignment: .leading, spacing: 4) {
             // A poster row: when, how long and its state on the label line
             // ("● NEW" unplayed, "✓ PLAYED" faded), then the title big.
-            PosterRowText(label: label, title: episode.title, titleSize: 18, lines: 2, dim: episode.played)
+            PosterRowText(label: label, title: episode.title, titleSize: 18, lines: 2, dim: episode.played && !isPlaying, onColour: isPlaying)
             if !episode.summary.isEmpty {
                 Text(episode.summary)
                     .font(expanded ? .subheadline : .caption)
-                    .foregroundStyle(expanded ? Theme.ink : Theme.muted)
+                    .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : (expanded ? Theme.ink : Theme.muted))
                     .lineLimit(expanded ? nil : 1)
             }
-            if !episode.played {
-                EpisodeLights(episode: episode)
+            if !episode.played || isPlaying {
+                EpisodeLights(episode: episode, onDark: isPlaying)
             }
         }
         .padding(.vertical, 2)
@@ -494,5 +495,21 @@ struct ShowHeroBackground: View {
             Halftone()
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// A show page row: a box with the show's colour band, or the dark playing
+/// card for the episode that's on (Deck 0: the same everywhere).
+private struct ShowEpisodeCard: ViewModifier {
+    let url: URL?
+    let title: String
+    let playing: Bool
+
+    func body(content: Content) -> some View {
+        if playing {
+            content.playingCard().deckCardRow()
+        } else {
+            content.showRow(url, title: title)
+        }
     }
 }

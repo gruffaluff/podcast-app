@@ -25,7 +25,26 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Poster"** (Paul, 11 Nov 2026: "let's rebuild it all", every
+**Look: "Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
+mock-ups https://claude.ai/artifact/4o3aSsUdjsA7xxsXYXdVAP and
+https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA; on the branch, see "On
+the branch for the next build"). Everything pressed is in the bottom half
+on a deck (`BottomDock` in `App/MiniPlayer.swift`, parts in
+`App/DeckParts.swift`): a plate (`Theme.plate`) with the green display
+(`LCDPanel`, `LCDProgress`: chapter, time, ends, left, progress blocks
+with chapter gaps and amber ads), chunky keys only for skip / red play /
+skip (`DeckTransport`, `DeckKeyStyle`), and the tabs as words with a red
+underline (`DeckTabs`: Listen, Library, Discover, Search). On Listen the
+full deck; other tabs a slim display + play. Rows are paper boxes with a
+4 pt band of the show's colour across the top (`posterCard` now draws the
+band; `Theme.cardRadius` 12); the episode playing is a dark card
+(`playingCard()`, `Theme.playingCard`, moving `PlayingBars`) wherever it
+shows. DL / TX are just small letters (`EpisodeLights`). Player: artwork
+in the top half, TRANSCRIPT / CHAPTERS shrink it beside the title and fill
+the top half (swap with each other), Speed / Trim / Boost / Sleep as one
+quiet strip with lights (`ToolsStrip`, `ToolCell`), TRANSCRIPT /
+CHAPTERS / output device buttons, swipe down to close.
+Before that: **"Poster"** (Paul, 11 Nov 2026: "let's rebuild it all", every
 screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
 his pick A + B with square stamps). Same sand page, paper cards, fonts and
 colour schemes; every list row is a poster row (`posterCard` / `showRow` /
@@ -1266,7 +1285,7 @@ From the Notion notes after 6 Nov 08:10:
   playing changes only when a different episode starts, with a 0.5 s fade
   (`AccentColour.colour` is now set by RootView inside `withAnimation`).
 
-## On the branch for the next build (11 Nov 2026; Paul's notes after build 140)
+## Done in build 141 (11 Nov 2026, PR #59; Paul's notes after build 140, then "build")
 
 - **Dead zone above the mini player** (scrolling an inch above it did
   nothing) and **rows stuck behind the mini player** in Up Next (the
@@ -1328,6 +1347,204 @@ From the Notion notes after 6 Nov 08:10:
   Next never held duplicates, but Play last / Add to Up Next on an
   episode already in it moved it to the end; now it does nothing
   (`LibraryStore.playLast` returns early). Play next still moves it up.
+
+## On the branch for the next build (11 Nov 2026; Paul's notes after build 141)
+
+- **Dead spot still there** (Paul's build 141 screenshot: swiping up /
+  down did nothing from about the dock's height above the mini player
+  down to it). Both earlier tries put the dock over the lists (an
+  overlay, then a bottom safe-area inset), and each left a strip about
+  the dock's height that scrolling ignored. Now the dock isn't attached
+  to the tabs at all: RootView is a VStack of the tabs (ZStack) and
+  `BottomDock` underneath (`App/MiniPlayer.swift`, was the
+  `MiniPlayerInset` modifier on every tab), so nothing overlaps any list.
+  Undo / No internet bars float over the bottom of the tabs. Check on
+  the phone: scrolling right down to the mini player on every tab.
+- **ADD ALL TO UP NEXT invisible** when every new episode was already
+  queued (a dimmed paper key on the card): it now reads "✓ ALL IN UP
+  NEXT" in the same light-on-dark style as Mark all played.
+- **Instead of the dots?** (Paul, 11 Nov 2026: "do we drop this dot
+  image stuff"): finishes for the big colour areas on
+  https://claude.ai/artifact/28nNe6nbWSbieb2u55qxuo: Now dots, F1 flat
+  colour, F2 soft tone (light-to-dark wash; suggested), F3 artwork glow
+  (blurred blooms, like Apple Music), F4 paper grain, F5 smooth print (no
+  dot screen), F6 flat colour with a darker top edge. Waiting on Paul.
+- **Fresh start?** (Paul, 11 Nov 2026: "I feel like I'm overthinking and
+  over engineering … happy for you to completely scrap whatever we've got
+  and redesign from the ground up"; keep every feature, minimal but very
+  functional, look and feel good). Five directions, each with Up Next,
+  player and Library, on https://claude.ai/artifact/LkL7nrKf76XCi77TH28Xb3:
+  1 Native warm (iOS's own lists, swipes, tab bar, sheets on off-white
+  with Fraunces titles; suggested: fewest bugs, smooth), 2 Paper
+  (magazine page: numbered ruled lines, no cards, colour only in the
+  player), 3 Night studio (dark, artwork glow behind what's playing),
+  4 One screen (playing card + Up Next with filters on home; two tabs,
+  Listen and Library), 5 Deck refined (cassette deck: LCD, chunky keys).
+  Common to all: three tabs (Up Next, Library, Discover; search inside
+  Library / Discover), one main thing per screen, player tools (speed,
+  trim, boost, sleep) in one Tools sheet, iOS's own parts where possible.
+  Supersedes the dots question if Paul picks one. Paul: likes 1 Native
+  warm, 2 Paper, 4 One screen (asked whether everything fits: yes, see
+  reply) and 5 Deck; not 3 Night studio; asked for more practical ideas
+  to combine. Round 2 on the same link: 6 Checklist (like Things: Now /
+  Today / Later groups, show colour dots, round played ticks), 7 Timeline
+  (Up Next against the clock: when each starts at your speed, "all done by
+  22:10"), 8 One sheet (like Apple Maps: one sheet slides up in three
+  steps, mini player / player / player + Up Next, transcript, chapters),
+  9 Utility (like Overcast: white, one orange, text buttons, big
+  targets), 10 Reader (transcript-first player with a small dark dock;
+  saved quotes in Library). Paul: likes 1 for simplicity, 4 for the one
+  screen idea, 5 for the look; asked for blends of those three. Five on
+  https://claude.ai/artifact/WpuLkbzDfjtBqTpHsUBNMP (two tabs, Listen and Library; Listen = what's playing + a
+  list switching Up Next / New / Carry on): A Deck on top (faceplate with
+  display + keys above the list), B Quiet deck (calm white-card app,
+  deck only in a slim dark display strip, mono labels and one red play
+  key; suggested), C Cassette card (what's playing as a cassette with
+  turning reels), D Deck with modes (fixed faceplate, mode keys UP NEXT /
+  NEW / CARRY ON / SHOWS switch the list, no tab bar), E Plain home, deck
+  player (deck saved for the full player). Paul: "not feeling any of
+  those; I want to feel wowed by how well thought out this is, how
+  smartly the space is used, functional and beautiful". Instead of more
+  options: one design worked through as a clickable prototype with the
+  reasoning beside each screen, https://claude.ai/artifact/Bui2H2iQBjQMtNQogtC1XJ:
+  iOS 26's own floating tab bar with two tabs (Listen, Library) and a
+  search button; Listen = what's playing as one card (chapter, time left,
+  play, progress split at chapters) + one list switching Up Next / New /
+  Carry on, with Up Next showing when each episode starts at your speed
+  and "done by 22:10"; player = artwork square that flips to the
+  transcript in place, chapter pill, progress with chapter gaps and amber
+  ads, "ends 19:42", tools as four buttons showing their state (1.3×, On,
+  Off, 20 min), AirPlay / Up Next / Notes along the bottom; Library = one
+  search for shows, episodes and transcripts, show tiles with new counts,
+  Discover suggestions, History / Stats / Settings cards; show page =
+  setting pills (Top of Up Next, alerts, own speed), round played ticks.
+  The artwork colour is the only colour. Paul: not sold;
+  asked to evolve Deck refined and look for any other angle. Three
+  evolutions on https://claude.ai/artifact/2UbLpBxfdCPjyEyvUAX3Us, each with
+  Listen, player and Library: A Hi-fi component (light panel, small amber
+  display, crisp keys with little lights for SPEED / TRIM / BOOST / SLEEP,
+  one orange; suggested), B Walkman (deep blue body, chunky keys, a cassette
+  window whose tape shows progress, Up Next as tapes, shows as spines on a
+  shelf, yellow for play), C Tape machine (Up Next as a length of tape down
+  the screen with start times and a red NOW line, chapters as edit marks,
+  Library shows the week as tape). Paul: Deck refined is above these;
+  asked for Deck refined itself plus ideas built on it:
+  https://claude.ai/artifact/KpAQizmVHCuGD9Ku6AdnpN.
+  0 Deck refined worked through (Up Next with the display and
+  start times, player, Library, show page; parts: green display for live
+  things only, keys that latch with a red light and show their value,
+  numbered paper rows, mono labels, one red play key), 1 Labelled tapes
+  (rows as cassette labels with a band in the show's colour), 2 Faceplate
+  (one screen: fixed deck on top with UP NEXT / NEW / CARRY ON / SHOWS
+  mode keys, no tab bar; pull down = player), 3 Quiet deck (plain lists,
+  deck only in the mini player and player), 4 Display does more (a DISP
+  key switches the player's display between TIME / TEXT / CHAP).
+  Suggested 0 with 4's player. Paul: for reach, the player and keys
+  must be at the bottom of the screen. All five reworked bottom up on
+  https://claude.ai/artifact/XftkojHeUgsmXaSYTuGH1e (rule: top is for
+  reading, bottom is for pressing): a fixed deck along the bottom of every
+  screen (display, play / skips, tabs), lists scroll above it with Up Next
+  sitting on the deck (next episode nearest the thumb), Library and show
+  search boxes on the deck, show settings keys on the deck, the player =
+  the same deck pulled up (artwork up top; display, transport, tools and
+  ⌄ Close key in the bottom half). Faceplate keeps its mode keys at the
+  very bottom; DISP display sits just above the keys. A "Show thumb
+  reach" switch overlays the easy / stretch / hard zones.
+  **Paul picked 0** (11 Nov 2026) with notes: no shows as tapes on a
+  shelf; Up Next as 1's colour-coded boxes but without the paper effect;
+  shows like 1 (two-across boxes); keep the keys but don't let it feel
+  like a calculator; player artwork takes the top half and shrinks for
+  the transcript, like Apple Podcasts. Refined 0 on
+  https://claude.ai/artifact/4o3aSsUdjsA7xxsXYXdVAP (player clickable):
+  plain cards with a 4 pt band in the show's colour (Up Next, Carry on,
+  New, show episodes; played ones grey), shows as two-across boxes with
+  the band; three weights of control: chunky keys only for skip / red
+  play / skip, Speed / Trim / Boost / Sleep (and the show page's Goes to
+  / Alerts / Speed / Keep) as one quiet strip with a light each, Text /
+  Chapters / Up Next / AirPlay / Close as plain icons, tabs as words with
+  a red underline; the green display stays. Player: artwork ~196 pt in
+  the top half with the title under it; TEXT (or tapping the artwork)
+  shrinks it to a 44 pt square beside the title and the transcript fills
+  the top half (speaker label, line now bigger and dark, others faded).
+  Paul's notes on that (11 Nov 2026), round 2 on
+  https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA: player has no Close
+  (swipe down) and no Up Next key (swipe down, Listen tab); three
+  buttons: TRANSCRIPT, CHAPTERS, output device (AirPlay); transcript and
+  chapters each fill the top half and replace each other (tap again for
+  the artwork). Keep the DL / TX lights (`EpisodeLights`) and similar
+  bits: on every episode row and under the player's title. Playing
+  episode highlighted in the theme's highlight colour (a dark card with
+  moving bars) wherever it shows: Up Next, Carry on, New, show pages.
+  Up Next: no numbers, reads top-down (playing first, then the top of the
+  queue), start times and "done 22:10" stay. Library order: New, Carry
+  on, Shows (most recently updated first, TOP / BTM and n NEW pill like
+  today). New styles mocked: A Boxes (colour-band boxes, newest three +
+  "All 6 new"; suggested), B Front page (one dark card with Add all /
+  Mark all played, like today's New), C By day (Today / Yesterday / This
+  week compact lines with colour dots), D Row of squares (sideways
+  artwork with +). Paul: DL / TX must be subtler (just the small
+  letters, faded or not); see more of B and C with the show art on the
+  right so New looks different from Carry on. Same link updated: DL / TX
+  are plain small mono letters (dark when done, faded when not, dotted
+  while on the way); New lines have the words left and the artwork on the
+  right; B Front page in dark and in paper (newest four, Add all / Mark
+  all played, "All ›" opens the full New list with both actions on the
+  deck at the bottom); C By day plain lines plus one mid-swipe (green
+  + UP NEXT). Suggested B on paper (dark stays for what's playing).
+  **Paul picked B on paper** (11 Nov 2026). The Deck 0 design is now
+  settled (summary): bottom deck on every screen (green display, chunky
+  skip / red play / skip, tabs as words); colour-band boxes for episode
+  rows and shows; playing episode as a dark highlight card with moving
+  bars everywhere; quiet DL / TX letters; Up Next top-down, no numbers,
+  start times + done-by; player artwork top half, TRANSCRIPT / CHAPTERS /
+  output device buttons (transcript and chapters swap into the top half),
+  tools strip with lights, swipe down to close; Library = New (paper
+  front-page card, art on the right, newest four, Add all / Mark all
+  played, All › full list with actions on the deck), Carry on, Shows
+  (recently updated, TOP / BTM, n NEW pill); search and show settings on
+  the deck. Not built yet: waiting on Paul's go to start the rebuild
+  (new branch, separate from PR #60).
+- **Deck 0 built** (Paul, 11 Nov 2026: "lets get the rebuild moving"). On
+  this branch with PR #60 (this session can only push to its one branch,
+  so the dead-spot fix and the rebuild go out together). Built without a
+  compiler: GitHub's check compiles it. What changed:
+  - Bottom deck (`BottomDock`): plate, grab handle, full deck on Listen
+    (`DeckNowDisplay` + `DeckTransport`), slim on other tabs (`SlimDeck`:
+    small display + red play), tabs as words (`DeckTabs`); tap the display
+    or swipe up for the player; Skip ad sits on the display during an ad.
+    The printed dock, `MiniPlayer` and `PosterTabBar` are gone.
+  - Up Next: no numbers, top-down, each row artwork left (tap plays),
+    title, show · tag · length, date + status, and on the right when it
+    starts at the current speed ("NOW" for the one playing / first) with
+    the DL / TX letters; header "n EPISODES · DONE BY 22:10"
+    (`UpNextTimes`); playing row = dark card with bars and its progress.
+  - Player (`NowPlayingView` rewritten): no close key (pull down) and no
+    Up Next key; top keys find (transcript) / download / mark played; the
+    artwork (matched move) and centred title, show · chapter line (opens
+    the show) and DL / TX; TRANSCRIPT and CHAPTERS modes fill the top half
+    (`PlayerTranscriptPanel(light: true)`, new `PlayerChaptersPanel` with
+    the playing chapter as the dark card and a link to the full Chapters
+    list with its From the show / Auto switch); saved as "playerTopMode"
+    (synced, replaces "playerShowsTranscript"). The display shows the time,
+    ends and left over the progress; drag from the bright mark to scrub
+    (same rules as before: only from the play point, finger below slows
+    it, Undo for 2 min+ jumps, chapter + time bubble). Chapter skip keys
+    left out of the transport (chapters panel, headphones and lock screen
+    still skip chapters). Episode notes still below.
+  - Library: small mono section labels (NEW · 06 …); New = paper card
+    (`NewPaper`: newest four, artwork on the right, "4H 10M · ALL ›" opens
+    `NewListView` with Add all / Mark all played at the bottom); Carry on
+    = boxes with a progress line, the playing one first as the dark card;
+    Your shows = boxes (artwork left, TOP / BTM · UPDATED 2H AGO, n NEW
+    pill), most recently updated first by default (new key "showsOrder",
+    synced; menu says "Recently updated first").
+  - Show pages: the playing episode's row is the dark card.
+  - Every other list (Discover, Search, history, storage, chapters…)
+    picks up the colour-band boxes through `posterCard`.
+  - Not changed yet: show / preview / episode page headers still printed
+    in the show's colour; Discover and Search rows keep the artwork on the
+    right. To check on the phone: deck height on smaller iPhones, the
+    player's top half with long titles, scrubbing on the display, Night.
 
 ## Queued for the next app build
 
