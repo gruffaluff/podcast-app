@@ -73,22 +73,32 @@ private struct MiniPlayerInset: ViewModifier {
     }
 }
 
-/// Behind the dock: the artwork printed in its colour behind the mini
-/// player only; behind the tab buttons a plain, darker band of the same
-/// colour with no artwork or dots, so the buttons stand out (Paul, build
-/// 139: they got lost on the artwork).
+/// Behind the dock: one print running under both the mini player and the
+/// tabs, darkening towards the bottom so the tab buttons stay readable
+/// (Paul, 11 Nov 2026, option A on
+/// https://claude.ai/artifact/FwkMBnaiwmK8SdbGbgRgW4; it was printed
+/// artwork above a plain band, which looked half and half). Nothing
+/// playing: the dark display colour with the dot print.
 private struct DockBackground: View {
     let url: URL?
     let playing: Bool
 
     var body: some View {
         let colour = url.flatMap { ArtworkColors.shared.background(for: $0) } ?? Theme.display
-        VStack(spacing: 0) {
+        Group {
             if playing {
                 PrintedArtwork(url: url, colour: colour, strength: 0.45)
-                    .frame(height: MiniPlayer.height)
+            } else {
+                PrintedArtwork(url: nil, colour: colour, strength: 0)
             }
-            colour.overlay(Color.black.opacity(0.28))
+        }
+        .overlay {
+            // Clear behind the mini player, darker down behind the tabs.
+            LinearGradient(stops: [
+                .init(color: .black.opacity(0), location: 0),
+                .init(color: .black.opacity(0), location: playing ? 0.4 : 0),
+                .init(color: .black.opacity(0.34), location: 1),
+            ], startPoint: .top, endPoint: .bottom)
         }
     }
 }
