@@ -1238,6 +1238,12 @@ From the Notion notes after 6 Nov 08:10:
   green (dark artwork colours would be lost as text on the dark page),
   and with nothing playing it keeps its own accent. Text on the accent is
   paper (artwork colours are darkened for light text).
+- **Play key in the show's colour** (Paul, 11 Nov 2026: yes to it, the
+  other keys stay neutral ink / sand / paper): the ▶ PLAY / RESUME key
+  under an opened show-page episode is filled with that show's artwork
+  colour (paper text); on the episode page, which is printed in that
+  colour, it's paper with the colour as text (`EpisodeActions.playKey`,
+  `ColourKeyStyle`). Ink until the colour is known.
 
 ## Queued for the next app build
 

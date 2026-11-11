@@ -69,7 +69,7 @@ struct EpisodeNotesView: View {
                 .minimumScaleFactor(0.6)
                 .accessibilityAddTraits(.isHeader)
             EpisodeLights(episode: episode, onDark: true)
-            EpisodeActions(episode: episode)
+            EpisodeActions(episode: episode, onShowColour: true)
         }
         .foregroundStyle(Poster.paper)
         .padding(18)

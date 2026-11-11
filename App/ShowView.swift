@@ -331,12 +331,15 @@ struct EpisodeActions: View {
     let episode: PodcastEpisode
     /// A NOTES key that opens the episode page (in lists, not on that page).
     var showsNotesKey = false
+    /// Set when the keys sit on the show's printed colour (the episode
+    /// page): the play key is then paper with the colour as its text.
+    var onShowColour = false
 
     var body: some View {
         let queued = store.isQueued(episode)
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                key(episode.position > 30 && !episode.played ? "▶ RESUME" : "▶ PLAY", dark: true) { player.play(episode) }
+                playKey
                 key("PLAY NEXT") { store.playNext(episode) }
                 key(queued ? "IN UP NEXT" : "PLAY LAST") { store.playLast(episode) }
                     .disabled(queued)
@@ -371,6 +374,22 @@ struct EpisodeActions: View {
         .padding(.bottom, 3)
     }
 
+    /// The play key in the show's own colour (Paul, 11 Nov 2026: the main
+    /// "do it" key follows the artwork; the other keys stay neutral).
+    private var playKey: some View {
+        let colour = ArtworkColors.shared.background(for: episode.showArtwork) ?? Theme.ink
+        return Button { player.play(episode) } label: {
+            Text(episode.position > 30 && !episode.played ? "▶ RESUME" : "▶ PLAY")
+                .font(Theme.mono(11, .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: 38)
+        }
+        .buttonStyle(ColourKeyStyle(fill: onShowColour ? Poster.paper : colour,
+                                    text: onShowColour ? colour : Poster.paper))
+        .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
+    }
+
     private func key(_ title: String, dark: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
@@ -382,6 +401,20 @@ struct EpisodeActions: View {
         // Sand keys, so they show on the paper rows (Paul, build 139: paper
         // keys on a paper card were lost).
         .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .sand, radius: 8))
+    }
+}
+
+/// A key in a given colour (the play key in the show's colour).
+private struct ColourKeyStyle: ButtonStyle {
+    let fill: Color
+    let text: Color
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(text)
+            .background(RoundedRectangle(cornerRadius: 8).fill(fill))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
 }
 
