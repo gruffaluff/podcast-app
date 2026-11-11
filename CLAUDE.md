@@ -1266,6 +1266,69 @@ From the Notion notes after 6 Nov 08:10:
   playing changes only when a different episode starts, with a 0.5 s fade
   (`AccentColour.colour` is now set by RootView inside `withAnimation`).
 
+## On the branch for the next build (11 Nov 2026; Paul's notes after build 140)
+
+- **Dead zone above the mini player** (scrolling an inch above it did
+  nothing) and **rows stuck behind the mini player** in Up Next (the
+  taller playing block pushed the list down): iOS's TabView is gone. Our
+  own tabs (`RootView.tabPage`: a ZStack, each tab made the first time
+  it's shown and kept, only the current one touchable), so no hidden iOS
+  tab bar sits under ours; the dock is a bottom safe-area inset
+  (`MiniPlayerInset`, was an overlay + content margins), so every list
+  stops above it and its last row scrolls clear. Undo / No internet bars
+  float just above the dock without taking room. Check on the phone:
+  scrolling just above the mini player, the last rows of every tab,
+  switching tabs keeps each tab's place.
+- **New in Library lasts two weeks** (Paul, 11 Nov 2026): episodes leave
+  New 14 days after they came out (`LibraryView.newFor`), as well as when
+  played; they stay unplayed on their show page (and in Up Next).
+  Leaving out episodes already in Up Next: no (Paul: everything goes to
+  Up Next by default, so New would be empty). Before the inbox, the New
+  Episodes carousel used the same rule (unplayed, since following plus
+  each show's newest, 12 at most) with no time limit.
+- **Your shows sort menu** (Paul): the tick pushed the chosen line's
+  words to the right; now two iOS pickers in the menu (Name A–Z / Z–A,
+  Newest / Oldest episode first) with iOS's own tick column. Sorting by
+  when you followed is gone (an old saved choice falls back to A–Z).
+- **Bottom of the screen** (Paul: half printed artwork behind the mini
+  player, half plain band behind the tabs "looks a little off"): options
+  on https://claude.ai/artifact/FwkMBnaiwmK8SdbGbgRgW4: Now, A one print
+  fading down, B one colour with the dot print all the way (suggested),
+  C mini player as a floating card over a dark tab bar, D printed mini
+  player over a paper tab bar. **Paul picked A** (11 Nov 2026):
+  `DockBackground` is one `PrintedArtwork` under the whole dock with a
+  black gradient (clear for the top 40%, 34% at the bottom); nothing
+  playing: display colour + dots with the same darkening.
+- **Carry on and Your shows look** (Paul, 11 Nov 2026: doesn't like how
+  they're shown): options on
+  https://claude.ai/artifact/SbZUnVKhQJPYuS8Hv4hZKw. Carry on: Now (slim
+  lines with a ring), C1 small printed cards sideways, C2 one big printed
+  card for the latest then small rows (suggested), C3 poster rows with a
+  progress edge, C4 progress rings round the artwork. Your shows: Now
+  (plain list), S1 artwork grid three across, S2 colour tiles two across
+  (suggested), S3 poster rows like New, S4 record shelf of spines.
+  The same page now shows the whole Library at full size with pickers.
+  Paul likes C2 and S2 or S3, and asked for New options first (same
+  link): Now (poster rows by day), N1 compact inbox, one line each on a
+  paper card (suggested), N2 printed cards sideways, N3 grouped by show,
+  N4 "morning paper" card with Add all / Mark all played, N5 stamp shelf
+  three across. **Paul picked N4, C2, S3** (11 Nov 2026), built in
+  LibraryView.swift: `NewPaper` (one printed card in the colour of
+  what's playing, display colour when nothing is: "n new episodes",
+  "LAST TWO WEEKS · 2H 20M TO LISTEN", a line per episode
+  (`NewPaperLine`: tap for the episode page, stamp plays, swipe right Up
+  Next / left played, hold for the menu), ADD ALL TO UP NEXT (only those
+  not queued, oldest first, Undo) and MARK ALL PLAYED (Undo));
+  `CarryOnBlock` (`CarryOnCard` printed in the show's colour with a big
+  play key and progress, then `CarryOnSmall` rows with a thin bar);
+  `ShowPosterRow` (colour strip, where new episodes go, name in the title
+  font, n NEW pill in the show's colour, stamp). The day-grouped inbox
+  rows (`InboxRow`) and `CarryOnLine` are gone.
+- **Add to Up Next never duplicates or moves** (Paul, 11 Nov 2026): Up
+  Next never held duplicates, but Play last / Add to Up Next on an
+  episode already in it moved it to the end; now it does nothing
+  (`LibraryStore.playLast` returns early). Play next still moves it up.
+
 ## Queued for the next app build
 
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /

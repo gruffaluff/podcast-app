@@ -77,6 +77,19 @@ struct PodcastsApp: App {
 
 struct RootView: View {
     /// Touch and hold the app icon (see QuickActions).
+    @ViewBuilder
+    private func tabPage<Page: View>(_ index: Int, @ViewBuilder _ page: () -> Page) -> some View {
+        let current = tab == index
+        if current || visited.contains(index) {
+            page()
+                .miniPlayer($showingPlayer, tab: $tab)
+                .opacity(current ? 1 : 0)
+                .allowsHitTesting(current)
+                .accessibilityHidden(!current)
+                .task { visited.insert(index) }
+        }
+    }
+
     private func handleQuickAction(_ action: String) {
         switch action {
         case QuickActions.playUpNext:
@@ -102,25 +115,20 @@ struct RootView: View {
     @Binding var tab: Int
     @State private var quickActions = QuickActions.shared
     @State private var showingWelcome = false
+    /// Tabs opened so far; each is made the first time it's shown and then
+    /// kept (scroll place, open pages), like iOS's tab view did.
+    @State private var visited: Set<Int> = []
 
     var body: some View {
-        TabView(selection: $tab) {
-            UpNextView()
-                .miniPlayer($showingPlayer, tab: $tab)
-                .tabItem { Label("Up Next", systemImage: "list.bullet") }
-                .tag(0)
-            LibraryView()
-                .miniPlayer($showingPlayer, tab: $tab)
-                .tabItem { Label("Library", systemImage: "square.grid.2x2") }
-                .tag(1)
-            DiscoverView()
-                .miniPlayer($showingPlayer, tab: $tab)
-                .tabItem { Label("Discover", systemImage: "safari") }
-                .tag(2)
-            SearchView()
-                .miniPlayer($showingPlayer, tab: $tab)
-                .tabItem { Label("Search", systemImage: "magnifyingglass") }
-                .tag(3)
+        // Our own tabs, not iOS's TabView (Paul, after build 140: a dead
+        // zone above the mini player where scrolling did nothing; iOS's
+        // hidden tab bar was still there under ours). The tab bar is
+        // `PosterTabBar`, in the dock at the bottom of each tab.
+        ZStack {
+            tabPage(0) { UpNextView() }
+            tabPage(1) { LibraryView() }
+            tabPage(2) { DiscoverView() }
+            tabPage(3) { SearchView() }
         }
         .onChange(of: quickActions.pending, initial: true) { _, action in
             guard let action else { return }
