@@ -1364,7 +1364,17 @@ From the Notion notes after 6 Nov 08:10:
   Common to all: three tabs (Up Next, Library, Discover; search inside
   Library / Discover), one main thing per screen, player tools (speed,
   trim, boost, sleep) in one Tools sheet, iOS's own parts where possible.
-  Supersedes the dots question if Paul picks one. Waiting on Paul.
+  Supersedes the dots question if Paul picks one. Paul: likes 1 Native
+  warm, 2 Paper, 4 One screen (asked whether everything fits: yes, see
+  reply) and 5 Deck; not 3 Night studio; asked for more practical ideas
+  to combine. Round 2 on the same link: 6 Checklist (like Things: Now /
+  Today / Later groups, show colour dots, round played ticks), 7 Timeline
+  (Up Next against the clock: when each starts at your speed, "all done by
+  22:10"), 8 One sheet (like Apple Maps: one sheet slides up in three
+  steps, mini player / player / player + Up Next, transcript, chapters),
+  9 Utility (like Overcast: white, one orange, text buttons, big
+  targets), 10 Reader (transcript-first player with a small dark dock;
+  saved quotes in Library). Waiting on Paul's mix.
 
 ## Queued for the next app build
 
