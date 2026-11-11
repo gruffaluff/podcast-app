@@ -1214,16 +1214,21 @@ From the Notion notes after 6 Nov 08:10:
   are sand on the paper rows (paper keys were lost); Up Next row keys
   (`RowKeyStyle`): ink + sand on paper rows, paper main key + dark
   see-through others on the playing block's printed colour.
-- **Swipes**: when a swipe goes through, the row slides away first, then
-  the action happens and it springs back (it sprang back while the list
-  changed under it). More after Paul's video.
+- **Swipes** (Paul's video, show page): the swipe measured the finger in
+  the moving row's own space, so each movement counted twice: the row ran
+  ahead of the finger, overshot and jerked. It now measures against the
+  window (`translation(in: nil)`). The action block stays on the side the
+  swipe began on for the whole swipe and its return (`side`; it flipped
+  from Unplayed to Play next as the row sprang back). When a swipe goes
+  through, the row slides away first, then the action happens and it
+  springs back. Paul's screenshot confirmed the show page keys were paper
+  on paper (now sand).
 - **Accent question** (Paul: olive clashes with the artwork colours; follow
   the artwork, or neutral soft black?): mock-up
   https://claude.ai/artifact/7VA6NoHBaRi5MSLoEEETMA (olive / soft black /
   follows what's playing). Suggested soft black; following the artwork
   costs nothing noticeable in speed but changes the whole app per
-  episode. Waiting on Paul. Video (swipes) and screenshot (show keys)
-  coming from Paul.
+  episode. Waiting on Paul.
 
 ## Queued for the next app build
 
