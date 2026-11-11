@@ -1408,7 +1408,19 @@ From the Notion notes after 6 Nov 08:10:
   window whose tape shows progress, Up Next as tapes, shows as spines on a
   shelf, yellow for play), C Tape machine (Up Next as a length of tape down
   the screen with start times and a red NOW line, chapters as edit marks,
-  Library shows the week as tape). Waiting on Paul.
+  Library shows the week as tape). Paul: Deck refined is above these;
+  asked for Deck refined itself plus ideas built on it:
+  https://claude.ai/artifact/KpAQizmVHCuGD9Ku6AdnpN.
+  0 Deck refined worked through (Up Next with the display and
+  start times, player, Library, show page; parts: green display for live
+  things only, keys that latch with a red light and show their value,
+  numbered paper rows, mono labels, one red play key), 1 Labelled tapes
+  (rows as cassette labels with a band in the show's colour), 2 Faceplate
+  (one screen: fixed deck on top with UP NEXT / NEW / CARRY ON / SHOWS
+  mode keys, no tab bar; pull down = player), 3 Quiet deck (plain lists,
+  deck only in the mini player and player), 4 Display does more (a DISP
+  key switches the player's display between TIME / TEXT / CHAP).
+  Suggested 0 with 4's player. Waiting on Paul.
 
 ## Queued for the next app build
 
