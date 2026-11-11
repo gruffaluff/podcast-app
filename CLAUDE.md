@@ -1092,18 +1092,8 @@ From the Notion notes after 6 Nov 08:10:
   screenshot: chapter dots 1 and 4 overlapped (short first chapters),
   gone with this design.
 
-## Queued for the next app build
+## Done in build 137 (11 Nov 2026, PR #55; Paul: "Build")
 
-- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
-  New Episodes). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
-  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
-  swipe right Up Next, left played, "All caught up"), 2 Show circles like
-  Stories (ringed show icons with counts, tap for that show's new ones),
-  3 Triage deck (one big card, swipe right Up Next / left played / up
-  play now), 4 Tape shelf (episodes as cassette spines in show colours,
-  tap one to slide it out), 5 Morning digest (one front-page card, "6
-  new since yesterday", one line each, Add the rest to Up Next). Waiting
-  on Paul.
 - **Your shows sort menu** (Paul, build 136 screenshot: "Newest first" /
   "Oldest first" twice, no way to tell which sort they were). Inside a
   Picker, iOS dropped the section headings. Now three menu sections
@@ -1117,8 +1107,23 @@ From the Notion notes after 6 Nov 08:10:
   read "NAME A–Z"). Large artwork tiles dropped (Paul, 11 Nov 2026: "just
   have the card and desc view"): Your shows is always the small cards
   with the description, the layout keys and `ShowTile` are gone, the strip
-  holds only the sort key, and "showsLayout" no longer syncs. On the
-  branch, not built.
+  holds only the sort key, and "showsLayout" no longer syncs.
+- **Alerts job retries Apple blips** (11 Nov 2026; see the alerts notes
+  above: waits 20 / 60 / 120 s and tries again on UNKNOWN_CONTAINER,
+  429 or 5xx).
+
+## Queued for the next app build
+
+- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
+  New Episodes). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
+  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
+  swipe right Up Next, left played, "All caught up"), 2 Show circles like
+  Stories (ringed show icons with counts, tap for that show's new ones),
+  3 Triage deck (one big card, swipe right Up Next / left played / up
+  play now), 4 Tape shelf (episodes as cassette spines in show colours,
+  tap one to slide it out), 5 Morning digest (one front-page card, "6
+  new since yesterday", one line each, Add the rest to Up Next). Waiting
+  on Paul.
 - **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
   a good spot", but curious if another layout is better). Mock-ups
   https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:
