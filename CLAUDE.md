@@ -1196,6 +1196,35 @@ From the Notion notes after 6 Nov 08:10:
   is (`MiniPlayerInset.dock`, `DockBackground`). It steps aside while the
   keyboard is up, like the mini player did.
 
+## On the branch for the next build (11 Nov 2026; Paul's notes after build 139)
+
+- **Player bottom row steady**: four fixed slots that never change their
+  words or come and go (TRANSCRIPT lights up while showing; CHAPTERS and
+  FULL TEXT dim when they can't be used; UP NEXT n), icon above label,
+  no animation on the switch (they jumped about between artwork and
+  transcript).
+- **Scrubber only from the play point**: a drag must start within 30
+  points of where it's playing (`scrubRefused`); a small paper marker
+  shows the point and grows while scrubbing.
+- **Tab bar readable**: behind the tabs a plain darker band of the dock's
+  colour, no artwork or dots (`DockBackground`); unselected tabs 72%;
+  a small bar under the current tab; bar 56 pt.
+- **Library Your shows** rule and count in rust (`Poster.rust`), not ink.
+- **Opened-row keys visible**: show page episode keys (`EpisodeActions`)
+  are sand on the paper rows (paper keys were lost); Up Next row keys
+  (`RowKeyStyle`): ink + sand on paper rows, paper main key + dark
+  see-through others on the playing block's printed colour.
+- **Swipes**: when a swipe goes through, the row slides away first, then
+  the action happens and it springs back (it sprang back while the list
+  changed under it). More after Paul's video.
+- **Accent question** (Paul: olive clashes with the artwork colours; follow
+  the artwork, or neutral soft black?): mock-up
+  https://claude.ai/artifact/7VA6NoHBaRi5MSLoEEETMA (olive / soft black /
+  follows what's playing). Suggested soft black; following the artwork
+  costs nothing noticeable in speed but changes the whole app per
+  episode. Waiting on Paul. Video (swipes) and screenshot (show keys)
+  coming from Paul.
+
 ## Queued for the next app build
 
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /

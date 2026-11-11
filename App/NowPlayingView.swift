@@ -24,6 +24,8 @@ struct NowPlayingView: View {
     @State private var scrubLastX: CGFloat?
     /// "HALF-SPEED SCRUBBING" etc. while the finger is below the line.
     @State private var scrubSpeed: String?
+    /// A drag that began away from the play point: ignored until it ends.
+    @State private var scrubRefused = false
     @State private var showingChapters = false
     @State private var showingNotes = false
     @State private var transcriptEpisode: PodcastEpisode?
@@ -275,18 +277,23 @@ struct NowPlayingView: View {
     private var bottomRow: some View {
         let playingID = player.nowPlaying?.episodeID
         let upcoming = store.queue.filter { $0.episode.id != playingID }.count
+        // Four fixed slots that never change their words or come and go
+        // (Paul: the row jumped about as keys appeared and labels changed):
+        // TRANSCRIPT lights up while it's showing, CHAPTERS and FULL dim
+        // when they can't be used.
         return HStack(spacing: 6) {
-            textKey(showsTranscript ? "ARTWORK" : "TRANSCRIPT", icon: showsTranscript ? "photo" : "text.quote") {
-                showsTranscript.toggle()
+            textKey("TRANSCRIPT", icon: "text.quote", lit: showsTranscript) {
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { showsTranscript.toggle() }
             }
-            if !player.chapters.isEmpty {
-                textKey("CHAPTERS", icon: "list.bullet") { showingChapters = true }
-            }
-            if showsTranscript {
-                textKey("FULL", icon: "arrow.up.left.and.arrow.down.right") { transcriptEpisode = currentEpisode }
-                    .accessibilityLabel("Full transcript")
-            }
-            textKey("UP NEXT · \(upcoming)", icon: "arrow.up") { showingQueue = true }
+            .accessibilityLabel(showsTranscript ? "Show artwork" : "Show transcript")
+            textKey("CHAPTERS", icon: "list.bullet") { showingChapters = true }
+                .disabled(player.chapters.isEmpty)
+            textKey("FULL TEXT", icon: "arrow.up.left.and.arrow.down.right") { transcriptEpisode = currentEpisode }
+                .disabled(!showsTranscript)
+                .accessibilityLabel("Full transcript")
+            textKey("UP NEXT \(upcoming)", icon: "arrow.up") { showingQueue = true }
                 .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
                     if value.translation.height < -30 { showingQueue = true }
                 })
@@ -294,17 +301,20 @@ struct NowPlayingView: View {
         }
     }
 
-    private func textKey(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+    /// A key in the bottom row: icon above a small label, the same width
+    /// every time; lit (paper) when it's on.
+    private func textKey(_ title: String, icon: String, lit: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon).font(.system(size: 11, weight: .bold))
-                Text(title).font(Theme.mono(10, .bold)).tracking(0.6).lineLimit(1).minimumScaleFactor(0.7)
+            VStack(spacing: 3) {
+                Image(systemName: icon).font(.system(size: 13, weight: .bold))
+                Text(title).font(Theme.mono(9, .bold)).tracking(0.5).lineLimit(1).minimumScaleFactor(0.7)
             }
-            .frame(maxWidth: .infinity, minHeight: 36)
+            .foregroundStyle(lit ? Color.black.opacity(0.85) : Poster.paper)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(lit ? Poster.paper : Color.clear, in: RoundedRectangle(cornerRadius: 10))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(Poster.paper)
+        .buttonStyle(DimWhenDisabled())
     }
 
     /// Where the sound is going; tap for the system device picker.
@@ -465,6 +475,17 @@ struct NowPlayingView: View {
                 .animation(.easeOut(duration: 0.2), value: active)
                 .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
                 .offset(x: -ScrubLine.stretch)
+                // A small round marker at the play point: where a drag
+                // has to start.
+                .overlay(alignment: .leading) {
+                    Circle()
+                        .fill(Poster.paper)
+                        .frame(width: active ? 26 : 16, height: active ? 26 : 16)
+                        .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+                        .offset(x: ScrubLine.stretch + CGFloat(shown / duration) * width - (active ? 13 : 8))
+                        .animation(.easeOut(duration: 0.15), value: active)
+                        .allowsHitTesting(false)
+                }
                 .overlay(alignment: .topLeading) {
                     if active { scrubBubble(at: shown, x: shown / duration * width, width: width) }
                 }
@@ -487,7 +508,15 @@ struct NowPlayingView: View {
     private func scrubGesture(width: CGFloat, duration: TimeInterval) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
+                if scrubRefused { return }
                 guard let lastX = scrubLastX, let current = scrubTime else {
+                    // Only from where it's playing now (Paul, after build
+                    // 139): a touch elsewhere on the line does nothing.
+                    let playheadX = ScrubLine.stretch + CGFloat(player.currentTime / duration) * width
+                    if abs(value.startLocation.x - playheadX) > 30 {
+                        scrubRefused = true
+                        return
+                    }
                     scrubStart = player.currentTime
                     scrubTime = player.currentTime
                     scrubLastX = value.location.x
@@ -502,6 +531,7 @@ struct NowPlayingView: View {
                 scrubLastX = value.location.x
             }
             .onEnded { _ in
+                scrubRefused = false
                 if let target = scrubTime, let start = scrubStart, abs(target - start) > 0.5 {
                     player.seek(to: target)
                     offerUndoJump(from: start, to: target)
@@ -778,5 +808,15 @@ private struct PosterBackdrop: View, Equatable {
             Halftone()
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// Plain button that fades when it can't be used.
+private struct DimWhenDisabled: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.35)
     }
 }

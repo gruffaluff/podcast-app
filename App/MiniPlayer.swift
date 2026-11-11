@@ -57,7 +57,7 @@ private struct MiniPlayerInset: ViewModifier {
         }
         .padding(.top, playing ? 0 : 6)
         .background {
-            DockBackground(url: player.nowPlaying?.artworkURL)
+            DockBackground(url: player.nowPlaying?.artworkURL, playing: playing)
                 .clipShape(UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
@@ -65,14 +65,22 @@ private struct MiniPlayerInset: ViewModifier {
     }
 }
 
+/// Behind the dock: the artwork printed in its colour behind the mini
+/// player only; behind the tab buttons a plain, darker band of the same
+/// colour with no artwork or dots, so the buttons stand out (Paul, build
+/// 139: they got lost on the artwork).
 private struct DockBackground: View {
     let url: URL?
+    let playing: Bool
 
     var body: some View {
-        if let url {
-            PrintedArtwork(url: url, colour: ArtworkColors.shared.background(for: url) ?? Theme.display, strength: 0.45)
-        } else {
-            Theme.display.overlay { Halftone() }
+        let colour = url.flatMap { ArtworkColors.shared.background(for: $0) } ?? Theme.display
+        VStack(spacing: 0) {
+            if playing {
+                PrintedArtwork(url: url, colour: colour, strength: 0.45)
+                    .frame(height: MiniPlayer.height)
+            }
+            colour.overlay(Color.black.opacity(0.28))
         }
     }
 }
@@ -81,7 +89,7 @@ private struct DockBackground: View {
 /// printed dock; the one you're on full strength, the others faded.
 struct PosterTabBar: View {
     @Binding var tab: Int
-    static let height: CGFloat = 52
+    static let height: CGFloat = 56
 
     private static let tabs: [(title: String, icon: String)] = [
         ("Up Next", "list.bullet"), ("Library", "square.grid.2x2"), ("Discover", "safari"), ("Search", "magnifyingglass"),
@@ -95,12 +103,16 @@ struct PosterTabBar: View {
                 Button { tab = index } label: {
                     VStack(spacing: 4) {
                         Image(systemName: item.icon)
-                            .font(.system(size: 18, weight: selected ? .semibold : .regular))
+                            .font(.system(size: 18, weight: selected ? .bold : .medium))
                         Text(item.title.uppercased())
                             .font(.custom("DMMono-Medium", fixedSize: 9))
                             .tracking(0.8)
+                        // A small bar under the tab you're on.
+                        Capsule()
+                            .fill(Poster.paper.opacity(selected ? 1 : 0))
+                            .frame(width: 18, height: 3)
                     }
-                    .foregroundStyle(Theme.displayText.opacity(selected ? 1 : 0.6))
+                    .foregroundStyle(Poster.paper.opacity(selected ? 1 : 0.72))
                     .frame(maxWidth: .infinity, minHeight: Self.height)
                     .contentShape(Rectangle())
                 }

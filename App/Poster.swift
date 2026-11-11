@@ -16,6 +16,9 @@ enum Poster {
     /// Full-row swipe colours: add (green) and played (red).
     static let swipeAdd = Color(hex: 0x45543A)
     static let swipePlayed = Color(hex: 0xB4472E)
+    /// Library's Your shows heading (Paul, after build 139: ink matched
+    /// the text and didn't stand out).
+    static let rust = Color(hex: 0xB4472E)
     /// The strip down the left of every row.
     static let stripWidth: CGFloat = 8
 
@@ -278,8 +281,18 @@ private struct PosterSwipe: ViewModifier {
         let flick = abs(offset) > 36 && abs(velocity) > 700 && (velocity > 0) == (offset > 0)
         let fire = (armed || flick) ? (offset > 0 ? leading : trailing) : nil
         armed = false
-        withAnimation(.spring(duration: 0.3)) { offset = 0 }
-        fire?.action()
+        guard let fire else {
+            withAnimation(.spring(duration: 0.3, bounce: 0.15)) { offset = 0 }
+            return
+        }
+        // Let the row finish sliding away before the list changes under
+        // it (springing back while the row moved or vanished looked jerky).
+        let direction: CGFloat = offset > 0 ? 1 : -1
+        withAnimation(.easeOut(duration: 0.18)) { offset = direction * 480 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            fire.action()
+            withAnimation(.spring(duration: 0.35, bounce: 0.1)) { offset = 0 }
+        }
     }
 
     @ViewBuilder private var actionBlock: some View {

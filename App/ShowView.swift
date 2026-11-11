@@ -379,7 +379,9 @@ struct EpisodeActions: View {
                 .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity, minHeight: 38)
         }
-        .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .plain, radius: 8))
+        // Sand keys, so they show on the paper rows (Paul, build 139: paper
+        // keys on a paper card were lost).
+        .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .sand, radius: 8))
     }
 }
 

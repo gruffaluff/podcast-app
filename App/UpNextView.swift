@@ -157,7 +157,7 @@ struct UpNextView: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityHint(isOpen ? "Hides the keys" : "Shows play, notes, download and more")
             if isOpen {
-                UpNextRowKeys(episode: episode) { openRow = nil }
+                UpNextRowKeys(episode: episode, onColour: index == playing) { openRow = nil }
                     .padding(.bottom, 4)
             }
         }
@@ -305,6 +305,8 @@ private struct UpNextRowKeys: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
+    /// On the playing block's printed colour rather than a paper row.
+    var onColour = false
     let close: () -> Void
 
     var body: some View {
@@ -377,7 +379,25 @@ private struct UpNextRowKeys: View {
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }
-        .buttonStyle(KeyButtonStyle(kind: dark ? .dark : .plain, radius: 8))
+        .buttonStyle(RowKeyStyle(main: dark, onColour: onColour))
+    }
+}
+
+/// Keys under an opened Up Next row (Paul, build 139: they were lost). On a
+/// paper row: ink main key, sand others. On the playing block's printed
+/// colour: paper main key, dark see-through others.
+private struct RowKeyStyle: ButtonStyle {
+    let main: Bool
+    let onColour: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        let fill: Color = onColour ? (main ? Poster.paper : Color.black.opacity(0.32)) : (main ? Theme.ink : Theme.background)
+        let text: Color = onColour ? (main ? Color.black.opacity(0.85) : Poster.paper) : (main ? Theme.surface : Theme.ink)
+        return configuration.label
+            .foregroundStyle(text)
+            .background(RoundedRectangle(cornerRadius: 8).fill(fill))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
 
