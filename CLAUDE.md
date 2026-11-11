@@ -1094,6 +1094,16 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
+  New Episodes). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
+  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
+  swipe right Up Next, left played, "All caught up"), 2 Show circles like
+  Stories (ringed show icons with counts, tap for that show's new ones),
+  3 Triage deck (one big card, swipe right Up Next / left played / up
+  play now), 4 Tape shelf (episodes as cassette spines in show colours,
+  tap one to slide it out), 5 Morning digest (one front-page card, "6
+  new since yesterday", one line each, Add the rest to Up Next). Waiting
+  on Paul.
 - **Your shows sort menu** (Paul, build 136 screenshot: "Newest first" /
   "Oldest first" twice, no way to tell which sort they were). Inside a
   Picker, iOS dropped the section headings. Now three menu sections
