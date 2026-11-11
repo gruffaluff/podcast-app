@@ -144,7 +144,7 @@ struct PlayerTranscriptPanel: View {
         let names = episode.podcast?.speakerNames ?? [:]
         return ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
+                LazyVStack(alignment: .leading, spacing: 4) {
                     ForEach(lines.indices, id: \.self) { index in
                         lineView(lines[index], isFocus: index == focus, isPast: focus.map { index < $0 } ?? false, names: names)
                             .id(index)
@@ -172,7 +172,7 @@ struct PlayerTranscriptPanel: View {
             }
             .onChange(of: focus, initial: true) { old, new in
                 guard let new, searching || !followPaused else { return }
-                withAnimation(old == new ? nil : .easeInOut(duration: 0.6)) {
+                withAnimation(old == new ? nil : .smooth(duration: 0.8)) {
                     proxy.scrollTo(new, anchor: UnitPoint(x: 0, y: 0.3))
                 }
             }
@@ -234,16 +234,18 @@ struct PlayerTranscriptPanel: View {
                     .tracking(1.2)
                     .foregroundStyle(isFocus ? Theme.adMarker : Theme.displayText)
                 // Whole lines, never cut short.
-                // A lyric sheet (poster look, 11 Nov 2026): the line being
-                // said in big Big Shoulders capitals, the others small.
+                // Every line is set the same (Fraunces Soft, a lyric sheet), so
+                // nothing reflows when the line changes; the others are
+                // shrunk and faded with a scale, which glides instead of
+                // jumping (the size change made the lines leap, Paul
+                // after build 138).
                 Text(highlighted(line.text))
-                    .font(isFocus ? Theme.big(32) : Theme.text(15))
-                    .textCase(isFocus ? .uppercase : nil)
+                    .font(Theme.title(26))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .contentTransition(.interpolate)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .scaleEffect(isFocus ? 1 : 0.7, anchor: .topLeading)
             .padding(.leading, ad == nil ? 0 : 12)
             .overlay(alignment: .leading) {
                 if ad != nil {
@@ -254,7 +256,7 @@ struct PlayerTranscriptPanel: View {
             }
             // Lines already heard fade more than those coming up.
             .opacity(isFocus ? 1 : (isPast ? 0.38 : 0.55))
-            .animation(.easeInOut(duration: 0.4), value: isFocus)
+            .animation(.easeInOut(duration: 0.5), value: isFocus)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

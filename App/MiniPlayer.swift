@@ -4,41 +4,112 @@ import Combine
 import PodcastCore
 
 extension View {
-    /// Shows the "now playing" bar at the bottom of a tab while something is loaded.
-    func miniPlayer(_ showingPlayer: Binding<Bool>, showsPlayer: Bool = true) -> some View {
-        modifier(MiniPlayerInset(showingPlayer: showingPlayer, showsPlayer: showsPlayer))
+    /// The bottom of every tab: the "now playing" bar (while something is
+    /// loaded) joined to the app's own tab bar, in one printed block.
+    func miniPlayer(_ showingPlayer: Binding<Bool>, tab: Binding<Int>) -> some View {
+        modifier(MiniPlayerInset(showingPlayer: showingPlayer, tab: tab))
     }
 }
 
 private struct MiniPlayerInset: ViewModifier {
     @Environment(PlayerModel.self) private var player
     @Binding var showingPlayer: Bool
-    var showsPlayer = true
-    /// The mini player steps aside while typing, so search results and
-    /// their play keys are never hidden under it.
+    @Binding var tab: Int
+    /// The bar steps aside while typing, so search results and their play
+    /// keys are never hidden under it.
     @State private var keyboardUp = false
 
-    private var showing: Bool { showsPlayer && player.nowPlaying != nil && !keyboardUp }
+    private var playing: Bool { player.nowPlaying != nil }
 
     func body(content: Content) -> some View {
-        // The bar floats over the page and its colour runs down behind the
-        // tab bar. Lists get extra room at the bottom (content margins reach
-        // every list inside), so their last rows scroll clear of it.
+        // The bar floats over the page. Lists get extra room at the bottom
+        // (content margins reach every list inside), so their last rows
+        // scroll clear of it.
         content
-            .contentMargins(.bottom, showing ? MiniPlayer.height + 8 : 0, for: .scrollContent)
+            .contentMargins(.bottom, keyboardUp ? 0 : (playing ? MiniPlayer.height : 0) + PosterTabBar.height + 8, for: .scrollContent)
+            // iOS's own tab bar (a floating white capsule on iOS 26) is
+            // hidden; ours sits under the mini player (Paul, 11 Nov 2026).
+            .toolbarVisibility(.hidden, for: .tabBar)
             .overlay(alignment: .bottom) {
                 VStack(spacing: 6) {
                     OfflineBar()
                         .padding(.horizontal, 12)
                     UndoBar()
                         .padding(.horizontal, 12)
-                    if showing {
-                        MiniPlayer { showingPlayer = true }
+                    if !keyboardUp {
+                        dock
                     }
                 }
             }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardUp = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardUp = false }
+    }
+
+    /// The mini player and the tab bar in one block with curved top
+    /// corners, running down to the bottom edge: printed in the colour of
+    /// what's playing, or the dark display colour when nothing is.
+    private var dock: some View {
+        VStack(spacing: 0) {
+            if playing {
+                MiniPlayer { showingPlayer = true }
+            }
+            PosterTabBar(tab: $tab)
+        }
+        .padding(.top, playing ? 0 : 6)
+        .background {
+            DockBackground(url: player.nowPlaying?.artworkURL)
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
+                .ignoresSafeArea(edges: .bottom)
+                .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
+        }
+    }
+}
+
+private struct DockBackground: View {
+    let url: URL?
+
+    var body: some View {
+        if let url {
+            PrintedArtwork(url: url, colour: ArtworkColors.shared.background(for: url) ?? Theme.display, strength: 0.45)
+        } else {
+            Theme.display.overlay { Halftone() }
+        }
+    }
+}
+
+/// The app's own tab bar: four flat icons with small DM Mono labels on the
+/// printed dock; the one you're on full strength, the others faded.
+struct PosterTabBar: View {
+    @Binding var tab: Int
+    static let height: CGFloat = 52
+
+    private static let tabs: [(title: String, icon: String)] = [
+        ("Up Next", "list.bullet"), ("Library", "square.grid.2x2"), ("Discover", "safari"), ("Search", "magnifyingglass"),
+    ]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Self.tabs.indices, id: \.self) { index in
+                let item = Self.tabs[index]
+                let selected = tab == index
+                Button { tab = index } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: item.icon)
+                            .font(.system(size: 18, weight: selected ? .semibold : .regular))
+                        Text(item.title.uppercased())
+                            .font(.custom("DMMono-Medium", fixedSize: 9))
+                            .tracking(0.8)
+                    }
+                    .foregroundStyle(Theme.displayText.opacity(selected ? 1 : 0.6))
+                    .frame(maxWidth: .infinity, minHeight: Self.height)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(item.title)
+                .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
+            }
+        }
+        .padding(.horizontal, 8)
     }
 }
 
@@ -70,8 +141,8 @@ struct MiniPlayer: View {
                                     .monospacedDigit()
                                     .foregroundStyle(Theme.displayDim)
                                     .lineLimit(1)
-                                Text(item.title.uppercased())
-                                    .font(.custom("BigShouldersDisplay-Black", fixedSize: 19))
+                                Text(item.title)
+                                    .font(.custom("FrauncesSoft-Medium", fixedSize: 16))
                                     .foregroundStyle(Theme.displayText)
                                     .lineLimit(1)
                             }
@@ -123,16 +194,11 @@ struct MiniPlayer: View {
             .padding(.top, 6)
             .padding(.bottom, 10)
             .frame(height: MiniPlayer.height, alignment: .top)
-            // The card runs down behind the tab bar, like the player card
-            // peeking up from below.
-            .background {
-                // Printed in the show's colour, like the player.
-                PrintedArtwork(url: item.artworkURL, colour: tint, strength: 0.45)
-                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26))
-                    .ignoresSafeArea(edges: .bottom)
-                    .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
-            }
-            .gesture(DragGesture(minimumDistance: 20).onEnded { value in
+            // Its printed background is drawn by the dock it sits in, which
+            // runs on down behind the tab bar.
+            .contentShape(Rectangle())
+            // Alongside the keys' taps, not instead of them.
+            .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
                 if value.translation.height < -20 { open() }
             })
             .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }

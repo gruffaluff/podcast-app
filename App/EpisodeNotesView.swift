@@ -22,7 +22,7 @@ struct EpisodeNotesView: View {
                 .padding(.bottom, 16)
             }
             .background(Theme.background)
-            .navigationTitle("EPISODE NOTES")
+            .navigationTitle("Episode notes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
@@ -63,7 +63,7 @@ struct EpisodeNotesView: View {
                         .foregroundStyle(Poster.paper.opacity(0.8))
                 }
             }
-            Text(episode.title.uppercased())
+            Text(episode.title)
                 .font(Theme.big(38))
                 .lineLimit(5)
                 .minimumScaleFactor(0.6)

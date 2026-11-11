@@ -30,7 +30,8 @@ screen at once; mock-ups https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
 his pick A + B with square stamps). Same sand page, paper cards, fonts and
 colour schemes; every list row is a poster row (`posterCard` / `showRow` /
 `PosterRowText` in `App/Poster.swift`): a strip of the show's colour down
-the left, a DM Mono label line, the title in big Big Shoulders capitals,
+the left, a DM Mono label line, the title in Fraunces Soft (type
+below),
 the artwork as a small square `Stamp` on the right. Big colour areas (Up
 Next's playing block, mini player, player, show and preview headers,
 episode page, Discover "because you listen to" tiles) are the artwork
@@ -277,14 +278,18 @@ to Nowhere / Top / Bottom" on the show page.
     of episode. Skip lengths are set on the Shows screen ("Skip buttons") or
     by touching and holding a skip button.
 
-### Library (poster look, build 138)
-- Library tab: HISTORY / STATS keys, then the **inbox** of new episodes
-  (Today / Yesterday / This week / Earlier; tap a row for the episode
-  page, the stamp to play; swipe right to add to Up Next, left played;
-  "All caught up" when empty), Continue listening, then "Your shows"
-  (poster rows with TOP / BTM · n NEW, the description and a sort key).
-  The New Episodes card carousel (248×330, Apple-style) it replaced is
-  in the build 121–137 notes below.
+### Library (option 3, Paul 11 Nov 2026)
+- Library tab: HISTORY / STATS keys, then three sections, each opening
+  with a big Big Shoulders heading and count on a heavy rule in the
+  section's colour (`bigHeading`): **NEW** (olive; the inbox of poster
+  rows, small TODAY / YESTERDAY / THIS WEEK / EARLIER labels when more than
+  one; tap a row for the episode page, the stamp to play; swipe right to
+  add to Up Next, left played; "All caught up" when empty), **CARRY ON**
+  (amber; started episodes as slim lines with a progress ring in the
+  show's colour, tap to play, `CarryOnLine`) and **YOUR SHOWS** (ink; a
+  plain list: small stamp, name, TOP / BTM · n NEW; sort key on the
+  heading). Rows get quieter down the page. Mock-ups
+  https://claude.ai/artifact/Q8eAX58QyJb4cgPQYqyqAZ.
 
 ### Transcripts (on device)
 - Use the publisher's transcript when the feed provides one
@@ -1140,7 +1145,7 @@ From the Notion notes after 6 Nov 08:10:
   above: waits 20 / 60 / 120 s and tries again on UNKNOWN_CONTAINER,
   429 or 5xx).
 
-## On the branch for build 138 (11 Nov 2026, PR #56; Paul: "let's rebuild it all", "get everything in for the next build")
+## Done in build 138 (11 Nov 2026, PR #56; Paul: "let's rebuild it all", then "build")
 
 - **Poster look on every screen** (see "Look" at the top). Built without
   a compiler (GitHub's check compiles it). To check on the phone: the
@@ -1152,7 +1157,79 @@ From the Notion notes after 6 Nov 08:10:
   `Theme.upNextCard`, the player's ARTWORK / TRANSCRIPT switch and Up Next
   card (now keys in the bottom row).
 
+## On the branch for the next build (11 Nov 2026; Paul after build 138: scrolling "a little jerky / low frameratey")
+
+- **Smoother scrolling**: the dot screen is one small tile repeated by the
+  GPU (`Halftone`; it drew every dot, ~22,000 on the player, on each
+  redraw); printed artwork is made once per artwork / colour / strength
+  off the main thread and shown as a plain picture (`PrintedImages`; it
+  was a live grey + multiply blend on every frame); the player's printed
+  background is its own view, so the twice-a-second clock no longer
+  redraws it (`PosterBackdrop`); only the progress line of Up Next's
+  playing block follows the clock (`PlayingProgress`); stamps have a thin
+  edge instead of a shadow; artwork colours are measured from a tiny copy
+  and saved once things go quiet (it made a JPEG of each picture on the
+  main thread and saved the whole list after each one); Library builds
+  rows only as they scroll into view (`LazyVStack`).
+
+- **Swipes and scrolling** (Paul: swipes and up / down scrolling "really
+  inconsistent and hard to trigger"): the full-row swipes used a SwiftUI
+  drag on every row that fought the lists' scrolling and the long-press
+  reorder. They now use an iOS pan that only begins when the finger
+  starts moving sideways (`SidewaysPan`), so up / down goes straight to
+  the list; the line is 80 points (was 96) and a quick flick counts. The
+  mini player's swipe up no longer blocks its keys' taps.
+- **Transcript glides** (Paul: it "pages away"): the line now changed
+  size (15 pt text to 32 pt capitals), so every line below leapt as the
+  layout changed. All lines are now the same lyric-sheet capitals and the
+  others are shrunk / faded with a scale (no reflow), with a softer
+  0.8 s scroll.
+- **Library option 3** with colour-coded rules (see Library above).
+- **Own tab bar** (Paul: the bar at the bottom was "still in a white
+  capsule", iOS 26's floating glass tab bar): iOS's tab bar is hidden
+  (`.toolbarVisibility(.hidden, for: .tabBar)`) and `PosterTabBar` (four
+  flat icons with small DM Mono labels, the current tab full strength,
+  others faded) sits under the mini player in one printed block with
+  curved top corners down to the bottom edge, in the colour of what's
+  playing, or the dark display colour with the dot screen when nothing
+  is (`MiniPlayerInset.dock`, `DockBackground`). It steps aside while the
+  keyboard is up, like the mini player did.
+
 ## Queued for the next app build
+
+- **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /
+  strong"). Every title is Big Shoulders Black (900) in capitals. Options
+  on https://claude.ai/artifact/HcvktcXpssM9FtFPNdqdFo: 1 today, 2 Big
+  Shoulders Bold everywhere, 3 Display ExtraBold headings + Big Shoulders
+  Text SemiBold row titles, 4 Display ExtraBold only for screen titles and
+  section headings, row titles in SF semibold normal case, 5 Barlow
+  Condensed (SemiBold headings, Medium rows). Suggested 4. Paul: keep
+  proper case (not capitals); same link re-rendered in proper case
+  (option 1 left in capitals to compare). **Paul picked 5** (11 Nov
+  2026), on the branch: `App/Fonts/` now holds BarlowCondensed-SemiBold
+  and -Medium (Google Fonts, OFL licence file) in place of Big Shoulders
+  (removed); `Theme.big` = Barlow Condensed SemiBold (headings, screen
+  titles, player title and time), new `Theme.title` = Barlow Condensed
+  Medium (row titles, mini player, transcript lines); every title and
+  heading in proper case (no `.uppercased()`), tab and screen titles too
+  ("Up Next", "Library", "Episode notes"…); the iOS navigation bar titles
+  use Barlow Condensed SemiBold. Labels stay DM Mono capitals, body SF.
+  Then Paul held the build ("hold on build") and asked to see Fraunces
+  Soft, New York and Bricolage Grotesque:
+  https://claude.ai/artifact/RS87QNtkmwBu4QaRFnXYpu (Barlow beside them;
+  New York is Apple's built-in serif, nothing to bundle). **Paul picked
+  Fraunces (Soft)**, 11 Nov 2026, on the branch: `App/Fonts/` holds
+  FrauncesSoft-SemiBold (headings, `Theme.big`, drawn at 92%) and
+  FrauncesSoft-Medium (row titles, mini player, transcript lines,
+  `Theme.title`, drawn at 85% as it's wider than the condensed faces the
+  sizes were set for), static fonts made from Google Fonts' variable
+  Fraunces with fontTools (SOFT 100, WONK 1, opsz 36 / 18, wght 600 /
+  500; OFL, no reserved name); Barlow removed. Navigation bar titles use
+  Fraunces Soft SemiBold. Proper case throughout. PR #57 not merged
+  until Paul says build.
+- Library sections: decided, option 3 with each section's rule in its
+  own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
+  options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
 
 - **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
   New Episodes; 1 Inbox went in with the poster look, build 138). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC

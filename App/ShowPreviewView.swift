@@ -69,7 +69,7 @@ struct ShowPreviewView: View {
                         .tracking(0.8)
                         .foregroundStyle(Theme.displayDim)
                         .lineLimit(2)
-                    Text((feed?.title ?? item.title).uppercased())
+                    Text(feed?.title ?? item.title)
                         .font(Theme.big(40))
                         .lineLimit(3)
                         .minimumScaleFactor(0.5)

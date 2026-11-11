@@ -53,7 +53,7 @@ struct SearchView: View {
             .background(Theme.background)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Words, people, shows")
             .onSubmit(of: .search) { remember(query) }
-            .tabTitle("SEARCH")
+            .tabTitle("Search")
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             .task(id: query) { await searchTranscripts() }
         }

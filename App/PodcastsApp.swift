@@ -44,15 +44,15 @@ struct PodcastsApp: App {
         .modelContainer(container)
     }
 
-    /// Big heavy condensed titles and plain tab labels.
+    /// Fraunces Soft titles (Paul's type pick) and plain tab labels.
     private static func styleSystemBars() {
         // Follows the scheme's light / dark (Night is dark).
         let ink = UIColor.label
         UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 40, weight: .black, width: .condensed), .foregroundColor: ink
+            .font: UIFont(name: "FrauncesSoft-SemiBold", size: 34) ?? UIFont.systemFont(ofSize: 34, weight: .semibold), .foregroundColor: ink
         ]
         UINavigationBar.appearance().titleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 17, weight: .heavy, width: .condensed), .foregroundColor: ink
+            .font: UIFont(name: "FrauncesSoft-SemiBold", size: 17) ?? UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: ink
         ]
         UITabBarItem.appearance().setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 10, weight: .semibold)], for: .normal)
     }
@@ -106,19 +106,19 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $tab) {
             UpNextView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Up Next", systemImage: "list.bullet") }
                 .tag(0)
             LibraryView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Library", systemImage: "square.grid.2x2") }
                 .tag(1)
             DiscoverView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Discover", systemImage: "safari") }
                 .tag(2)
             SearchView()
-                .miniPlayer($showingPlayer)
+                .miniPlayer($showingPlayer, tab: $tab)
                 .tabItem { Label("Search", systemImage: "magnifyingglass") }
                 .tag(3)
         }

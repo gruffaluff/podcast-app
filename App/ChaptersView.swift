@@ -44,7 +44,7 @@ struct ChaptersView: View {
                         .foregroundStyle(Theme.muted)
                 }
             }
-            .navigationTitle("CHAPTERS")
+            .navigationTitle("Chapters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

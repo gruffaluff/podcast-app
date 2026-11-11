@@ -26,7 +26,7 @@ struct ShowSettingsView: View {
                                     .font(Theme.mono(10, .semibold))
                                     .foregroundStyle(Theme.muted)
                             }
-                            Text(show.title.uppercased())
+                            Text(show.title)
                                 .font(Theme.mono(17, .bold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(2)
@@ -126,7 +126,7 @@ struct ShowSettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .navigationTitle("SHOW SETTINGS")
+            .navigationTitle("Show settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -229,7 +229,7 @@ struct TopPriorityView: View {
                         Text("\(index + 1) ·")
                             .font(Theme.big(20))
                             .foregroundStyle(Theme.ink)
-                        Text(show.title.uppercased())
+                        Text(show.title)
                             .font(Theme.big(20))
                             .foregroundStyle(Theme.ink)
                             .lineLimit(1)
@@ -425,7 +425,7 @@ struct TopPriorityView: View {
         .scrollContentBackground(.hidden)
         .background(Theme.background)
         .environment(\.editMode, .constant(.active))
-        .navigationTitle("SHOWS")
+        .navigationTitle("Shows")
         .navigationDestination(isPresented: $showingStorage) { StorageView() }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { shows = store.topShows }
