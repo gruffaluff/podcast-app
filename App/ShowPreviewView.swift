@@ -7,6 +7,15 @@ import PodcastCore
 struct ShowPreviewView: View {
     @Environment(LibraryStore.self) private var store
     let item: DirectoryItem
+    /// The page's colour, fixed when it opens so nothing changes colour
+    /// while it's on screen (Paul, 11 Nov 2026). Unknown = neutral for
+    /// this visit; it's measured for next time.
+    @State private var pageColour: Color?
+
+    init(item: DirectoryItem) {
+        self.item = item
+        _pageColour = State(initialValue: ArtworkColors.shared.background(for: item.artworkURL))
+    }
     @State private var follower = Follower()
     @State private var feed: ParsedFeed?
     @State private var failed = false
@@ -57,7 +66,7 @@ struct ShowPreviewView: View {
     /// fading into its colour, big title, then Follow (or Open show).
     private var header: some View {
         let art = feed?.artworkURL ?? item.artworkURL
-        let tint = ArtworkColors.shared.background(for: art) ?? Theme.display
+        let tint = pageColour ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
             Spacer(minLength: 170)
             // The show's poster, the artwork as a stamp beside the name.

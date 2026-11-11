@@ -224,10 +224,22 @@ final class LibraryStore {
     /// Checks every followed show and adds fresh episodes to Up Next by the queue rules.
     /// Checks every feed. `postAlerts: false` when an iCloud push already
     /// showed the alert (see RealtimeAlerts).
+    /// Measures the colour of every followed show not yet known (a tiny
+    /// copy of the artwork, once per show; saved), so show pages open in
+    /// their colour instead of changing once it's measured.
+    func preloadShowColours() async {
+        for url in Set(allPodcasts.compactMap(\.artworkURL)) where ArtworkColors.shared.background(for: url) == nil {
+            await ArtworkColors.shared.load(url)
+        }
+    }
+
     func refreshAll(postAlerts: Bool = true) async {
         guard !isRefreshing else { return }
         isRefreshing = true
-        defer { isRefreshing = false }
+        defer {
+            isRefreshing = false
+            Task { await preloadShowColours() }
+        }
 
         let urls = allPodcasts.map(\.feedURL)
         // A feed that hasn't changed since the last check is skipped: no

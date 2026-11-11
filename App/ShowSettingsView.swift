@@ -13,8 +13,15 @@ struct ShowSettingsView: View {
     var justFollowed = false
     @State private var olderUnplayed = true
     @State private var addedAll = false
-    /// This show's colour for the "on" keys and toggles here.
-    private var colour: Color? { ArtworkColors.shared.background(for: show.artworkURL) }
+    /// This show's colour for the "on" keys and toggles here, fixed when
+    /// the sheet opens (nothing changes colour while it's open).
+    @State private var colour: Color?
+
+    init(show: Podcast, justFollowed: Bool = false) {
+        self.show = show
+        self.justFollowed = justFollowed
+        _colour = State(initialValue: ArtworkColors.shared.background(for: show.artworkURL))
+    }
 
     var body: some View {
         NavigationStack {

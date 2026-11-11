@@ -1196,7 +1196,7 @@ From the Notion notes after 6 Nov 08:10:
   is (`MiniPlayerInset.dock`, `DockBackground`). It steps aside while the
   keyboard is up, like the mini player did.
 
-## On the branch for the next build (11 Nov 2026; Paul's notes after build 139)
+## Done in build 140 (11 Nov 2026, PR #58; Paul's notes after build 139, then "add them, merge, build")
 
 - **Player bottom row steady**: four fixed slots that never change their
   words or come and go (TRANSCRIPT lights up while showing; CHAPTERS and
@@ -1254,6 +1254,17 @@ From the Notion notes after 6 Nov 08:10:
   ShowSettingsView) read by `KeyButtonStyle(.accent)`, `DeckSwitch` and
   `DeckTag` through `Theme.showAccentFill / showAccentText /
   showOnAccent`. Night keeps its light accent text.
+- **Nothing changes colour on screen** (Paul, 11 Nov 2026: "I don't want
+  someone to open a page and the colour changes"): show page, show
+  preview, episode page and show settings fix their colour when they open
+  (`pageColour` / `colour` set in `init` from the saved colour); if it
+  isn't known yet the page stays neutral for that visit and it's measured
+  for next time. Every followed show's colour is measured ahead at launch
+  and after each feed check (`LibraryStore.preloadShowColours`; tiny copy,
+  once per show, saved), and rows with a stamp measure theirs as they
+  appear, so pages normally open in their colour. The colour of what's
+  playing changes only when a different episode starts, with a 0.5 s fade
+  (`AccentColour.colour` is now set by RootView inside `withAnimation`).
 
 ## Queued for the next app build
 

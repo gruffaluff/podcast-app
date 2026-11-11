@@ -7,6 +7,15 @@ struct ShowView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
     let show: Podcast
+    /// The page's colour, fixed when it opens so nothing changes colour
+    /// while it's on screen (Paul, 11 Nov 2026). Unknown = neutral for
+    /// this visit; it's measured for next time.
+    @State private var pageColour: Color?
+
+    init(show: Podcast) {
+        self.show = show
+        _pageColour = State(initialValue: ArtworkColors.shared.background(for: show.artworkURL))
+    }
     @State private var confirmingUnfollow = false
     @State private var showingSettings = false
     /// Show only unplayed episodes (default), or every episode.
@@ -98,7 +107,7 @@ struct ShowView: View {
         .scrollContentBackground(.hidden)
         .ignoresSafeArea(edges: .top)
         .background(Theme.background)
-        .environment(\.showColour, ArtworkColors.shared.background(for: show.artworkURL))
+        .environment(\.showColour, pageColour)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(selecting)
         .toolbar {
@@ -232,7 +241,7 @@ struct ShowView: View {
     /// colour behind the text, with Following, settings (where new episodes
     /// go) and the alerts bell across the width.
     private var header: some View {
-        let tint = ArtworkColors.shared.background(for: show.artworkURL) ?? Theme.display
+        let tint = pageColour ?? Theme.display
         return VStack(alignment: .leading, spacing: 12) {
             Spacer(minLength: 170)
             // The show's poster: the artwork printed in its colour, the real
@@ -330,6 +339,7 @@ struct EpisodeActions: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
+    @Environment(\.showColour) private var showColour
     /// A NOTES key that opens the episode page (in lists, not on that page).
     var showsNotesKey = false
     /// Set when the keys sit on the show's printed colour (the episode
@@ -378,7 +388,7 @@ struct EpisodeActions: View {
     /// The play key in the show's own colour (Paul, 11 Nov 2026: the main
     /// "do it" key follows the artwork; the other keys stay neutral).
     private var playKey: some View {
-        let colour = ArtworkColors.shared.background(for: episode.showArtwork) ?? Theme.ink
+        let colour = showColour ?? Theme.ink
         return Button { player.play(episode) } label: {
             Text(episode.position > 30 && !episode.played ? "▶ RESUME" : "▶ PLAY")
                 .font(Theme.mono(11, .bold))
@@ -388,7 +398,6 @@ struct EpisodeActions: View {
         }
         .buttonStyle(ColourKeyStyle(fill: onShowColour ? Poster.paper : colour,
                                     text: onShowColour ? colour : Poster.paper))
-        .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
     }
 
     private func key(_ title: String, dark: Bool = false, action: @escaping () -> Void) -> some View {

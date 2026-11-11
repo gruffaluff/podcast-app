@@ -238,9 +238,7 @@ extension Color {
 @Observable
 final class AccentColour {
     static let shared = AccentColour()
-    var artwork: URL?
-
-    var colour: Color? {
-        artwork.flatMap { ArtworkColors.shared.background(for: $0) }
-    }
+    /// Set by RootView with a short fade, only when what's playing changes
+    /// (and once its colour is measured), so the app never jumps colour.
+    var colour: Color?
 }

@@ -7,6 +7,15 @@ struct EpisodeNotesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
+    /// The page's colour, fixed when it opens so nothing changes colour
+    /// while it's on screen (Paul, 11 Nov 2026). Unknown = neutral for
+    /// this visit; it's measured for next time.
+    @State private var pageColour: Color?
+
+    init(episode: PodcastEpisode) {
+        self.episode = episode
+        _pageColour = State(initialValue: ArtworkColors.shared.background(for: episode.showArtwork))
+    }
 
     var body: some View {
         NavigationStack {
@@ -22,7 +31,7 @@ struct EpisodeNotesView: View {
                 .padding(.bottom, 16)
             }
             .background(Theme.background)
-            .environment(\.showColour, ArtworkColors.shared.background(for: episode.showArtwork))
+            .environment(\.showColour, pageColour)
             .navigationTitle("Episode notes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -37,7 +46,7 @@ struct EpisodeNotesView: View {
     /// title in big capitals, then its keys.
     private var poster: some View {
         let art = episode.showArtwork
-        let tint = ArtworkColors.shared.background(for: art) ?? Theme.placeholderColor(for: episode.showTitle)
+        let tint = pageColour ?? Theme.display
         let details = [episode.published.formatted(date: .abbreviated, time: .omitted),
                        episode.duration.map { TimeFormat.length($0) }].compactMap { $0 }.joined(separator: " · ")
         return VStack(alignment: .leading, spacing: 12) {
@@ -93,6 +102,7 @@ struct EpisodeNotesView: View {
 /// episode from that moment.
 struct EpisodeNotesText: View {
     @Environment(PlayerModel.self) private var player
+    @Environment(\.showColour) private var showColour
     let episode: PodcastEpisode
 
     var body: some View {
@@ -106,7 +116,7 @@ struct EpisodeNotesText: View {
                 Text(Self.linked(episode.summary))
                     .font(.subheadline)
                     .foregroundStyle(Theme.ink)
-                    .tint(Theme.showAccentText(ArtworkColors.shared.background(for: episode.showArtwork)))
+                    .tint(Theme.showAccentText(showColour))
                     .lineSpacing(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .environment(\.openURL, OpenURLAction { url in
