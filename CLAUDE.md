@@ -1103,7 +1103,14 @@ From the Notion notes after 6 Nov 08:10:
   the screen, compact control dock that pulls up); 4 Deck (cassette:
   turning reels, LCD with chapter and times, latching keys); 5 Gestures
   (full-bleed artwork, tap to pause, double tap sides to skip, chapter
-  cards, everything else in a pull-up drawer). Waiting on Paul.
+  cards, everything else in a pull-up drawer). Paul: none improve on
+  136. Round 2, https://claude.ai/artifact/LaxiGxbUhYrBwvFQHdMrQZ: 6 Pages
+  (fixed controls below, swipe the top between Art / Chapters / Text /
+  Next), 7 Timeline (chapters as stops down the screen, the current one
+  opens with the controls), 8 Dial (progress as a ring round play, drag
+  round to scrub), 9 Dashboard (tiles: said just now, chapter left, up
+  next, time saved, sleep), 10 Poster (no picture: artwork colour, huge
+  time and title in Big Shoulders). Waiting on Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
