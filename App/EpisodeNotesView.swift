@@ -22,6 +22,7 @@ struct EpisodeNotesView: View {
                 .padding(.bottom, 16)
             }
             .background(Theme.background)
+            .environment(\.showColour, ArtworkColors.shared.background(for: episode.showArtwork))
             .navigationTitle("Episode notes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -105,7 +106,7 @@ struct EpisodeNotesText: View {
                 Text(Self.linked(episode.summary))
                     .font(.subheadline)
                     .foregroundStyle(Theme.ink)
-                    .tint(Theme.accentText)
+                    .tint(Theme.showAccentText(ArtworkColors.shared.background(for: episode.showArtwork)))
                     .lineSpacing(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .environment(\.openURL, OpenURLAction { url in

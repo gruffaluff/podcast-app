@@ -1244,6 +1244,16 @@ From the Notion notes after 6 Nov 08:10:
   colour (paper text); on the episode page, which is printed in that
   colour, it's paper with the colour as text (`EpisodeActions.playKey`,
   `ColourKeyStyle`). Ink until the colour is known.
+- **Colour rule for keys** (Paul, 11 Nov 2026, "follow that guidance"):
+  on a screen about one show (show page, episode page, show settings
+  sheet) the colour comes from that show; everywhere else from what's
+  playing, soft black when nothing is. Only the main "do it" key (play)
+  and keys / switches that are on or chosen get colour; every other key
+  stays neutral ink / sand / paper. Built with `\.showColour` (an
+  environment value set by ShowView, EpisodeNotesView and
+  ShowSettingsView) read by `KeyButtonStyle(.accent)`, `DeckSwitch` and
+  `DeckTag` through `Theme.showAccentFill / showAccentText /
+  showOnAccent`. Night keeps its light accent text.
 
 ## Queued for the next app build
 

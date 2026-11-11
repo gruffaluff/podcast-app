@@ -98,6 +98,7 @@ struct ShowView: View {
         .scrollContentBackground(.hidden)
         .ignoresSafeArea(edges: .top)
         .background(Theme.background)
+        .environment(\.showColour, ArtworkColors.shared.background(for: show.artworkURL))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(selecting)
         .toolbar {

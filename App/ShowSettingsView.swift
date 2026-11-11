@@ -13,6 +13,8 @@ struct ShowSettingsView: View {
     var justFollowed = false
     @State private var olderUnplayed = true
     @State private var addedAll = false
+    /// This show's colour for the "on" keys and toggles here.
+    private var colour: Color? { ArtworkColors.shared.background(for: show.artworkURL) }
 
     var body: some View {
         NavigationStack {
@@ -59,7 +61,7 @@ struct ShowSettingsView: View {
                     Text("Downloads follow your Wi-Fi only setting. Keep downloads deletes this show's older downloads beyond the newest few. Alerts say where the episode went in Up Next.")
                 }
                 .listRowBackground(Theme.surface)
-                .tint(Theme.accentFill)
+                .tint(Theme.showAccentFill(colour))
 
                 Section {
                     DeckPicker(title: "Speed", options: Self.speedChoices, selection: Binding(get: { show.speedOverride }, set: { value in
@@ -134,6 +136,8 @@ struct ShowSettingsView: View {
                 }
             }
         }
+        .environment(\.showColour, colour)
+        .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }
     }
 
     private var autoAdd: Binding<AutoAddMode> {
@@ -163,7 +167,7 @@ struct ShowSettingsView: View {
             Spacer(minLength: 8)
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.accentText)
+                .foregroundStyle(Theme.showAccentText(colour))
         }
         .contentShape(Rectangle())
     }

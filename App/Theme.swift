@@ -111,6 +111,14 @@ enum Theme {
         if ColourScheme.current.isDark { return Color(hex: p.accentText) }
         return AccentColour.shared.colour ?? softBlack
     }
+    /// On a screen about one show (show page, episode page, show settings),
+    /// that show's colour wins over what's playing (Paul, 11 Nov 2026).
+    @MainActor static func showAccentFill(_ show: Color?) -> Color { show ?? accentFill }
+    /// Night keeps its light accent text (dark show colours vanish on it).
+    @MainActor static func showAccentText(_ show: Color?) -> Color {
+        ColourScheme.current.isDark ? accentText : (show ?? accentText)
+    }
+    @MainActor static func showOnAccent(_ show: Color?) -> Color { show == nil ? onAccent : Color(hex: 0xF6F2E9) }
     /// Artwork colours are darkened for light text on them, as is the soft
     /// black; only Night's own light accent takes dark text.
     @MainActor static var onAccent: Color {
