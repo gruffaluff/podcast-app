@@ -273,19 +273,10 @@ extension View {
     /// large-title gap above the content). The plain title stays for back
     /// buttons on screens pushed from here.
     func tabTitle(_ title: String) -> some View {
+        // Native warm: iOS's own large title, which shrinks into the bar
+        // as the list scrolls.
         self.navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
-                ToolbarItem(placement: .topBarLeading) {
-                    Text(title)
-                        .font(Theme.big(30))
-                        .foregroundStyle(Theme.ink)
-                        .fixedSize()
-                        .accessibilityAddTraits(.isHeader)
-                }
-                .sharedBackgroundVisibility(.hidden)
-            }
+            .navigationBarTitleDisplayMode(.large)
     }
 }
 
@@ -297,10 +288,9 @@ extension View {
     /// list row and every card-like panel uses it.
     func deckCard(_ fill: Color = Theme.surface, radius: CGFloat = Theme.cardRadius) -> some View {
         background {
+            // Native warm: flat, like an iOS inset list (no shadows).
             RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .fill(fill)
-                .shadow(color: Theme.shadowSoft, radius: 0.5, y: 1)
-                .shadow(color: Theme.shadowWide, radius: 3, y: 1.5)
         }
     }
 

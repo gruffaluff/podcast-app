@@ -49,10 +49,10 @@ struct PodcastsApp: App {
         // Follows the scheme's light / dark (Night is dark).
         let ink = UIColor.label
         UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont(name: "FrauncesSoft-SemiBold", size: 34) ?? UIFont.systemFont(ofSize: 34, weight: .semibold), .foregroundColor: ink
+            .font: UIFont.systemFont(ofSize: 34, weight: .bold), .foregroundColor: ink
         ]
         UINavigationBar.appearance().titleTextAttributes = [
-            .font: UIFont(name: "FrauncesSoft-SemiBold", size: 17) ?? UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: ink
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: ink
         ]
         UITabBarItem.appearance().setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 10, weight: .semibold)], for: .normal)
     }
@@ -77,18 +77,6 @@ struct PodcastsApp: App {
 
 struct RootView: View {
     /// Touch and hold the app icon (see QuickActions).
-    @ViewBuilder
-    private func tabPage<Page: View>(_ index: Int, @ViewBuilder _ page: () -> Page) -> some View {
-        let current = tab == index
-        if current || visited.contains(index) {
-            page()
-                .opacity(current ? 1 : 0)
-                .allowsHitTesting(current)
-                .accessibilityHidden(!current)
-                .task { visited.insert(index) }
-        }
-    }
-
     private func handleQuickAction(_ action: String) {
         switch action {
         case QuickActions.playUpNext:
@@ -114,33 +102,31 @@ struct RootView: View {
     @Binding var tab: Int
     @State private var quickActions = QuickActions.shared
     @State private var showingWelcome = false
-    /// Tabs opened so far; each is made the first time it's shown and then
-    /// kept (scroll place, open pages), like iOS's tab view did.
-    @State private var visited: Set<Int> = []
 
     var body: some View {
-        // Our own tabs, not iOS's TabView (Paul, after build 140: a dead
-        // zone above the mini player where scrolling did nothing; iOS's
-        // hidden tab bar was still there under ours). The tabs are words on
-        // the deck at the bottom (`BottomDock`, `DeckTabs`).
-        VStack(spacing: 0) {
-            ZStack {
-                tabPage(0) { UpNextView() }
-                tabPage(1) { LibraryView() }
-                tabPage(2) { DiscoverView() }
-                tabPage(3) { SearchView() }
+        // Native warm (Paul, 11 Nov 2026): iOS's own tab bar, with the
+        // mini player sitting above it as Apple Music does (the tab view's
+        // bottom accessory). iOS lays the lists out round both, so nothing
+        // overlaps a list (the dead spots of builds 140-141 came from our
+        // own dock over iOS's hidden bar).
+        TabView(selection: $tab) {
+            Tab("Up Next", systemImage: "list.bullet", value: 0) { UpNextView() }
+            Tab("Library", systemImage: "square.stack", value: 1) { LibraryView() }
+            Tab("Discover", systemImage: "safari", value: 2) { DiscoverView() }
+            Tab(value: 3, role: .search) { SearchView() }
+        }
+        .tabViewBottomAccessory {
+            NowPlayingBar { showingPlayer = true }
+        }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        // Undo and No internet float above the tab bar while they show.
+        .overlay(alignment: .bottom) {
+            VStack(spacing: 6) {
+                OfflineBar()
+                UndoBar()
             }
-            // Undo and No internet float just above the dock, over the
-            // list, only while they show.
-            .overlay(alignment: .bottom) {
-                VStack(spacing: 6) {
-                    OfflineBar()
-                    UndoBar()
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 6)
-            }
-            BottomDock(showingPlayer: $showingPlayer, tab: $tab)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 128)
         }
         .background(Theme.background.ignoresSafeArea())
         .onChange(of: quickActions.pending, initial: true) { _, action in

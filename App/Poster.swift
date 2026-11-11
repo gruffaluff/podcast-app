@@ -198,24 +198,17 @@ struct PosterRowText: View {
 }
 
 extension View {
-    /// A row card (Deck 0, Paul 11 Nov 2026): plain paper with a band of
-    /// the show's colour across the top ("colour-coded boxes", without the
-    /// paper texture), rounded, on a soft shadow. Every list row uses it.
+    /// A row card (Native warm, Paul 11 Nov 2026): a plain white rounded
+    /// row on the warm page, like an iOS inset list, no colour band. Every
+    /// list row uses it; `strip` (the show's colour) is no longer drawn.
     func posterCard(_ strip: Color, fill: Color = Theme.surface) -> some View {
         self
             .padding(.horizontal, 12)
-            .padding(.top, 10 + Poster.bandHeight)
-            .padding(.bottom, 10)
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
                     .fill(fill)
-                    .overlay(alignment: .top) {
-                        strip.frame(height: Poster.bandHeight)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
-                    .shadow(color: Theme.shadowSoft, radius: 0.5, y: 1)
-                    .shadow(color: Theme.shadowWide, radius: 3, y: 1.5)
             }
     }
 
