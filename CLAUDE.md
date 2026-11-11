@@ -1214,6 +1214,11 @@ From the Notion notes after 6 Nov 08:10:
   heading in proper case (no `.uppercased()`), tab and screen titles too
   ("Up Next", "Library", "Episode notes"…); the iOS navigation bar titles
   use Barlow Condensed SemiBold. Labels stay DM Mono capitals, body SF.
+  Then Paul held the build ("hold on build") and asked to see Fraunces
+  Soft, New York and Bricolage Grotesque:
+  https://claude.ai/artifact/RS87QNtkmwBu4QaRFnXYpu (Barlow beside them;
+  New York is Apple's built-in serif, nothing to bundle). Waiting on
+  Paul; PR #57 not merged until he says build.
 - Library sections: decided, option 3 with each section's rule in its
   own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
   options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
