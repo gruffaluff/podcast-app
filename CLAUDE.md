@@ -1198,7 +1198,15 @@ From the Notion notes after 6 Nov 08:10:
   progress line), 4 Poster type (POD / DECK on amber), 5 Reels on the
   line (two reels joined by the progress line on rust); shown on dark /
   light home screens and at 60 / 40 / 29 pt next to today's olive
-  cassette D. Suggested 1 or 5. Waiting on Paul.
+  cassette D. Suggested 1 or 5. Paul liked 2 and 5 ("evolve them a
+  bit"): https://claude.ai/artifact/Mxf14F2Xft1No9W8NBdWNM with 2a
+  Spoked (bigger cassette, spoked reels, no offset shadow), 2b Tape line
+  (progress line across the cassette's bottom + amber print shadow), 2c
+  Reversed (rust printed cassette on sand), 5a Tape path (tape running
+  between the reels into the line), 5b Ink (reels + line on near-black),
+  5c Big reel (one spool on the line), X Blend (printed cassette outline,
+  spoked reels, line). Suggested 2b or X; 5b sharpest small. Waiting on
+  Paul.
 - 7 time row: left as it is (Paul, 9 Nov 2026).
 - Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
   chapter". Dragging in Up Next is OK as of build 128: no hand-made
