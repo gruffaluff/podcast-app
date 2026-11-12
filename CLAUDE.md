@@ -1584,6 +1584,20 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Player in the episode's colour + not looking like Apple** (Paul, FNB,
+  12 Nov 2026: "we're in a nice spot again"). Mock-ups on
+  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q, two episodes each:
+  A Full colour (whole player in the artwork colour, light text; most
+  like Apple), B Warm page, colour on the controls (progress line, play
+  key, switched-on capsules in the colour, soft colour glow behind the
+  artwork; suggested), C Tinted page, D Colour above / warm below, E Glow.
+  Not-Apple touches: olive (from the icon) as the app's own colour for
+  the selected tab / links / switches, DM Mono for numbers and labels,
+  a rounded-square play key in the episode's colour, tape-style progress
+  (chapter ticks, amber ads, a ring "reel" at the play point), start
+  times / done-by shown as a signature. Suggested B + olive + mono
+  numbers + rounded-square key. Waiting on Paul's picks.
+
 - **New lasts one week** (Paul, FNB, 12 Nov 2026): episodes stay in New
   for 7 days from release (`LibraryView.newFor`, was 14), newest at the
   top, older ones pushed down the list as new ones arrive (the card shows
