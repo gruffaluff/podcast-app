@@ -1689,12 +1689,12 @@ check compiles it):
   `design/icon/icon_w1.png`); website logos updated and the claude.ai
   page republished.
 
-## Queued for the next app build
+## Done in build 147 (12 Nov 2026, PR #65; Paul: "Build")
 
 - **App icon badge** (Paul, 12 Nov 2026: "badges for those who want it";
   options https://claude.ai/artifact/RnVevs4sFdvbMpeXBfnbM6, in-app
   layouts https://claude.ai/artifact/7zcUA9zfezfFkToa3HkVhJ; **Paul picked
-  A**). On the branch: Shows screen section "Badge on the app icon"
+  A**). Shows screen section "Badge on the app icon"
   (after Checking for new episodes) with one row: a tiny icon preview
   (`IconPreview` image, the W1b icon at 120 px) showing today's number,
   then "Badge" and the sand ▾ list key (`BadgeSettingRow`); the footer
@@ -1716,7 +1716,7 @@ check compiles it):
   is centred in its box (`CentredVolumeView` overrides
   `volumeSliderRect`), so it lines up with the icons; its dot is the
   progress line's (12 pt paper circle, 20 pt while held) on a 4 pt
-  rounded track (`SystemVolumeSlider`). On the branch.
+  rounded track (`SystemVolumeSlider`).
 
 - **Player artwork edge to edge** (Paul, 12 Nov 2026, with a screenshot
   of Apple Podcasts' player: "artwork bigger and blends into the rest of
@@ -1750,6 +1750,8 @@ check compiles it):
 - **Show preview pulled down** (Paul, 12 Nov 2026: pull down on screens
   without refresh; normal iOS bounce, but the preview showed a sand gap
   above its coloured header): the gap fills with the show's colour.
+
+## Queued for the next app build
 
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
