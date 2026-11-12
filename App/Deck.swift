@@ -223,44 +223,50 @@ struct DeckActionRow: View {
 /// downloading) and TX (transcript ready; blinks while transcribing).
 struct EpisodeLights: View {
     @Environment(DownloadManager.self) private var downloads
+    @Environment(TranscriptService.self) private var transcripts
     let episode: PodcastEpisode
     /// On the dark display panel.
     var onDark = false
 
     var body: some View {
-        let progress = downloads.progress[episode.episodeID]
+        let progress: Double? = downloads.progress[episode.episodeID]
+        let txState: TranscriptState = episode.transcriptState
+        let txBusy: Bool = txState == .transcribing || txState == .waiting
         HStack(spacing: 6) {
-            light(progress.map { $0 > 0 ? "DL \(Int($0 * 100))%" : "DL …" } ?? "DL",
-                  state: episode.downloadFile != nil ? .on : (progress != nil ? .busy : .off),
-                  color: onDark ? Theme.displayText : Theme.ink)
-            light(episode.transcriptState == .transcribing ? "TX …" : (episode.transcriptState == .waiting ? "TX WAIT" : "TX"),
-                  state: episode.transcriptState == .ready ? .on : (episode.transcriptState == .transcribing || episode.transcriptState == .waiting ? .busy : .off),
-                  color: onDark ? Theme.adMarker : Theme.accentFill)
+            light("DL", done: episode.downloadFile != nil, fill: progress.map { max(0.05, $0) })
+            light("TX", done: txState == .ready,
+                  fill: txBusy ? max(0.05, transcripts.progress[episode.episodeID] ?? 0) : nil)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label(progress: progress))
     }
 
-    private enum LightState { case on, busy, off }
-
-    /// Deck 0 (Paul, 11 Nov 2026: "more subtle"): just the small letters,
-    /// dark when done, faded when not, dotted underneath while on its way.
-    /// Each light keeps the room of its longest form ("DL 100%",
-    /// "TX WAIT"), so a download starting doesn't shift the row's text
-    /// about (Paul, build 143).
-    private func light(_ text: String, state: LightState, color: Color) -> some View {
-        ZStack(alignment: .leading) {
-            Text(text.hasPrefix("DL") ? "DL 100%" : "TX WAIT")
-                .hidden()
-            Text(text)
-                .underline(state == .busy, pattern: .dot)
-                .foregroundStyle(onDark ? Poster.paper : Theme.ink)
-                .opacity(state == .on ? 0.85 : (state == .busy ? 0.55 : 0.22))
-        }
-        .font(Theme.mono(8.5, .semibold))
-        .tracking(0.6)
-        .lineLimit(1)
-        .fixedSize()
+    /// Just the small letters (Paul, 12 Nov 2026, option 4): faded when not
+    /// done, dark when done, and while it's on its way the letters darken
+    /// from left to right as it goes. Nothing changes width, so the row
+    /// never moves.
+    private func light(_ text: String, done: Bool, fill: Double?) -> some View {
+        let ink: Color = onDark ? Poster.paper : Theme.ink
+        return Text(text)
+            .foregroundStyle(ink)
+            .opacity(done ? 0.85 : 0.22)
+            .overlay {
+                if let fill, !done {
+                    Text(text)
+                        .foregroundStyle(ink)
+                        .opacity(0.85)
+                        .mask(alignment: .leading) {
+                            GeometryReader { geometry in
+                                Rectangle().frame(width: geometry.size.width * fill)
+                            }
+                        }
+                        .animation(.easeOut(duration: 0.3), value: fill)
+                }
+            }
+            .font(Theme.mono(8.5, .semibold))
+            .tracking(0.6)
+            .lineLimit(1)
+            .fixedSize()
     }
 
     private func label(progress: Double?) -> String {

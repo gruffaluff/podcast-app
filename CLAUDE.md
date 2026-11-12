@@ -1645,6 +1645,15 @@ check compiles it):
   website's two inline logos are the new one (claude.ai page
   republished). Goes out with the next app build.
 
+- **DL / TX letters fill in** (Paul, 12 Nov 2026, build 144 screenshots of
+  Up Next and Library: the letters sat far apart, because build 144 gave
+  each the room of "DL 100%" / "TX WAIT"; picked option 4 of: % in place,
+  progress circle, line underneath, letters fill in): back to just "DL"
+  and "TX" side by side; faded when not done, dark when done, and while
+  downloading / transcribing the letters darken left to right with the
+  progress (`EpisodeLights.light`, a masked copy). Nothing changes width.
+  On the branch; goes out with the next build.
+
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
   "not like Apple" touches: olive as the app's own colour for the selected
