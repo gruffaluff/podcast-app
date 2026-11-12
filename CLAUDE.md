@@ -1786,6 +1786,17 @@ check compiles it):
   address off the store), version 0.1 → 1.0. Costs: developer
   membership (already paid yearly) + domain; free app has no other fees.
   Waiting on Paul: public TestFlight first or straight to the store.
+  Alerts for everyone (Paul asked if it needs a server): not at first.
+  Same free GitHub job, made multi-user: each phone saves its own sealed
+  follows record under a random ID; the job fetches each feed once and
+  writes one alert record per follower tagged with that ID; each phone's
+  CloudKit subscription filters on its own ID. Fine for tens to a few
+  hundred users; GitHub's loose timing stays; using free Actions as a
+  service for others is a grey area; after the repo goes private its
+  minutes count. Bigger: same job on a hosted timer (e.g. Cloudflare
+  Workers paid, $5 / month). Simplest for launch: instant alerts only
+  for Paul, everyone else on the background check. Paul: "just
+  interested in steps for now".
 
 
 
