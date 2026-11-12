@@ -1711,6 +1711,13 @@ check compiles it):
   ("badgeMode", not synced). Free. If the icon changes, re-make
   `IconPreview.png` from `design/icon/icon_w1.png`.
 
+- **Volume slider tidy** (Paul, 12 Nov 2026, build 146 screenshot: the
+  speaker icons sat below the line and iOS's thumb was big): the slider
+  is centred in its box (`CentredVolumeView` overrides
+  `volumeSliderRect`), so it lines up with the icons; its dot is the
+  progress line's (12 pt paper circle, 20 pt while held) on a 4 pt
+  rounded track (`SystemVolumeSlider`). On the branch.
+
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
   Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
