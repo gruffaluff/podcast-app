@@ -1679,6 +1679,15 @@ check compiles it):
   sand tile, W1d sand tile + edge. Waiting on Paul; then update
   `make_poster_icon.js` and re-run it.
 
+- **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
+  app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
+  Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
+  (#EEE7D9 page, white cards), S2 Sand + olive (S1 plus olive #45543A for
+  the selected tab, section labels, links and switches; suggested), S3
+  Deep sand (#E6DCC8 page, cream #FBF7EE cards, olive), each with its
+  matching icon (sand tile + fine edge). Ties in with the icon contrast
+  choice. Waiting on Paul.
+
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
   "not like Apple" touches: olive as the app's own colour for the selected
