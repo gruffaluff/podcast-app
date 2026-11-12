@@ -47,7 +47,9 @@ swapping in. Player now Apple style: the progress line (`ScrubLine`, ink,
 dot at the play point; drag from it to scrub, same rules), time / ends /
 left under it, big plain skip / play / skip symbols, Speed / Trim / Boost
 / Sleep as small capsules (filled when on), Transcript / Chapters /
-output device as icons; swipe down to close. Deck 0's display, chunky
+output device as icons; swipe down to close. Build 144: the player is in
+the episode's artwork colour, with volume and an Options menu (see
+"Done in build 144"). Deck 0's display, chunky
 keys, plate and word tabs are no longer used (parts left in
 `DeckParts.swift`).
 Before that: **"Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
@@ -1582,91 +1584,59 @@ From the Notion notes after 6 Nov 08:10:
   placement above the tab bar (fixed 128 pt lift), text sizes now in SF,
   the player's progress line and buttons, Night.
 
+## Done in build 144 (12 Nov 2026, PR #62; Paul: "Merge")
+
+Paul's queued notes after build 143, built without a compiler (GitHub's
+check compiles it):
+- **Player in full colour** (Paul picked A on
+  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q; no rounded-square
+  play key): the whole player is the episode's artwork colour
+  (`ArtworkColors`, already darkened for light text), a little darker
+  towards the bottom; text, icons, progress line and play symbol in paper;
+  lit buttons paper with the colour inside, others see-through light.
+  The colour is set when the player opens / the episode changes
+  (`NowPlayingView.colour`), neutral dark (#2C2A26) until measured, then
+  fades in once. Transcript and chapters panels use light text. The
+  status bar is hidden in the player (dark status text would be lost on
+  the colour; a colour-scheme preference there can flip the whole app).
+  Episode notes sit in a paper card below.
+- **Player reshuffle**: a transcript key beside download in the top keys
+  (TX to transcribe now; a ring while it's on its way, tap to stop;
+  filled when there's a transcript, tap to show it); the iPhone's own
+  volume (`SystemVolumeSlider`, `MPVolumeView`) where Speed / Trim /
+  Boost / Sleep were, speaker icons at each end, a little narrower than
+  the line; bottom row Options · Transcript · Chapters · AirPlay, with
+  Options a menu holding Speed (choices), Trim, Boost and Sleep (timers,
+  5 more minutes), lit when any is on; no Up Next key: the next three in
+  Up Next with start times sit above the notes (`PlayerUpNextCard`, tap
+  to play, All › pulls up `UpNextSheet`).
+- **Show page**: plain header on the warm page (artwork 96 pt, name in SF
+  bold, publisher · episodes · auto download, Following / Top / bell
+  keys, description); the printed block and the gap above it when pulled
+  down are gone. Following and a lit bell take the show's colour, the
+  settings key is neutral. (Discover's show preview still has the
+  printed header.)
+- **Episode page**: artwork 64 pt + "Show ›" + date · length, the title
+  in SF semibold 22 pt as the feed writes it (up to 4 lines), DL / TX, one
+  wide Play / Resume (Pause when on) key in the episode's colour with
+  small Play next and Played keys (`EpisodePageKeys`); download,
+  transcript and Up Next only in the status rows below.
+- **Library**: New lasts one week (`LibraryView.newFor`); History and
+  Stats are icons in the title bar beside + (their own row left gaps);
+  Carry on artwork has a play / pause icon (soft dark circle).
+- **Download % no longer shifts Up Next rows**: the DL / TX letters keep
+  the room of "DL 100%" / "TX WAIT" (`EpisodeLights`).
+- To check on the phone: the player colour on light and dark artwork,
+  the volume slider (it only shows on a real iPhone), the Options menu,
+  the show page top when pulled down.
+
 ## Queued for the next app build
 
-- **Player reshuffle** (Paul, 12 Nov 2026; replaces the Up Next key idea):
-  - Top keys: a **transcript key beside the download key** (like download:
-    TX to transcribe now, a filling ring / % while it's on its way and
-    tap to stop, filled when there's a transcript).
-  - **Volume slider** where Speed / Trim / Boost / Sleep sit now: the
-    iPhone's own volume (`MPVolumeView`, so it moves with the buttons on
-    the side and AirPods), quiet speaker icons at each end, a little
-    narrower than the progress line.
-  - Bottom row: **Options · Transcript · Chapters · AirPods**. Options
-    opens a small menu (popover above the button) holding Speed (with its
-    choices), Trim, Boost and Sleep (with its timer choices and 5 more
-    minutes); the Options icon lights when any of them is on.
-  - **No Up Next key.** Instead the mini Up Next card comes back **above
-    the episode notes** (scroll down in the player): the next few
-    episodes with start times, tap to play, "All ›" pulls up the full Up
-    Next (`UpNextSheet`, drag to reorder, swipe to remove).
-  - Full colour player (queued above) applies to all of these.
-
-- **Carry on: play / pause on the artwork** (Paul, 12 Nov 2026): each
-  Carry on card's artwork gets a small play icon over it (a soft dark
-  circle with a white ▶), pause (❚❚) on the one playing, so it's clear
-  tapping the card starts / stops it. Same tap as now (whole card); the
-  icon swaps the moment it's tapped. `CarryOnRow` in LibraryView.swift.
-
-- **Show page: pulling down shows a gap above the header** (Paul, 12 Nov
-  2026, screenshot): the printed header (dots, rounded bottom) is a
-  leftover from the Poster look; pulling the list down shows the sand
-  page above it. Fix: no printed block on show pages in Native warm; a
-  plain header on the warm page (artwork 96 pt, show name in SF bold,
-  publisher · episodes · auto download, description, FOLLOWING / TOP /
-  bell keys), so pulling down just shows more page, like any iOS list.
-- **Episode page top reworked** (Paul, 12 Nov 2026, screenshot of the
-  sheet from tapping a New episode): the printed dotted block with a huge
-  capitals-sized title and six keys looks off, and repeats the status
-  rows under it (In Up Next / Downloading / Transcript). New top on the
-  warm page: artwork 64 pt + "Show ›" + date · length, the title in SF
-  semibold (about 22 pt, as the feed writes it, up to 4 lines), DL / TX
-  letters, one full-width Play / Resume key in the episode's colour, and
-  small Play next and Played keys beside it. Download, transcript and
-  "In Up Next" stay only as the status rows below (no duplicate keys).
-
-- **Player in the episode's colour + not looking like Apple** (Paul, FNB,
-  12 Nov 2026: "we're in a nice spot again"). Mock-ups on
-  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q, two episodes each:
-  A Full colour (whole player in the artwork colour, light text; most
-  like Apple), B Warm page, colour on the controls (progress line, play
-  key, switched-on capsules in the colour, soft colour glow behind the
-  artwork; suggested), C Tinted page, D Colour above / warm below, E Glow.
-  Not-Apple touches: olive (from the icon) as the app's own colour for
-  the selected tab / links / switches, DM Mono for numbers and labels,
-  a rounded-square play key in the episode's colour, tape-style progress
-  (chapter ticks, amber ads, a ring "reel" at the play point), start
-  times / done-by shown as a signature. Suggested B + olive + mono
-  numbers + rounded-square key. **Paul picked A, full colour** (12 Nov
-  2026): the whole player in the playing episode's artwork colour
-  (darkening a little towards the bottom), all text, icons, the progress
-  line and the play symbol in light paper; capsules switched on = paper
-  with the colour as text, off = see-through light; transcript /
-  chapters panels and the mini Up Next readable on the colour (light
-  text). Colour fixed when the player opens / the episode changes (no
-  jumps), measured from `ArtworkColors` and darkened for 4.5:1 contrast;
-  neutral dark until known. **No rounded-square play key** (Paul): keep
-  the plain play / pause symbol. The other touches (olive, mono numbers,
-  tape-style progress, timings) not decided yet.
-
-- **New lasts one week** (Paul, FNB, 12 Nov 2026): episodes stay in New
-  for 7 days from release (`LibraryView.newFor`, was 14), newest at the
-  top, older ones pushed down the list as new ones arrive (the card shows
-  the newest four; All › the rest). Still leaves New when played.
-
-- **Library: History / Stats beside the title** (Paul, FNB, 12 Nov 2026,
-  build 143 screenshot): the HISTORY and STATS keys sit on their own row
-  under the big "Library" title, leaving gaps above and below. Move them
-  up level with the title (toolbar keys on the title's line, or in the
-  bar beside it) and close up the space down to NEW.
-
-- **Download % makes the Up Next row jump** (Paul, FNB, 12 Nov 2026,
-  build 143): tapping download in an Up Next row's keys, the "40%" that
-  appears shifted the row's text about for a moment. Likely the DL / TX
-  letters ("DL" → "DL 40%") and the status line ("Downloading") changing
-  width / appearing. Fix: give the DL letters and the key labels a fixed
-  width (room for "DL 100%") and keep the status line always there, so
-  nothing reflows while a download runs.
+- **Still undecided** (from the player colour mock-ups,
+  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
+  "not like Apple" touches: olive as the app's own colour for the selected
+  tab / links / switches, DM Mono numbers, tape-style progress, start
+  times / done-by as a signature. Not built.
 
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /
   strong"). Every title is Big Shoulders Black (900) in capitals. Options
