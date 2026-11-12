@@ -1584,6 +1584,12 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Carry on: play / pause on the artwork** (Paul, 12 Nov 2026): each
+  Carry on card's artwork gets a small play icon over it (a soft dark
+  circle with a white ▶), pause (❚❚) on the one playing, so it's clear
+  tapping the card starts / stops it. Same tap as now (whole card); the
+  icon swaps the moment it's tapped. `CarryOnRow` in LibraryView.swift.
+
 - **Show page: pulling down shows a gap above the header** (Paul, 12 Nov
   2026, screenshot): the printed header (dots, rounded bottom) is a
   leftover from the Poster look; pulling the list down shows the sand
