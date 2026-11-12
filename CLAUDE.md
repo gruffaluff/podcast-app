@@ -1760,6 +1760,14 @@ check compiles it):
   on the plain colour; the dark shade at the top is gone. Its fade also
   ends nearer the title. On the branch.
 
+- **Mini player with nothing playing: B** (Paul, 12 Nov 2026, from
+  https://claude.ai/artifact/WiCp8oqMHFgCfg5g6FEVP3; he'd missed the old
+  "Tap to play Up Next" line): the bar shows the top of Up Next ready to
+  play: its artwork and title, "Up next · Show · 26m" (or "Carry on ·
+  12m left" once started) and a play key in a ring that shows how far
+  through it is (`NowPlayingBar.upcoming`). Tap the bar or the key to
+  play it. "Up Next is empty" when there's nothing. On the branch.
+
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
   Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
