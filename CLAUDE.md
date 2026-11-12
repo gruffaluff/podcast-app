@@ -1753,6 +1753,13 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **Player artwork below the keys** (Paul, build 147 screenshot: the
+  artwork ran to the very top and the download / transcript / played
+  keys were lost on busy artwork): the edge-to-edge artwork now starts
+  just under the top keys (status bar height + 44 pt), so the keys sit
+  on the plain colour; the dark shade at the top is gone. Its fade also
+  ends nearer the title. On the branch.
+
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
   Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
