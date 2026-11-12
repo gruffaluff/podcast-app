@@ -1584,6 +1584,23 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Show page: pulling down shows a gap above the header** (Paul, 12 Nov
+  2026, screenshot): the printed header (dots, rounded bottom) is a
+  leftover from the Poster look; pulling the list down shows the sand
+  page above it. Fix: no printed block on show pages in Native warm; a
+  plain header on the warm page (artwork 96 pt, show name in SF bold,
+  publisher · episodes · auto download, description, FOLLOWING / TOP /
+  bell keys), so pulling down just shows more page, like any iOS list.
+- **Episode page top reworked** (Paul, 12 Nov 2026, screenshot of the
+  sheet from tapping a New episode): the printed dotted block with a huge
+  capitals-sized title and six keys looks off, and repeats the status
+  rows under it (In Up Next / Downloading / Transcript). New top on the
+  warm page: artwork 64 pt + "Show ›" + date · length, the title in SF
+  semibold (about 22 pt, as the feed writes it, up to 4 lines), DL / TX
+  letters, one full-width Play / Resume key in the episode's colour, and
+  small Play next and Played keys beside it. Download, transcript and
+  "In Up Next" stay only as the status rows below (no duplicate keys).
+
 - **Up Next key in the player** (Paul, 12 Nov 2026, build 143 screenshot):
   a fourth icon on the left of the bottom row (Up Next · Transcript ·
   Chapters · AirPods) that opens a mini Up Next pulled up over the player
