@@ -1768,7 +1768,7 @@ check compiles it):
   through it is (`NowPlayingBar.upcoming`). Tap the bar or the key to
   play it. "Up Next is empty" when there's nothing.
 
-## Queued for the next app build
+## Done in build 149 (12 Nov 2026, PR #67; Paul: "Build")
 
 - **Player top A + Options D** (Paul, 12 Nov 2026, from
   https://claude.ai/artifact/PjNiXZeWYQUL7GqMeyHJkk, shown with the
@@ -1785,7 +1785,9 @@ check compiles it):
   Sleep timer as one row with a list (Off, 5–60 min, End of episode) and
   "5 more minutes" while it runs. The in-player panel is gone, so nothing
   on the player moves. Paul: keep labels like "Options" centred under
-  their icons (the mock-up's weren't; the app's are). On the branch.
+  their icons (the mock-up's weren't; the app's are).
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
