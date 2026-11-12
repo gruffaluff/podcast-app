@@ -178,10 +178,11 @@ struct NowPlayingView: View {
         .frame(maxWidth: .infinity)
         .background(alignment: .top) {
             if topMode == .artwork {
-                // Starts under the top keys (Paul, build 147: from the very
-                // top the keys were lost on busy artwork).
+                // Starts just under the status bar and fades in at the top
+                // and out at the bottom, so it floats in the colour with no
+                // hard edge (builds 147 / 148).
                 heroArtwork(item)
-                    .padding(.top, top + 44)
+                    .padding(.top, top + 8)
                     .transition(.opacity)
             }
         }
@@ -195,7 +196,12 @@ struct NowPlayingView: View {
             let side: CGFloat = geometry.size.width
             ArtworkView(url: item.artworkURL, title: item.showTitle, size: side, radius: 0)
                 .mask {
-                    LinearGradient(stops: [.init(color: .black, location: 0),
+                    // Soft at the top too (Paul, build 148: the hard top
+                    // edge under a plain band "doesn't look good"), so the
+                    // keys sit where the artwork is still fading in.
+                    LinearGradient(stops: [.init(color: .clear, location: 0),
+                                           .init(color: .black.opacity(0.55), location: 0.1),
+                                           .init(color: .black, location: 0.2),
                                            .init(color: .black, location: 0.62),
                                            .init(color: .black.opacity(0.45), location: 0.82),
                                            .init(color: .clear, location: 1)],

@@ -1770,6 +1770,13 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **Player artwork fades in at the top** (Paul, build 148 screenshot:
+  "that top bit doesn't look good at all": a plain band with the keys,
+  then the artwork's hard top edge): the artwork starts just under the
+  status bar (+8 pt) and fades in over its top fifth as well as out at
+  the bottom, so it floats in the player's colour with no edges; the keys
+  sit where it's still faint. On the branch.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
