@@ -1584,6 +1584,12 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Library: History / Stats beside the title** (Paul, FNB, 12 Nov 2026,
+  build 143 screenshot): the HISTORY and STATS keys sit on their own row
+  under the big "Library" title, leaving gaps above and below. Move them
+  up level with the title (toolbar keys on the title's line, or in the
+  bar beside it) and close up the space down to NEW.
+
 - **Download % makes the Up Next row jump** (Paul, FNB, 12 Nov 2026,
   build 143): tapping download in an Up Next row's keys, the "40%" that
   appears shifted the row's text about for a moment. Likely the DL / TX
