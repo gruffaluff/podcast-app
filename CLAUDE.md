@@ -1655,7 +1655,7 @@ check compiles it):
   progress (`EpisodeLights.light`, a masked copy). Nothing changes width.
 
 
-## Queued for the next app build
+## Done in build 146 (12 Nov 2026, PR #64; Paul: "Build")
 
 - **Dragged Up Next rows: just the card** (Paul, 12 Nov 2026, build 145
   screenshot of the pulled-up Up Next: the lifted row had a light square
@@ -1687,7 +1687,9 @@ check compiles it):
   (#CFC6B4) round the cassette and a slightly stronger shadow.
   `make_poster_icon.js` re-run (app icon, `docs/icon.png`,
   `design/icon/icon_w1.png`); website logos updated and the claude.ai
-  page republished. Goes out with the next build.
+  page republished.
+
+## Queued for the next app build
 
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
