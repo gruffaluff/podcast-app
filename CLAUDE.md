@@ -1632,6 +1632,17 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **Icon refresh for the whiter look** (Paul, 12 Nov 2026: "refresh the
+  logo a bit to match the whiter look"): options on
+  https://claude.ai/artifact/C3kwySgwiAzrEcWyByRrnt (generator in the
+  session scratchpad, same cassette as `make_poster_icon.js`): Now (2b
+  olive with dots), W1 Warm white (off-white tile, white cassette with a
+  soft shadow, ink window, olive played line; suggested), W2 Clean olive
+  (no dots, white cassette), W3 Ink on white (dark cassette on white), W4
+  Olive on white (olive cassette, white window). Waiting on Paul; when
+  picked, update `make_poster_icon.js` (it writes the app icon and
+  `docs/icon.png`).
+
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
   "not like Apple" touches: olive as the app's own colour for the selected
