@@ -1673,6 +1673,12 @@ check compiles it):
   Now, B Tiles on the colour (suggested), C White cards, D Timeline, E Big
   artwork sideways. Waiting on Paul.
 
+- **Icon contrast** (Paul, 12 Nov 2026: the white cassette is "a little
+  lost" on the W1 tile): https://claude.ai/artifact/PS3G7LXAN1QLxAfbNPG8Ei:
+  Now, W1a deeper shadow, W1b fine warm-grey edge (suggested), W1c darker
+  sand tile, W1d sand tile + edge. Waiting on Paul; then update
+  `make_poster_icon.js` and re-run it.
+
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
   "not like Apple" touches: olive as the app's own colour for the selected
