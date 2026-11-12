@@ -1691,6 +1691,16 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **App icon badge** (Paul, 12 Nov 2026: "badges for those who want it",
+  choose what it counts): mock-up
+  https://claude.ai/artifact/RnVevs4sFdvbMpeXBfnbM6 (home screen + a
+  "Badge on the app icon" setting on the Shows screen, under Alerts):
+  Off (default), New since last open (suggested; clears on open), New
+  episodes (Library's New), In Up Next, Downloaded not played, Top shows
+  only, Hours left in Up Next, Only when something's wrong. Updates on
+  open, background check and the alerts job's quiet push, so it can lag
+  ~an hour. Free. Waiting on Paul.
+
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
   Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
