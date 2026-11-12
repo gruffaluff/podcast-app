@@ -1770,12 +1770,22 @@ check compiles it):
 
 ## Queued for the next app build
 
-- **Player artwork fades in at the top** (Paul, build 148 screenshot:
-  "that top bit doesn't look good at all": a plain band with the keys,
-  then the artwork's hard top edge): the artwork starts just under the
-  status bar (+8 pt) and fades in over its top fifth as well as out at
-  the bottom, so it floats in the player's colour with no edges; the keys
-  sit where it's still faint. On the branch.
+- **Player top A + Options D** (Paul, 12 Nov 2026, from
+  https://claude.ai/artifact/PjNiXZeWYQUL7GqMeyHJkk, shown with the
+  Tailenders artwork; build 148 had a plain band then a hard edge, and
+  opening the Options panel slid the title and progress line over the
+  stretched artwork). A: the artwork is a big rounded card again
+  (`artwork(item, size:)`) with the title left-aligned under it, on a
+  soft blurred copy of itself spread across the top and fading into the
+  player's colour (`NowPlayingView.artworkGlow`, like Apple Music); the
+  edge-to-edge `heroArtwork` is gone. D: Options opens a short sheet
+  (`PlayerOptionsSheet`, half height, swipe down or Done): Speed as one
+  "− 1.2× +" control with quick picks 1× / 1.2× / 1.5× / 2× (lit in the
+  accent), Trim silences and Boost voices as switches with a line each,
+  Sleep timer as one row with a list (Off, 5–60 min, End of episode) and
+  "5 more minutes" while it runs. The in-player panel is gone, so nothing
+  on the player moves. Paul: keep labels like "Options" centred under
+  their icons (the mock-up's weren't; the app's are). On the branch.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
