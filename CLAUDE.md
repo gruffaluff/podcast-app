@@ -1699,7 +1699,12 @@ check compiles it):
   episodes (Library's New), In Up Next, Downloaded not played, Top shows
   only, Hours left in Up Next, Only when something's wrong. Updates on
   open, background check and the alerts job's quiet push, so it can lag
-  ~an hour. Free. Waiting on Paul.
+  ~an hour. Free. How it looks in the app (Paul asked):
+  https://claude.ai/artifact/7zcUA9zfezfFkToa3HkVhJ, a "Badge on the app
+  icon" section on the Shows screen: A one row with a tiny icon preview
+  and a sand ▾ list key (suggested; same style as Keep downloads under),
+  B an on / off switch then a Count row, C a row opening its own page
+  of choices with today's numbers. Waiting on Paul.
 
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
