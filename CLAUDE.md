@@ -47,7 +47,9 @@ swapping in. Player now Apple style: the progress line (`ScrubLine`, ink,
 dot at the play point; drag from it to scrub, same rules), time / ends /
 left under it, big plain skip / play / skip symbols, Speed / Trim / Boost
 / Sleep as small capsules (filled when on), Transcript / Chapters /
-output device as icons; swipe down to close. Deck 0's display, chunky
+output device as icons; swipe down to close. Build 144: the player is in
+the episode's artwork colour, with volume and an Options menu (see
+"Done in build 144"). Deck 0's display, chunky
 keys, plate and word tabs are no longer used (parts left in
 `DeckParts.swift`).
 Before that: **"Deck 0"** (Paul, 11 Nov 2026: "lets get the rebuild moving";
@@ -1571,17 +1573,70 @@ From the Notion notes after 6 Nov 08:10:
     right. To check on the phone: deck height on smaller iPhones, the
     player's top half with long titles, scrubbing on the display, Night.
 
-## On the branch for the next build (11 Nov 2026, night; Paul: rebuild overnight in Native warm, then build)
+## Done in build 143 (11 Nov 2026, night, PR #61; Paul: rebuild overnight in Native warm, then build)
 
 - **Native warm** (see "Look" at the top). Built without a compiler;
-  GitHub's check compiles it, then straight to a build (Paul's say-so).
+  GitHub's check passed first time; merged straight to a build (Paul's
+  say-so).
   To check on the phone: the iOS tab bar and mini player (Paul disliked
   iOS 26's floating glass tab bar in build 138; this is the native look
   he asked for, but say if the capsule still bothers him), Undo bar
   placement above the tab bar (fixed 128 pt lift), text sizes now in SF,
   the player's progress line and buttons, Night.
 
+## Done in build 144 (12 Nov 2026, PR #62; Paul: "Merge")
+
+Paul's queued notes after build 143, built without a compiler (GitHub's
+check compiles it):
+- **Player in full colour** (Paul picked A on
+  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q; no rounded-square
+  play key): the whole player is the episode's artwork colour
+  (`ArtworkColors`, already darkened for light text), a little darker
+  towards the bottom; text, icons, progress line and play symbol in paper;
+  lit buttons paper with the colour inside, others see-through light.
+  The colour is set when the player opens / the episode changes
+  (`NowPlayingView.colour`), neutral dark (#2C2A26) until measured, then
+  fades in once. Transcript and chapters panels use light text. The
+  status bar is hidden in the player (dark status text would be lost on
+  the colour; a colour-scheme preference there can flip the whole app).
+  Episode notes sit in a paper card below.
+- **Player reshuffle**: a transcript key beside download in the top keys
+  (TX to transcribe now; a ring while it's on its way, tap to stop;
+  filled when there's a transcript, tap to show it); the iPhone's own
+  volume (`SystemVolumeSlider`, `MPVolumeView`) where Speed / Trim /
+  Boost / Sleep were, speaker icons at each end, a little narrower than
+  the line; bottom row Options · Transcript · Chapters · AirPlay, with
+  Options a menu holding Speed (choices), Trim, Boost and Sleep (timers,
+  5 more minutes), lit when any is on; no Up Next key: the next three in
+  Up Next with start times sit above the notes (`PlayerUpNextCard`, tap
+  to play, All › pulls up `UpNextSheet`).
+- **Show page**: plain header on the warm page (artwork 96 pt, name in SF
+  bold, publisher · episodes · auto download, Following / Top / bell
+  keys, description); the printed block and the gap above it when pulled
+  down are gone. Following and a lit bell take the show's colour, the
+  settings key is neutral. (Discover's show preview still has the
+  printed header.)
+- **Episode page**: artwork 64 pt + "Show ›" + date · length, the title
+  in SF semibold 22 pt as the feed writes it (up to 4 lines), DL / TX, one
+  wide Play / Resume (Pause when on) key in the episode's colour with
+  small Play next and Played keys (`EpisodePageKeys`); download,
+  transcript and Up Next only in the status rows below.
+- **Library**: New lasts one week (`LibraryView.newFor`); History and
+  Stats are icons in the title bar beside + (their own row left gaps);
+  Carry on artwork has a play / pause icon (soft dark circle).
+- **Download % no longer shifts Up Next rows**: the DL / TX letters keep
+  the room of "DL 100%" / "TX WAIT" (`EpisodeLights`).
+- To check on the phone: the player colour on light and dark artwork,
+  the volume slider (it only shows on a real iPhone), the Options menu,
+  the show page top when pulled down.
+
 ## Queued for the next app build
+
+- **Still undecided** (from the player colour mock-ups,
+  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
+  "not like Apple" touches: olive as the app's own colour for the selected
+  tab / links / switches, DM Mono numbers, tape-style progress, start
+  times / done-by as a signature. Not built.
 
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /
   strong"). Every title is Big Shoulders Black (900) in capitals. Options

@@ -1,18 +1,17 @@
 import AVKit
+import MediaPlayer
 import SwiftUI
 import PodcastCore
 
-/// The full player (Deck 0, Paul 11 Nov 2026; mock-up
-/// https://claude.ai/artifact/7Pz2BXFcpRBv9JMsz2m1TA). Looking at the top:
-/// the artwork filling the top half with the title under it. TRANSCRIPT or
-/// CHAPTERS shrinks the artwork beside the title and fills the top half
-/// instead (they swap with each other; tap the lit one again for the
-/// artwork), like Apple Podcasts. Doing at the bottom, in thumb reach: the
-/// green display (time, when it ends, what's left; drag along its progress
-/// from the play point to scrub), skip / play / skip, the Speed / Trim /
-/// Boost / Sleep strip, and TRANSCRIPT / CHAPTERS / where it's playing. No
-/// close key: swipe down. Up Next is on the Listen tab. The episode notes
-/// are further down the page.
+/// The full player (Native warm, full colour: Paul 12 Nov 2026, mock-up A on
+/// https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q). The whole player is
+/// in the playing episode's artwork colour (darkening a little towards the
+/// bottom) with light text. Top: download and transcript keys, the artwork
+/// (TRANSCRIPT or CHAPTERS shrink it beside the title and fill the top
+/// half). Bottom, in thumb reach: the progress line, skip / play / skip,
+/// the iPhone's volume, then Options (speed, trim, boost, sleep) ·
+/// Transcript · Chapters · where it's playing. Scroll down for the next
+/// few in Up Next and the episode notes. No close key: swipe down.
 struct NowPlayingView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -44,6 +43,18 @@ struct NowPlayingView: View {
     /// Looked up once per episode, not on every redraw: the player redraws
     /// twice a second while playing (review, 9 Nov 2026).
     @State private var currentEpisode: PodcastEpisode?
+    /// The player's colour, fixed when it opens or the episode changes (no
+    /// jumps while you look at it); neutral dark until it's known.
+    @State private var colour: Color?
+    @State private var showingUpNext = false
+
+    private static let neutral = Color(hex: 0x2C2A26)
+    private var canvas: Color { colour ?? Self.neutral }
+    /// Light text and icons on the colour.
+    private var fg: Color { Poster.paper }
+    private var fgQuiet: Color { Poster.paper.opacity(0.72) }
+    /// See-through light fill for keys that are off.
+    private var chip: Color { Color.white.opacity(0.16) }
 
     var body: some View {
         Group {
@@ -53,10 +64,17 @@ struct NowPlayingView: View {
                     VStack(spacing: 0) {
                         screen(item, top: geometry.safeAreaInsets.top,
                                height: geometry.size.height + geometry.safeAreaInsets.top)
+                        PlayerUpNextCard(fg: fg, fgQuiet: fgQuiet) { showingUpNext = true }
+                            .padding(.horizontal, 18)
+                            .padding(.top, 8)
                         if let episode = currentEpisode {
+                            // A paper card, so the notes read as they do
+                            // everywhere else.
                             EpisodeNotesText(episode: episode)
+                                .padding(16)
+                                .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
                                 .padding(.horizontal, 18)
-                                .padding(.top, 12)
+                                .padding(.top, 14)
                                 .padding(.bottom, 30)
                         }
                     }
@@ -79,7 +97,13 @@ struct NowPlayingView: View {
                 }
                 .ignoresSafeArea(edges: .top)
                 }
-                .task(id: item.artworkURL) { await ArtworkColors.shared.load(item.artworkURL) }
+                .task(id: item.artworkURL) {
+                    await ArtworkColors.shared.load(item.artworkURL)
+                    // Measured just now: fade in once, then it stays.
+                    if colour == nil, let measured = ArtworkColors.shared.background(for: item.artworkURL) {
+                        withAnimation(.easeInOut(duration: 0.4)) { colour = measured }
+                    }
+                }
             } else {
                 Text("Nothing playing")
                     .foregroundStyle(Theme.muted)
@@ -87,11 +111,17 @@ struct NowPlayingView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background.ignoresSafeArea())
-        .foregroundStyle(Theme.ink)
-        .tint(Theme.ink)
+        .background { background.ignoresSafeArea() }
+        .foregroundStyle(fg)
+        .tint(fg)
+        // The status bar's dark text would be lost on the colour (a
+        // colour-scheme preference here can flip the whole app's look).
+        .statusBarHidden(true)
         .onChange(of: player.nowPlaying?.episodeID, initial: true) { _, id in
             currentEpisode = id.flatMap { store.episode($0) }
+            withAnimation(.easeInOut(duration: 0.4)) {
+                colour = ArtworkColors.shared.background(for: player.nowPlaying?.artworkURL)
+            }
         }
         .onChange(of: player.chapters.isEmpty) { _, empty in
             if empty, topMode == .chapters { topModeRaw = TopMode.artwork.rawValue }
@@ -99,7 +129,20 @@ struct NowPlayingView: View {
         .sheet(isPresented: $showingNotes) {
             if let episode = currentEpisode { EpisodeNotesView(episode: episode) }
         }
+        .sheet(isPresented: $showingUpNext) {
+            UpNextSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .transcribeExplainer()
+    }
+
+    /// The artwork colour, a little darker towards the bottom.
+    private var background: some View {
+        ZStack {
+            canvas
+            LinearGradient(colors: [.clear, .black.opacity(0.28)], startPoint: .top, endPoint: .bottom)
+        }
     }
 
     // MARK: The first screenful
@@ -116,7 +159,7 @@ struct NowPlayingView: View {
             VStack(spacing: 11) {
                 progressSection
                 transport
-                toolsRow
+                volumeRow
                 modeButtons
             }
             .padding(.top, 10)
@@ -136,12 +179,15 @@ struct NowPlayingView: View {
             if topMode == .transcript {
                 quietKey("magnifyingglass", label: "Find in transcript") { searchingTranscript.toggle() }
             }
-            if let episode = currentEpisode { downloadKey(episode) }
+            if let episode = currentEpisode {
+                downloadKey(episode)
+                transcriptKey(episode)
+            }
             quietKey("checkmark", label: "Mark as played") { markPlayed() }
         }
         .frame(height: 36)
         .overlay {
-            Capsule().fill(Theme.controlBorder).frame(width: 38, height: 5)
+            Capsule().fill(fg.opacity(0.4)).frame(width: 38, height: 5)
                 .accessibilityHidden(true)
         }
     }
@@ -150,9 +196,9 @@ struct NowPlayingView: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(fg)
                 .frame(width: 34, height: 34)
-                .background(Theme.surface, in: Circle())
-                .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
+                .background(chip, in: Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -180,7 +226,7 @@ struct NowPlayingView: View {
                     .padding(.top, 6)
                     Group {
                         if topMode == .transcript, let episode = currentEpisode {
-                            PlayerTranscriptPanel(episode: episode, searching: $searchingTranscript, light: true)
+                            PlayerTranscriptPanel(episode: episode, searching: $searchingTranscript)
                         } else {
                             PlayerChaptersPanel()
                         }
@@ -207,7 +253,7 @@ struct NowPlayingView: View {
             Button { showingNotes = true } label: {
                 Text(item.title)
                     .font(Theme.title(centred ? 22 : 18))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(fg)
                     .multilineTextAlignment(centred ? .center : .leading)
                     .lineLimit(2)
             }
@@ -221,12 +267,12 @@ struct NowPlayingView: View {
                     Text(showLine(item).uppercased())
                         .font(Theme.mono(9.5))
                         .tracking(0.6)
-                        .foregroundStyle(Theme.muted)
+                        .foregroundStyle(fgQuiet)
                         .lineLimit(1)
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens the show")
-                if let episode = currentEpisode { EpisodeLights(episode: episode) }
+                if let episode = currentEpisode { EpisodeLights(episode: episode, onDark: true) }
             }
         }
         .frame(maxWidth: .infinity, alignment: centred ? .center : .leading)
@@ -265,11 +311,11 @@ struct NowPlayingView: View {
                 let x: CGFloat = CGFloat(shown / duration) * width
                 ZStack(alignment: .leading) {
                     ScrubLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
-                              tint: Theme.ink, track: Theme.ink.opacity(0.14), grow: active ? 1 : 0)
+                              tint: fg, track: fg.opacity(0.25), grow: active ? 1 : 0)
                         .frame(width: width + 2 * ScrubLine.stretch, height: ScrubLine.height)
                         .offset(x: -ScrubLine.stretch)
                     Circle()
-                        .fill(Theme.ink)
+                        .fill(fg)
                         .frame(width: active ? 20 : 12, height: active ? 20 : 12)
                         .offset(x: x - (active ? 10 : 6))
                         .allowsHitTesting(false)
@@ -302,7 +348,7 @@ struct NowPlayingView: View {
             }
             .font(.system(size: 12, weight: .medium))
             .monospacedDigit()
-            .foregroundStyle(Theme.muted)
+            .foregroundStyle(fgQuiet)
         }
     }
 
@@ -325,8 +371,8 @@ struct NowPlayingView: View {
             SkipButton(direction: .forward, iconSize: 30, frame: 60)
             Spacer()
         }
-        .foregroundStyle(Theme.ink)
-        .tint(Theme.ink)
+        .foregroundStyle(fg)
+        .tint(fg)
     }
 
     private func scrubGesture(width: CGFloat, duration: TimeInterval) -> some Gesture {
@@ -378,58 +424,74 @@ struct NowPlayingView: View {
         return player.adBreaks.map { ($0.start / player.duration)...($0.end / player.duration) }
     }
 
-    /// Speed, Trim, Boost and Sleep: small buttons, filled when on.
-    private var toolsRow: some View {
-        HStack(spacing: 8) {
-            Menu {
-                Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: Binding(get: { player.speed }, set: { player.setSpeed($0) })) {
-                    ForEach(PlayerOptions.speeds, id: \.self) { speed in
-                        Text(PlayerOptions.speedLabel(speed)).tag(speed)
-                    }
-                }
-            } label: {
-                toolLabel(PlayerOptions.speedLabel(player.speed), icon: "gauge.with.dots.needle.50percent", on: player.speed != 1)
-            }
-            .accessibilityLabel("Speed, \(PlayerOptions.speedLabel(player.speed))")
+    /// The iPhone's own volume (it moves with the side buttons and
+    /// AirPods), a little narrower than the progress line (Paul, 12 Nov 2026).
+    private var volumeRow: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "speaker.fill")
+                .font(.system(size: 11))
+                .foregroundStyle(fgQuiet)
+                .accessibilityHidden(true)
+            SystemVolumeSlider()
+                .frame(height: 34)
+            Image(systemName: "speaker.wave.3.fill")
+                .font(.system(size: 11))
+                .foregroundStyle(fgQuiet)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 16)
+    }
 
-            Button { player.setTrimSilences(!player.trimSilences) } label: {
-                toolLabel("Trim", icon: "scissors", on: player.trimSilences)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Trim silences: speeds through pauses")
-            .accessibilityAddTraits(player.trimSilences ? .isSelected : [])
+    /// Any of speed, trim, boost or sleep switched on (lights Options).
+    private var optionsOn: Bool {
+        player.speed != 1 || player.trimSilences || player.boostVoices || player.sleepTimer != nil
+    }
 
-            Button { player.setBoostVoices(!player.boostVoices) } label: {
-                toolLabel("Boost", icon: "waveform", on: player.boostVoices)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Boost voices: makes speech clearer and more even")
-            .accessibilityAddTraits(player.boostVoices ? .isSelected : [])
+    private var speedBinding: Binding<Double> {
+        Binding(get: { player.speed }, set: { player.setSpeed($0) })
+    }
 
-            Menu {
-                if player.sleepTimer != nil {
-                    Button("5 more minutes", systemImage: "plus.circle") { player.extendSleepTimer() }
-                    Button("Turn off timer", systemImage: "moon.zzz") { player.setSleepTimer(nil) }
+    private var trimBinding: Binding<Bool> {
+        Binding(get: { player.trimSilences }, set: { player.setTrimSilences($0) })
+    }
+
+    private var boostBinding: Binding<Bool> {
+        Binding(get: { player.boostVoices }, set: { player.setBoostVoices($0) })
+    }
+
+    /// Speed, Trim, Boost and Sleep in one small menu (Paul, 12 Nov 2026).
+    @ViewBuilder private var optionsMenuContent: some View {
+        Menu {
+            Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: speedBinding) {
+                ForEach(PlayerOptions.speeds, id: \.self) { speed in
+                    Text(PlayerOptions.speedLabel(speed)).tag(speed)
                 }
-                ForEach(SleepTimerOption.all, id: \.self) { option in
-                    Button(option.label) { player.chooseSleepTimer(option) }
-                }
-            } label: {
-                toolLabel(player.sleepTimer == nil ? "Sleep" : sleepValue, icon: "moon", on: player.sleepTimer != nil)
             }
-            .accessibilityLabel(player.sleepTimer == nil ? "Sleep timer" : "Sleep timer on, \(sleepValue)")
+        } label: {
+            Label("Speed · \(PlayerOptions.speedLabel(player.speed))", systemImage: "gauge.with.dots.needle.50percent")
+        }
+        Toggle(isOn: trimBinding) { Label("Trim silences", systemImage: "scissors") }
+        Toggle(isOn: boostBinding) { Label("Boost voices", systemImage: "waveform") }
+        Menu {
+            if player.sleepTimer != nil {
+                Button("5 more minutes", systemImage: "plus.circle") { player.extendSleepTimer() }
+                Button("Turn off timer", systemImage: "moon.zzz") { player.setSleepTimer(nil) }
+            }
+            ForEach(SleepTimerOption.all, id: \.self) { option in
+                Button(option.label) { player.chooseSleepTimer(option) }
+            }
+        } label: {
+            Label(player.sleepTimer == nil ? "Sleep timer" : "Sleep · \(sleepValue)", systemImage: "moon")
         }
     }
 
-    private func toolLabel(_ title: String, icon: String, on: Bool) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 12, weight: .semibold))
-            Text(title).font(.system(size: 13, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+    private var optionsButton: some View {
+        Menu {
+            optionsMenuContent
+        } label: {
+            modeLabel("Options", icon: "slider.horizontal.3", lit: optionsOn)
         }
-        .foregroundStyle(on ? Theme.surface : Theme.ink)
-        .frame(maxWidth: .infinity, minHeight: 36)
-        .background(on ? Theme.ink : Theme.surface, in: Capsule())
-        .contentShape(Capsule())
+        .accessibilityLabel(optionsOn ? "Options: speed, trim, boost, sleep. Some are on" : "Options: speed, trim, boost, sleep")
     }
 
     /// "OFF", "END" or the minutes left ("20M").
@@ -440,35 +502,40 @@ struct NowPlayingView: View {
         return player.sleepTimer == .endOfEpisode ? "End" : (player.sleepTimer == nil ? "Off" : "On")
     }
 
-    /// Transcript, chapters and where it's playing (Paul, 11 Nov 2026), as
-    /// plain icons like the row under Apple Music's player; lit when on.
+    /// Options · Transcript · Chapters · where it's playing (Paul, 12 Nov
+    /// 2026), as plain icons; lit (paper, the colour inside) when on.
     private var modeButtons: some View {
         HStack {
-            modeButton("Transcript", icon: "quote.bubble", lit: topMode == .transcript) { setMode(.transcript) }
-                .accessibilityLabel(topMode == .transcript ? "Show artwork" : "Show transcript")
-            modeButton("Chapters", icon: "list.bullet", lit: topMode == .chapters) { setMode(.chapters) }
-                .disabled(player.chapters.isEmpty)
-                .accessibilityLabel(topMode == .chapters ? "Show artwork" : "Show chapters")
+            optionsButton
+            Button { setMode(.transcript) } label: {
+                modeLabel("Transcript", icon: "quote.bubble", lit: topMode == .transcript)
+            }
+            .buttonStyle(DimWhenDisabled())
+            .accessibilityLabel(topMode == .transcript ? "Show artwork" : "Show transcript")
+            Button { setMode(.chapters) } label: {
+                modeLabel("Chapters", icon: "list.bullet", lit: topMode == .chapters)
+            }
+            .buttonStyle(DimWhenDisabled())
+            .disabled(player.chapters.isEmpty)
+            .accessibilityLabel(topMode == .chapters ? "Show artwork" : "Show chapters")
             deviceButton
         }
     }
 
-    private func modeButton(_ title: String, icon: String, lit: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(lit ? Theme.surface : Theme.ink)
-                    .frame(width: 40, height: 32)
-                    .background(lit ? Theme.ink : Color.clear, in: Capsule())
-                Text(title)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(Theme.muted)
-            }
-            .frame(maxWidth: .infinity, minHeight: 50)
-            .contentShape(Rectangle())
+    private func modeLabel(_ title: String, icon: String, lit: Bool) -> some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(lit ? canvas : fg)
+                .frame(width: 40, height: 32)
+                .background(lit ? fg : Color.clear, in: Capsule())
+            Text(title)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(fgQuiet)
+                .lineLimit(1)
         }
-        .buttonStyle(DimWhenDisabled())
+        .frame(maxWidth: .infinity, minHeight: 50)
+        .contentShape(Rectangle())
     }
 
     /// Where the sound is going; tap for the system device picker.
@@ -479,10 +546,10 @@ struct NowPlayingView: View {
                 .frame(width: 40, height: 32)
             Text(player.outputName ?? "iPhone")
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(fgQuiet)
                 .lineLimit(1)
         }
-        .foregroundStyle(Theme.ink)
+        .foregroundStyle(fg)
         .frame(maxWidth: .infinity, minHeight: 50)
         .allowsHitTesting(false)
         .background(RoutePicker(tint: .clear))
@@ -506,10 +573,10 @@ struct NowPlayingView: View {
         } label: {
             ZStack {
                 if let fraction {
-                    Circle().stroke(Theme.hairline, lineWidth: 3)
+                    Circle().stroke(fg.opacity(0.25), lineWidth: 3)
                     Circle()
                         .trim(from: 0, to: max(0.04, fraction))
-                        .stroke(Theme.ink, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .stroke(fg, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     Image(systemName: "stop.fill")
                         .font(.system(size: 8, weight: .bold))
@@ -518,14 +585,53 @@ struct NowPlayingView: View {
                         .font(.system(size: 14, weight: .bold))
                 }
             }
+            .foregroundStyle(fg)
             .frame(width: 22, height: 22)
             .frame(width: 34, height: 34)
-            .background(Theme.surface, in: Circle())
-            .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
+            .background(chip, in: Circle())
         }
         .buttonStyle(.plain)
         .disabled(local)
         .accessibilityLabel(local ? "Downloaded" : fraction.map { "Stop download, \(Int($0 * 100)) percent done" } ?? "Download")
+    }
+
+    /// Transcript, like download (Paul, 12 Nov 2026): TX to transcribe now;
+    /// a ring filling while it's on its way (tap to stop); filled once
+    /// there's a transcript (tap to show it).
+    private func transcriptKey(_ episode: PodcastEpisode) -> some View {
+        let queued: Bool = transcripts.isQueued(episode)
+        let fraction: Double? = transcripts.progress[episode.episodeID]
+        let ready: Bool = episode.transcriptState == .ready
+        return Button {
+            if queued {
+                transcripts.stop(episode)
+            } else if ready || !transcripts.canTranscribeNow(episode) {
+                setMode(.transcript)
+            } else {
+                transcripts.transcribeNow(episode)
+            }
+        } label: {
+            ZStack {
+                if queued {
+                    Circle().stroke(fg.opacity(0.25), lineWidth: 3)
+                    Circle()
+                        .trim(from: 0, to: max(0.04, fraction ?? 0.04))
+                        .stroke(fg, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 8, weight: .bold))
+                } else {
+                    Image(systemName: ready ? "text.quote" : "text.bubble")
+                        .font(.system(size: 13, weight: .bold))
+                }
+            }
+            .foregroundStyle(ready && !queued ? canvas : fg)
+            .frame(width: 22, height: 22)
+            .frame(width: 34, height: 34)
+            .background(ready && !queued ? fg : chip, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(queued ? "Stop transcribing" : (ready ? "Show transcript" : "Transcribe now"))
     }
 
     /// The top keys' fill on printed colour areas (the poster look's one-ink
@@ -625,8 +731,9 @@ struct NowPlayingView: View {
 
 }
 
-/// The player's CHAPTERS view (fills the top half): every chapter, the one
-/// playing in the dark "playing" card, earlier ones faded; tap to jump.
+/// The player's CHAPTERS view (fills the top half): every chapter in light
+/// text on the player's colour, the one playing on a see-through light
+/// band, earlier ones faded; tap to jump.
 /// "From the show / auto" opens the full chapters list with its switch.
 private struct PlayerChaptersPanel: View {
     @Environment(PlayerModel.self) private var player
@@ -648,7 +755,7 @@ private struct PlayerChaptersPanel: View {
                         Text("ALL CHAPTERS · FROM THE SHOW / AUTO ›")
                             .font(Theme.mono(9, .bold))
                             .tracking(0.6)
-                            .foregroundStyle(Theme.muted)
+                            .foregroundStyle(Poster.paper.opacity(0.72))
                             .frame(maxWidth: .infinity, minHeight: 40)
                     }
                     .buttonStyle(.plain)
@@ -674,7 +781,7 @@ private struct PlayerChaptersPanel: View {
         return HStack(spacing: 10) {
             Text(isNow ? "▶" : "\(index + 1)")
                 .font(Theme.mono(10, .bold))
-                .foregroundStyle(isNow ? Deck0.led : Theme.muted)
+                .foregroundStyle(Poster.paper.opacity(isNow ? 1 : 0.6))
                 .frame(width: 18, alignment: .leading)
             Text(title)
                 .font(Theme.text(15, isNow ? .semibold : .regular))
@@ -685,13 +792,122 @@ private struct PlayerChaptersPanel: View {
                 .monospacedDigit()
                 .opacity(0.75)
         }
-        .foregroundStyle(isNow ? Poster.paper : (done ? Theme.muted : Theme.ink))
+        .foregroundStyle(Poster.paper.opacity(done ? 0.55 : 1))
         .padding(.horizontal, 10)
         .frame(minHeight: 38)
-        .background(isNow ? Theme.playingCard : Color.clear, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .background(isNow ? Color.white.opacity(0.18) : Color.clear, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
         .contentShape(Rectangle())
         .accessibilityLabel("Chapter \(index + 1), \(title)\(isNow ? ", playing" : "")")
     }
+}
+
+/// The next few in Up Next above the episode notes (Paul, 12 Nov 2026: the
+/// mini Up Next card back, instead of an Up Next key): when each starts at
+/// the current speed, tap to play, "All ›" pulls up the full list.
+private struct PlayerUpNextCard: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    let fg: Color
+    let fgQuiet: Color
+    let openAll: () -> Void
+
+    private struct Next: Identifiable {
+        let episode: PodcastEpisode
+        let starts: Date
+        var id: String { episode.episodeID }
+    }
+
+    /// Up to three after the one playing, with their start times.
+    private var upcoming: [Next] {
+        let playingID: String? = player.nowPlaying?.episodeID
+        let rest: [QueueItem] = store.queue.filter { $0.episode.id != playingID }
+        let episodes = store.episodes(rest.prefix(3).map(\.episode.id))
+        let speed: Double = max(player.speed, 0.5)
+        var clock: Date = Date().addingTimeInterval(max(0, player.duration - player.currentTime) / speed)
+        var result: [Next] = []
+        for item in rest.prefix(3) {
+            guard let episode = episodes[item.episode.id] else { continue }
+            result.append(Next(episode: episode, starts: clock))
+            let length: TimeInterval = episode.timeLeft ?? episode.duration ?? 0
+            clock = clock.addingTimeInterval(length / speed)
+        }
+        return result
+    }
+
+    var body: some View {
+        let next = upcoming
+        let count: Int = store.queue.filter { $0.episode.id != player.nowPlaying?.episodeID }.count
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("UP NEXT · \(count)")
+                    .font(Theme.mono(10, .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(fgQuiet)
+                Spacer()
+                Button(action: openAll) {
+                    Text("All ›")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(fg)
+                        .frame(minHeight: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("All of Up Next")
+            }
+            if next.isEmpty {
+                Text("Nothing else in Up Next.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(fgQuiet)
+            }
+            ForEach(next) { item in
+                row(item)
+            }
+        }
+        .padding(14)
+        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+    }
+
+    private func row(_ item: Next) -> some View {
+        Button { player.play(item.episode) } label: {
+            HStack(spacing: 10) {
+                ArtworkView(url: item.episode.artwork, title: item.episode.showTitle, size: 36, radius: 6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.episode.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(fg)
+                        .lineLimit(1)
+                    Text(item.episode.showTitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(fgQuiet)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(UpNextTimes.clock(item.starts))
+                    .font(.system(size: 12, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(fgQuiet)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(item.episode.title), starts at \(UpNextTimes.clock(item.starts))")
+        .accessibilityHint("Plays it now")
+    }
+}
+
+/// The iPhone's own volume slider (moves with the side buttons), drawn in
+/// the player's light colour.
+private struct SystemVolumeSlider: UIViewRepresentable {
+    func makeUIView(context: Context) -> MPVolumeView {
+        let view = MPVolumeView(frame: .zero)
+        view.tintColor = UIColor(Poster.paper)
+        if let slider = view.subviews.compactMap({ $0 as? UISlider }).first {
+            slider.minimumTrackTintColor = UIColor(Poster.paper)
+            slider.maximumTrackTintColor = UIColor(Poster.paper).withAlphaComponent(0.25)
+        }
+        return view
+    }
+
+    func updateUIView(_ view: MPVolumeView, context: Context) {}
 }
 
 /// The progress line's drawing (see `scrubBar`): split by small gaps at

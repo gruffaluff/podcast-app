@@ -245,15 +245,22 @@ struct EpisodeLights: View {
 
     /// Deck 0 (Paul, 11 Nov 2026: "more subtle"): just the small letters,
     /// dark when done, faded when not, dotted underneath while on its way.
+    /// Each light keeps the room of its longest form ("DL 100%",
+    /// "TX WAIT"), so a download starting doesn't shift the row's text
+    /// about (Paul, build 143).
     private func light(_ text: String, state: LightState, color: Color) -> some View {
-        Text(text)
-            .font(Theme.mono(8.5, .semibold))
-            .tracking(0.6)
-            .underline(state == .busy, pattern: .dot)
-            .lineLimit(1)
-            .fixedSize()
-            .foregroundStyle(onDark ? Poster.paper : Theme.ink)
-            .opacity(state == .on ? 0.85 : (state == .busy ? 0.55 : 0.22))
+        ZStack(alignment: .leading) {
+            Text(text.hasPrefix("DL") ? "DL 100%" : "TX WAIT")
+                .hidden()
+            Text(text)
+                .underline(state == .busy, pattern: .dot)
+                .foregroundStyle(onDark ? Poster.paper : Theme.ink)
+                .opacity(state == .on ? 0.85 : (state == .busy ? 0.55 : 0.22))
+        }
+        .font(Theme.mono(8.5, .semibold))
+        .tracking(0.6)
+        .lineLimit(1)
+        .fixedSize()
     }
 
     private func label(progress: Double?) -> String {
