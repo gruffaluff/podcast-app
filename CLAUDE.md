@@ -1584,6 +1584,24 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Player reshuffle** (Paul, 12 Nov 2026; replaces the Up Next key idea):
+  - Top keys: a **transcript key beside the download key** (like download:
+    TX to transcribe now, a filling ring / % while it's on its way and
+    tap to stop, filled when there's a transcript).
+  - **Volume slider** where Speed / Trim / Boost / Sleep sit now: the
+    iPhone's own volume (`MPVolumeView`, so it moves with the buttons on
+    the side and AirPods), quiet speaker icons at each end, a little
+    narrower than the progress line.
+  - Bottom row: **Options · Transcript · Chapters · AirPods**. Options
+    opens a small menu (popover above the button) holding Speed (with its
+    choices), Trim, Boost and Sleep (with its timer choices and 5 more
+    minutes); the Options icon lights when any of them is on.
+  - **No Up Next key.** Instead the mini Up Next card comes back **above
+    the episode notes** (scroll down in the player): the next few
+    episodes with start times, tap to play, "All ›" pulls up the full Up
+    Next (`UpNextSheet`, drag to reorder, swipe to remove).
+  - Full colour player (queued above) applies to all of these.
+
 - **Carry on: play / pause on the artwork** (Paul, 12 Nov 2026): each
   Carry on card's artwork gets a small play icon over it (a soft dark
   circle with a white ▶), pause (❚❚) on the one playing, so it's clear
@@ -1606,14 +1624,6 @@ From the Notion notes after 6 Nov 08:10:
   letters, one full-width Play / Resume key in the episode's colour, and
   small Play next and Played keys beside it. Download, transcript and
   "In Up Next" stay only as the status rows below (no duplicate keys).
-
-- **Up Next key in the player** (Paul, 12 Nov 2026, build 143 screenshot):
-  a fourth icon on the left of the bottom row (Up Next · Transcript ·
-  Chapters · AirPods) that opens a mini Up Next pulled up over the player
-  (half-height sheet with a handle: the next few episodes with start
-  times, tap to play, drag to reorder, swipe to remove; reuse
-  `UpNextSheet` with `.presentationDetents([.medium, .large])`). Shows
-  the count ("Up Next · 4") under the icon.
 
 - **Player in the episode's colour + not looking like Apple** (Paul, FNB,
   12 Nov 2026: "we're in a nice spot again"). Mock-ups on
