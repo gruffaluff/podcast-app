@@ -50,14 +50,12 @@ struct ShowView: View {
 
         List(selection: $selection) {
             Section {
-                // Edge to edge, up under the status bar, rounded at the bottom.
                 header
                     .listRowBackground(Theme.background)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets())
                     .selectionDisabled()
-                // Search this show (a field here: the header runs up to the
-                // top of the screen, where the bar's search would sit).
+                // Search this show.
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Theme.muted)
                     TextField("Search this show", text: $search)
@@ -106,7 +104,6 @@ struct ShowView: View {
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .ignoresSafeArea(edges: .top)
         .background(Theme.background)
         .environment(\.showColour, pageColour)
         .navigationBarTitleDisplayMode(.inline)
@@ -238,63 +235,66 @@ struct ShowView: View {
                 }))
     }
 
-    /// The show's header: the artwork filling the card, fading into its
-    /// colour behind the text, with Following, settings (where new episodes
-    /// go) and the alerts bell across the width.
+    /// The show's header, plain on the warm page (Paul, 12 Nov 2026: the
+    /// printed block left a gap above it when the list was pulled down):
+    /// artwork and name, publisher · episodes · auto download, then
+    /// Following, settings (where new episodes go) and the alerts bell, and
+    /// the description. Keys that are on take the show's colour.
     private var header: some View {
-        let tint = pageColour ?? Theme.display
-        return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 170)
-            // The show's poster: the artwork printed in its colour, the real
-            // artwork as a square stamp beside the name (Paul's A + B).
-            HStack(alignment: .bottom, spacing: 12) {
-                Stamp(url: show.artworkURL, title: show.title, size: 72)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text([show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ").uppercased())
-                        .font(Theme.mono(9.5))
-                        .tracking(0.8)
-                        .foregroundStyle(Theme.displayDim)
-                        .lineLimit(2)
+        let accent: Color = Theme.showAccentFill(pageColour)
+        let onAccent: Color = Theme.showOnAccent(pageColour)
+        let details: String = [show.author, "\(show.episodes.count) episodes", show.autoDownload ? "auto download" : nil]
+            .compactMap { $0?.isEmpty == false ? $0 : nil }
+            .joined(separator: " · ")
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 14) {
+                ArtworkView(url: show.artworkURL, title: show.title, size: 96, radius: 12)
+                VStack(alignment: .leading, spacing: 5) {
                     Text(show.title)
-                        .font(Theme.big(40))
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(Theme.ink)
                         .lineLimit(3)
-                        .minimumScaleFactor(0.5)
-                        .shadow(color: .black.opacity(0.3), radius: 6, y: 2)
+                        .minimumScaleFactor(0.7)
                         .accessibilityAddTraits(.isHeader)
+                    Text(details)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(2)
                 }
             }
             HStack(spacing: 8) {
                 Button { confirmingUnfollow = true } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "checkmark").font(.system(size: 12, weight: .heavy))
-                        Text("FOLLOWING").font(Theme.mono(12, .bold))
+                        Text("Following").font(.system(size: 14, weight: .semibold))
                     }
-                    .foregroundStyle(tint)
+                    .foregroundStyle(onAccent)
                     .padding(.horizontal, 10)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
-                    .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
+                    .background(accent, in: RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Following. Tap to unfollow")
                 Button { showingSettings = true } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "slider.horizontal.3")
-                        Text(modeName).font(Theme.mono(12, .bold))
+                        Text(modeName).font(.system(size: 14, weight: .semibold))
                     }
+                    .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 10)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
-                    .background(NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 13))
+                    .background(Theme.plate, in: RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Show settings. New episodes: \(modeName)")
                 Button { toggleAlerts() } label: {
                     Image(systemName: show.notify ? "bell.fill" : "bell.slash")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(show.notify ? Theme.ink : Theme.displayText)
+                        .foregroundStyle(show.notify ? onAccent : Theme.ink)
                         .frame(width: 44, height: 44)
-                        .background(show.notify ? Theme.highlight : NowPlayingView.keyFill, in: RoundedRectangle(cornerRadius: 13))
+                        .background(show.notify ? accent : Theme.plate, in: RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(show.notify ? "New episode alerts on" : "New episode alerts off")
@@ -303,16 +303,14 @@ struct ShowView: View {
             if !show.summary.isEmpty {
                 Text(show.summary)
                     .font(.subheadline)
-                    .foregroundStyle(Theme.displayDim)
+                    .foregroundStyle(Theme.muted)
                     .lineLimit(3)
             }
         }
-        .foregroundStyle(Theme.displayText)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 22)
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background { ShowHeroBackground(url: show.artworkURL, tint: tint) }
-        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 36, bottomTrailingRadius: 36))
         .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }
     }
 
@@ -326,9 +324,9 @@ struct ShowView: View {
 
     private var modeName: String {
         switch show.autoAdd {
-        case .off: return "OFF"
-        case .top: return "TOP"
-        case .bottom: return "BOTTOM"
+        case .off: return "Off"
+        case .top: return "Top"
+        case .bottom: return "Bottom"
         }
     }
 }

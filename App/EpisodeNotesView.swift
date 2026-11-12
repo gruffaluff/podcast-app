@@ -41,52 +41,51 @@ struct EpisodeNotesView: View {
         .transcribeExplainer()
     }
 
-    /// The episode's own poster (Paul's pick, 11 Nov 2026): printed in the
-    /// show's colour, the artwork stamp and show (both open the show), the
-    /// title in big capitals, then its keys.
+    /// The top of the page on the warm page (Paul, 12 Nov 2026: the printed
+    /// block with a huge title and six keys looked off and repeated the
+    /// status rows below): artwork, "Show ›" and date · length, the title
+    /// as the feed writes it, DL / TX, then one Play / Resume key in the
+    /// episode's colour with small Play next and Played keys. Download,
+    /// transcript and the place in Up Next are only the rows below.
     private var poster: some View {
         let art = episode.showArtwork
-        let tint = pageColour ?? Theme.display
         let details = [episode.published.formatted(date: .abbreviated, time: .omitted),
                        episode.duration.map { TimeFormat.length($0) }].compactMap { $0 }.joined(separator: " · ")
         return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Button(action: openShow) {
-                    Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 52)
+                    ArtworkView(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 64, radius: 10)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Open \(episode.podcast?.title ?? "the show")")
                 VStack(alignment: .leading, spacing: 3) {
                     Button(action: openShow) {
                         HStack(spacing: 4) {
-                            Text(episode.showTitle.uppercased())
-                            Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold))
+                            Text(episode.showTitle)
+                            Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
                         }
-                        .font(Theme.mono(10, .bold))
-                        .tracking(0.8)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.showAccentText(pageColour))
                         .lineLimit(1)
                     }
                     .buttonStyle(.plain)
-                    Text(details.uppercased())
-                        .font(Theme.mono(10))
-                        .tracking(0.8)
-                        .foregroundStyle(Poster.paper.opacity(0.8))
+                    Text(details)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.muted)
                 }
             }
             Text(episode.title)
-                .font(Theme.big(38))
-                .lineLimit(5)
-                .minimumScaleFactor(0.6)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(4)
+                .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-            EpisodeLights(episode: episode, onDark: true)
-            EpisodeActions(episode: episode, onShowColour: true)
+            EpisodeLights(episode: episode)
+            EpisodePageKeys(episode: episode, colour: pageColour)
         }
-        .foregroundStyle(Poster.paper)
-        .padding(18)
+        .padding(.horizontal, 16)
         .padding(.top, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background { PrintedArtwork(url: episode.artwork, colour: tint, strength: 0.45) }
-        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
         .task(id: art) { await ArtworkColors.shared.load(art) }
     }
 
@@ -94,6 +93,57 @@ struct EpisodeNotesView: View {
         guard let show = episode.podcast else { return }
         store.revealShow = show
         dismiss()
+    }
+}
+
+/// The episode page's keys: one wide Play / Resume (Pause while it's on)
+/// in the episode's colour, and small Play next and Played beside it.
+private struct EpisodePageKeys: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    let episode: PodcastEpisode
+    let colour: Color?
+
+    private var isThis: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+
+    private var playTitle: String {
+        if isThis && player.isPlaying { return "Pause" }
+        return episode.position > 30 && !episode.played ? "Resume" : "Play"
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button {
+                if isThis { player.togglePlayPause() } else { player.play(episode) }
+            } label: {
+                Label(playTitle, systemImage: isThis && player.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Theme.showOnAccent(colour))
+                    .frame(maxWidth: .infinity, minHeight: 46)
+                    .background(Theme.showAccentFill(colour), in: RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            smallKey("text.line.first.and.arrowtriangle.forward", label: "Play next") { store.playNext(episode) }
+            if episode.played {
+                smallKey("arrow.uturn.backward", label: "Mark unplayed") { store.markUnplayed(episode) }
+            } else {
+                smallKey("checkmark", label: "Mark played") {
+                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+                }
+            }
+        }
+    }
+
+    private func smallKey(_ icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 52, height: 46)
+                .background(Theme.plate, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }
 

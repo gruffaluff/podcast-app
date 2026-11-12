@@ -28,10 +28,10 @@ struct LibraryView: View {
     /// plus that show's newest one. Following a show with a long back
     /// catalogue filled the carousel with its old episodes (Paul, 8 Nov
     /// 2026: cap it at the latest one).
-    /// How long an episode stays in New (Paul, 11 Nov 2026): two weeks from
+    /// How long an episode stays in New (Paul, 12 Nov 2026): one week from
     /// when it came out. After that it's only on its show page (still
     /// unplayed, and still in Up Next if it's there).
-    static let newFor: TimeInterval = 14 * 86_400
+    static let newFor: TimeInterval = 7 * 86_400
 
     private var newCards: [PodcastEpisode] { Self.pickNew(from: newEpisodes, limit: 12) }
 
@@ -81,15 +81,6 @@ struct LibraryView: View {
                     if shows.isEmpty {
                         emptyState
                     } else {
-                        // HISTORY · STATS as small keys on the right.
-                        HStack(spacing: 6) {
-                            Spacer()
-                            NavigationLink { HistoryView() } label: { libraryKey("HISTORY", icon: "clock.arrow.circlepath") }
-                            NavigationLink { StatsView() } label: { libraryKey("STATS", icon: "chart.bar") }
-                        }
-                        .buttonStyle(KeyButtonStyle(kind: .plain, radius: 8))
-                        .padding(.horizontal, 12)
-
                         // Deck 0 (Paul, 11 Nov 2026): New first, as one paper
                         // "front page" card (B on paper, artwork on the right
                         // so it never looks like Carry on), then Carry on as
@@ -134,8 +125,14 @@ struct LibraryView: View {
                 path = NavigationPath()
                 path.append(show)
             }
+            // History and Stats sit level with the title, beside Add a show
+            // (Paul, build 143: their own row left gaps above and below).
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    NavigationLink { HistoryView() } label: { Image(systemName: "clock.arrow.circlepath") }
+                        .accessibilityLabel("History")
+                    NavigationLink { StatsView() } label: { Image(systemName: "chart.bar") }
+                        .accessibilityLabel("Stats")
                     Button { addingShow = true } label: {
                         Image(systemName: "plus")
                     }
@@ -227,15 +224,6 @@ struct LibraryView: View {
 
     private var sortBinding: Binding<ShowsSort> {
         Binding(get: { sort }, set: { showsSort = $0.rawValue })
-    }
-
-    private func libraryKey(_ title: String, icon: String) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 11, weight: .semibold))
-            Text(title).font(Theme.mono(10, .bold)).tracking(0.8)
-        }
-        .padding(.horizontal, 10)
-        .frame(minHeight: 32)
     }
 
     /// A section's big heading (option 3): the name and count in Big
@@ -548,7 +536,7 @@ private struct NewPaperLine: View {
     }
 }
 
-/// Every new episode (the last two weeks), with Add all and Mark all
+/// Every new episode (the last week), with Add all and Mark all
 /// played at the bottom, in thumb reach.
 private struct NewListView: View {
     @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
@@ -587,7 +575,7 @@ private struct NewListView: View {
                     .background(Theme.plate)
             }
         }
-        .navigationTitle("New · last two weeks")
+        .navigationTitle("New · last week")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -637,7 +625,16 @@ private struct CarryOnRow: View {
     var body: some View {
         let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
         let content = HStack(spacing: 10) {
+            // A play / pause icon over the artwork shows that tapping the
+            // card starts and stops it (Paul, 12 Nov 2026).
             Stamp(url: episode.artwork, title: episode.showTitle, size: 40)
+                .overlay {
+                    Image(systemName: isCurrent && player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 24, height: 24)
+                        .background(Color.black.opacity(0.5), in: Circle())
+                }
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     if isCurrent { PlayingBars(active: player.isPlaying) }
