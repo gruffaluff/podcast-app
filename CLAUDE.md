@@ -11,9 +11,10 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 12 Nov 2026): **"W1 Warm white"**: white cassette,
-ink window, olive / amber progress line, soft shadow on the off-white page
-(`design/icon/icon_w1.png` from `make_poster_icon.js`; build 145).
+screen. Icon (Paul, 12 Nov 2026): **"W1b Warm white, fine edge"**: white
+cassette with a thin warm-grey edge, ink window, olive / amber progress
+line, soft shadow on the off-white page (`design/icon/icon_w1.png` from
+`make_poster_icon.js`; W1 without the edge went out in build 145).
 Before that (11 Nov 2026): **"2b olive, soft shadow"**: sand
 cassette with spoked reels and the progress line (olive played, amber ad)
 on the olive accent with the halftone dot print and a soft card shadow;
@@ -1654,7 +1655,50 @@ check compiles it):
   progress (`EpisodeLights.light`, a masked copy). Nothing changes width.
 
 
+## Done in build 146 (12 Nov 2026, PR #64; Paul: "Build")
+
+- **Dragged Up Next rows: just the card** (Paul, 12 Nov 2026, build 145
+  screenshot of the pulled-up Up Next: the lifted row had a light square
+  round the card). Both reorderable Up Next lists use `reorderCardRow()`
+  (Deck.swift): clear row background and a rounded `.dragPreview` shape
+  the size of the card. (Builds 124 / 127 tried a drag shape on rows that
+  filled the cell; these rows are cards inside the cell, so the shape is
+  the card.) Check on the phone that the lifted card isn't see-through.
+- **Titles level with the top buttons** (Paul, 12 Nov 2026: "Up Next
+  level with the buttons at the top"): `tabTitle` uses
+  `.toolbarTitleDisplayMode(.inlineLarge)`, so Up Next, Library,
+  Discover and Search show their big title on the bar's own line and
+  the content starts higher.
+- **Mini Up Next matches the Up Next tab** (Paul, 12 Nov 2026, after the
+  options on https://claude.ai/artifact/HzhNwdFKAN7LRg9S8E71Xt: "match the
+  main Up Next in style and theme"): `PlayerUpNextCard` rows are the tab's
+  white cards (`posterCard`): 40 pt artwork, title (2 lines), SHOW ·
+  LENGTH, start time and DL / TX on the right; the "UP NEXT · n" label and
+  All › stay light on the player's colour. No see-through box round them.
+- **New card roomier** (Paul, 12 Nov 2026: "looks cramped"): `NewPaper`
+  padding 16 / 14 (was 12 / 10), lines 12 pt top and bottom (was 8),
+  artwork 44 pt (was 36), title 17 pt like Up Next, label 9 pt, more room
+  above the keys.
+
+- **Icon W1b "fine edge"** (Paul, 12 Nov 2026: the white cassette was "a
+  little lost"; picked W1b from
+  https://claude.ai/artifact/PS3G7LXAN1QLxAfbNPG8Ei over W1a deeper shadow,
+  W1c darker tile, W1d sand tile + edge): W1 with a thin warm-grey edge
+  (#CFC6B4) round the cassette and a slightly stronger shadow.
+  `make_poster_icon.js` re-run (app icon, `docs/icon.png`,
+  `design/icon/icon_w1.png`); website logos updated and the claude.ai
+  page republished.
+
 ## Queued for the next app build
+
+- **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
+  app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
+  Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
+  (#EEE7D9 page, white cards), S2 Sand + olive (S1 plus olive #45543A for
+  the selected tab, section labels, links and switches; suggested), S3
+  Deep sand (#E6DCC8 page, cream #FBF7EE cards, olive), each with its
+  matching icon (sand tile + fine edge). **Paul: leave the theme for now**
+  (12 Nov 2026).
 
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other

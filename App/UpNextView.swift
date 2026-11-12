@@ -180,7 +180,7 @@ struct UpNextView: View {
                 store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
             },
             enabled: !editing)
-        .deckCardRow()
+        .reorderCardRow()
     }
 
 

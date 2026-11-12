@@ -48,7 +48,7 @@ struct UpNextSheet: View {
                         .posterSwipe(trailing: PosterSwipeAction(title: "Remove", icon: "minus.circle", colour: Poster.swipePlayed) {
                             store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
                         })
-                        .deckCardRow()
+                        .reorderCardRow()
                     }
                     // Long press and drag, like the Up Next tab. (Always-on
                     // edit mode here redrew rows in the wrong order after a

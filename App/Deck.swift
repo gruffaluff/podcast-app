@@ -286,10 +286,11 @@ extension View {
     /// large-title gap above the content). The plain title stays for back
     /// buttons on screens pushed from here.
     func tabTitle(_ title: String) -> some View {
-        // Native warm: iOS's own large title, which shrinks into the bar
-        // as the list scrolls.
+        // iOS's large title, but on the same line as the bar's buttons
+        // (Paul, build 145: "Up Next level with the buttons at the top"),
+        // so every tab's content starts higher.
         self.navigationTitle(title)
-            .navigationBarTitleDisplayMode(.large)
+            .toolbarTitleDisplayMode(.inlineLarge)
     }
 }
 
@@ -312,6 +313,18 @@ extension View {
     func deckCardRow() -> some View {
         self
             .listRowBackground(Theme.background)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 5, leading: 12, bottom: 5, trailing: 12))
+    }
+
+    /// A card row you can pick up and drag (Up Next, the pulled-up Up Next):
+    /// the lifted copy is just the rounded card, with no square of the
+    /// page round it (Paul, build 145 screenshot). The row's own
+    /// background is clear, so only the card is lifted.
+    func reorderCardRow() -> some View {
+        self
+            .contentShape(.dragPreview, RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+            .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 5, leading: 12, bottom: 5, trailing: 12))
     }

@@ -410,15 +410,17 @@ private struct NewPaper: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("All new episodes")
             }
-            .padding(.bottom, 2)
+            .padding(.bottom, 4)
             ForEach(Array(episodes.prefix(4).enumerated()), id: \.element.episodeID) { index, episode in
                 NewPaperLine(episode: episode, first: index == 0)
             }
             NewActions(episodes: episodes)
-                .padding(.top, 10)
+                .padding(.top, 14)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        // Roomier (Paul, 12 Nov 2026: it looked cramped next to the other
+        // rows): more padding, and lines sized like Carry on and Up Next.
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
         .deckCard()
     }
 }
@@ -492,17 +494,17 @@ private struct NewPaperLine: View {
         if isCurrent { parts.append("Playing") } else if inQueue { parts.append("In Up Next") }
         let line: String = parts.filter { !$0.isEmpty }.joined(separator: " · ").uppercased()
         return HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     if isCurrent { PlayingBars(active: player.isPlaying) }
                     Text(episode.title)
-                        .font(Theme.title(16))
+                        .font(Theme.title(17))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(2)
                 }
                 HStack(spacing: 6) {
                     Text(line)
-                        .font(Theme.mono(8.5))
+                        .font(Theme.mono(9))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                     EpisodeLights(episode: episode)
@@ -512,12 +514,12 @@ private struct NewPaperLine: View {
             Button {
                 if isCurrent { player.togglePlayPause() } else { player.play(episode) }
             } label: {
-                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 36)
+                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 44)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(isCurrent && player.isPlaying ? "Pause" : "Play")
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .overlay(alignment: .top) {
             if !first { Theme.hairline.frame(height: 1) }
         }
