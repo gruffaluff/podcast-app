@@ -1656,6 +1656,23 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **Dragged Up Next rows: just the card** (Paul, 12 Nov 2026, build 145
+  screenshot of the pulled-up Up Next: the lifted row had a light square
+  round the card). Both reorderable Up Next lists use `reorderCardRow()`
+  (Deck.swift): clear row background and a rounded `.dragPreview` shape
+  the size of the card. (Builds 124 / 127 tried a drag shape on rows that
+  filled the cell; these rows are cards inside the cell, so the shape is
+  the card.) Check on the phone that the lifted card isn't see-through.
+- **Titles level with the top buttons** (Paul, 12 Nov 2026: "Up Next
+  level with the buttons at the top"): `tabTitle` uses
+  `.toolbarTitleDisplayMode(.inlineLarge)`, so Up Next, Library,
+  Discover and Search show their big title on the bar's own line and
+  the content starts higher.
+- **Mini Up Next options** (Paul, 12 Nov 2026: "slightly bigger and more
+  defined rows"): https://claude.ai/artifact/HzhNwdFKAN7LRg9S8E71Xt:
+  Now, B Tiles on the colour (suggested), C White cards, D Timeline, E Big
+  artwork sideways. Waiting on Paul.
+
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
   "not like Apple" touches: olive as the app's own colour for the selected
