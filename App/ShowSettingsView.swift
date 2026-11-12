@@ -217,6 +217,14 @@ struct TopPriorityView: View {
     @AppStorage("downloadCapGB") private var downloadCapGB = 0  // LibraryStore.downloadCapKey
     @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = false  // PlayerModel.bedtimeKey
     @AppStorage(PlayerModel.rewindKey) private var rewindOnResume = true
+    @AppStorage(AppBadge.modeKey) private var badgeMode = BadgeMode.off.rawValue
+
+    /// What the chosen badge counts, and how often it updates.
+    private var badgeFooter: String {
+        let mode = BadgeMode(rawValue: badgeMode) ?? .off
+        guard mode != .off else { return "The red number on Poddeck's icon. " + mode.detail }
+        return mode.detail + " It updates when you open the app and when it checks for new episodes, so it can be up to an hour or so behind."
+    }
     @State private var shows: [Podcast] = []
     @State private var checkHours = BackgroundRefresh.intervalHours
     @State private var findAds = AdScanner.isEnabled
@@ -300,6 +308,15 @@ struct TopPriorityView: View {
                 DeckHeader(title: "Checking for new episodes")
             } footer: {
                 Text("iOS decides the exact moment, so checks can run a little late. Pull down on Up Next to check now.")
+            }
+            .listRowBackground(Theme.surface)
+
+            Section {
+                BadgeSettingRow()
+            } header: {
+                DeckHeader(title: "Badge on the app icon")
+            } footer: {
+                Text(badgeFooter)
             }
             .listRowBackground(Theme.surface)
 

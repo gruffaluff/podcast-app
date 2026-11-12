@@ -249,6 +249,7 @@ final class LibraryStore {
         let known = Self.feedFingerprints
         var fingerprints = known
         var feeds: [String: ParsedFeed] = [:]
+        var unreachable: [String] = []
         await withTaskGroup(of: (String, ParsedFeed?, String?).self) { group in
             for url in urls {
                 group.addTask {
@@ -260,6 +261,7 @@ final class LibraryStore {
                 }
             }
             for await (url, feed, print) in group {
+                if print == nil { unreachable.append(url) }
                 if let feed { feeds[url] = feed }
                 if let print, feed != nil || print == known[url] { fingerprints[url] = print }
             }
@@ -288,6 +290,9 @@ final class LibraryStore {
         cleanUpPlayedDownloads()
         await RealtimeAlerts.publishFollows(store: self)
         transcripts?.prepareUpNext()
+        // The icon's badge (if on) follows each check.
+        UserDefaults.standard.set(unreachable, forKey: AppBadge.failedFeedsKey)
+        AppBadge.update(store: self)
     }
 
     /// Saves episodes not seen before; returns the fresh releases among them.

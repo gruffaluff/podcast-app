@@ -191,12 +191,14 @@ struct RootView: View {
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
+                AppBadge.update(store: store)
                 WidgetSync.shared.flush()
                 transcripts.scheduleBackgroundWork()
                 BackgroundRefresh.schedule()
             }
             // Check feeds when the app opens, at most once an hour.
             guard phase == .active else { return }
+            AppBadge.appOpened(store: store)
             store.tidyAfterSync()
             store.cleanUpPlayedDownloads()
             transcripts.prepareUpNext()

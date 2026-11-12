@@ -1691,20 +1691,25 @@ check compiles it):
 
 ## Queued for the next app build
 
-- **App icon badge** (Paul, 12 Nov 2026: "badges for those who want it",
-  choose what it counts): mock-up
-  https://claude.ai/artifact/RnVevs4sFdvbMpeXBfnbM6 (home screen + a
-  "Badge on the app icon" setting on the Shows screen, under Alerts):
-  Off (default), New since last open (suggested; clears on open), New
-  episodes (Library's New), In Up Next, Downloaded not played, Top shows
-  only, Hours left in Up Next, Only when something's wrong. Updates on
-  open, background check and the alerts job's quiet push, so it can lag
-  ~an hour. Free. How it looks in the app (Paul asked):
-  https://claude.ai/artifact/7zcUA9zfezfFkToa3HkVhJ, a "Badge on the app
-  icon" section on the Shows screen: A one row with a tiny icon preview
-  and a sand ▾ list key (suggested; same style as Keep downloads under),
-  B an on / off switch then a Count row, C a row opening its own page
-  of choices with today's numbers. Waiting on Paul.
+- **App icon badge** (Paul, 12 Nov 2026: "badges for those who want it";
+  options https://claude.ai/artifact/RnVevs4sFdvbMpeXBfnbM6, in-app
+  layouts https://claude.ai/artifact/7zcUA9zfezfFkToa3HkVhJ; **Paul picked
+  A**). On the branch: Shows screen section "Badge on the app icon"
+  (after Checking for new episodes) with one row: a tiny icon preview
+  (`IconPreview` image, the W1b icon at 120 px) showing today's number,
+  then "Badge" and the sand ▾ list key (`BadgeSettingRow`); the footer
+  says what the choice counts. `App/Badge.swift`: `BadgeMode` Off
+  (default) / New since last open / New episodes (Library's New) / In Up
+  Next / Downloaded, not played / Top shows only / Hours left in Up Next
+  (at your speed, rounded up) / Only when something's wrong (feeds that
+  couldn't be fetched in the last check, saved by `refreshAll` as
+  "badgeFailedFeeds"). `AppBadge.update` sets the number (0 clears it):
+  on opening the app (which also restarts "since last open"), going to
+  the background and after every feed check (so the background check and
+  the alerts job's quiet push update it too). iOS asks once to allow
+  badges when a mode other than Off is chosen. Kept on this iPhone only
+  ("badgeMode", not synced). Free. If the icon changes, re-make
+  `IconPreview.png` from `design/icon/icon_w1.png`.
 
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
