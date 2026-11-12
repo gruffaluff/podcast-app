@@ -1584,6 +1584,11 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **New lasts one week** (Paul, FNB, 12 Nov 2026): episodes stay in New
+  for 7 days from release (`LibraryView.newFor`, was 14), newest at the
+  top, older ones pushed down the list as new ones arrive (the card shows
+  the newest four; All › the rest). Still leaves New when played.
+
 - **Library: History / Stats beside the title** (Paul, FNB, 12 Nov 2026,
   build 143 screenshot): the HISTORY and STATS keys sit on their own row
   under the big "Library" title, leaving gaps above and below. Move them
