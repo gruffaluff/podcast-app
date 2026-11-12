@@ -178,13 +178,16 @@ struct NowPlayingView: View {
         .frame(maxWidth: .infinity)
         .background(alignment: .top) {
             if topMode == .artwork {
+                // Starts under the top keys (Paul, build 147: from the very
+                // top the keys were lost on busy artwork).
                 heroArtwork(item)
+                    .padding(.top, top + 44)
                     .transition(.opacity)
             }
         }
     }
 
-    /// Like Apple Podcasts: the artwork edge to edge from the very top,
+    /// Like Apple Podcasts: the artwork edge to edge, just under the top keys,
     /// fading into the player's colour, with the title under the fade.
     /// Scrolls away with the controls.
     private func heroArtwork(_ item: PlayerModel.NowPlaying) -> some View {
@@ -197,11 +200,6 @@ struct NowPlayingView: View {
                                            .init(color: .black.opacity(0.45), location: 0.82),
                                            .init(color: .clear, location: 1)],
                                    startPoint: .top, endPoint: .bottom)
-                }
-                // A light shade at the top so the keys show on pale artwork.
-                .overlay(alignment: .top) {
-                    LinearGradient(colors: [.black.opacity(0.28), .clear], startPoint: .top, endPoint: .bottom)
-                        .frame(height: side * 0.24)
                 }
                 .accessibilityHidden(true)
         }

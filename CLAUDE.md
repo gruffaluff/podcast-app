@@ -1751,7 +1751,43 @@ check compiles it):
   without refresh; normal iOS bounce, but the preview showed a sand gap
   above its coloured header): the gap fills with the show's colour.
 
+## Done in build 148 (12 Nov 2026, PR #66; Paul: "Let's build")
+
+- **Player artwork below the keys** (Paul, build 147 screenshot: the
+  artwork ran to the very top and the download / transcript / played
+  keys were lost on busy artwork): the edge-to-edge artwork now starts
+  just under the top keys (status bar height + 44 pt), so the keys sit
+  on the plain colour; the dark shade at the top is gone. Its fade also
+  ends nearer the title.
+
+- **Mini player with nothing playing: B** (Paul, 12 Nov 2026, from
+  https://claude.ai/artifact/WiCp8oqMHFgCfg5g6FEVP3; he'd missed the old
+  "Tap to play Up Next" line): the bar shows the top of Up Next ready to
+  play: its artwork and title, "Up next · Show · 26m" (or "Carry on ·
+  12m left" once started) and a play key in a ring that shows how far
+  through it is (`NowPlayingBar.upcoming`). Tap the bar or the key to
+  play it. "Up Next is empty" when there's nothing.
+
 ## Queued for the next app build
+
+- **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
+  developing mostly", asked next steps / timeline). Told him: three ways
+  (stay personal on TestFlight, builds expire after 90 days; public
+  TestFlight link, up to 10,000, light first review; App Store), suggested
+  public TestFlight with friends for 1–2 weeks then the App Store.
+  **Must fix first**: instant alerts are single-user (one public
+  "follows" record, `PoddeckAlertEpisode` records seen by every
+  subscriber), so others would get Paul's alerts and theirs wouldn't
+  work: limit instant alerts to Paul; everyone else uses the background
+  check. Store listing to do: name check, subtitle / description /
+  keywords, privacy policy + support page on poddeck.uk, 6.9" screenshots
+  (no third-party artwork), App Privacy answers (mostly none), age
+  rating, EU trader status (free, not a business: non-trader keeps his
+  address off the store), version 0.1 → 1.0. Costs: developer
+  membership (already paid yearly) + domain; free app has no other fees.
+  Waiting on Paul: public TestFlight first or straight to the store.
+
+
 
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
