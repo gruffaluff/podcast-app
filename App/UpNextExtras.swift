@@ -8,15 +8,11 @@ struct UpNextSheet: View {
     @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
 
-    /// The first one that isn't playing now.
-    private var nextIndex: Int? {
-        store.queue.firstIndex { $0.episode.id != player.nowPlaying?.episodeID }
-    }
-
     var body: some View {
         let episodes = store.episodes(store.queue.map(\.episode.id))
         let total = store.queue.compactMap { episodes[$0.episode.id]?.timeLeft }.reduce(0, +)
         let playing = store.queue.firstIndex { $0.episode.id == player.nowPlaying?.episodeID }
+        let starts: [Date] = UpNextTimes.starts(lengths: UpNextView.lengths(of: store.queue, episodes: episodes), speed: player.speed)
         NavigationStack {
             List {
                 Section {
@@ -26,29 +22,10 @@ struct UpNextSheet: View {
                         .listRowBackground(Theme.background)
                         .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
-                        let episode = episodes[item.episode.id]
-                        // No numbers (the top is next); a small NEXT tag on the
-                        // first one instead.
-                        let show = episode?.podcast?.title ?? ""
-                        Group {
-                            if let episode {
-                                HStack(spacing: 10) {
-                                    PosterRowText(
-                                        label: ((index == playing ? ["Now"] : (index == nextIndex ? ["Next"] : [])) + [show, episode.timeLeft.map { TimeFormat.clock($0) }].compactMap { $0 }).joined(separator: " · "),
-                                        title: item.episode.title,
-                                        titleSize: 17,
-                                        lines: 1,
-                                        onColour: index == playing)
-                                    Stamp(url: episode.artwork, title: show.isEmpty ? episode.title : show, size: 34)
-                                }
-                                .modifier(QueueCard(episode: episode, isPlaying: index == playing))
-                            }
+                        if let episode = episodes[item.episode.id] {
+                            sheetRow(index: index, item: item, episode: episode, playing: playing,
+                                     start: index == (playing ?? 0) ? "NOW" : UpNextTimes.clock(starts[index]))
                         }
-                        // Poster cards like the Up Next tab; swipe left to remove.
-                        .posterSwipe(trailing: PosterSwipeAction(title: "Remove", icon: "minus.circle", colour: Poster.swipePlayed) {
-                            store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
-                        })
-                        .reorderCardRow()
                     }
                     // Long press and drag, like the Up Next tab. (Always-on
                     // edit mode here redrew rows in the wrong order after a
@@ -81,6 +58,26 @@ struct UpNextSheet: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
+    }
+
+    /// The Up Next tab's own row (Paul, 12 Nov 2026: same size as the other
+    /// screens). Nothing in a row depends on its place in the list (the old
+    /// NEXT tag moved between rows while dragging and the text redrew).
+    /// Tap to play; swipe left to remove; long press and drag to reorder.
+    private func sheetRow(index: Int, item: QueueItem, episode: PodcastEpisode, playing: Int?, start: String) -> some View {
+        QueueRow(number: index + 1, item: item, episode: episode, settings: store.queueSettings,
+                 isPlaying: index == playing, start: start) {
+            player.play(episode)
+        }
+        .onTapGesture { player.play(episode) }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Plays it now")
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(QueueCard(episode: episode, isPlaying: index == playing))
+        .posterSwipe(trailing: PosterSwipeAction(title: "Remove", icon: "minus.circle", colour: Poster.swipePlayed) {
+            store.undoable("Removed from Up Next", episodes: []) { store.removeFromQueue(item.episode.id) }
+        })
+        .reorderCardRow()
     }
 
     private func summary(total: TimeInterval) -> String {

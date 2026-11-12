@@ -47,6 +47,9 @@ struct NowPlayingView: View {
     /// jumps while you look at it); neutral dark until it's known.
     @State private var colour: Color?
     @State private var showingUpNext = false
+    /// The Options panel open under the bottom row (Paul, 12 Nov 2026: the
+    /// menu "doesn't look good"; expand underneath instead).
+    @State private var showingOptions = false
 
     private static let neutral = Color(hex: 0x2C2A26)
     private var canvas: Color { colour ?? Self.neutral }
@@ -161,6 +164,10 @@ struct NowPlayingView: View {
                 transport
                 volumeRow
                 modeButtons
+                if showingOptions {
+                    optionsPanel
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
             .padding(.top, 10)
         }
@@ -169,6 +176,37 @@ struct NowPlayingView: View {
         .padding(.bottom, 12)
         .frame(height: max(height, 680))
         .frame(maxWidth: .infinity)
+        .background(alignment: .top) {
+            if topMode == .artwork {
+                heroArtwork(item)
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    /// Like Apple Podcasts: the artwork edge to edge from the very top,
+    /// fading into the player's colour, with the title under the fade.
+    /// Scrolls away with the controls.
+    private func heroArtwork(_ item: PlayerModel.NowPlaying) -> some View {
+        GeometryReader { geometry in
+            let side: CGFloat = geometry.size.width
+            ArtworkView(url: item.artworkURL, title: item.showTitle, size: side, radius: 0)
+                .mask {
+                    LinearGradient(stops: [.init(color: .black, location: 0),
+                                           .init(color: .black, location: 0.62),
+                                           .init(color: .black.opacity(0.45), location: 0.82),
+                                           .init(color: .clear, location: 1)],
+                                   startPoint: .top, endPoint: .bottom)
+                }
+                // A light shade at the top so the keys show on pale artwork.
+                .overlay(alignment: .top) {
+                    LinearGradient(colors: [.black.opacity(0.28), .clear], startPoint: .top, endPoint: .bottom)
+                        .frame(height: side * 0.24)
+                }
+                .accessibilityHidden(true)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .allowsHitTesting(false)
     }
 
     /// A handle (pull down to close), then find (transcript), download and
@@ -208,14 +246,14 @@ struct NowPlayingView: View {
     /// artwork beside the title with the panel filling the rest.
     private func topArea(_ item: PlayerModel.NowPlaying) -> some View {
         GeometryReader { geometry in
-            let side: CGFloat = max(120, min(geometry.size.width - 24, geometry.size.height - 96))
             VStack(spacing: 0) {
                 if topMode == .artwork {
-                    Spacer(minLength: 4)
-                    artwork(item, size: side)
-                    titleBlock(item, centred: true)
-                        .padding(.top, 14)
-                    Spacer(minLength: 4)
+                    // The artwork is behind (heroArtwork); the title sits at
+                    // the foot of the fade.
+                    Spacer(minLength: 0)
+                    titleBlock(item, centred: false, size: 24)
+                        .shadow(color: .black.opacity(0.22), radius: 8, y: 1)
+                        .padding(.bottom, 4)
                 } else {
                     HStack(spacing: 12) {
                         Button { setMode(.artwork) } label: { artwork(item, size: 52) }
@@ -248,11 +286,11 @@ struct NowPlayingView: View {
 
     /// The title (opens the notes), the show and chapter (the show opens its
     /// page), and the DL / TX letters.
-    private func titleBlock(_ item: PlayerModel.NowPlaying, centred: Bool) -> some View {
+    private func titleBlock(_ item: PlayerModel.NowPlaying, centred: Bool, size: CGFloat = 18) -> some View {
         VStack(alignment: centred ? .center : .leading, spacing: 4) {
             Button { showingNotes = true } label: {
                 Text(item.title)
-                    .font(Theme.title(centred ? 22 : 18))
+                    .font(Theme.title(size))
                     .foregroundStyle(fg)
                     .multilineTextAlignment(centred ? .center : .leading)
                     .lineLimit(2)
@@ -447,51 +485,134 @@ struct NowPlayingView: View {
         player.speed != 1 || player.trimSilences || player.boostVoices || player.sleepTimer != nil
     }
 
-    private var speedBinding: Binding<Double> {
-        Binding(get: { player.speed }, set: { player.setSpeed($0) })
+    private var optionsButton: some View {
+        Button {
+            withAnimation(.spring(duration: 0.35, bounce: 0.1)) { showingOptions.toggle() }
+        } label: {
+            modeLabel("Options", icon: showingOptions ? "chevron.down" : "slider.horizontal.3", lit: optionsOn || showingOptions)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(showingOptions ? "Hide options" : "Options: speed, trim, boost, sleep")
+        .accessibilityValue(optionsOn ? "Some are on" : "All off")
     }
 
-    private var trimBinding: Binding<Bool> {
-        Binding(get: { player.trimSilences }, set: { player.setTrimSilences($0) })
-    }
+    // MARK: Options panel
 
-    private var boostBinding: Binding<Bool> {
-        Binding(get: { player.boostVoices }, set: { player.setBoostVoices($0) })
-    }
-
-    /// Speed, Trim, Boost and Sleep in one small menu (Paul, 12 Nov 2026).
-    @ViewBuilder private var optionsMenuContent: some View {
-        Menu {
-            Picker(player.speedIsForShow ? "Speed for this show" : "Speed", selection: speedBinding) {
-                ForEach(PlayerOptions.speeds, id: \.self) { speed in
-                    Text(PlayerOptions.speedLabel(speed)).tag(speed)
+    /// Speed, Trim, Boost and Sleep laid out under the bottom row, each
+    /// showing its state; lit chips are on.
+    private var optionsPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            speedRow
+            HStack(spacing: 8) {
+                optionChip("Trim silences", icon: "scissors", on: player.trimSilences) {
+                    player.setTrimSilences(!player.trimSilences)
+                }
+                optionChip("Boost voices", icon: "waveform", on: player.boostVoices) {
+                    player.setBoostVoices(!player.boostVoices)
                 }
             }
-        } label: {
-            Label("Speed · \(PlayerOptions.speedLabel(player.speed))", systemImage: "gauge.with.dots.needle.50percent")
+            sleepRow
         }
-        Toggle(isOn: trimBinding) { Label("Trim silences", systemImage: "scissors") }
-        Toggle(isOn: boostBinding) { Label("Boost voices", systemImage: "waveform") }
-        Menu {
-            if player.sleepTimer != nil {
-                Button("5 more minutes", systemImage: "plus.circle") { player.extendSleepTimer() }
-                Button("Turn off timer", systemImage: "moon.zzz") { player.setSleepTimer(nil) }
+        .padding(14)
+        .background(chip, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func panelLabel(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.mono(10, .bold))
+            .tracking(0.8)
+            .foregroundStyle(fgQuiet)
+    }
+
+    private var speedRow: some View {
+        let speeds: [Double] = PlayerOptions.speeds
+        let index: Int = speeds.firstIndex { abs($0 - player.speed) < 0.01 } ?? 0
+        return HStack(spacing: 10) {
+            panelLabel(player.speedIsForShow ? "SPEED · THIS SHOW" : "SPEED")
+            Spacer(minLength: 4)
+            stepKey("minus", label: "Slower", enabled: index > 0) { player.setSpeed(speeds[index - 1]) }
+            Button { player.setSpeed(1) } label: {
+                Text(PlayerOptions.speedLabel(player.speed))
+                    .font(.system(size: 17, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(fg)
+                    .frame(width: 56, height: 34)
             }
-            ForEach(SleepTimerOption.all, id: \.self) { option in
-                Button(option.label) { player.chooseSleepTimer(option) }
-            }
-        } label: {
-            Label(player.sleepTimer == nil ? "Sleep timer" : "Sleep · \(sleepValue)", systemImage: "moon")
+            .buttonStyle(.plain)
+            .accessibilityLabel("Speed \(PlayerOptions.speedLabel(player.speed))")
+            .accessibilityHint("Back to normal speed")
+            stepKey("plus", label: "Faster", enabled: index < speeds.count - 1) { player.setSpeed(speeds[index + 1]) }
         }
     }
 
-    private var optionsButton: some View {
-        Menu {
-            optionsMenuContent
-        } label: {
-            modeLabel("Options", icon: "slider.horizontal.3", lit: optionsOn)
+    private func stepKey(_ icon: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(fg)
+                .frame(width: 40, height: 34)
+                .background(chip, in: Capsule())
         }
-        .accessibilityLabel(optionsOn ? "Options: speed, trim, boost, sleep. Some are on" : "Options: speed, trim, boost, sleep")
+        .buttonStyle(DimWhenDisabled())
+        .disabled(!enabled)
+        .accessibilityLabel(label)
+    }
+
+    private func optionChip(_ title: String, icon: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 13, weight: .semibold))
+                Text(title).font(.system(size: 14, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(on ? canvas : fg)
+            .frame(maxWidth: .infinity, minHeight: 38)
+            .background(on ? fg : chip, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(on ? "On" : "Off")
+    }
+
+    private var sleepRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                panelLabel(player.sleepTimer == nil ? "SLEEP" : "SLEEP · \(sleepValue.uppercased()) LEFT")
+                Spacer()
+                if player.sleepTimer != nil, player.sleepEndsAt != nil {
+                    Button("+5 min") { player.extendSleepTimer() }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(fg)
+                        .buttonStyle(.plain)
+                }
+            }
+            HStack(spacing: 6) {
+                sleepChip("Off", on: player.sleepTimer == nil) { player.setSleepTimer(nil) }
+                ForEach(SleepTimerOption.all, id: \.self) { option in
+                    sleepChip(Self.shortLabel(option), on: player.sleepTimer == option) { player.chooseSleepTimer(option) }
+                }
+            }
+        }
+    }
+
+    private func sleepChip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(on ? canvas : fg)
+                .frame(maxWidth: .infinity, minHeight: 34)
+                .background(on ? fg : chip, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(on ? "Chosen" : "")
+    }
+
+    /// "5", "15", "1h", "End".
+    private static func shortLabel(_ option: SleepTimerOption) -> String {
+        switch option {
+        case .minutes(let m): return m == 60 ? "1h" : "\(m)"
+        case .endOfEpisode: return "End"
+        }
     }
 
     /// "OFF", "END" or the minutes left ("20M").
@@ -805,7 +926,8 @@ private struct PlayerChaptersPanel: View {
 /// mini Up Next card back, instead of an Up Next key). The rows are the Up
 /// Next tab's own white cards (Paul: "match the main Up Next in style"):
 /// artwork, title, show · length, and on the right when it starts at the
-/// current speed with DL / TX. Tap to play; "All ›" pulls up the full list.
+/// current speed with DL / TX. Tap to play; "Edit" or "+ n more" pulls up
+/// the full list to reorder or remove.
 private struct PlayerUpNextCard: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
@@ -847,13 +969,14 @@ private struct PlayerUpNextCard: View {
                     .foregroundStyle(fgQuiet)
                 Spacer()
                 Button(action: openAll) {
-                    Text("All ›")
+                    Text("Edit")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(fg)
                         .frame(minHeight: 32)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("All of Up Next")
+                .accessibilityLabel("Edit Up Next")
+                .accessibilityHint("Reorder or remove episodes")
             }
             if next.isEmpty {
                 Text("Nothing else in Up Next.")
@@ -862,6 +985,27 @@ private struct PlayerUpNextCard: View {
             }
             ForEach(next) { item in
                 row(item)
+            }
+            // The rest behind one key, so it's clear the list itself is
+            // changed in the pulled-up Up Next (Paul, 12 Nov 2026).
+            if count > next.count {
+                Button(action: openAll) {
+                    HStack(spacing: 6) {
+                        Text("+ \(count - next.count) more")
+                        Text("·").foregroundStyle(fgQuiet)
+                        Text("Reorder or remove")
+                        Spacer()
+                        Image(systemName: "chevron.up")
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(fg)
+                    .padding(.horizontal, 14)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Color.white.opacity(0.16), in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(count - next.count) more in Up Next")
+                .accessibilityHint("Opens Up Next to reorder or remove")
             }
         }
     }
@@ -911,17 +1055,45 @@ private struct PlayerUpNextCard: View {
 /// The iPhone's own volume slider (moves with the side buttons), drawn in
 /// the player's light colour.
 private struct SystemVolumeSlider: UIViewRepresentable {
-    func makeUIView(context: Context) -> MPVolumeView {
-        let view = MPVolumeView(frame: .zero)
-        view.tintColor = UIColor(Poster.paper)
-        if let slider = view.subviews.compactMap({ $0 as? UISlider }).first {
-            slider.minimumTrackTintColor = UIColor(Poster.paper)
-            slider.maximumTrackTintColor = UIColor(Poster.paper).withAlphaComponent(0.25)
-        }
+    func makeUIView(context: Context) -> CentredVolumeView {
+        let view = CentredVolumeView(frame: .zero)
+        let paper = UIColor(Poster.paper)
+        view.tintColor = paper
+        // The same round dot as the progress line: 12 pt at rest, 20 pt
+        // while it's held (Paul, build 146: the iOS thumb was too big).
+        view.setVolumeThumbImage(Self.dot(12, colour: paper), for: .normal)
+        view.setVolumeThumbImage(Self.dot(20, colour: paper), for: .highlighted)
+        view.setMinimumVolumeSliderImage(Self.track(paper), for: .normal)
+        view.setMaximumVolumeSliderImage(Self.track(paper.withAlphaComponent(0.25)), for: .normal)
         return view
     }
 
-    func updateUIView(_ view: MPVolumeView, context: Context) {}
+    func updateUIView(_ view: CentredVolumeView, context: Context) {}
+
+    private static func dot(_ size: CGFloat, colour: UIColor) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+            colour.setFill()
+            UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: size, height: size)).fill()
+        }
+    }
+
+    /// A 4 pt rounded track that stretches.
+    private static func track(_ colour: UIColor) -> UIImage {
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 9, height: 4)).image { _ in
+            colour.setFill()
+            UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 9, height: 4), cornerRadius: 2).fill()
+        }
+        return image.resizableImage(withCapInsets: UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4))
+    }
+}
+
+/// iOS draws the volume slider at the top of its box; this keeps it
+/// centred, so it lines up with the speaker icons either side.
+final class CentredVolumeView: MPVolumeView {
+    override func volumeSliderRect(forBounds bounds: CGRect) -> CGRect {
+        let rect = super.volumeSliderRect(forBounds: bounds)
+        return CGRect(x: rect.minX, y: (bounds.height - rect.height) / 2, width: rect.width, height: rect.height)
+    }
 }
 
 /// The progress line's drawing (see `scrubBar`): split by small gaps at

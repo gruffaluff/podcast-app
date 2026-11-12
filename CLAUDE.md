@@ -1689,6 +1689,68 @@ check compiles it):
   `design/icon/icon_w1.png`); website logos updated and the claude.ai
   page republished.
 
+## Done in build 147 (12 Nov 2026, PR #65; Paul: "Build")
+
+- **App icon badge** (Paul, 12 Nov 2026: "badges for those who want it";
+  options https://claude.ai/artifact/RnVevs4sFdvbMpeXBfnbM6, in-app
+  layouts https://claude.ai/artifact/7zcUA9zfezfFkToa3HkVhJ; **Paul picked
+  A**). Shows screen section "Badge on the app icon"
+  (after Checking for new episodes) with one row: a tiny icon preview
+  (`IconPreview` image, the W1b icon at 120 px) showing today's number,
+  then "Badge" and the sand ▾ list key (`BadgeSettingRow`); the footer
+  says what the choice counts. `App/Badge.swift`: `BadgeMode` Off
+  (default) / New since last open / New episodes (Library's New) / In Up
+  Next / Downloaded, not played / Top shows only / Hours left in Up Next
+  (at your speed, rounded up) / Only when something's wrong (feeds that
+  couldn't be fetched in the last check, saved by `refreshAll` as
+  "badgeFailedFeeds"). `AppBadge.update` sets the number (0 clears it):
+  on opening the app (which also restarts "since last open"), going to
+  the background and after every feed check (so the background check and
+  the alerts job's quiet push update it too). iOS asks once to allow
+  badges when a mode other than Off is chosen. Kept on this iPhone only
+  ("badgeMode", not synced). Free. If the icon changes, re-make
+  `IconPreview.png` from `design/icon/icon_w1.png`.
+
+- **Volume slider tidy** (Paul, 12 Nov 2026, build 146 screenshot: the
+  speaker icons sat below the line and iOS's thumb was big): the slider
+  is centred in its box (`CentredVolumeView` overrides
+  `volumeSliderRect`), so it lines up with the icons; its dot is the
+  progress line's (12 pt paper circle, 20 pt while held) on a 4 pt
+  rounded track (`SystemVolumeSlider`).
+
+- **Player artwork edge to edge** (Paul, 12 Nov 2026, with a screenshot
+  of Apple Podcasts' player: "artwork bigger and blends into the rest of
+  it"): in artwork mode the episode's artwork fills the width from the
+  very top (under the hidden status bar), square, and fades into the
+  player's colour over its lower third (`NowPlayingView.heroArtwork`,
+  behind the first screenful, so it scrolls away with it); a light shade
+  at the top keeps the keys visible on pale artwork. The title (24 pt,
+  left-aligned like Apple's) and show · chapter line sit at the foot of
+  the fade, just above the progress line. Transcript / chapters modes
+  are unchanged (plain colour, small artwork beside the title). On the
+  branch.
+
+- **Player Options panel** (Paul, 12 Nov 2026: the Options menu "doesn't
+  look good"; expand as a menu underneath): Options opens a panel under
+  the bottom row (`NowPlayingView.optionsPanel`): Speed with − / value /
+  + (tap the value for 1×; says THIS SHOW for a show's own speed), Trim
+  silences and Boost voices as chips (filled when on), Sleep as chips
+  Off / 5 / 15 / 30 / 45 / 1h / End with "+5 min" while a timer runs.
+  Tap Options again (a ⌄) to close; the artwork area shrinks to make
+  room. The iOS menu is gone.
+- **Player Up Next clearer** (Paul, 12 Nov 2026: not clear whether you
+  change it on the player or click through; picked "3 then +2 more"):
+  the next three stay (tap to play), the heading's key says Edit, and
+  under them "+ 2 more · Reorder or remove" opens the pulled-up Up Next.
+- **Pulled-up Up Next rows** (Paul's recording, build 146: text redrew
+  while dragging; wants bigger rows like the other screens): rows are the
+  Up Next tab's own (`QueueRow`, now shared): 40 pt artwork, 2-line
+  title, show · tag · time, date, start time and DL / TX; tap plays. The
+  NEXT tag that moved between rows mid-drag (the redrawn text) is gone.
+- **Show preview pulled down** (Paul, 12 Nov 2026: pull down on screens
+  without refresh; normal iOS bounce, but the preview showed a sand gap
+  above its coloured header): the gap fills with the show's colour.
+
 ## Queued for the next app build
 
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
