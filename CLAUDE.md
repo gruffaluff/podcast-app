@@ -1584,6 +1584,14 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Up Next key in the player** (Paul, 12 Nov 2026, build 143 screenshot):
+  a fourth icon on the left of the bottom row (Up Next · Transcript ·
+  Chapters · AirPods) that opens a mini Up Next pulled up over the player
+  (half-height sheet with a handle: the next few episodes with start
+  times, tap to play, drag to reorder, swipe to remove; reuse
+  `UpNextSheet` with `.presentationDetents([.medium, .large])`). Shows
+  the count ("Up Next · 4") under the icon.
+
 - **Player in the episode's colour + not looking like Apple** (Paul, FNB,
   12 Nov 2026: "we're in a nice spot again"). Mock-ups on
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q, two episodes each:
