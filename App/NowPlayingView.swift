@@ -169,6 +169,37 @@ struct NowPlayingView: View {
         .padding(.bottom, 12)
         .frame(height: max(height, 680))
         .frame(maxWidth: .infinity)
+        .background(alignment: .top) {
+            if topMode == .artwork {
+                heroArtwork(item)
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    /// Like Apple Podcasts: the artwork edge to edge from the very top,
+    /// fading into the player's colour, with the title under the fade.
+    /// Scrolls away with the controls.
+    private func heroArtwork(_ item: PlayerModel.NowPlaying) -> some View {
+        GeometryReader { geometry in
+            let side: CGFloat = geometry.size.width
+            ArtworkView(url: item.artworkURL, title: item.showTitle, size: side, radius: 0)
+                .mask {
+                    LinearGradient(stops: [.init(color: .black, location: 0),
+                                           .init(color: .black, location: 0.62),
+                                           .init(color: .black.opacity(0.45), location: 0.82),
+                                           .init(color: .clear, location: 1)],
+                                   startPoint: .top, endPoint: .bottom)
+                }
+                // A light shade at the top so the keys show on pale artwork.
+                .overlay(alignment: .top) {
+                    LinearGradient(colors: [.black.opacity(0.28), .clear], startPoint: .top, endPoint: .bottom)
+                        .frame(height: side * 0.24)
+                }
+                .accessibilityHidden(true)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .allowsHitTesting(false)
     }
 
     /// A handle (pull down to close), then find (transcript), download and
@@ -208,14 +239,14 @@ struct NowPlayingView: View {
     /// artwork beside the title with the panel filling the rest.
     private func topArea(_ item: PlayerModel.NowPlaying) -> some View {
         GeometryReader { geometry in
-            let side: CGFloat = max(120, min(geometry.size.width - 24, geometry.size.height - 96))
             VStack(spacing: 0) {
                 if topMode == .artwork {
-                    Spacer(minLength: 4)
-                    artwork(item, size: side)
-                    titleBlock(item, centred: true)
-                        .padding(.top, 14)
-                    Spacer(minLength: 4)
+                    // The artwork is behind (heroArtwork); the title sits at
+                    // the foot of the fade.
+                    Spacer(minLength: 0)
+                    titleBlock(item, centred: false, size: 24)
+                        .shadow(color: .black.opacity(0.22), radius: 8, y: 1)
+                        .padding(.bottom, 4)
                 } else {
                     HStack(spacing: 12) {
                         Button { setMode(.artwork) } label: { artwork(item, size: 52) }
@@ -248,11 +279,11 @@ struct NowPlayingView: View {
 
     /// The title (opens the notes), the show and chapter (the show opens its
     /// page), and the DL / TX letters.
-    private func titleBlock(_ item: PlayerModel.NowPlaying, centred: Bool) -> some View {
+    private func titleBlock(_ item: PlayerModel.NowPlaying, centred: Bool, size: CGFloat = 18) -> some View {
         VStack(alignment: centred ? .center : .leading, spacing: 4) {
             Button { showingNotes = true } label: {
                 Text(item.title)
-                    .font(Theme.title(centred ? 22 : 18))
+                    .font(Theme.title(size))
                     .foregroundStyle(fg)
                     .multilineTextAlignment(centred ? .center : .leading)
                     .lineLimit(2)

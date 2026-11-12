@@ -1718,6 +1718,18 @@ check compiles it):
   progress line's (12 pt paper circle, 20 pt while held) on a 4 pt
   rounded track (`SystemVolumeSlider`). On the branch.
 
+- **Player artwork edge to edge** (Paul, 12 Nov 2026, with a screenshot
+  of Apple Podcasts' player: "artwork bigger and blends into the rest of
+  it"): in artwork mode the episode's artwork fills the width from the
+  very top (under the hidden status bar), square, and fades into the
+  player's colour over its lower third (`NowPlayingView.heroArtwork`,
+  behind the first screenful, so it scrolls away with it); a light shade
+  at the top keeps the keys visible on pale artwork. The title (24 pt,
+  left-aligned like Apple's) and show · chapter line sit at the foot of
+  the fade, just above the progress line. Transcript / chapters modes
+  are unchanged (plain colour, small artwork beside the title). On the
+  branch.
+
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
   Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
