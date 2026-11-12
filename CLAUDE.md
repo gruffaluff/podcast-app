@@ -1669,10 +1669,16 @@ check compiles it):
   `.toolbarTitleDisplayMode(.inlineLarge)`, so Up Next, Library,
   Discover and Search show their big title on the bar's own line and
   the content starts higher.
-- **Mini Up Next options** (Paul, 12 Nov 2026: "slightly bigger and more
-  defined rows"): https://claude.ai/artifact/HzhNwdFKAN7LRg9S8E71Xt:
-  Now, B Tiles on the colour (suggested), C White cards, D Timeline, E Big
-  artwork sideways. Waiting on Paul.
+- **Mini Up Next matches the Up Next tab** (Paul, 12 Nov 2026, after the
+  options on https://claude.ai/artifact/HzhNwdFKAN7LRg9S8E71Xt: "match the
+  main Up Next in style and theme"): `PlayerUpNextCard` rows are the tab's
+  white cards (`posterCard`): 40 pt artwork, title (2 lines), SHOW ·
+  LENGTH, start time and DL / TX on the right; the "UP NEXT · n" label and
+  All › stay light on the player's colour. No see-through box round them.
+- **New card roomier** (Paul, 12 Nov 2026: "looks cramped"): `NewPaper`
+  padding 16 / 14 (was 12 / 10), lines 12 pt top and bottom (was 8),
+  artwork 44 pt (was 36), title 17 pt like Up Next, label 9 pt, more room
+  above the keys.
 
 - **Icon W1b "fine edge"** (Paul, 12 Nov 2026: the white cassette was "a
   little lost"; picked W1b from

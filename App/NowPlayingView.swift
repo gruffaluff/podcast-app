@@ -802,8 +802,10 @@ private struct PlayerChaptersPanel: View {
 }
 
 /// The next few in Up Next above the episode notes (Paul, 12 Nov 2026: the
-/// mini Up Next card back, instead of an Up Next key): when each starts at
-/// the current speed, tap to play, "All ›" pulls up the full list.
+/// mini Up Next card back, instead of an Up Next key). The rows are the Up
+/// Next tab's own white cards (Paul: "match the main Up Next in style"):
+/// artwork, title, show · length, and on the right when it starts at the
+/// current speed with DL / TX. Tap to play; "All ›" pulls up the full list.
 private struct PlayerUpNextCard: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
@@ -837,7 +839,7 @@ private struct PlayerUpNextCard: View {
     var body: some View {
         let next = upcoming
         let count: Int = store.queue.filter { $0.episode.id != player.nowPlaying?.episodeID }.count
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("UP NEXT · \(count)")
                     .font(Theme.mono(10, .bold))
@@ -846,7 +848,7 @@ private struct PlayerUpNextCard: View {
                 Spacer()
                 Button(action: openAll) {
                     Text("All ›")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(fg)
                         .frame(minHeight: 32)
                 }
@@ -862,34 +864,46 @@ private struct PlayerUpNextCard: View {
                 row(item)
             }
         }
-        .padding(14)
-        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+    }
+
+    private func detail(_ episode: PodcastEpisode) -> String {
+        let length: String = (episode.timeLeft ?? episode.duration).map { TimeFormat.clock($0) } ?? ""
+        return [episode.showTitle, length].filter { !$0.isEmpty }.joined(separator: " · ").uppercased()
     }
 
     private func row(_ item: Next) -> some View {
-        Button { player.play(item.episode) } label: {
-            HStack(spacing: 10) {
-                ArtworkView(url: item.episode.artwork, title: item.episode.showTitle, size: 36, radius: 6)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.episode.title)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(fg)
-                        .lineLimit(1)
-                    Text(item.episode.showTitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(fgQuiet)
+        let episode = item.episode
+        let colour = Poster.colour(episode.showArtwork, title: episode.showTitle)
+        return Button { player.play(episode) } label: {
+            HStack(alignment: .center, spacing: 10) {
+                Stamp(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 40)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(episode.title)
+                        .font(Theme.title(17))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Text(detail(episode))
+                        .font(Theme.mono(8.5))
+                        .tracking(0.5)
+                        .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text(UpNextTimes.clock(item.starts))
-                    .font(.system(size: 12, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(fgQuiet)
+                VStack(alignment: .trailing, spacing: 5) {
+                    Text(UpNextTimes.clock(item.starts))
+                        .font(Theme.mono(10, .medium))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.ink)
+                    EpisodeLights(episode: episode)
+                }
+                .fixedSize()
             }
             .contentShape(Rectangle())
+            .posterCard(colour)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(item.episode.title), starts at \(UpNextTimes.clock(item.starts))")
+        .accessibilityLabel("\(episode.title), starts at \(UpNextTimes.clock(item.starts))")
         .accessibilityHint("Plays it now")
     }
 }
