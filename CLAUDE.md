@@ -1584,6 +1584,14 @@ From the Notion notes after 6 Nov 08:10:
 
 ## Queued for the next app build
 
+- **Download % makes the Up Next row jump** (Paul, FNB, 12 Nov 2026,
+  build 143): tapping download in an Up Next row's keys, the "40%" that
+  appears shifted the row's text about for a moment. Likely the DL / TX
+  letters ("DL" → "DL 40%") and the status line ("Downloading") changing
+  width / appearing. Fix: give the DL letters and the key labels a fixed
+  width (room for "DL 100%") and keep the status line always there, so
+  nothing reflows while a download runs.
+
 - **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /
   strong"). Every title is Big Shoulders Black (900) in capitals. Options
   on https://claude.ai/artifact/HcvktcXpssM9FtFPNdqdFo: 1 today, 2 Big
