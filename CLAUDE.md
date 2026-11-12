@@ -1604,7 +1604,17 @@ From the Notion notes after 6 Nov 08:10:
   a rounded-square play key in the episode's colour, tape-style progress
   (chapter ticks, amber ads, a ring "reel" at the play point), start
   times / done-by shown as a signature. Suggested B + olive + mono
-  numbers + rounded-square key. Waiting on Paul's picks.
+  numbers + rounded-square key. **Paul picked A, full colour** (12 Nov
+  2026): the whole player in the playing episode's artwork colour
+  (darkening a little towards the bottom), all text, icons, the progress
+  line and the play symbol in light paper; capsules switched on = paper
+  with the colour as text, off = see-through light; transcript /
+  chapters panels and the mini Up Next readable on the colour (light
+  text). Colour fixed when the player opens / the episode changes (no
+  jumps), measured from `ArtworkColors` and darkened for 4.5:1 contrast;
+  neutral dark until known. **No rounded-square play key** (Paul): keep
+  the plain play / pause symbol. The other touches (olive, mono numbers,
+  tape-style progress, timings) not decided yet.
 
 - **New lasts one week** (Paul, FNB, 12 Nov 2026): episodes stay in New
   for 7 days from release (`LibraryView.newFor`, was 14), newest at the
