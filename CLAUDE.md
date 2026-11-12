@@ -11,7 +11,10 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 11 Nov 2026): **"2b olive, soft shadow"**: sand
+screen. Icon (Paul, 12 Nov 2026): **"W1 Warm white"**: white cassette,
+ink window, olive / amber progress line, soft shadow on the off-white page
+(`design/icon/icon_w1.png` from `make_poster_icon.js`; build 145).
+Before that (11 Nov 2026): **"2b olive, soft shadow"**: sand
 cassette with spoked reels and the progress line (olive played, amber ad)
 on the olive accent with the halftone dot print and a soft card shadow;
 `design/icon/poster_2b.png` / `.svg` from `make_poster_icon.js` (node,
@@ -1629,6 +1632,27 @@ check compiles it):
 - To check on the phone: the player colour on light and dark artwork,
   the volume slider (it only shows on a real iPhone), the Options menu,
   the show page top when pulled down.
+
+## Done in build 145 (12 Nov 2026, PR #63; Paul: "build")
+
+- **App icon W1 "Warm white"** (Paul, 12 Nov 2026, from
+  https://claude.ai/artifact/C3kwySgwiAzrEcWyByRrnt: Now, W1 Warm white,
+  W2 Clean olive, W3 Ink on white, W4 Olive on white): the same cassette
+  in white with an ink window and white spoked reels, lifted by a soft
+  warm shadow off the app's off-white (#F5F2EC), olive played line and
+  amber ad; no dot print. `design/icon/make_poster_icon.js` now writes
+  `icon_w1.svg` / `.png`, the app icon and `docs/icon.png`; the
+  website's two inline logos are the new one (claude.ai page
+  republished). 
+
+- **DL / TX letters fill in** (Paul, 12 Nov 2026, build 144 screenshots of
+  Up Next and Library: the letters sat far apart, because build 144 gave
+  each the room of "DL 100%" / "TX WAIT"; picked option 4 of: % in place,
+  progress circle, line underneath, letters fill in): back to just "DL"
+  and "TX" side by side; faded when not done, dark when done, and while
+  downloading / transcribing the letters darken left to right with the
+  progress (`EpisodeLights.light`, a masked copy). Nothing changes width.
+
 
 ## Queued for the next app build
 
