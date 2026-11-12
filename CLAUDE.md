@@ -1730,6 +1730,27 @@ check compiles it):
   are unchanged (plain colour, small artwork beside the title). On the
   branch.
 
+- **Player Options panel** (Paul, 12 Nov 2026: the Options menu "doesn't
+  look good"; expand as a menu underneath): Options opens a panel under
+  the bottom row (`NowPlayingView.optionsPanel`): Speed with − / value /
+  + (tap the value for 1×; says THIS SHOW for a show's own speed), Trim
+  silences and Boost voices as chips (filled when on), Sleep as chips
+  Off / 5 / 15 / 30 / 45 / 1h / End with "+5 min" while a timer runs.
+  Tap Options again (a ⌄) to close; the artwork area shrinks to make
+  room. The iOS menu is gone.
+- **Player Up Next clearer** (Paul, 12 Nov 2026: not clear whether you
+  change it on the player or click through; picked "3 then +2 more"):
+  the next three stay (tap to play), the heading's key says Edit, and
+  under them "+ 2 more · Reorder or remove" opens the pulled-up Up Next.
+- **Pulled-up Up Next rows** (Paul's recording, build 146: text redrew
+  while dragging; wants bigger rows like the other screens): rows are the
+  Up Next tab's own (`QueueRow`, now shared): 40 pt artwork, 2-line
+  title, show · tag · time, date, start time and DL / TX; tap plays. The
+  NEXT tag that moved between rows mid-drag (the redrawn text) is gone.
+- **Show preview pulled down** (Paul, 12 Nov 2026: pull down on screens
+  without refresh; normal iOS bounce, but the preview showed a sand gap
+  above its coloured header): the gap fills with the show's colour.
+
 - **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
   app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
   Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand

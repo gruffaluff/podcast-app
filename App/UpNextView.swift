@@ -185,7 +185,7 @@ struct UpNextView: View {
 
 
     /// How long each Up Next episode has left (its length if not started).
-    private static func lengths(of queue: [QueueItem], episodes: [String: PodcastEpisode]) -> [TimeInterval] {
+    static func lengths(of queue: [QueueItem], episodes: [String: PodcastEpisode]) -> [TimeInterval] {
         var result: [TimeInterval] = []
         for item in queue {
             let episode: PodcastEpisode? = episodes[item.episode.id]
@@ -224,7 +224,8 @@ struct UpNextView: View {
     }
 }
 
-private struct QueueRow: View {
+/// An Up Next row (also used by the pulled-up Up Next in the player).
+struct QueueRow: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
     @Environment(PlayerModel.self) private var player

@@ -20,6 +20,9 @@ struct ShowPreviewView: View {
     @State private var feed: ParsedFeed?
     @State private var failed = false
     @State private var expanded: String?
+    /// How far the list is pulled down past the top (fills the gap above
+    /// the header with its colour instead of the sand page).
+    @State private var overscroll: CGFloat = 0
 
     var body: some View {
         List {
@@ -50,6 +53,16 @@ struct ShowPreviewView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .ignoresSafeArea(edges: .top)
+        .onScrollGeometryChange(for: CGFloat.self) { max(0, -($0.contentOffset.y + $0.contentInsets.top)) } action: { _, pulled in
+            overscroll = pulled
+        }
+        // Pulling down past the top shows the header's colour, not a sand
+        // gap (Paul, 12 Nov 2026: the page pulled away from the top).
+        .background(alignment: .top) {
+            (pageColour ?? Theme.display)
+                .frame(height: overscroll > 0 ? overscroll + 40 : 0)
+                .ignoresSafeArea()
+        }
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
