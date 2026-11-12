@@ -1768,6 +1768,25 @@ check compiles it):
   through it is (`NowPlayingBar.upcoming`). Tap the bar or the key to
   play it. "Up Next is empty" when there's nothing.
 
+## Done in build 149 (12 Nov 2026, PR #67; Paul: "Build")
+
+- **Player top A + Options D** (Paul, 12 Nov 2026, from
+  https://claude.ai/artifact/PjNiXZeWYQUL7GqMeyHJkk, shown with the
+  Tailenders artwork; build 148 had a plain band then a hard edge, and
+  opening the Options panel slid the title and progress line over the
+  stretched artwork). A: the artwork is a big rounded card again
+  (`artwork(item, size:)`) with the title left-aligned under it, on a
+  soft blurred copy of itself spread across the top and fading into the
+  player's colour (`NowPlayingView.artworkGlow`, like Apple Music); the
+  edge-to-edge `heroArtwork` is gone. D: Options opens a short sheet
+  (`PlayerOptionsSheet`, half height, swipe down or Done): Speed as one
+  "− 1.2× +" control with quick picks 1× / 1.2× / 1.5× / 2× (lit in the
+  accent), Trim silences and Boost voices as switches with a line each,
+  Sleep timer as one row with a list (Off, 5–60 min, End of episode) and
+  "5 more minutes" while it runs. The in-player panel is gone, so nothing
+  on the player moves. Paul: keep labels like "Options" centred under
+  their icons (the mock-up's weren't; the app's are).
+
 ## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
@@ -1786,6 +1805,17 @@ check compiles it):
   address off the store), version 0.1 → 1.0. Costs: developer
   membership (already paid yearly) + domain; free app has no other fees.
   Waiting on Paul: public TestFlight first or straight to the store.
+  Alerts for everyone (Paul asked if it needs a server): not at first.
+  Same free GitHub job, made multi-user: each phone saves its own sealed
+  follows record under a random ID; the job fetches each feed once and
+  writes one alert record per follower tagged with that ID; each phone's
+  CloudKit subscription filters on its own ID. Fine for tens to a few
+  hundred users; GitHub's loose timing stays; using free Actions as a
+  service for others is a grey area; after the repo goes private its
+  minutes count. Bigger: same job on a hosted timer (e.g. Cloudflare
+  Workers paid, $5 / month). Simplest for launch: instant alerts only
+  for Paul, everyone else on the background check. Paul: "just
+  interested in steps for now".
 
 
 
