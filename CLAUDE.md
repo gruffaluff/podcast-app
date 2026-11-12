@@ -11,7 +11,10 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 11 Nov 2026): **"2b olive, soft shadow"**: sand
+screen. Icon (Paul, 12 Nov 2026): **"W1 Warm white"**: white cassette,
+ink window, olive / amber progress line, soft shadow on the off-white page
+(`design/icon/icon_w1.png` from `make_poster_icon.js`; see the queue).
+Before that (11 Nov 2026): **"2b olive, soft shadow"**: sand
 cassette with spoked reels and the progress line (olive played, amber ad)
 on the olive accent with the halftone dot print and a soft card shadow;
 `design/icon/poster_2b.png` / `.svg` from `make_poster_icon.js` (node,
@@ -1632,16 +1635,15 @@ check compiles it):
 
 ## Queued for the next app build
 
-- **Icon refresh for the whiter look** (Paul, 12 Nov 2026: "refresh the
-  logo a bit to match the whiter look"): options on
-  https://claude.ai/artifact/C3kwySgwiAzrEcWyByRrnt (generator in the
-  session scratchpad, same cassette as `make_poster_icon.js`): Now (2b
-  olive with dots), W1 Warm white (off-white tile, white cassette with a
-  soft shadow, ink window, olive played line; suggested), W2 Clean olive
-  (no dots, white cassette), W3 Ink on white (dark cassette on white), W4
-  Olive on white (olive cassette, white window). Waiting on Paul; when
-  picked, update `make_poster_icon.js` (it writes the app icon and
-  `docs/icon.png`).
+- **App icon W1 "Warm white"** (Paul, 12 Nov 2026, from
+  https://claude.ai/artifact/C3kwySgwiAzrEcWyByRrnt: Now, W1 Warm white,
+  W2 Clean olive, W3 Ink on white, W4 Olive on white): the same cassette
+  in white with an ink window and white spoked reels, lifted by a soft
+  warm shadow off the app's off-white (#F5F2EC), olive played line and
+  amber ad; no dot print. `design/icon/make_poster_icon.js` now writes
+  `icon_w1.svg` / `.png`, the app icon and `docs/icon.png`; the
+  website's two inline logos are the new one (claude.ai page
+  republished). Goes out with the next app build.
 
 - **Still undecided** (from the player colour mock-ups,
   https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
