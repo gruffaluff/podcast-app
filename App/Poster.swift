@@ -293,7 +293,9 @@ private struct PosterSwipe: ViewModifier {
         let direction: CGFloat = offset > 0 ? 1 : -1
         withAnimation(.easeOut(duration: 0.18)) { offset = direction * 480 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            fire.action()
+            // Animated, so the list closes up (or the row moves) smoothly
+            // instead of jumping (Paul's recording, 13 Nov 2026).
+            withAnimation(LibraryStore.listChange) { fire.action() }
             withAnimation(.spring(duration: 0.35)) { offset = 0 } completion: { side = 0 }
         }
     }

@@ -1789,6 +1789,15 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **Smoother swipes and Undo** (Paul's recording, 13 Nov 2026, build
+  149: swiping an Up Next row to Played, the row vanished in one jump
+  and the rows below leapt up; Undo popped it back; the Undo bar popped
+  in and out). Every change that can be undone (`LibraryStore.undoable`)
+  and every full-row swipe action (`PosterSwipe`) now happens inside one
+  animation (`LibraryStore.listChange`, snappy 0.32 s), so lists close
+  up, move and reopen smoothly, Undo included; the Undo bar slides up
+  from the bottom and away (`UndoBar`). On the branch.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public

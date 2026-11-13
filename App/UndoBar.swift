@@ -5,7 +5,18 @@ struct UndoBar: View {
     @Environment(LibraryStore.self) private var store
 
     var body: some View {
-        if let action = store.undoAction {
+        // Slides up and away instead of popping in and out.
+        ZStack {
+            if let action = store.undoAction {
+                bar(action)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.snappy(duration: 0.3), value: store.undoAction?.id)
+    }
+
+    private func bar(_ action: UndoAction) -> some View {
+        Group {
             HStack(spacing: 10) {
                 Text(action.label.uppercased())
                     .font(Theme.mono(12, .semibold))
