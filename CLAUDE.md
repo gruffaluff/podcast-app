@@ -1869,7 +1869,7 @@ check compiles it):
   so redraws can't jolt them; still and level while paused.
 
 
-## Haar rework (13 Nov 2026, branch `haar-look`; UBDM until Paul says "build")
+## Done in build 151: Haar rework (13 Nov 2026, PR #69; Paul: "Build")
 
 Paul, 13 Nov 2026: "let's work on restyling it all and bringing over
 into live", "stick with P1". Every Poddeck feature stays; only the look
@@ -1970,6 +1970,14 @@ tab bar and the Native warm screens (`RootView.content`).
   cost (the page fog is drawn under each layer).
 
 ## Queued for the next app build
+
+- **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
+  asked if they matched; they don't). In Native warm, Your shows cards
+  are ~60 pt, Carry on ~66 pt, the playing Carry on card ~70 pt
+  (`CarryOnRow`, `ShowPosterRow` in LibraryView.swift). Plan: one fixed
+  height, content centred, playing card on the same padding. Haar's
+  Library (`HaarLibrarySections`: Carry on rings, shows as a grid) has
+  its own layout now: check whether it still applies there. Not started.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
