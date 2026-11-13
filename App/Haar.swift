@@ -19,9 +19,18 @@ struct PageBackground: View {
 struct FogBackdrop: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drift = false
+    /// How thick the fog is (Settings → Colours, Haar only).
+    @AppStorage(FogBackdrop.densityKey) private var density = 1.0
+    /// Tint the mist with the colour of what's playing.
+    @AppStorage(FogBackdrop.tintKey) private var tint = true
+
+    static let densityKey = "haarFog"
+    static let tintKey = "haarTint"
+
+    private var playing: Color? { tint ? AccentColour.shared.colour : nil }
 
     private var mist: Color {
-        guard let playing = AccentColour.shared.colour else { return Theme.background }
+        guard let playing else { return Theme.background }
         return Theme.background.mix(with: playing, by: 0.12)
     }
 
@@ -32,14 +41,14 @@ struct FogBackdrop: View {
                 mist
                 LinearGradient(colors: [.white.opacity(0.42), .white.opacity(0)], startPoint: .top, endPoint: .center)
                 Circle()
-                    .fill(AccentColour.shared.colour ?? Theme.idleAccent)
+                    .fill(playing ?? Theme.idleAccent)
                     .opacity(0.10)
                     .frame(width: w * 1.1, height: w * 1.1)
                     .blur(radius: 80)
                     .position(x: w * 0.45, y: h * 0.18)
-                band(width: w * 2.1, height: 150, y: h * 0.2, opacity: 0.55, shift: 50, w: w)
-                band(width: w * 2.1, height: 130, y: h * 0.56, opacity: 0.38, shift: -70, w: w)
-                band(width: w * 2.1, height: 170, y: h * 0.86, opacity: 0.55, shift: 40, w: w)
+                band(width: w * 2.1, height: 150, y: h * 0.2, opacity: 0.55 * density, shift: 50, w: w)
+                band(width: w * 2.1, height: 130, y: h * 0.56, opacity: 0.38 * density, shift: -70, w: w)
+                band(width: w * 2.1, height: 170, y: h * 0.86, opacity: 0.55 * density, shift: 40, w: w)
             }
             .animation(.easeInOut(duration: 0.8), value: AccentColour.shared.colour)
         }

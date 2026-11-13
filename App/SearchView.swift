@@ -216,7 +216,7 @@ struct SearchView: View {
 }
 
 /// A transcript match: episode, quote with the match highlighted, actions.
-private struct TranscriptResultRow: View {
+struct TranscriptResultRow: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
@@ -267,7 +267,7 @@ private struct TranscriptResultRow: View {
     }
 }
 
-private struct ClipRow: View {
+struct ClipRow: View {
     @Environment(PlayerModel.self) private var player
     let bookmark: Bookmark
     let episode: PodcastEpisode

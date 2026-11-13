@@ -218,6 +218,8 @@ struct TopPriorityView: View {
     @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = false  // PlayerModel.bedtimeKey
     @AppStorage(PlayerModel.rewindKey) private var rewindOnResume = true
     @AppStorage(AppBadge.modeKey) private var badgeMode = BadgeMode.off.rawValue
+    @AppStorage(FogBackdrop.densityKey) private var fogDensity = 1.0
+    @AppStorage(FogBackdrop.tintKey) private var fogTint = true
 
     /// What the chosen badge counts, and how often it updates.
     private var badgeFooter: String {
@@ -290,10 +292,31 @@ struct TopPriorityView: View {
                 DeckSwitch(options: [(label: "Auto", value: ColourScheme.auto)]
                                + ColourScheme.allCases.map { (label: $0.label, value: $0.rawValue) },
                            selection: $colourScheme)
+                if Theme.isHaar {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Fog").foregroundStyle(Theme.ink)
+                        HStack(spacing: 10) {
+                            Text("Light").font(.caption).foregroundStyle(Theme.muted)
+                            Slider(value: $fogDensity, in: 0...1.4)
+                                .tint(Theme.ink)
+                            Text("Thick").font(.caption).foregroundStyle(Theme.muted)
+                        }
+                    }
+                    .accessibilityElement(children: .contain)
+                    Toggle(isOn: $fogTint) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Tint the mist with each show").foregroundStyle(Theme.ink)
+                            Text("The fog takes a little of the colour of what's playing.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                    .tint(Theme.accentFill)
+                }
             } header: {
                 DeckHeader(title: "Colours")
             } footer: {
-                Text("Auto uses Sand, or Night when your iPhone is in dark mode. The player keeps the colour of what's playing. The app redraws in the new colours.")
+                Text("Auto uses Haar, or Night when your iPhone is in dark mode. The app redraws in the new colours.")
             }
             .listRowBackground(Theme.surface)
 

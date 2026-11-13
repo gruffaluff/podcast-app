@@ -9,6 +9,7 @@ struct LibraryView: View {
     @Query(sort: \Podcast.title) private var shows: [Podcast]
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
+    @State private var showingSettings = false
     @State private var path = NavigationPath()
     /// Most recently updated first by default (Paul, 11 Nov 2026); a new
     /// key so an older saved A–Z doesn't stick.
@@ -80,6 +81,13 @@ struct LibraryView: View {
                 LazyVStack(alignment: .leading, spacing: 10) {
                     if shows.isEmpty {
                         emptyState
+                    } else if Theme.isHaar {
+                        // Haar (phase 4): inbox by day, Carry on with rings,
+                        // an artwork grid with Top shows first, shelves.
+                        HaarLibrarySections(newEpisodes: Self.pickNew(from: newEpisodes, limit: 30),
+                                            continuing: continuing,
+                                            shows: sortedShows,
+                                            sortMenu: AnyView(sortMenu))
                     } else {
                         // Deck 0 (Paul, 11 Nov 2026): New first, as one paper
                         // "front page" card (B on paper, artwork on the right
@@ -129,10 +137,17 @@ struct LibraryView: View {
             // (Paul, build 143: their own row left gaps above and below).
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    NavigationLink { HistoryView() } label: { Image(systemName: "clock.arrow.circlepath") }
-                        .accessibilityLabel("History")
-                    NavigationLink { StatsView() } label: { Image(systemName: "chart.bar") }
-                        .accessibilityLabel("Stats")
+                    if Theme.isHaar {
+                        // Haar: History and Stats are shelves at the foot of
+                        // Library; settings live here (there's no Up Next tab).
+                        Button { showingSettings = true } label: { Image(systemName: "gearshape") }
+                            .accessibilityLabel("Shows and settings")
+                    } else {
+                        NavigationLink { HistoryView() } label: { Image(systemName: "clock.arrow.circlepath") }
+                            .accessibilityLabel("History")
+                        NavigationLink { StatsView() } label: { Image(systemName: "chart.bar") }
+                            .accessibilityLabel("Stats")
+                    }
                     Button { addingShow = true } label: {
                         Image(systemName: "plus")
                     }
@@ -140,6 +155,16 @@ struct LibraryView: View {
                 }
             }
             .sheet(isPresented: $addingShow) { AddShowView() }
+            .sheet(isPresented: $showingSettings) {
+                NavigationStack {
+                    TopPriorityView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { showingSettings = false }
+                            }
+                        }
+                }
+            }
         }
     }
 
