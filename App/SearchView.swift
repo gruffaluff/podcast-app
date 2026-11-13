@@ -35,7 +35,7 @@ struct SearchView: View {
         NavigationStack {
             List {
                 DeckSwitch(options: Scope.allCases.map { (label: $0.rawValue, value: $0) }, selection: $scope)
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
                 .listRowSeparator(.hidden)
 
                 if query.isEmpty && !recents.isEmpty {
@@ -50,7 +50,7 @@ struct SearchView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Words, people, shows")
             .onSubmit(of: .search) { remember(query) }
             .tabTitle("Search")
@@ -70,14 +70,14 @@ struct SearchView: View {
                 .foregroundStyle(Theme.accentText)
                 .buttonStyle(.plain)
         }
-        .listRowBackground(Theme.background)
+        .listRowBackground(Theme.rowBackground)
         .listRowSeparator(.hidden)
         ForEach(recents, id: \.self) { term in
             Button { query = term } label: {
                 Label(term, systemImage: "clock.arrow.circlepath")
                     .foregroundStyle(Theme.ink)
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.rowBackground)
         }
     }
 
@@ -88,7 +88,7 @@ struct SearchView: View {
             hint("Search everything said in your episodes' transcripts.")
         } else if searching && transcriptResults.isEmpty {
             HStack { Spacer(); ProgressView(); Spacer() }
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
         } else if transcriptResults.isEmpty {
             hint("No transcript mentions “\(query)”.")
         } else {
@@ -149,7 +149,7 @@ struct SearchView: View {
             let episodes = matchingEpisodes(text)
             if !episodes.isEmpty {
                 DeckHeader(title: "Episodes", detail: "\(episodes.count) found")
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
             }
             ForEach(episodes) { episode in
@@ -210,13 +210,13 @@ struct SearchView: View {
             .font(.subheadline)
             .foregroundStyle(Theme.muted)
             .padding(.vertical, 12)
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.rowBackground)
             .listRowSeparator(.hidden)
     }
 }
 
 /// A transcript match: episode, quote with the match highlighted, actions.
-private struct TranscriptResultRow: View {
+struct TranscriptResultRow: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
@@ -267,7 +267,7 @@ private struct TranscriptResultRow: View {
     }
 }
 
-private struct ClipRow: View {
+struct ClipRow: View {
     @Environment(PlayerModel.self) private var player
     let bookmark: Bookmark
     let episode: PodcastEpisode

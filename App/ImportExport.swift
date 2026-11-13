@@ -60,7 +60,7 @@ struct ImportExportSection: View {
         } footer: {
             Text("Move your shows from or to another podcast app with an OPML file (Pocket Casts, Overcast, Castro and most others can make one; Apple Podcasts can't, so add those shows by name or link). Imported shows start on Bottom and nothing downloads until new episodes arrive.")
         }
-        .listRowBackground(Theme.background)
+        .listRowBackground(Theme.rowBackground)
         .fileImporter(isPresented: $choosingFile, allowedContentTypes: [.opml, .xml, .data]) { result in
             guard case .success(let url) = result else { return }
             Task { await importFile(url) }

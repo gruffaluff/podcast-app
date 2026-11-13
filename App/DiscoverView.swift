@@ -33,7 +33,7 @@ struct DiscoverView: View {
             .environment(\.defaultMinListRowHeight, 0)
             .listRowSpacing(0)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Shows, people, topics")
             .onSubmit(of: .search) { Task { await search() } }
             .task(id: query) { await search(debounced: true) }
@@ -52,11 +52,11 @@ struct DiscoverView: View {
         Section {
             if searching && searchResults.isEmpty {
                 HStack { Spacer(); ProgressView(); Spacer() }
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
             } else if searchResults.isEmpty {
                 Text("No shows found.").foregroundStyle(Theme.muted)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
             }
             ForEach(Array(searchResults.enumerated()), id: \.element.id) { index, item in
@@ -92,7 +92,7 @@ struct DiscoverView: View {
             }
             .padding(.bottom, 3)
         }
-        .listRowBackground(Theme.background)
+        .listRowBackground(Theme.rowBackground)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0))
     }
@@ -122,7 +122,7 @@ struct DiscoverView: View {
                         HStack { Spacer(); ProgressView(); Spacer() }
                     }
                 }
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
                 .listRowSeparator(.hidden)
             }
             ForEach(Array(chart.enumerated()), id: \.element.id) { index, item in
@@ -162,7 +162,7 @@ struct DiscoverView: View {
             DeckHeader(title: "Because you listen to \(showTitle)")
                 .padding(.top, -6)
         }
-        .listRowBackground(Theme.background)
+        .listRowBackground(Theme.rowBackground)
         .listRowSeparator(.hidden)
     }
 

@@ -14,21 +14,22 @@ import Observation
 /// and fonts in each; only these colours change. The player and mini
 /// player keep taking their colour from the artwork.
 enum ColourScheme: String, CaseIterable, Identifiable {
-    case sand, slate, clay, night
+    case haar, sand, slate, clay, night
 
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
     var isDark: Bool { self == .night }
 
     /// The settings key (synced through iCloud with the other settings).
-    /// Its default, "auto", follows the iPhone: Sand when it's light, Night
-    /// when it's in dark mode (Paul, 9 Nov 2026).
+    /// Its default, "auto", follows the iPhone: Haar when it's light (the
+    /// fog look, Paul 13 Nov 2026; was Sand), Night when it's in dark mode
+    /// (Paul, 9 Nov 2026).
     static let key = "colourScheme"
     static let auto = "auto"
 
     /// The scheme a saved setting means, given the iPhone's light / dark.
     static func resolve(_ setting: String, systemDark: Bool) -> ColourScheme {
-        ColourScheme(rawValue: setting) ?? (systemDark ? .night : .sand)
+        ColourScheme(rawValue: setting) ?? (systemDark ? .night : .haar)
     }
 
     /// The scheme in use. RootView sets it from the saved setting before
@@ -50,6 +51,16 @@ enum ColourScheme: String, CaseIterable, Identifiable {
 
     var palette: Palette {
         switch self {
+        case .haar:
+            // Haar (Paul, 13 Nov 2026): a calm misty grey page with drifting
+            // fog (`FogBackdrop`), frosted white cards, soft charcoal ink and
+            // one deep blue for when nothing is playing. Mock-ups:
+            // https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7 (page v4).
+            Palette(background: 0xD3D8DB, surface: 0xFFFFFF, hairline: 0xC3CACF, controlBorder: 0xB4BDC4,
+                    ink: 0x1F2328, muted: 0x4B5259, accentFill: 0x2B4766, accentText: 0x2B4766,
+                    onAccent: 0xFFFFFF, highlight: 0xE4E9EC, adText: 0x6E4A12,
+                    display: 0x2B4766, displayText: 0xF4F2EE, displayDim: 0xC9CDD1,
+                    plate: 0xC9D0D5, playing: 0x1F2328)
         case .sand:
             // Native warm (Paul, 11 Nov 2026): a warm off-white page, white
             // rows, near-black text; colour comes from the artwork.
@@ -96,7 +107,7 @@ enum Theme {
     static var hairline: Color { Color(hex: p.hairline) }
 
     /// Corner radius of every list card.
-    static let cardRadius: CGFloat = 12
+    static var cardRadius: CGFloat { isHaar ? 18 : 12 }
     /// Deck 0: the plate under the bottom deck.
     static var plate: Color { Color(hex: p.plate) }
     /// Deck 0: the card of the episode playing, wherever it shows (Up Next,
@@ -116,14 +127,14 @@ enum Theme {
     /// accent redraw, once, when the episode changes.
     @MainActor static var accentFill: Color {
         if let playing = AccentColour.shared.colour { return playing }
-        return ColourScheme.current.isDark ? Color(hex: p.accentFill) : softBlack
+        return ColourScheme.current.isDark ? Color(hex: p.accentFill) : idleAccent
     }
     /// Accent text on cards and the page.
     /// Night keeps light accent text: artwork colours are dark, made for
     /// light text on them, so as text on the dark page they'd be lost.
     @MainActor static var accentText: Color {
         if ColourScheme.current.isDark { return Color(hex: p.accentText) }
-        return AccentColour.shared.colour ?? softBlack
+        return AccentColour.shared.colour ?? idleAccent
     }
     /// On a screen about one show (show page, episode page, show settings),
     /// that show's colour wins over what's playing (Paul, 11 Nov 2026).
@@ -141,6 +152,13 @@ enum Theme {
     }
     /// The accent when nothing is playing.
     static let softBlack = Color(hex: 0x2B2925)
+    /// Haar's deep blue when nothing plays; soft black in the other light schemes.
+    static var idleAccent: Color { ColourScheme.current == .haar ? Color(hex: 0x2B4766) : softBlack }
+    /// Is the Haar look on (fog page, frosted cards, serif titles)?
+    static var isHaar: Bool { ColourScheme.current == .haar }
+    /// Behind list rows: clear in Haar so the fog shows through, the page
+    /// colour otherwise.
+    static var rowBackground: Color { isHaar ? .clear : background }
     /// Search matches, highlighted lines and the playing card.
     static var highlight: Color { Color(hex: p.highlight) }
     /// Ad breaks (amber).
@@ -175,7 +193,19 @@ enum Theme {
     /// Headings and screen titles: Apple's own font, SF Pro, bold (Native
     /// warm, Paul 11 Nov 2026: "just use a standard Apple font").
     static func big(_ size: CGFloat) -> Font {
-        .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
+        // Haar: Instrument Serif (OFL, bundled), drawn a little larger as
+        // it's lighter than SF bold.
+        if isHaar { return .custom(serifName, size: scaled(size * 1.08, max: 1.2)) }
+        return .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
+    }
+
+    /// The Haar look's serif (App/Fonts/InstrumentSerif-Regular.ttf).
+    static let serifName = "InstrumentSerif-Regular"
+
+    /// Big serif text that doesn't follow the text size (player titles,
+    /// the transcript's line now): Haar only, else SF bold.
+    static func serif(_ size: CGFloat) -> Font {
+        isHaar ? .custom(serifName, size: scaled(size, max: 1.2)) : .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
     }
 
     /// Row titles (episodes, shows, chapters) and the transcript's lines:
