@@ -1843,6 +1843,15 @@ check compiles it):
 
 ## Queued for the next app build
 
+- **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
+  asked if they matched; they don't). Your shows cards are ~60 pt (two
+  lines beside 40 pt artwork), Carry on ~66 pt (title, show · time left
+  and the progress line stack taller than the artwork), and the playing
+  Carry on card ~70 pt (`playingCard()` pads 12 vs `posterCard` 10).
+  Plan: one fixed card height for both (`CarryOnRow`, `ShowPosterRow` in
+  LibraryView.swift), content centred, and the dark playing card on the
+  same padding as the white ones. Not started.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
