@@ -1971,6 +1971,30 @@ tab bar and the Native warm screens (`RootView.content`).
 
 ## Queued for the next app build
 
+- **Haar show page, swipe back, plain line** (Paul, 13 Nov 2026, after
+  build 151: "let's work the show page and swipe back (if valid)"; "the
+  waveform shape doesn't need to mimic the real sound … simplify this
+  line like Poddeck had"). On the branch, not built:
+  - Show pages open as a sheet over wherever you are
+    (`HaarShowSheet` in `App/HaarShow.swift`, from `store.showSheet`,
+    presented by `HaarRoot`): Episodes / Settings as two words at the
+    top with Done; Episodes is the usual `ShowView` (kept alive so it
+    keeps its place), Settings is `ShowSettingsView(embedded: true)`; the
+    show page's settings key and "Show settings" switch to the Settings
+    page (`\.openShowSettings`). Opened from Library's grid, Find's
+    "Your shows", the player's ⋯ Go to show / show name and an episode
+    page's show (`revealShow` → HaarRoot; no tab switch, no push). An
+    episode page opened from the sheet shows over it (the root view's
+    episode sheet stands aside while a show sheet is up).
+  - Swipe right on Library's first page goes back to Now (`SwipeRight`,
+    a pan that only starts when moving right, so scrolling isn't
+    touched; pages pushed on Library, e.g. History, keep iOS's back
+    swipe). Valid now that shows no longer push inside Library.
+  - The waveform is gone: `HaarScrubLine` is a plain line like
+    Poddeck's (5 pt, split by 3 pt gaps at chapters, played in ink,
+    ahead faded, ads paler, an ink dot at the play point; thicker with a
+    bigger dot while dragging). Same drag rules, bubble and Undo.
+
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
   asked if they matched; they don't). In Native warm, Your shows cards
   are ~60 pt, Carry on ~66 pt, the playing Carry on card ~70 pt

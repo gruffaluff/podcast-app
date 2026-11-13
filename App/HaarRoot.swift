@@ -31,6 +31,7 @@ struct HaarRoot: View {
                     .accessibilityHidden(tab != 0)
                 if libraryMade || tab == 1 {
                     LibraryView()
+                        .environment(\.haarGoHome, { go(0) })
                         .safeAreaPadding(.bottom, Self.dockRoom - 10)
                         .offset(x: tab == 1 ? 0 : geometry.size.width + 30)
                         .opacity(tab == 1 ? 1 : 0)
@@ -58,6 +59,24 @@ struct HaarRoot: View {
             UpNextSheet()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+        }
+        // A show opens as a sheet over wherever you are.
+        .sheet(item: Binding(get: { store.showSheet }, set: { store.showSheet = $0 })) { show in
+            HaarShowSheet(show: show)
+                .presentationDetents([.large])
+        }
+        // The player's / an episode page's show name: open that show.
+        .onChange(of: store.revealShow) { _, show in
+            guard let show else { return }
+            store.revealShow = nil
+            guard store.showSheet?.feedURL != show.feedURL else { return }
+            store.showSheet = nil
+            showingUpNext = false
+            // Let any sheet that's closing (the episode page) go first.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(380))
+                store.showSheet = show
+            }
         }
         // "In Up Next · 2nd" on an episode page.
         .onChange(of: store.revealInUpNext) { _, id in

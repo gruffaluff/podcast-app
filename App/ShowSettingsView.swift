@@ -11,15 +11,18 @@ struct ShowSettingsView: View {
     let show: Podcast
     /// True when shown right after following ("Following …" heading).
     var justFollowed = false
+    /// Inside the Haar show sheet's Settings page: the sheet has its own Done.
+    var embedded = false
     @State private var olderUnplayed = true
     @State private var addedAll = false
     /// This show's colour for the "on" keys and toggles here, fixed when
     /// the sheet opens (nothing changes colour while it's open).
     @State private var colour: Color?
 
-    init(show: Podcast, justFollowed: Bool = false) {
+    init(show: Podcast, justFollowed: Bool = false, embedded: Bool = false) {
         self.show = show
         self.justFollowed = justFollowed
+        self.embedded = embedded
         _colour = State(initialValue: ArtworkColors.shared.background(for: show.artworkURL))
     }
 
@@ -135,8 +138,9 @@ struct ShowSettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .haarPage()
-            .navigationTitle("Show settings")
+            .navigationTitle(embedded ? "" : "Show settings")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(embedded ? .hidden : .automatic, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }

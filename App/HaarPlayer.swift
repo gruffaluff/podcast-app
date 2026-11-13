@@ -204,7 +204,7 @@ struct HaarNowView: View {
                 .padding(.top, 8)
             adBar
                 .padding(.top, 4)
-            HaarWave(episodeID: item.episodeID)
+            HaarScrubLine(episodeID: item.episodeID)
                 .padding(.top, 6)
             transport
                 .padding(.top, 2)
@@ -537,13 +537,14 @@ struct HaarNowView: View {
 
 // MARK: - Waveform progress
 
-/// The progress line as a waveform (the shape is made up from the
-/// episode, the same every time; it isn't the real sound), played part in
-/// ink, the rest faded, ad breaks fainter still, chapter dots under it.
+/// The progress line, plain like Poddeck's (Paul, 13 Nov 2026: the
+/// waveform's shape needn't mimic the sound, simplify it): a thin line
+/// split by small gaps at chapters, played part in ink, the rest faded,
+/// ad breaks fainter, a dot at the play point that grows while you drag.
 /// Drag anywhere along it: it moves by how far the finger travels (a touch
 /// never jumps), finger lower down for finer, a bubble shows the chapter
 /// and time, and a jump of 2 minutes or more offers Undo.
-struct HaarWave: View {
+struct HaarScrubLine: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
     let episodeID: String
@@ -553,8 +554,8 @@ struct HaarWave: View {
     @State private var lastX: CGFloat?
     @State private var speedLabel: String?
 
-    static let bars = 64
-    static let height: CGFloat = 42
+    /// The touch band; the line sits in its middle.
+    static let height: CGFloat = 30
 
     var body: some View {
         let duration: TimeInterval = max(player.duration, 1)
@@ -565,11 +566,10 @@ struct HaarWave: View {
             GeometryReader { geometry in
                 let width: CGFloat = max(1, geometry.size.width)
                 ZStack(alignment: .topLeading) {
-                    WaveShape(heights: Self.heights(for: episodeID), progress: shown / duration,
-                              ads: adFractions, ink: Theme.ink, faded: Theme.ink.opacity(0.18))
+                    PlainLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
+                              grow: scrubTime == nil ? 0 : 1)
                         .frame(width: width, height: Self.height)
-                    dots(width: width)
-                        .offset(y: Self.height + 3)
+                        .animation(.easeOut(duration: 0.18), value: scrubTime == nil)
                     if scrubTime != nil {
                         bubble(at: shown, x: CGFloat(shown / duration) * width, width: width)
                     }
@@ -577,7 +577,7 @@ struct HaarWave: View {
                 .contentShape(Rectangle())
                 .gesture(scrub(width: width, duration: duration))
             }
-            .frame(height: Self.height + 9)
+            .frame(height: Self.height)
             .accessibilityElement()
             .accessibilityLabel("Position")
             .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
@@ -611,22 +611,10 @@ struct HaarWave: View {
         }
     }
 
-    /// Small dots under the wave where each chapter starts; filled once
-    /// reached.
-    private func dots(width: CGFloat) -> some View {
-        let duration: TimeInterval = max(player.duration, 1)
-        let now: TimeInterval = scrubTime ?? player.currentTime
-        return ZStack(alignment: .leading) {
-            ForEach(Array(player.chapters.enumerated()), id: \.offset) { _, chapter in
-                let x: CGFloat = CGFloat(min(1, max(0, chapter.start / duration))) * width
-                Circle()
-                    .fill(chapter.start <= now ? Theme.ink : Theme.ink.opacity(0.25))
-                    .frame(width: 4, height: 4)
-                    .offset(x: max(0, min(width - 4, x - 2)))
-            }
-        }
-        .frame(width: width, height: 4, alignment: .leading)
-        .allowsHitTesting(false)
+    /// Where each chapter starts, as a fraction of the episode.
+    private var chapterStarts: [Double] {
+        guard player.duration > 0 else { return [] }
+        return player.chapters.map { $0.start / player.duration }
     }
 
     private func scrub(width: CGFloat, duration: TimeInterval) -> some Gesture {
@@ -690,56 +678,66 @@ struct HaarWave: View {
         .position(x: centre, y: -26)
         .allowsHitTesting(false)
     }
-
-    /// Bar heights (0.18–1) made from the episode's ID: a calm, speech-like
-    /// shape that's the same every time the episode is shown.
-    static func heights(for id: String) -> [Double] {
-        var seed: UInt64 = 1469598103934665603
-        for byte in id.utf8 {
-            seed = (seed ^ UInt64(byte)) &* 1099511628211
-        }
-        var values: [Double] = []
-        values.reserveCapacity(bars)
-        var smooth: Double = 0.5
-        for index in 0..<bars {
-            seed = seed &* 6364136223846793005 &+ 1442695040888963407
-            let random: Double = Double((seed >> 33) % 1000) / 1000
-            smooth = smooth * 0.55 + random * 0.45
-            let swell: Double = 0.75 + 0.25 * sin(Double(index) / 5.3)
-            values.append(max(0.18, min(1, smooth * swell * 1.25)))
-        }
-        return values
-    }
 }
 
-/// Draws the bars: played in ink, the rest faded, ads fainter.
-private struct WaveShape: View {
-    let heights: [Double]
+/// Draws the line: chapter gaps, played in ink, ahead faded, ads fainter,
+/// and the play-point dot. `grow` (0 at rest, 1 while dragging) animates
+/// it a little thicker with a bigger dot.
+private struct PlainLine: View, Animatable {
     let progress: Double
+    let chapterStarts: [Double]
     let ads: [ClosedRange<Double>]
-    let ink: Color
-    let faded: Color
+    var grow: Double
+
+    var animatableData: Double {
+        get { grow }
+        set { grow = newValue }
+    }
 
     var body: some View {
         Canvas { context, size in
-            let count: Int = heights.count
-            guard count > 0 else { return }
-            let step: CGFloat = size.width / CGFloat(count)
-            let barWidth: CGFloat = max(1.5, step * 0.55)
-            for index in 0..<count {
-                let middle: Double = (Double(index) + 0.5) / Double(count)
-                let inAd: Bool = ads.contains { $0.contains(middle) }
-                let barHeight: CGFloat = max(3, CGFloat(heights[index]) * size.height)
-                let rect = CGRect(x: CGFloat(index) * step + (step - barWidth) / 2,
-                                  y: (size.height - barHeight) / 2,
-                                  width: barWidth, height: barHeight)
-                let played: Bool = middle <= progress
-                var colour: Color = played ? ink : faded
-                if inAd { colour = played ? ink.opacity(0.35) : faded.opacity(0.45) }
-                context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(colour))
-            }
+            Self.draw(in: context, size: size, progress: progress, chapterStarts: chapterStarts, ads: ads, grow: CGFloat(grow))
         }
         .accessibilityHidden(true)
+    }
+
+    // Split out (with explicit types) so the compiler checks it quickly.
+    private static func draw(in context: GraphicsContext, size: CGSize, progress: Double,
+                             chapterStarts: [Double], ads: [ClosedRange<Double>], grow: CGFloat) {
+        let ink: Color = Theme.ink
+        let dot: CGFloat = 12 + 6 * grow
+        let x0: CGFloat = dot / 2
+        let span: CGFloat = max(1, size.width - dot)
+        let thickness: CGFloat = 5 + 4 * grow
+        let top: CGFloat = (size.height - thickness) / 2
+        let playedX: CGFloat = x0 + span * CGFloat(min(1, max(0, progress)))
+        let inner: [Double] = chapterStarts.filter { $0 > 0.002 && $0 < 0.998 }.sorted()
+        let cuts: [Double] = [0] + inner + [1]
+        let gap: CGFloat = 3
+        for index in 0..<(cuts.count - 1) {
+            let start: CGFloat = x0 + span * CGFloat(cuts[index]) + (index > 0 ? gap / 2 : 0)
+            let end: CGFloat = x0 + span * CGFloat(cuts[index + 1]) - (index < cuts.count - 2 ? gap / 2 : 0)
+            guard end > start else { continue }
+            let shape = Path(roundedRect: CGRect(x: start, y: top, width: end - start, height: thickness),
+                             cornerRadius: thickness / 2)
+            var segment = context
+            segment.clip(to: shape)
+            segment.fill(shape, with: .color(ink.opacity(0.16)))
+            if playedX > start {
+                let played = CGRect(x: start, y: top, width: min(end, playedX) - start, height: thickness)
+                segment.fill(Path(played), with: .color(ink))
+            }
+            for ad in ads {
+                let adStart: CGFloat = max(start, x0 + span * CGFloat(ad.lowerBound))
+                let adEnd: CGFloat = min(end, x0 + span * CGFloat(ad.upperBound))
+                guard adEnd > adStart else { continue }
+                // Ads read paler than the rest, played or not.
+                let adRect = CGRect(x: adStart, y: top, width: adEnd - adStart, height: thickness)
+                segment.fill(Path(adRect), with: .color(Theme.background.opacity(0.55)))
+            }
+        }
+        let dotRect = CGRect(x: playedX - dot / 2, y: (size.height - dot) / 2, width: dot, height: dot)
+        context.fill(Path(ellipseIn: dotRect), with: .color(ink))
     }
 }
 

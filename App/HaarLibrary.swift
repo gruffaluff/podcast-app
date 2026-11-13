@@ -186,7 +186,7 @@ struct HaarLibrarySections: View {
         let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
         return LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
             ForEach(ordered) { entry in
-                NavigationLink(value: entry.show) {
+                Button { store.showSheet = entry.show } label: {
                     HaarShowTile(show: entry.show, rank: entry.rank)
                 }
                 .buttonStyle(.plain)

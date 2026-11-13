@@ -10,6 +10,7 @@ struct LibraryView: View {
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
     @State private var showingSettings = false
+    @Environment(\.haarGoHome) private var goHome
     @State private var path = NavigationPath()
     /// Most recently updated first by default (Paul, 11 Nov 2026); a new
     /// key so an older saved A–Z doesn't stick.
@@ -122,6 +123,9 @@ struct LibraryView: View {
                 .padding(.bottom, 12)
             }
             .haarPage()
+            // Haar: swipe right on Library's first page to go back to Now
+            // (pages pushed on top keep iOS's own back swipe).
+            .gesture(SwipeRight(isEnabled: goHome != nil) { goHome?() })
             .refreshable { await store.refreshAll() }
             .onAppear { continuing = carryOn(playing: player.nowPlaying?.episodeID) }
             .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = carryOn(playing: id) }
@@ -129,7 +133,7 @@ struct LibraryView: View {
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             // From the player's / an episode page's show name.
             .onChange(of: store.revealShow, initial: true) { _, show in
-                guard let show else { return }
+                guard let show, !Theme.isHaar else { return }
                 path = NavigationPath()
                 path.append(show)
             }
