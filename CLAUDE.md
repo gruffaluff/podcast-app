@@ -2132,6 +2132,8 @@ all the suggested picks.**
   "That's everything unplayed." then the most recent 60 played episodes
   grouped by month (newest first; "Older episodes are under All" beyond
   that) (`HaarShowEpisodes`). All is unchanged.
+- Find on the fog page like Library (`.haarPage()`; Paul: "so white it
+  stands out"; it only had the pale see-through layer).
 - Sleep moon no longer jumps when the minutes appear: the moon stays put
   and "15M" sits under it as an overlay (`HaarTransport.sleepButton`).
 
