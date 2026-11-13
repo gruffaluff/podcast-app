@@ -16,7 +16,7 @@ struct ChaptersView: View {
                 Section {
                     // A plain row, not a section header (plain lists pin headers).
                     header
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                         .listRowSeparator(.hidden)
                     ForEach(Array(player.chapters.enumerated()), id: \.offset) { index, chapter in
                         Button {
@@ -37,7 +37,7 @@ struct ChaptersView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .overlay {
                 if player.chapters.isEmpty {
                     ContentUnavailableView("No chapters", systemImage: "list.bullet.rectangle", description: Text("This episode doesn't come with chapters. They're made automatically once it has a transcript."))

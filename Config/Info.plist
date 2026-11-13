@@ -10,6 +10,7 @@
 		<string>FrauncesSoft-Medium.ttf</string>
 		<string>DMMono-Regular.ttf</string>
 		<string>DMMono-Medium.ttf</string>
+		<string>InstrumentSerif-Regular.ttf</string>
 	</array>
 	<!-- Keep playing when the screen is locked or another app is open. -->
 	<key>UIBackgroundModes</key>

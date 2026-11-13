@@ -20,14 +20,14 @@ struct AddShowView: View {
                     Text(message)
                         .font(.footnote)
                         .foregroundStyle(Theme.accentText)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                 }
                 if looksLikeFeedLink, let url = feedLink {
                     Button { follow(url) } label: {
                         Label("Follow this link", systemImage: "link")
                     }
                     .foregroundStyle(Theme.accentText)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                 }
                 // Tap a show for its page (description and episodes); the
                 // Follow key follows it straight away.
@@ -39,7 +39,7 @@ struct AddShowView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .overlay {
                 if searching {
                     ProgressView()

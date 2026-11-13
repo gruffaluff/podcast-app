@@ -19,7 +19,7 @@ struct UpNextSheet: View {
                     Text(summary(total: total))
                         .font(Theme.mono(12))
                         .foregroundStyle(Theme.muted)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                         .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
@@ -43,7 +43,7 @@ struct UpNextSheet: View {
                         }
                     }
                     .tint(Theme.accentFill)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
                 }
                 .listSectionSeparator(.hidden)
@@ -51,7 +51,7 @@ struct UpNextSheet: View {
             // Full-width banded rows, like the Up Next tab.
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .navigationTitle("Up Next")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

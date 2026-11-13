@@ -48,8 +48,10 @@ struct PodcastsApp: App {
     private static func styleSystemBars() {
         // Follows the scheme's light / dark (Night is dark).
         let ink = UIColor.label
+        // Haar: big titles in Instrument Serif (falls back to SF bold).
+        let largeFont = (Theme.isHaar ? UIFont(name: Theme.serifName, size: 38) : nil) ?? UIFont.systemFont(ofSize: 34, weight: .bold)
         UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 34, weight: .bold), .foregroundColor: ink
+            .font: largeFont, .foregroundColor: ink
         ]
         UINavigationBar.appearance().titleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: ink
@@ -86,7 +88,7 @@ struct RootView: View {
                 showingPlayer = true
             }
         case QuickActions.search:
-            tab = 3
+            tab = Theme.isHaar ? 2 : 3
         default:
             tab = 0
         }
@@ -103,32 +105,45 @@ struct RootView: View {
     @State private var quickActions = QuickActions.shared
     @State private var showingWelcome = false
 
+    /// Haar (phase 3): the player as home with Library and Find as layers
+    /// and a floating dock. Every other scheme: iOS's tab bar with the
+    /// mini player above it (Native warm).
+    @ViewBuilder private var content: some View {
+        if Theme.isHaar {
+            HaarRoot(tab: $tab)
+                .onAppear { if tab > 2 { tab = 2 } }
+        } else {
+            TabView(selection: $tab) {
+                Tab("Up Next", systemImage: "list.bullet", value: 0) { UpNextView() }
+                Tab("Library", systemImage: "square.stack", value: 1) { LibraryView() }
+                Tab("Discover", systemImage: "safari", value: 2) { DiscoverView() }
+                Tab(value: 3, role: .search) { SearchView() }
+            }
+            .tabViewBottomAccessory {
+                NowPlayingBar { showingPlayer = true }
+            }
+            .tabBarMinimizeBehavior(.onScrollDown)
+        }
+    }
+
     var body: some View {
         // Native warm (Paul, 11 Nov 2026): iOS's own tab bar, with the
         // mini player sitting above it as Apple Music does (the tab view's
         // bottom accessory). iOS lays the lists out round both, so nothing
         // overlaps a list (the dead spots of builds 140-141 came from our
         // own dock over iOS's hidden bar).
-        TabView(selection: $tab) {
-            Tab("Up Next", systemImage: "list.bullet", value: 0) { UpNextView() }
-            Tab("Library", systemImage: "square.stack", value: 1) { LibraryView() }
-            Tab("Discover", systemImage: "safari", value: 2) { DiscoverView() }
-            Tab(value: 3, role: .search) { SearchView() }
-        }
-        .tabViewBottomAccessory {
-            NowPlayingBar { showingPlayer = true }
-        }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        // Undo and No internet float above the tab bar while they show.
+        content
+        // Undo and No internet float above the tab bar (or Haar's dock)
+        // while they show.
         .overlay(alignment: .bottom) {
             VStack(spacing: 6) {
                 OfflineBar()
                 UndoBar()
             }
             .padding(.horizontal, 12)
-            .padding(.bottom, 128)
+            .padding(.bottom, Theme.isHaar ? 84 : 128)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .haarPage()
         .onChange(of: quickActions.pending, initial: true) { _, action in
             guard let action else { return }
             quickActions.pending = nil
@@ -137,8 +152,14 @@ struct RootView: View {
         .tint(Theme.ink)
         // The player fills the whole screen (Paul: no page showing through
         // at the top); swipe down to close it.
-        .fullScreenCover(isPresented: $showingPlayer) {
+        .fullScreenCover(isPresented: Theme.isHaar ? Binding.constant(false) : $showingPlayer) {
             NowPlayingView()
+        }
+        // Haar: the player is home, so "open the player" goes home.
+        .onChange(of: showingPlayer) { _, open in
+            guard open, Theme.isHaar else { return }
+            showingPlayer = false
+            tab = 0
         }
         .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)

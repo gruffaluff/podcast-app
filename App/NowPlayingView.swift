@@ -929,7 +929,7 @@ private struct PlayerUpNextCard: View {
 
 /// The iPhone's own volume slider (moves with the side buttons), drawn in
 /// the player's light colour.
-private struct SystemVolumeSlider: UIViewRepresentable {
+struct SystemVolumeSlider: UIViewRepresentable {
     func makeUIView(context: Context) -> CentredVolumeView {
         let view = CentredVolumeView(frame: .zero)
         let paper = UIColor(Poster.paper)
@@ -1040,7 +1040,7 @@ private struct ScrubLine: View, Animatable {
 }
 
 /// The system AirPlay / Bluetooth device picker.
-private struct RoutePicker: UIViewRepresentable {
+struct RoutePicker: UIViewRepresentable {
     let tint: UIColor
 
     func makeUIView(context: Context) -> AVRoutePickerView {
@@ -1094,7 +1094,7 @@ private struct DimWhenDisabled: ButtonStyle {
 /// fit everything at once (Paul, 13 Nov 2026: no swiping up for the rest;
 /// no blue; the see-through glass was too cloudy). Solid warm page, white
 /// cards, icons and keys in ink and the accent.
-private struct PlayerOptionsSheet: View {
+struct PlayerOptionsSheet: View {
     @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
     /// The sheet is exactly as tall as what's in it.

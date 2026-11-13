@@ -61,7 +61,7 @@ struct TranscriptView: View {
                     status
                 }
             }
-            .background(Theme.background)
+            .haarPage()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {

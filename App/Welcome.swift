@@ -91,7 +91,7 @@ struct WelcomeView: View {
             .padding(24)
             .padding(.top, 20)
         }
-        .background(Theme.background)
+        .haarPage()
         .onDisappear { UserDefaults.standard.set(true, forKey: Self.seenKey) }
     }
 

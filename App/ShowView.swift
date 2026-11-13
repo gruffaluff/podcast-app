@@ -51,7 +51,7 @@ struct ShowView: View {
         List(selection: $selection) {
             Section {
                 header
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets())
                     .selectionDisabled()
@@ -70,12 +70,12 @@ struct ShowView: View {
                 .padding(.horizontal, 12)
                 .frame(minHeight: 40)
                 .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 4, trailing: 16))
                 .selectionDisabled()
                 DeckSwitch(options: [(label: "Unplayed \(unplayedCount)", value: false), (label: "All \(allEpisodes.count)", value: true)], selection: $showAll)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 6, trailing: 16))
                     .selectionDisabled()
@@ -83,7 +83,7 @@ struct ShowView: View {
                     Text(!term.isEmpty ? "No episodes match “\(term)”." : showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
                         .font(.footnote)
                         .foregroundStyle(Theme.muted)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                         .listRowSeparator(.hidden)
                         .selectionDisabled()
                 }
@@ -105,7 +105,7 @@ struct ShowView: View {
         .environment(\.editMode, .constant(selecting ? .active : .inactive))
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Theme.background)
+        .haarPage()
         .environment(\.showColour, pageColour)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(selecting)

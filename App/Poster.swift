@@ -208,8 +208,12 @@ extension View {
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
-                    .fill(fill)
+                if Theme.isHaar && fill == Theme.surface {
+                    Color.clear.frostedCard()
+                } else {
+                    RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
+                        .fill(fill)
+                }
             }
     }
 
