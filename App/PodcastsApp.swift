@@ -152,7 +152,7 @@ struct RootView: View {
         .tint(Theme.ink)
         // The player fills the whole screen (Paul: no page showing through
         // at the top); swipe down to close it.
-        .fullScreenCover(isPresented: Theme.isHaar ? .constant(false) : $showingPlayer) {
+        .fullScreenCover(isPresented: Theme.isHaar ? Binding.constant(false) : $showingPlayer) {
             NowPlayingView()
         }
         // Haar: the player is home, so "open the player" goes home.
