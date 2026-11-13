@@ -1824,6 +1824,14 @@ check compiles it):
   line and DL / TX line (blank / hidden when there's nothing). Carry on
   rows were already one line each. On the branch.
 
+- **Sheets from inside the player washed out** (Paul's screenshot, 13
+  Nov 2026: Share a clip's Cancel / Share and the Include audio / Link to
+  the moment labels were pale on pale). The player paints its text and
+  keys in paper, and sheets opened from inside it (Share a clip from the
+  transcript panel, the full Chapters list from the chapters panel) took
+  that on. They now reset to ink and the accent (`normalColours()` in
+  Deck.swift). On the branch.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public

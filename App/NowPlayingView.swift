@@ -763,6 +763,7 @@ private struct PlayerChaptersPanel: View {
         }
         .sheet(isPresented: $showingAll) {
             ChaptersView()
+                .normalColours()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }

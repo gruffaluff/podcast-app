@@ -51,6 +51,7 @@ struct PlayerTranscriptPanel: View {
         .overlay(alignment: .bottom) { backToNow }
         .sheet(item: $clipLine) { request in
             ClipView(episode: episode, line: request.line, quote: request.quote)
+                .normalColours()
         }
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.syncAnchorsData) { load() }
