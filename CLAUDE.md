@@ -56,7 +56,7 @@ dock Now · Library · Find, read-along with the word lit as it's spoken,
 chapter timeline sheet, Library New inbox restyled, Find = search +
 Discover with charts) comes in later phases (see "Haar rework" below).
 Reverting: TestFlight keeps build 150 (Native warm) under Previous Builds
-for 90 days, and the git tag `native-warm-150` marks its code.
+for 90 days, and commit a1cb37a (main before Haar) is its code.
 Before that: **"Native warm"** (Paul, 11 Nov 2026, late, after build 142: "it
 just feels like a lost mess now"; picked direction 1 Native warm from
 https://claude.ai/artifact/LkL7nrKf76XCi77TH28Xb3, "just use a standard
