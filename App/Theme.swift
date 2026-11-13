@@ -193,19 +193,24 @@ enum Theme {
     /// Headings and screen titles: Apple's own font, SF Pro, bold (Native
     /// warm, Paul 11 Nov 2026: "just use a standard Apple font").
     static func big(_ size: CGFloat) -> Font {
-        // Haar: Instrument Serif (OFL, bundled), drawn a little larger as
-        // it's lighter than SF bold.
-        if isHaar { return .custom(serifName, size: scaled(size * 1.08, max: 1.2)) }
+        // Haar: SF Rounded bold (Paul, 13 Nov 2026: Instrument Serif "too
+        // elegant"; picked SF Rounded from
+        // https://claude.ai/artifact/32Yjrqvdz3igPu7m1wHoFN).
+        if isHaar { return rounded(size * 0.88) }
         return .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
     }
 
-    /// The Haar look's serif (App/Fonts/InstrumentSerif-Regular.ttf).
-    static let serifName = "InstrumentSerif-Regular"
+    /// The Haar look's title font: Apple's SF Rounded, bold (built in;
+    /// was the bundled Instrument Serif until build 153).
+    static func rounded(_ size: CGFloat) -> Font {
+        .system(size: scaled(size, max: 1.2), weight: .bold, design: .rounded)
+    }
 
-    /// Big serif text that doesn't follow the text size (player titles,
-    /// the transcript's line now): Haar only, else SF bold.
+    /// Haar title text (player titles, the transcript's line now, ranks):
+    /// SF Rounded bold, drawn smaller than the serif sizes it replaced as
+    /// it's wider and heavier. Other looks: SF bold.
     static func serif(_ size: CGFloat) -> Font {
-        isHaar ? .custom(serifName, size: scaled(size, max: 1.2)) : .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
+        isHaar ? rounded(size * 0.86) : .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
     }
 
     /// Row titles (episodes, shows, chapters) and the transcript's lines:

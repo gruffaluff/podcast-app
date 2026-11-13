@@ -1361,7 +1361,7 @@ struct HaarReadAlong: View {
         HStack(spacing: 10) {
             Rectangle().fill(Theme.accentText.opacity(0.3)).frame(height: 1)
             Text(title)
-                .font(Theme.serif(16).italic())
+                .font(Theme.serif(16))
                 .foregroundStyle(Theme.accentText)
                 .lineLimit(1)
                 .layoutPriority(1)

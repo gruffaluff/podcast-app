@@ -299,21 +299,44 @@ struct HaarShowWord: View {
     var size: CGFloat = 15
     /// Space between the word and its underline.
     var gap: CGFloat = 7
+    /// Take an equal share of the row, centred, with the underline across
+    /// the whole share (settings choices spread across the page).
+    var fills: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: size, weight: selected ? .bold : .medium))
-                .foregroundStyle(selected ? Theme.ink : Theme.muted)
-                .lineLimit(1)
-                .fixedSize()
-                .overlay(alignment: .bottom) { underline }
-                .frame(minHeight: 36)
-                .contentShape(Rectangle())
+            if fills { spread } else { word }
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var label: some View {
+        Text(title)
+            .font(.system(size: size, weight: selected ? .bold : .medium))
+            .foregroundStyle(selected ? Theme.ink : Theme.muted)
+            .lineLimit(1)
+    }
+
+    private var word: some View {
+        label
+            .fixedSize()
+            .overlay(alignment: .bottom) { underline }
+            .frame(minHeight: 36)
+            .contentShape(Rectangle())
+    }
+
+    private var spread: some View {
+        label
+            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity, minHeight: 36)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(selected ? Theme.ink : Color.clear)
+                    .frame(height: 2)
+            }
+            .contentShape(Rectangle())
     }
 
     private var underline: some View {
@@ -324,23 +347,23 @@ struct HaarShowWord: View {
     }
 }
 
-/// One of a few words, underlined when chosen.
+/// One of a few words, underlined when chosen, spread evenly across the
+/// page (Paul, 13 Nov 2026, after build 152: left-aligned looked odd).
 struct HaarShowChoice<Value: Hashable>: View {
     let options: [(label: String, value: Value)]
     @Binding var selection: Value
 
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 0) {
             ForEach(options.indices, id: \.self) { index in
                 word(index)
             }
-            Spacer(minLength: 0)
         }
     }
 
     private func word(_ index: Int) -> some View {
         let option: (label: String, value: Value) = options[index]
-        return HaarShowWord(title: option.label, selected: option.value == selection, size: 15, gap: 5) {
+        return HaarShowWord(title: option.label, selected: option.value == selection, size: 15, gap: 5, fills: true) {
             withAnimation(.easeOut(duration: 0.15)) { selection = option.value }
         }
     }

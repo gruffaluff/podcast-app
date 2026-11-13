@@ -2,8 +2,8 @@ import SwiftUI
 import PodcastCore
 
 /// Haar, phase 3 (Paul, 13 Nov 2026; reworked to the prototype the same
-/// night): getting around. The player is home; Library slides in from the
-/// right and Find drops from the top as see-through layers over it, with
+/// night): getting around. The player is home; Library and Find fade in
+/// over it in place (a quick fade since build 153; they slid before), with
 /// a small floating dock (Now · Library · Find) on every screen instead of
 /// iOS's tab bar. Read along and Up next open in place on the player.
 /// From the player: swipe up for Up next, down for Find, left for Library.
@@ -29,6 +29,9 @@ struct HaarRoot: View {
     static let readingKey = "haarReading"
     /// The layers' slide: the prototype's long, soft ease-out.
     static let slide: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.7)
+    /// Moving between Now, Library and Find: a quick cross-fade in place
+    /// (Paul, 13 Nov 2026, after build 152; the layers used to slide).
+    static let fade: Animation = .easeInOut(duration: 0.2)
 
     var body: some View {
         GeometryReader { geometry in
@@ -96,6 +99,7 @@ struct HaarRoot: View {
         HaarNowView(showingUpNext: $showingUpNext, reading: $reading, openFind: { go(2) }, bottomRoom: bottomRoom)
             .contentShape(Rectangle())
             .gesture(nowSwipes, including: showingUpNext ? .subviews : .all)
+            .opacity(tab == 0 ? 1 : 0)
             .allowsHitTesting(tab == 0)
             .accessibilityHidden(tab != 0)
     }
@@ -112,7 +116,7 @@ struct HaarRoot: View {
             // See-through layer over the player (LibraryView draws its own
             // fog page inside, so this shows only where that doesn't reach).
             .background { HaarLayerBackground() }
-            .offset(x: tab == 1 ? 0 : width * 1.04)
+            .opacity(tab == 1 ? 1 : 0)
             .allowsHitTesting(tab == 1)
             .accessibilityHidden(tab != 1)
             .onAppear { libraryMade = true }
@@ -124,7 +128,7 @@ struct HaarRoot: View {
             .contentMargins(.bottom, Self.dockRoom + 12, for: .scrollContent)
             // A see-through layer: the player shows faintly behind.
             .background { HaarLayerBackground() }
-            .offset(y: tab == 2 ? 0 : -height * 1.04)
+            .opacity(tab == 2 ? 1 : 0)
             .allowsHitTesting(tab == 2)
             .accessibilityHidden(tab != 2)
             .onAppear { findMade = true }
@@ -138,7 +142,7 @@ struct HaarRoot: View {
     /// closes Up next and Read along on the player.
     private func go(_ next: Int) {
         guard next != tab || showingUpNext || reading else { return }
-        withAnimation(motion) {
+        withAnimation(next != tab ? (reduceMotion ? nil : Self.fade) : motion) {
             showingUpNext = false
             reading = false
             tab = next
@@ -146,10 +150,10 @@ struct HaarRoot: View {
     }
 
     private func openUpNext() {
-        withAnimation(motion) {
-            tab = 0
-            showingUpNext = true
+        if tab != 0 {
+            withAnimation(reduceMotion ? nil : Self.fade) { tab = 0 }
         }
+        withAnimation(motion) { showingUpNext = true }
     }
 
     private func setReading(_ on: Bool) {

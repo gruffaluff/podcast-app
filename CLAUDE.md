@@ -44,8 +44,9 @@ fog, tinted a little by the colour of what's playing (`FogBackdrop` in
 `App/Haar.swift`); frosted white cards with a fine white edge
 (`frostedCard`, used by `deckCard` / `posterCard`); soft charcoal ink
 (#1F2328, muted #4B5259); the playing episode's deep colour as the only
-colour (deep blue #2B4766 when nothing plays); titles in Instrument Serif
-(`Theme.big`, `Theme.serif`; bundled, OFL), everything else SF; plain text
+colour (deep blue #2B4766 when nothing plays); titles in SF Rounded bold
+(`Theme.big`, `Theme.serif`, `Theme.rounded`; Instrument Serif until build
+153), everything else SF; plain text
 and icons instead of button chrome wherever it's clear (Paul: "just
 having text/icons in a lot of places … as long as it is clear"); no
 visible scroll bars. It's a colour scheme (`ColourScheme.haar`), the new
@@ -2079,39 +2080,43 @@ tab bar and the Native warm screens (`RootView.content`).
     (`contentMargins` in `HaarRoot`), which also covers pages pushed on
     them (History, Stats…).
 
+## Done in build 153 (13 Nov 2026, PR #71; Paul: "Rounded and all your picks as we mocked up. Build")
+
+Paul's notes after build 152 (screenshots of the show Settings tab, the
+Now screen and Up next's Keep playing row): scrolling "not the smoothest
+… low framerate"; Settings word choices odd all left-aligned; not sure
+about the sliding layers; iOS's own volume bar popping up at the side;
+title font "nice but too elegant"; menus like Keep playing were plain text
+in the mock-up ("replicate throughout"); the New box looks odd; other ways
+to show Your shows. Options:
+https://claude.ai/artifact/BPRLRv99kWnq74Hr3aKdKp, then SF Rounded with the
+suggested picks on every screen (with Carry on, as Paul asked):
+https://claude.ai/artifact/32Yjrqvdz3igPu7m1wHoFN. **Paul: Rounded and
+all the suggested picks.**
+- Smoother scrolling: the fog is soft gradients (no `.blur`), only the
+  root fog drifts (`haarFogBehind`), cards have no live material.
+- Plain-text menu rows (Keep playing, shelves, show settings;
+  `HaarMenuHairline`), no white cards.
+- iOS's volume bar kept away (`HaarVolumeHUDHider` in `HaarRoot`; check
+  on the phone).
+- Titles in SF Rounded bold (`Theme.rounded`; `Theme.big` at 88%,
+  `Theme.serif` at 86% of the serif sizes; nav bar large titles too).
+  Chapter rules in read-along no longer italic. Instrument Serif's file
+  is still bundled but unused.
+- Now / Library / Find cross-fade in place in 0.2 s (`HaarRoot.fade`);
+  they slid before. Up next and Read along keep their 0.7 s morph.
+- Show settings choices spread evenly across the page, underline under
+  each share (`HaarShowWord(fills:)`, `HaarShowChoice`).
+- Library: New as a plain list (no card, "New · n", faint day labels);
+  Carry on as a plain list ("Carry on · n", total time left, ring in the
+  show's colour on the left, show label, title, time left, artwork on the
+  right); Your shows as a plain list (`HaarShowLine`: 46 pt artwork, rank
+  as a rounded number before the name, where new episodes go, "n new"
+  pill); the grid (`HaarShowTile`) and the card (`haarGroupCard`) are
+  gone. The old Carry on / Your shows card-height note is dropped (those
+  cards aren't in the Haar Library).
+
 ## Queued for the next app build
-
-- **After build 152** (Paul, 13 Nov 2026, screenshots of the show
-  Settings tab, the Now screen and Up next's Keep playing row): scrolling
-  "not the smoothest … low framerate"; the Settings word choices look odd
-  all left-aligned; not sure about the sliding layers ("swiping between
-  screens using the menu bar?"); iOS's own volume bar pops up at the side
-  when the volume changes; title font "nice but too elegant"; menus like
-  Keep playing were plain text in the mock-up, no white card ("replicate
-  throughout", e.g. Downloads / Saved clips); the New box looks odd; other
-  ways to show Your shows. Being fixed on the branch (no choice needed):
-  smoother scrolling (one fog, no live blur under cards), plain-text menu
-  rows, keeping iOS's volume bar away. Options to pick from:
-  https://claude.ai/artifact/BPRLRv99kWnq74Hr3aKdKp (1 title font: Now
-  Instrument Serif, A Fraunces soft (suggested), B Newsreader, C SF
-  Rounded, D Bricolage Grotesque, E SF Pro bold; 2 moving between Now /
-  Library / Find: Now slide, A quick fade (suggested), B pages side by
-  side, C instant; 3 settings choices: Now left-aligned, A spread across
-  (suggested), B soft switch, C value on the right; 4 New: Now card by
-  day, A plain list (suggested), B artwork row, C one-line summary; 5 Your
-  shows: Now 3 across, A plain list (suggested), B 2 across, C Top shows
-  row then a list). Paul asked to see SF Rounded with the suggested
-  picks together: https://claude.ai/artifact/32Yjrqvdz3igPu7m1wHoFN (Now,
-  Up next, Library, show settings, Find; the dock fades between screens).
-  Waiting on Paul's picks.
-
-- **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
-  asked if they matched; they don't). In Native warm, Your shows cards
-  are ~60 pt, Carry on ~66 pt, the playing Carry on card ~70 pt
-  (`CarryOnRow`, `ShowPosterRow` in LibraryView.swift). Plan: one fixed
-  height, content centred, playing card on the same padding. Haar's
-  Library (`HaarLibrarySections`: Carry on rings, shows as a grid) has
-  its own layout now: check whether it still applies there. Not started.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

@@ -58,7 +58,7 @@ struct HaarLibrarySections: View {
 
     private var newSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HaarSectionLabel(text: "New") {
+            HaarSectionLabel(text: newEpisodes.isEmpty ? "New" : "New · \(newEpisodes.count)") {
                 if !newEpisodes.isEmpty { clearAllButton }
             }
             if newEpisodes.isEmpty {
@@ -100,9 +100,9 @@ struct HaarLibrarySections: View {
                 newGroup(group.day, group.episodes)
             }
         }
-        .padding(.bottom, 4)
-        .haarGroupCard()
-        .padding(.horizontal, 14)
+        // Plain rows straight on the fog, no card (Paul, 13 Nov 2026,
+        // after build 152: "the new box looks a bit odd").
+        .padding(.horizontal, 2)
     }
 
     private func newGroup(_ day: Day, _ episodes: [PodcastEpisode]) -> some View {
@@ -110,7 +110,7 @@ struct HaarLibrarySections: View {
             Text(day.label)
                 .font(.system(size: 10, weight: .bold))
                 .tracking(1.1)
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(Theme.muted.opacity(0.75))
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .padding(.bottom, 2)
@@ -126,12 +126,25 @@ struct HaarLibrarySections: View {
 
     private var carryOnSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HaarSectionLabel(text: "Carry on") { EmptyView() }
-            ForEach(continuing, id: \.episodeID) { episode in
+            HaarSectionLabel(text: "Carry on · \(continuing.count)") {
+                Text(carryOnLeft)
+                    .font(Theme.text(12))
+                    .foregroundStyle(Theme.muted)
+            }
+            ForEach(Array(continuing.enumerated()), id: \.element.episodeID) { index, episode in
+                if index > 0 { HaarHairline().padding(.leading, 2) }
                 HaarCarryOnRow(episode: episode)
             }
         }
         .padding(.top, 22)
+    }
+
+    /// "1 h 31 m left" across everything in Carry on.
+    private var carryOnLeft: String {
+        let seconds: TimeInterval = continuing.reduce(0) { $0 + ($1.timeLeft ?? 0) }
+        guard seconds > 0 else { return "" }
+        let minutes = Int((seconds / 60).rounded())
+        return minutes >= 60 ? "\(minutes / 60) h \(minutes % 60) m left" : "\(max(1, minutes)) min left"
     }
 
     // MARK: Your shows
@@ -159,23 +172,24 @@ struct HaarLibrarySections: View {
     private var yourShowsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             HaarSectionLabel(text: "Your shows") { sortMenu }
-            showGrid
+            showList
         }
         .padding(.top, 22)
     }
 
-    private var showGrid: some View {
-        let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
-        return LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
-            ForEach(ordered) { entry in
+    /// One show per line (Paul, 13 Nov 2026, after build 152; was a
+    /// 3-across artwork grid).
+    private var showList: some View {
+        let entries: [Entry] = ordered
+        return LazyVStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                if index > 0 { HaarHairline().padding(.leading, 2) }
                 Button { store.showSheet = entry.show } label: {
-                    HaarShowTile(show: entry.show, rank: entry.rank)
+                    HaarShowLine(show: entry.show, rank: entry.rank)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 4)
     }
 }
 
@@ -211,19 +225,6 @@ private struct HaarHairline: View {
             .fill(Theme.ink.opacity(0.07))
             .frame(height: 1)
             .padding(.leading, 16)
-    }
-}
-
-private extension View {
-    /// The prototype's grouped card: white over frosted glass with a fine
-    /// white edge, radius 22.
-    func haarGroupCard() -> some View {
-        background {
-            let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
-            // Plain fill, no material (a live blur per card cost frames).
-            shape.fill(Color.white.opacity(0.66))
-                .overlay(shape.strokeBorder(Color.white, lineWidth: 1))
-        }
     }
 }
 
@@ -367,16 +368,24 @@ private struct HaarCarryOnRow: View {
             HStack(spacing: 12) {
                 HaarRing(fraction: fraction, colour: haarShowColour(showArtwork), playing: playing)
                 VStack(alignment: .leading, spacing: 2) {
+                    Text(episode.showTitle.uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(0.6)
+                        .foregroundStyle(haarShowColour(showArtwork))
+                        .lineLimit(1)
                     Text(episode.title)
-                        .font(Theme.text(14, .medium))
+                        .font(Theme.text(14, .semibold))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
-                    Text(meta)
+                    Text(left.isEmpty ? " " : left)
                         .font(Theme.text(12))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                ArtworkView(url: episode.artwork, title: episode.showTitle, size: 40, radius: 0)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
@@ -407,62 +416,69 @@ private struct HaarRing: View {
                 .foregroundStyle(colour)
                 .offset(x: playing ? 0 : 1)
         }
-        .frame(width: 36, height: 36)
+        .frame(width: 40, height: 40)
         .accessibilityHidden(true)
     }
 }
 
-/// A show in the grid: its artwork with "n new" in the corner, then the
-/// name, with the rank as a serif number in front for Top shows.
-private struct HaarShowTile: View {
+/// A show in the list: small artwork, the rank as a rounded number in
+/// front of the name for Top shows, where its new episodes go, and an
+/// "n new" pill.
+private struct HaarShowLine: View {
     let show: Podcast
     let rank: Int?
 
+    private var goesTo: String {
+        switch show.autoAdd {
+        case .top: "Top of Up next"
+        case .bottom: "Bottom of Up next"
+        case .off: "Not added to Up next"
+        }
+    }
+
     var body: some View {
         let fresh: Int = ShowBadges.newCount(show)
-        VStack(alignment: .leading, spacing: 7) {
-            GeometryReader { geometry in
-                ArtworkView(url: show.artworkURL, title: show.title, size: geometry.size.width, radius: 0)
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                    .shadow(color: Color(hex: 0x28323C).opacity(0.14), radius: 12, y: 10)
-                    .overlay(alignment: .topTrailing) {
-                        if fresh > 0 { newPill(fresh) }
-                    }
+        HStack(spacing: 12) {
+            ArtworkView(url: show.artworkURL, title: show.title, size: 46, radius: 0)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                nameLine
+                Text(goesTo)
+                    .font(Theme.text(12))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
             }
-            .aspectRatio(1, contentMode: .fit)
-            nameLine
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if fresh > 0 { newPill(fresh) }
         }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 9)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
     private func newPill(_ count: Int) -> some View {
-        // A solid dark pill with a white edge, so it reads on any artwork
-        // (Paul, build 151: the counters were lost on the art).
         Text("\(count) new")
             .font(Theme.text(11, .bold))
             .foregroundStyle(.white)
-            .padding(.horizontal, 7)
+            .padding(.horizontal, 8)
             .frame(minHeight: 20)
             .background(Color(hex: 0x1F2328), in: Capsule())
-            .overlay(Capsule().strokeBorder(.white, lineWidth: 1.5))
-            .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
-            .padding(6)
             .accessibilityLabel("\(count) new")
     }
 
     private var nameLine: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 5) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
             if let rank {
                 Text("\(rank)")
-                    .font(Theme.serif(18))
-                    .foregroundStyle(Theme.ink)
+                    .font(Theme.rounded(17))
+                    .foregroundStyle(Theme.muted)
                     .accessibilityLabel("Top show number \(rank)")
             }
             Text(show.title)
-                .font(Theme.text(12, .semibold))
+                .font(Theme.text(15, .semibold))
                 .foregroundStyle(Theme.ink)
-                .lineLimit(2, reservesSpace: true)
-                .multilineTextAlignment(.leading)
+                .lineLimit(1)
         }
     }
 }
