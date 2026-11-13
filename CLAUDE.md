@@ -2124,17 +2124,18 @@ all the suggested picks.**
   ✓ Downloaded (grey, tap to remove with a confirm); Transcribe /
   "Transcribing 62%" (fills, tap to stop) / ✓ Words ready (tap to read
   along); Mark played (with Undo). Still also in ⋯.
+- Show page fuller (Paul, 13 Nov 2026, build 152 screenshot: the show
+  sheet looked empty with one unplayed episode; options
+  https://claude.ai/artifact/TQpmnvsJ7QjSMhXdm3JwY9, **Paul picked C
+  "Search and months"**): a search box for the show's episodes (titles
+  and notes, every word typed) at the top of Episodes; on Unplayed,
+  "That's everything unplayed." then the most recent 60 played episodes
+  grouped by month (newest first; "Older episodes are under All" beyond
+  that) (`HaarShowEpisodes`). All is unchanged.
 - Sleep moon no longer jumps when the minutes appear: the moon stays put
   and "15M" sits under it as an overlay (`HaarTransport.sleepButton`).
 
 ## Queued for the next app build
-
-- **Show page space** (Paul, 13 Nov 2026, build 152 screenshot: the show
-  sheet looks empty with one unplayed episode). Options
-  https://claude.ai/artifact/TQpmnvsJ7QjSMhXdm3JwY9: A the back catalogue
-  carries on below, faded (suggested), B about + your listening numbers
-  + when new ones usually land, C search box + played by month, D more
-  like this (same categories, Follow). Can combine. Waiting on Paul.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
