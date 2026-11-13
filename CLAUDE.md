@@ -44,8 +44,9 @@ fog, tinted a little by the colour of what's playing (`FogBackdrop` in
 `App/Haar.swift`); frosted white cards with a fine white edge
 (`frostedCard`, used by `deckCard` / `posterCard`); soft charcoal ink
 (#1F2328, muted #4B5259); the playing episode's deep colour as the only
-colour (deep blue #2B4766 when nothing plays); titles in Instrument Serif
-(`Theme.big`, `Theme.serif`; bundled, OFL), everything else SF; plain text
+colour (deep blue #2B4766 when nothing plays); titles in SF Rounded bold
+(`Theme.big`, `Theme.serif`, `Theme.rounded`; Instrument Serif until build
+153), everything else SF; plain text
 and icons instead of button chrome wherever it's clear (Paul: "just
 having text/icons in a lot of places … as long as it is clear"); no
 visible scroll bars. It's a colour scheme (`ColourScheme.haar`), the new
@@ -2079,15 +2080,64 @@ tab bar and the Native warm screens (`RootView.content`).
     (`contentMargins` in `HaarRoot`), which also covers pages pushed on
     them (History, Stats…).
 
-## Queued for the next app build
+## Done in build 153 (13 Nov 2026, PR #71; Paul: "Rounded and all your picks as we mocked up. Build")
 
-- **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
-  asked if they matched; they don't). In Native warm, Your shows cards
-  are ~60 pt, Carry on ~66 pt, the playing Carry on card ~70 pt
-  (`CarryOnRow`, `ShowPosterRow` in LibraryView.swift). Plan: one fixed
-  height, content centred, playing card on the same padding. Haar's
-  Library (`HaarLibrarySections`: Carry on rings, shows as a grid) has
-  its own layout now: check whether it still applies there. Not started.
+Paul's notes after build 152 (screenshots of the show Settings tab, the
+Now screen and Up next's Keep playing row): scrolling "not the smoothest
+… low framerate"; Settings word choices odd all left-aligned; not sure
+about the sliding layers; iOS's own volume bar popping up at the side;
+title font "nice but too elegant"; menus like Keep playing were plain text
+in the mock-up ("replicate throughout"); the New box looks odd; other ways
+to show Your shows. Options:
+https://claude.ai/artifact/BPRLRv99kWnq74Hr3aKdKp, then SF Rounded with the
+suggested picks on every screen (with Carry on, as Paul asked):
+https://claude.ai/artifact/32Yjrqvdz3igPu7m1wHoFN. **Paul: Rounded and
+all the suggested picks.**
+- Smoother scrolling: the fog is soft gradients (no `.blur`), only the
+  root fog drifts (`haarFogBehind`), cards have no live material.
+- Plain-text menu rows (Keep playing, shelves, show settings;
+  `HaarMenuHairline`), no white cards.
+- iOS's volume bar kept away (`HaarVolumeHUDHider` in `HaarRoot`; check
+  on the phone).
+- Titles in SF Rounded bold (`Theme.rounded`; `Theme.big` at 88%,
+  `Theme.serif` at 86% of the serif sizes; nav bar large titles too).
+  Chapter rules in read-along no longer italic. Instrument Serif's file
+  is still bundled but unused.
+- Now / Library / Find cross-fade in place in 0.2 s (`HaarRoot.fade`);
+  they slid before. Up next and Read along keep their 0.7 s morph.
+- Show settings choices spread evenly across the page, underline under
+  each share (`HaarShowWord(fills:)`, `HaarShowChoice`).
+- Library: New as a plain list (no card, "New · n", faint day labels);
+  Carry on as a plain list ("Carry on · n", total time left, ring in the
+  show's colour on the left, show label, title, time left, artwork on the
+  right); Your shows as a plain list (`HaarShowLine`: 46 pt artwork, rank
+  as a rounded number before the name, where new episodes go, "n new"
+  pill); the grid (`HaarShowTile`) and the card (`haarGroupCard`) are
+  gone. The old Carry on / Your shows card-height note is dropped (those
+  cards aren't in the Haar Library).
+- Episode keys on Now (Paul, 13 Nov 2026: "still like to see download,
+  transcribe and mark as played somewhere"; options
+  https://claude.ai/artifact/X49sL6x7gvwQoJMX3dqhed, **Paul picked D**,
+  evenly spread, filling as they progress): three words spread evenly
+  under the title (`HaarNowView.episodeKeys`, `HaarKeyWord`): Download /
+  "Downloading 40%" (fills with the accent left to right, tap to stop) /
+  ✓ Downloaded (grey, tap to remove with a confirm); Transcribe /
+  "Transcribing 62%" (fills, tap to stop) / ✓ Words ready (tap to read
+  along); Mark played (with Undo). Still also in ⋯.
+- Show page fuller (Paul, 13 Nov 2026, build 152 screenshot: the show
+  sheet looked empty with one unplayed episode; options
+  https://claude.ai/artifact/TQpmnvsJ7QjSMhXdm3JwY9, **Paul picked C
+  "Search and months"**): a search box for the show's episodes (titles
+  and notes, every word typed) at the top of Episodes; on Unplayed,
+  "That's everything unplayed." then the most recent 60 played episodes
+  grouped by month (newest first; "Older episodes are under All" beyond
+  that) (`HaarShowEpisodes`). All is unchanged.
+- Find on the fog page like Library (`.haarPage()`; Paul: "so white it
+  stands out"; it only had the pale see-through layer).
+- Sleep moon no longer jumps when the minutes appear: the moon stays put
+  and "15M" sits under it as an overlay (`HaarTransport.sleepButton`).
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

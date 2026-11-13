@@ -54,6 +54,9 @@ struct HaarFindView: View {
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.immediately)
+            // The same misty fog page as Library (Paul, 13 Nov 2026: Find
+            // was "so white it stands out"; it only had the pale layer).
+            .haarPage()
             .refreshable { await loadChart() }
             .toolbar(.hidden, for: .navigationBar)
             .task(id: query) { await search() }

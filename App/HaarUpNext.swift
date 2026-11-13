@@ -15,8 +15,8 @@ struct HaarQueueCardBackground: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        shape.fill(.ultraThinMaterial)
-            .overlay(shape.fill(Color.white.opacity(0.52)))
+        // Plain fill, no material (a live blur per card cost frames).
+        shape.fill(Color.white.opacity(0.6))
             .overlay(shape.strokeBorder(Color.white.opacity(0.75), lineWidth: 1))
             .shadow(color: Color(hex: 0x1F2328).opacity(0.10), radius: 15, y: 10)
     }
@@ -425,9 +425,15 @@ struct HaarUpNextList: View {
                 .labelsHidden()
                 .tint(Theme.accentFill)
         }
+        // A setting, not an episode: plain text on the page with a hairline
+        // above (Paul, 13 Nov 2026: menus were just text in the mock-up),
+        // lined up with the cards' text.
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .haarQueueCard(radius: 20)
+        .overlay(alignment: .top) {
+            HaarMenuHairline()
+                .padding(.horizontal, 16)
+        }
         .opacity(appeared ? 1 : 0)
         .animation(reduceMotion ? nil : HaarNowView.morph.delay(0.2), value: appeared)
         .moveDisabled(true)

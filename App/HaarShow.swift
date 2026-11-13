@@ -267,26 +267,39 @@ private struct HaarShowTabs: View {
 
 // MARK: Episodes
 
-/// Unplayed / All, Mark all played, and the episodes in one frosted card.
+/// A search box for the show's episodes, Unplayed / All, Mark all played,
+/// and the episodes. On Unplayed, the played ones follow below, grouped by
+/// month (Paul, 13 Nov 2026, C "Search and months" on
+/// https://claude.ai/artifact/TQpmnvsJ7QjSMhXdm3JwY9: the page looked
+/// empty with one unplayed episode).
 private struct HaarShowEpisodes: View {
     @Environment(LibraryStore.self) private var store
     let show: Podcast
     let tint: Color
     @Binding var showAll: Bool
     @State private var confirmingMarkAll = false
+    @State private var query = ""
+
+    private struct Month: Identifiable {
+        let id: String
+        let title: String
+        let episodes: [PodcastEpisode]
+    }
 
     var body: some View {
         let all: [PodcastEpisode] = show.episodes.sorted { $0.published > $1.published }
-        let shown: [PodcastEpisode] = showAll ? all : all.filter { !$0.played }
+        let searching: Bool = !query.trimmingCharacters(in: .whitespaces).isEmpty
         VStack(alignment: .leading, spacing: 14) {
-            filterRow(hasUnplayed: all.contains { !$0.played })
-            if shown.isEmpty {
-                Text(showAll ? "No episodes yet." : "You're all caught up. Switch to All to see played episodes.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 6)
+            searchBox(count: all.count)
+            if searching {
+                results(all)
             } else {
-                list(shown, all: all)
+                filterRow(hasUnplayed: all.contains { !$0.played })
+                if showAll {
+                    if all.isEmpty { note("No episodes yet.") } else { list(all, all: all) }
+                } else {
+                    unplayedThenMonths(all)
+                }
             }
         }
         .alert("Mark all \(show.episodes.count) episodes as played?", isPresented: $confirmingMarkAll) {
@@ -298,6 +311,112 @@ private struct HaarShowEpisodes: View {
         } message: {
             Text("They leave Up Next and stop showing as unplayed.")
         }
+    }
+
+    private func note(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13))
+            .foregroundStyle(Theme.muted)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+    }
+
+    private func searchBox(count: Int) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.muted)
+            TextField("Search \(count) episodes", text: $query)
+                .font(.system(size: 15))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+            if !query.isEmpty {
+                Button { query = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Theme.muted)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 40)
+        .background(Color.white.opacity(0.7), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    /// Titles and notes that contain every word typed.
+    private func results(_ all: [PodcastEpisode]) -> some View {
+        let words: [String] = query.lowercased().split(separator: " ").map(String.init)
+        let found: [PodcastEpisode] = all.filter { episode in
+            let text: String = (episode.title + " " + episode.summary).lowercased()
+            return words.allSatisfy { text.contains($0) }
+        }
+        return Group {
+            if found.isEmpty {
+                note("Nothing matches “\(query)”.")
+            } else {
+                list(found, all: all)
+            }
+        }
+    }
+
+    /// Unplayed, then "That's everything unplayed", then the played ones
+    /// by month, newest first.
+    @ViewBuilder private func unplayedThenMonths(_ all: [PodcastEpisode]) -> some View {
+        let unplayed: [PodcastEpisode] = all.filter { !$0.played }
+        let played: [PodcastEpisode] = all.filter(\.played)
+        // The most recent 60, so a 600-episode show still opens quickly;
+        // All has the rest.
+        let months: [Month] = Self.months(Array(played.prefix(60)))
+        if unplayed.isEmpty {
+            note(all.isEmpty ? "No episodes yet." : "You're all caught up.")
+        } else {
+            list(unplayed, all: all)
+            if !months.isEmpty { note("That's everything unplayed.") }
+        }
+        ForEach(months) { month in
+            VStack(alignment: .leading, spacing: 6) {
+                Text(month.title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.3)
+                    .foregroundStyle(Theme.muted)
+                    .padding(.leading, 4)
+                    .accessibilityAddTraits(.isHeader)
+                list(month.episodes, all: all)
+            }
+        }
+        if played.count > 60 {
+            Button {
+                withAnimation(LibraryStore.listChange) { showAll = true }
+            } label: {
+                Text("Older episodes are under All")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(maxWidth: .infinity, minHeight: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    /// "November" (this year) or "March 2024".
+    private static func months(_ played: [PodcastEpisode]) -> [Month] {
+        let calendar = Calendar.current
+        var order: [String] = []
+        var groups: [String: [PodcastEpisode]] = [:]
+        var titles: [String: String] = [:]
+        for episode in played {
+            let parts = calendar.dateComponents([.year, .month], from: episode.published)
+            let key = "\(parts.year ?? 0)-\(parts.month ?? 0)"
+            if groups[key] == nil {
+                order.append(key)
+                let sameYear: Bool = calendar.isDate(episode.published, equalTo: Date(), toGranularity: .year)
+                titles[key] = episode.published.formatted(sameYear ? .dateTime.month(.wide) : .dateTime.month(.wide).year())
+            }
+            groups[key, default: []].append(episode)
+        }
+        return order.map { Month(id: $0, title: titles[$0] ?? "", episodes: groups[$0] ?? []) }
     }
 
     private func filterRow(hasUnplayed: Bool) -> some View {

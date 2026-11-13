@@ -48,8 +48,11 @@ struct PodcastsApp: App {
     private static func styleSystemBars() {
         // Follows the scheme's light / dark (Night is dark).
         let ink = UIColor.label
-        // Haar: big titles in Instrument Serif (falls back to SF bold).
-        let largeFont = (Theme.isHaar ? UIFont(name: Theme.serifName, size: 38) : nil) ?? UIFont.systemFont(ofSize: 34, weight: .bold)
+        // Haar: big titles in SF Rounded bold.
+        let plainLarge = UIFont.systemFont(ofSize: 34, weight: .bold)
+        let largeFont = Theme.isHaar
+            ? UIFont(descriptor: plainLarge.fontDescriptor.withDesign(.rounded) ?? plainLarge.fontDescriptor, size: 34)
+            : plainLarge
         UINavigationBar.appearance().largeTitleTextAttributes = [
             .font: largeFont, .foregroundColor: ink
         ]
@@ -133,6 +136,10 @@ struct RootView: View {
         // overlaps a list (the dead spots of builds 140-141 came from our
         // own dock over iOS's hidden bar).
         content
+        // Haar: this root page's fog is the one that drifts; every page,
+        // layer and sheet inside draws its fog standing still, so only one
+        // fog moves on screen (smoother scrolling).
+        .environment(\.haarFogBehind, true)
         // Undo and No internet float above the tab bar (or Haar's dock)
         // while they show.
         .overlay(alignment: Theme.isHaar ? .top : .bottom) {
