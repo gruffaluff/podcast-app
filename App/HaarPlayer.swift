@@ -763,7 +763,10 @@ struct HaarVolumeLine: View {
 /// is invisible until touched.
 struct HaarVolumeSlider: UIViewRepresentable {
     func makeUIView(context: Context) -> CentredVolumeView {
-        let view = CentredVolumeView(frame: .zero)
+        // Made with a real size (not .zero): iOS decides whether to hide
+        // its own volume bar from how the slider looks when it joins the
+        // window.
+        let view = CentredVolumeView(frame: CGRect(x: 0, y: 0, width: 200, height: 24))
         let ink = UIColor(Theme.ink)
         view.tintColor = ink
         view.setVolumeThumbImage(Self.dot(16, colour: .clear), for: .normal)
@@ -789,6 +792,29 @@ struct HaarVolumeSlider: UIViewRepresentable {
             UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 5, height: 2), cornerRadius: 1).fill()
         }
         return image.resizableImage(withCapInsets: UIEdgeInsets(top: 0, left: 2, bottom: 0, right: 2))
+    }
+}
+
+/// Keeps iOS's own volume bar from popping up at the side of the screen
+/// when the volume buttons are pressed (Paul, build 152). iOS leaves its
+/// bar away only while a volume slider is in the window, shown and not
+/// see-through; the visible line comes and goes (not in Up next, nothing
+/// playing, short screens, and it's remade on every Read along morph), so
+/// this tiny, almost invisible one stays on the Haar screens all the time.
+/// It is 2 points, at 1% opacity, and takes no touches.
+struct HaarVolumeHUDHider: UIViewRepresentable {
+    func makeUIView(context: Context) -> MPVolumeView {
+        let view = MPVolumeView(frame: CGRect(x: 0, y: 0, width: 2, height: 2))
+        view.alpha = 0.01
+        view.isUserInteractionEnabled = false
+        view.clipsToBounds = true
+        view.isAccessibilityElement = false
+        view.accessibilityElementsHidden = true
+        return view
+    }
+
+    func updateUIView(_ view: MPVolumeView, context: Context) {
+        if view.alpha < 0.01 { view.alpha = 0.01 }
     }
 }
 

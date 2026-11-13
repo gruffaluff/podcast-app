@@ -47,6 +47,14 @@ struct HaarRoot: View {
                     find(height: fullHeight)
                 }
             }
+            // Keeps iOS's volume bar from popping up over the app (the
+            // Now screen shows its own volume line).
+            .background(alignment: .topLeading) {
+                HaarVolumeHUDHider()
+                    .frame(width: 2, height: 2)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
             .overlay(alignment: .bottom) {
                 HaarDock(tab: tab, go: go)
                     .offset(y: safeBottom - dockLift)
@@ -184,14 +192,12 @@ struct HaarRoot: View {
     }
 }
 
-/// Behind Library and Find: a pale mist over a thin material, so the
-/// player shows faintly through.
+/// Behind Library and Find: a pale mist, so the player shows faintly
+/// through. A plain see-through colour, not a material: a live blur over
+/// the whole screen made scrolling the layers feel low frame rate.
 struct HaarLayerBackground: View {
     var body: some View {
-        ZStack {
-            Rectangle().fill(.ultraThinMaterial)
-            Color(red: 232 / 255, green: 234 / 255, blue: 233 / 255).opacity(0.78)
-        }
+        Color(red: 232 / 255, green: 234 / 255, blue: 233 / 255).opacity(0.9)
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }
@@ -223,8 +229,9 @@ struct HaarDock: View {
 
     private var background: some View {
         let shape = RoundedRectangle(cornerRadius: 29, style: .continuous)
-        return shape.fill(.ultraThinMaterial)
-            .overlay(shape.fill(Color.white.opacity(0.6)))
+        // Plain white, no material: content scrolls under the dock, and a
+        // live blur there redrew on every frame of a scroll.
+        return shape.fill(Color.white.opacity(0.86))
             .overlay(shape.strokeBorder(Color.white.opacity(0.9), lineWidth: 1))
             .shadow(color: Color(hex: 0x1F2328).opacity(0.14), radius: 15, y: 12)
     }

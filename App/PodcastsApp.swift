@@ -133,6 +133,10 @@ struct RootView: View {
         // overlaps a list (the dead spots of builds 140-141 came from our
         // own dock over iOS's hidden bar).
         content
+        // Haar: this root page's fog is the one that drifts; every page,
+        // layer and sheet inside draws its fog standing still, so only one
+        // fog moves on screen (smoother scrolling).
+        .environment(\.haarFogBehind, true)
         // Undo and No internet float above the tab bar (or Haar's dock)
         // while they show.
         .overlay(alignment: Theme.isHaar ? .top : .bottom) {
