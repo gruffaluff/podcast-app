@@ -7,8 +7,9 @@ import PodcastCore
 
 // MARK: Settings
 
-/// The show's settings, Haar style: plain words and switches on frosted
-/// cards. The same settings as `ShowSettingsView` (which the other colour
+/// The show's settings, Haar style: plain words and switches straight on
+/// the page with hairlines between (Paul, 13 Nov 2026: menus are just
+/// text, no white card). The same settings as `ShowSettingsView` (which the other colour
 /// schemes keep).
 struct HaarShowSettings: View {
     @Environment(LibraryStore.self) private var store
@@ -71,10 +72,8 @@ struct HaarShowSettings: View {
                 .foregroundStyle(Theme.muted)
                 .multilineTextAlignment(.center)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
-        .haarShowGroup()
     }
 
     private func rankArrow(_ symbol: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -107,20 +106,18 @@ struct HaarShowSettings: View {
     private var switchCard: some View {
         VStack(spacing: 0) {
             toggleRow("Download new episodes", isOn: downloadBinding)
-            HaarShowHairline(inset: 16)
+            HaarMenuHairline()
             toggleRow("Tell me when one lands", isOn: notifyBinding)
         }
-        .haarShowGroup()
     }
 
     private func toggleRow(_ title: String, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             Text(title)
-                .font(.system(size: 15))
+                .font(.system(size: 16))
                 .foregroundStyle(Theme.ink)
         }
         .tint(tint)
-        .padding(.horizontal, 16)
         .padding(.vertical, 11)
     }
 
@@ -228,10 +225,9 @@ struct HaarShowSettings: View {
             HaarShowLabel(text: "Older episodes")
             VStack(spacing: 0) {
                 actionRow("Mark older episodes as played", symbol: "checkmark.circle") { askMarkOlder() }
-                HaarShowHairline(inset: 16)
+                HaarMenuHairline()
                 actionRow("Add all to Up next, oldest first", symbol: "text.append") { askAddAll() }
             }
-            .haarShowGroup()
         }
     }
 
@@ -248,7 +244,6 @@ struct HaarShowSettings: View {
                     .foregroundStyle(tint)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .contentShape(Rectangle())
         }
@@ -380,10 +375,8 @@ struct HaarShowHairline: View {
 /// The frosted fill of a grouped card (white over a blur).
 struct HaarShowCardFill: View {
     var body: some View {
-        ZStack {
-            Rectangle().fill(.ultraThinMaterial)
-            Color.white.opacity(0.66)
-        }
+        // Plain fill, no material (a live blur per card cost frames).
+        Color.white.opacity(0.66)
     }
 }
 

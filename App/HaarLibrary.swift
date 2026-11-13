@@ -24,8 +24,9 @@ struct HaarLibrarySections: View {
                 carryOnSection
             }
             yourShowsSection
+            // Plain rows: their words line up with the section labels (18).
             HaarShelves()
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 2)
                 .padding(.top, 24)
         }
     }
@@ -219,8 +220,8 @@ private extension View {
     func haarGroupCard() -> some View {
         background {
             let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
-            shape.fill(.ultraThinMaterial)
-                .overlay(shape.fill(Color.white.opacity(0.66)))
+            // Plain fill, no material (a live blur per card cost frames).
+            shape.fill(Color.white.opacity(0.66))
                 .overlay(shape.strokeBorder(Color.white, lineWidth: 1))
         }
     }
@@ -468,7 +469,7 @@ private struct HaarShowTile: View {
 
 // MARK: - Shelves
 
-/// One card of shelves: Downloads, Saved clips, History, Stats, Finished,
+/// The shelves, as plain rows: Downloads, Saved clips, History, Stats, Finished,
 /// each with a line of what's there (worked out when Library appears).
 private struct HaarShelves: View {
     @Environment(LibraryStore.self) private var store
@@ -486,17 +487,17 @@ private struct HaarShelves: View {
     var body: some View {
         VStack(spacing: 0) {
             shelf("Downloads", icon: "arrow.down.circle", meta: downloadsMeta) { StorageView() }
-            HaarHairline()
+            HaarMenuHairline(inset: HaarShelfRow.textInset)
             shelf("Saved clips", icon: "quote.opening", meta: "\(info.clips) clip\(info.clips == 1 ? "" : "s"), searchable") { HaarSavedClipsView() }
-            HaarHairline()
+            HaarMenuHairline(inset: HaarShelfRow.textInset)
             shelf("History", icon: "clock.arrow.circlepath", meta: historyMeta) { HistoryView() }
-            HaarHairline()
+            HaarMenuHairline(inset: HaarShelfRow.textInset)
             shelf("Stats", icon: "chart.bar", meta: statsMeta) { StatsView() }
-            HaarHairline()
+            HaarMenuHairline(inset: HaarShelfRow.textInset)
             shelf("Finished", icon: "checkmark.circle", meta: "\(info.finished) episode\(info.finished == 1 ? "" : "s")") { HaarFinishedView() }
         }
-        .padding(.vertical, 4)
-        .haarGroupCard()
+        // Menu rows, not content: plain text on the page with hairlines
+        // between (Paul, 13 Nov 2026: "just text in the mockup. No white card").
         .onAppear { info = load() }
     }
 
@@ -544,6 +545,10 @@ private struct HaarShelves: View {
 }
 
 private struct HaarShelfRow: View {
+    static let iconWidth: CGFloat = 26
+    /// Where the words start, for the hairlines between rows.
+    static let textInset: CGFloat = 16 + iconWidth + 12
+
     let name: String
     let icon: String
     let meta: String
@@ -551,17 +556,16 @@ private struct HaarShelfRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
-                .background(Color(hex: 0x1F2328), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(Theme.ink)
+                .frame(width: HaarShelfRow.iconWidth)
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .font(Theme.text(15, .medium))
+                    .font(Theme.text(16, .medium))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                 Text(meta)
-                    .font(Theme.text(12))
+                    .font(Theme.text(13))
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
             }
@@ -571,7 +575,7 @@ private struct HaarShelfRow: View {
                 .foregroundStyle(Theme.muted.opacity(0.7))
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
