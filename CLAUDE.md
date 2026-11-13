@@ -1833,6 +1833,14 @@ check compiles it):
   that on. They now reset to ink and the accent (`normalColours()` in
   Deck.swift). On the branch.
 
+- **Playing bars calmer** (Paul's recording, 13 Nov 2026: the little
+  red bars on the playing card were "a bit wild", jumping about). They
+  were a repeating animation that every redraw of the row (its progress
+  line ticks twice a second) restarted. `PlayingBars` now follows the
+  clock: each bar a slow, smooth wave of its own (1.1–1.7 s, 4–9 pt),
+  so redraws can't jolt them; still and level while paused. On the
+  branch.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public

@@ -227,25 +227,36 @@ struct DeckTabs: View {
 }
 
 /// Little bars that move while the episode plays (on its dark card).
+/// Driven by the clock (each bar a slow, gentle wave of its own) rather
+/// than a repeating animation, so redraws of the row (the progress line
+/// ticks twice a second) can't restart or jolt them (Paul, 13 Nov 2026:
+/// "a bit wild"). Still and level while paused.
 struct PlayingBars: View {
     let active: Bool
-    @State private var up = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let moving = active && !reduceMotion
-        HStack(alignment: .bottom, spacing: 1.5) {
-            ForEach(0..<3, id: \.self) { index in
-                Capsule()
-                    .fill(Deck0.led)
-                    .frame(width: 2.5, height: moving ? (up ? [10, 5, 8][index] : [4, 10, 5][index]) : 6)
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !moving)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .bottom, spacing: 1.5) {
+                ForEach(0..<3, id: \.self) { index in
+                    Capsule()
+                        .fill(Deck0.led)
+                        .frame(width: 2.5, height: moving ? Self.height(index, at: t) : 5)
+                }
             }
         }
         .frame(height: 10, alignment: .bottom)
-        .animation(moving ? .easeInOut(duration: 0.42).repeatForever(autoreverses: true) : .default, value: up)
-        .onAppear { up.toggle() }
-        .onChange(of: moving) { up.toggle() }
         .accessibilityHidden(true)
+    }
+
+    /// 4–9 pt, each bar on its own slow period (1.1–1.7 s) and offset.
+    private static let periods: [Double] = [1.3, 1.7, 1.1]
+    private static let offsets: [Double] = [0, 2.1, 4.0]
+    private static func height(_ index: Int, at t: Double) -> CGFloat {
+        let wave = sin(t * 2 * .pi / periods[index] + offsets[index])
+        return 6.5 + 2.5 * CGFloat(wave)
     }
 }
 
