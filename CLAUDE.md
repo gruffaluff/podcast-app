@@ -1969,7 +1969,7 @@ tab bar and the Native warm screens (`RootView.content`).
   iPhone, word lighting timing, the chart marks from the second day, fog
   cost (the page fog is drawn under each layer).
 
-## Queued for the next app build
+## Done in build 152 (13 Nov 2026, PR #70; Paul: "add in everything outstanding and build")
 
 - **Matching the Haar prototype's last row** (Paul, 13 Nov 2026: "not
   looking or flowing and operating as well as the mock up",
@@ -2078,6 +2078,8 @@ tab bar and the Native warm screens (`RootView.content`).
     reach the lists inside; now a bottom scroll margin of dock + 12 pt
     (`contentMargins` in `HaarRoot`), which also covers pages pushed on
     them (History, Stats…).
+
+## Queued for the next app build
 
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
   asked if they matched; they don't). In Native warm, Your shows cards
