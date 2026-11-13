@@ -1990,8 +1990,59 @@ tab bar and the Native warm screens (`RootView.content`).
   volume A** (a thin line under the transport, the width of the progress
   line, small speaker icons each end, dot only while touched; hidden on
   the smallest iPhones) **and ending time B** (tap the time left to swap
-  "−41:48" for "ends 21:42" and back). Waiting on Paul: the go for
-  batch 1.
+  "−41:48" for "ends 21:42" and back). Paul: "add in everything
+  outstanding and build" (13 Nov 2026). All three batches built the same
+  evening by four helpers in parallel, merged on this branch:
+  - Colour: the page mist mixes 24% of the show's colour (was 12%), its
+    glow 16%; Undo is a dark toast near the top in Haar (`UndoBar`
+    toast, `RootView` overlay).
+  - Now (`App/HaarPlayer.swift`): AirPlay · grab handle (tap = Find) · ⋯
+    (adds "Speed and sound…" = `PlayerOptionsSheet`, and Chapters);
+    artwork up to 280 pt radius 46 with a Read along pill when words are
+    ready; show name in accent caps above the serif title (33, or 25 over
+    44 characters); plain line; time row with `HaarChapterControl` in the
+    middle (opens the chapters sheet even with none) and time left that
+    swaps to "ends HH:MM" on tap ("haarShowEnds"); `HaarTransport`:
+    speed cycler 1 / 1.3 / 1.5 / 2×, skips, a 70 pt play circle in the
+    accent, sleep moon cycling Off / 15 / 30 / 45 / 60 / End;
+    `HaarVolumeLine` (hidden at 680 pt tall or less); the Up next stack
+    (`App/HaarUpNext.swift`, 76 pt frosted card, two peeking above, "47
+    min left · skips 2 ads · words ready"); ad as a dark pill at the top;
+    chapter flash pill. Gone: the Options words row, chapter pill row,
+    "ends" middle text, "Playing on", the big ad block.
+  - Read along: the same screen morphs (0.7 s): artwork to a 60 pt
+    corner square, ⌄ back, words rise in; `HaarWordsOnTheWay` empty state
+    ("Words are on their way.", %, Transcribe now); speaker names, the
+    current word in the accent, chapter rules in italic serif, Make a
+    clip.
+  - Up next (`HaarUpNextList`): in place, not a sheet; cards fly in;
+    "clears by" time; long-press reorder; swipe right Play next / left
+    Played with Undo; rank pills; the episode playing isn't listed; Keep
+    playing toggle at the end.
+  - Navigation (`HaarRoot`): swipes start at 12 pt and fire at 48;
+    Library slides from the right and Find from the top on the 0.7 s
+    curve over a see-through layer (Library still draws its own fog, so
+    it's solid); dock 224×58 with one sliding dot, no play button.
+  - Library (`HaarLibrary.swift`, `LibraryView`): serif "Library" 44
+    header with + and sliders, summary "9 shows · 3 ranked · 26 unplayed",
+    caps section labels, New as one card by day with Clear all, Carry on
+    rings on the left in the show's colour, tiles radius 24 (rank and "n
+    new" pill as Paul chose), Shelves as one card with detail lines and a
+    new Finished list.
+  - Show page (`HaarShow.swift`, `HaarShowParts.swift`): its own Haar
+    page in a translucent radius-36 sheet: 88 pt artwork, serif 32 name,
+    "Twice a week · 592 episodes", Following ✓ / ▶ Play latest, Episodes /
+    Settings tabs under the header, episodes in one card with NEW / IN UP
+    NEXT / PLAYED labels (tap plays, swipes, menu), Settings with the
+    Top priority ↑ #n ↓, switches, and word choices for where new
+    episodes go, intro / outro skip, speed, keep downloads. Not on it
+    (yet): searching the show's episodes and Select mode. Older values
+    outside the word choices show nothing underlined.
+  - Chapters (`HaarChapters.swift`, `HaarChaptersSheet`): timeline sheet
+    (rail, nodes, current in serif accent with minutes left), "Chapters
+    arrive with the words." when there are none, From the show / Auto
+    words, Stop at chapter end (`PlayerModel.setStopAtChapterEnd`,
+    fades and pauses at the chapter's end) and Skip this chapter.
 
 - **Haar show page, swipe back, plain line** (Paul, 13 Nov 2026, after
   build 151: "let's work the show page and swipe back (if valid)"; "the
