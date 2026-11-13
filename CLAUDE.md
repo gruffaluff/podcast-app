@@ -1994,6 +1994,11 @@ tab bar and the Native warm screens (`RootView.content`).
     Poddeck's (5 pt, split by 3 pt gaps at chapters, played in ink,
     ahead faded, ads paler, an ink dot at the play point; thicker with a
     bigger dot while dragging). Same drag rules, bubble and Undo.
+  - Your shows grid (Paul's build 151 screenshot: the counters were lost
+    on the artwork and the 1–4 rank badges didn't work): the rank is off
+    the artwork, a serif number beside the show's name; the new count is
+    a solid dark pill with a white edge, "1 new", in the top corner
+    (`HaarShowTile`).
 
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
   asked if they matched; they don't). In Native warm, Your shows cards

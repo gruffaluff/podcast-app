@@ -367,37 +367,40 @@ private struct HaarShowTile: View {
             GeometryReader { geometry in
                 ArtworkView(url: show.artworkURL, title: show.title, size: geometry.size.width, radius: 14)
                     .shadow(color: Color(hex: 0x28323C).opacity(0.14), radius: 8, y: 4)
-                    .overlay(alignment: .topLeading) {
-                        if let rank {
-                            Text("\(rank)")
-                                .font(Theme.serif(17))
-                                .foregroundStyle(Theme.ink)
-                                .frame(minWidth: 24, minHeight: 24)
-                                .padding(.horizontal, 3)
-                                .frostedCard(radius: 12)
-                                .padding(6)
-                                .accessibilityLabel("Top show number \(rank)")
-                        }
-                    }
-                    .overlay(alignment: .bottomTrailing) {
+                    // New this week: a solid dark pill with a white edge in
+                    // the top corner, so it reads on any artwork (Paul,
+                    // build 151: the counters were lost on the art).
+                    .overlay(alignment: .topTrailing) {
                         if fresh > 0 {
-                            Text("\(fresh)")
+                            Text("\(fresh) new")
                                 .font(Theme.text(11, .bold))
-                                .foregroundStyle(Theme.onAccent)
-                                .frame(minWidth: 20, minHeight: 20)
-                                .padding(.horizontal, 3)
-                                .background(Theme.accentFill, in: Capsule())
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 7)
+                                .frame(minHeight: 20)
+                                .background(Color(hex: 0x1F2328), in: Capsule())
+                                .overlay(Capsule().strokeBorder(.white, lineWidth: 1.5))
+                                .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
                                 .padding(6)
                                 .accessibilityLabel("\(fresh) new")
                         }
                     }
             }
             .aspectRatio(1, contentMode: .fit)
-            Text(show.title)
-                .font(Theme.text(12, .semibold))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(2, reservesSpace: true)
-                .multilineTextAlignment(.leading)
+            // Top shows' rank sits beside the name in the serif, off the
+            // artwork (Paul, build 151: the badges on the art didn't work).
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                if let rank {
+                    Text("\(rank)")
+                        .font(Theme.serif(19))
+                        .foregroundStyle(Theme.muted)
+                        .accessibilityLabel("Top show number \(rank)")
+                }
+                Text(show.title)
+                    .font(Theme.text(12, .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+            }
         }
         .accessibilityElement(children: .combine)
     }
