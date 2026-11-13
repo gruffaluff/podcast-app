@@ -1971,6 +1971,23 @@ tab bar and the Native warm screens (`RootView.content`).
 
 ## Queued for the next app build
 
+- **Matching the Haar prototype's last row** (Paul, 13 Nov 2026: "not
+  looking or flowing and operating as well as the mock up",
+  https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7, page v4, row "Real
+  example: Elis James and John Robins, #592"). Gap list given to Paul in
+  three batches: 1 colour + Now screen (show colour as the accent and
+  page mist, filled play circle with speed / sleep beside it, bigger
+  rounder artwork, show name above the title, chapter in the time row,
+  Up next stack with meta line), 2 motion (Up next and Read along as
+  in-place morphs, translucent Library / Find layers, rounded sheets
+  above the dock, top toasts), 3 Library / show page / chapters
+  (timeline, Stop at chapter end, Skip this chapter, empty states).
+  Decided so far (Paul, 13 Nov 2026): keep the Your shows badge fix
+  (rank beside the name, "n new" pill), not the prototype's badges on
+  the art; keep a volume slider; keep the ending time if it fits.
+  Waiting on Paul: where the volume and ending time go, and the go for
+  batch 1.
+
 - **Haar show page, swipe back, plain line** (Paul, 13 Nov 2026, after
   build 151: "let's work the show page and swipe back (if valid)"; "the
   waveform shape doesn't need to mimic the real sound … simplify this
