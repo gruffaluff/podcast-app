@@ -133,8 +133,6 @@ struct NowPlayingView: View {
         }
         .sheet(isPresented: $showingOptions) {
             PlayerOptionsSheet()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingUpNext) {
             UpNextSheet()
@@ -1089,62 +1087,78 @@ private struct DimWhenDisabled: ButtonStyle {
     }
 }
 
-/// The player's Options as a short sheet (Paul's D, 12 Nov 2026: the panel
-/// in the player was "hard on clarity" and the speed "all spaced out").
-/// Speed as one "− 1.2× +" control with quick picks, Trim and Boost as
-/// switches with a line saying what they do, Sleep as one row with a list.
+/// The player's Options as a short sheet (Paul's D, 12 Nov 2026), sized to
+/// fit everything at once (Paul, 13 Nov 2026: no swiping up for the rest;
+/// no blue; the see-through glass was too cloudy). Solid warm page, white
+/// cards, icons and keys in ink and the accent.
 private struct PlayerOptionsSheet: View {
     @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
+    /// The sheet is exactly as tall as what's in it.
+    @State private var height: CGFloat = 420
 
     private static let quickSpeeds: [Double] = [1, 1.2, 1.5, 2]
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    speedRow
-                    quickPicks
-                } footer: {
-                    Text(player.speedIsForShow ? "This show has its own speed." : "The same speed for all shows.")
-                }
-                Section {
-                    Toggle(isOn: Binding(get: { player.trimSilences }, set: { player.setTrimSilences($0) })) {
-                        rowLabel("Trim silences", detail: "Skips through the pauses", icon: "scissors")
-                    }
-                    Toggle(isOn: Binding(get: { player.boostVoices }, set: { player.setBoostVoices($0) })) {
-                        rowLabel("Boost voices", detail: "Evens out quiet speech", icon: "waveform")
-                    }
-                }
-                .tint(Theme.accentFill)
-                Section {
-                    sleepRow
-                    if player.sleepEndsAt != nil {
-                        Button { player.extendSleepTimer() } label: {
-                            Label("5 more minutes", systemImage: "plus.circle")
-                        }
-                    }
-                } footer: {
-                    Text("The sound fades out over the last 10 seconds.")
-                }
+        VStack(spacing: 12) {
+            header
+            card { speedRow; quickPicks }
+            card {
+                toggleRow("Trim silences", detail: "Skips through the pauses", icon: "scissors",
+                          isOn: Binding(get: { player.trimSilences }, set: { player.setTrimSilences($0) }))
+                Divider().overlay(Theme.hairline)
+                toggleRow("Boost voices", detail: "Evens out quiet speech", icon: "waveform",
+                          isOn: Binding(get: { player.boostVoices }, set: { player.setBoostVoices($0) }))
             }
-            .navigationTitle("Options")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+            card { sleepRow }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+        .foregroundStyle(Theme.ink)
+        .tint(Theme.accentFill)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationDetents([.height(height)])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(Theme.background)
+    }
+
+    private var header: some View {
+        ZStack {
+            Text("Options").font(.headline)
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                    .buttonStyle(.plain)
+            }
+        }
+        .frame(height: 32)
+    }
+
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(spacing: 10) { content() }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
+    }
+
+    private func label(_ title: String, detail: String, icon: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.body)
+                Text(detail).font(.caption).foregroundStyle(Theme.muted)
             }
         }
     }
 
-    private func rowLabel(_ title: String, detail: String, icon: String) -> some View {
-        Label {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
-            }
-        } icon: {
-            Image(systemName: icon)
-        }
+    private func toggleRow(_ title: String, detail: String, icon: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) { label(title, detail: detail, icon: icon) }
     }
 
     private var speeds: [Double] { PlayerOptions.speeds }
@@ -1157,7 +1171,7 @@ private struct PlayerOptionsSheet: View {
     private var speedRow: some View {
         let index: Int = speedIndex
         return HStack {
-            rowLabel("Speed", detail: player.speedIsForShow ? "This show" : "All shows", icon: "gauge.with.dots.needle.50percent")
+            label("Speed", detail: player.speedIsForShow ? "This show" : "All shows", icon: "gauge.with.dots.needle.50percent")
             Spacer(minLength: 8)
             HStack(spacing: 0) {
                 stepButton("minus", label: "Slower", enabled: index > 0) { player.setSpeed(speeds[index - 1]) }
@@ -1167,7 +1181,7 @@ private struct PlayerOptionsSheet: View {
                     .frame(minWidth: 44)
                 stepButton("plus", label: "Faster", enabled: index < speeds.count - 1) { player.setSpeed(speeds[index + 1]) }
             }
-            .background(Color.primary.opacity(0.07), in: Capsule())
+            .background(Theme.ink.opacity(0.07), in: Capsule())
         }
     }
 
@@ -1175,10 +1189,12 @@ private struct PlayerOptionsSheet: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Theme.ink)
                 .frame(width: 36, height: 32)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
+        .opacity(enabled ? 1 : 0.3)
         .disabled(!enabled)
         .accessibilityLabel(label)
     }
@@ -1192,32 +1208,46 @@ private struct PlayerOptionsSheet: View {
                         .font(.subheadline.weight(.semibold))
                         .monospacedDigit()
                         .frame(maxWidth: .infinity, minHeight: 32)
-                        .foregroundStyle(on ? Theme.onAccent : Color.primary)
-                        .background(on ? Theme.accentFill : Color.primary.opacity(0.07), in: Capsule())
+                        .foregroundStyle(on ? Theme.onAccent : Theme.ink)
+                        .background(on ? Theme.accentFill : Theme.ink.opacity(0.07), in: Capsule())
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
     }
 
-    /// One row; its value opens the list of timers.
+    /// One row; its value opens the list of timers. "+5" while one runs.
     private var sleepRow: some View {
-        Menu {
-            Button("Off") { player.setSleepTimer(nil) }
-            ForEach(SleepTimerOption.all, id: \.self) { option in
-                Button(option.label) { player.chooseSleepTimer(option) }
+        HStack(spacing: 8) {
+            Menu {
+                Button("Off") { player.setSleepTimer(nil) }
+                ForEach(SleepTimerOption.all, id: \.self) { option in
+                    Button(option.label) { player.chooseSleepTimer(option) }
+                }
+            } label: {
+                HStack {
+                    label("Sleep timer", detail: "Fades out, then stops", icon: "moon")
+                    Spacer(minLength: 8)
+                    Text(sleepValue).foregroundStyle(Theme.muted)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(Theme.muted)
+                }
+                .contentShape(Rectangle())
             }
-        } label: {
-            HStack {
-                rowLabel("Sleep timer", detail: "Stops playing for you", icon: "moon")
-                    .foregroundStyle(Color.primary)
-                Spacer(minLength: 8)
-                Text(sleepValue)
-                    .foregroundStyle(.secondary)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            .buttonStyle(.plain)
+            if player.sleepEndsAt != nil {
+                Button { player.extendSleepTimer() } label: {
+                    Text("+5")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 30)
+                        .background(Theme.ink.opacity(0.07), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("5 more minutes")
             }
         }
     }

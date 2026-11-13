@@ -1802,6 +1802,16 @@ check compiles it):
   is now outside the card (`ShowView` `leadingSwipe` / `trailingSwipe`),
   so the whole card slides, like Up Next. On the branch.
 
+- **Options sheet tidied** (Paul's build 149 screenshot, 13 Nov 2026:
+  blue icons and + didn't fit, the see-through glass was too cloudy, and
+  the sleep timer was hidden until you swiped up): `PlayerOptionsSheet`
+  is now one compact layout sized exactly to its contents
+  (`presentationDetents([.height(measured)])`), so everything shows at
+  once; solid warm page (`presentationBackground(Theme.background)`) with
+  white cards; icons, − / + and Done in ink, the chosen quick speed and
+  switches in the accent; no footers; "+5" beside the sleep timer while
+  it runs. On the branch.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
