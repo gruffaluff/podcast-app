@@ -1985,7 +1985,12 @@ tab bar and the Native warm screens (`RootView.content`).
   Decided so far (Paul, 13 Nov 2026): keep the Your shows badge fix
   (rank beside the name, "n new" pill), not the prototype's badges on
   the art; keep a volume slider; keep the ending time if it fits.
-  Waiting on Paul: where the volume and ending time go, and the go for
+  Volume and ending time (mock-ups
+  https://claude.ai/artifact/Tv46pEoExxAgwruXE6MYtr): **Paul picked
+  volume A** (a thin line under the transport, the width of the progress
+  line, small speaker icons each end, dot only while touched; hidden on
+  the smallest iPhones) **and ending time B** (tap the time left to swap
+  "−41:48" for "ends 21:42" and back). Waiting on Paul: the go for
   batch 1.
 
 - **Haar show page, swipe back, plain line** (Paul, 13 Nov 2026, after
