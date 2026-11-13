@@ -1999,6 +1999,12 @@ tab bar and the Native warm screens (`RootView.content`).
     the artwork, a serif number beside the show's name; the new count is
     a solid dark pill with a white edge, "1 new", in the top corner
     (`HaarShowTile`).
+  - Last rows stuck behind the dock (Paul's build 151 screenshot:
+    Library's Shelves couldn't scroll clear): Library and Find got their
+    room as safe-area padding round their navigation stacks, which didn't
+    reach the lists inside; now a bottom scroll margin of dock + 12 pt
+    (`contentMargins` in `HaarRoot`), which also covers pages pushed on
+    them (History, Stats…).
 
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
   asked if they matched; they don't). In Native warm, Your shows cards

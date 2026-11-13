@@ -32,7 +32,12 @@ struct HaarRoot: View {
                 if libraryMade || tab == 1 {
                     LibraryView()
                         .environment(\.haarGoHome, { go(0) })
-                        .safeAreaPadding(.bottom, Self.dockRoom - 10)
+                        // Room under the last row so it scrolls clear of the dock. Set as
+                        // a scroll margin (it reaches the lists inside the layer's
+                        // navigation stack, and pages pushed on it); the safe-area
+                        // padding used before didn't, so the last rows stayed stuck
+                        // behind the dock (Paul's build 151 screenshot, Shelves).
+                        .contentMargins(.bottom, Self.dockRoom + 12, for: .scrollContent)
                         .offset(x: tab == 1 ? 0 : geometry.size.width + 30)
                         .opacity(tab == 1 ? 1 : 0)
                         .allowsHitTesting(tab == 1)
@@ -41,7 +46,8 @@ struct HaarRoot: View {
                 }
                 if findMade || tab == 2 {
                     HaarFindView(close: { go(0) })
-                        .safeAreaPadding(.bottom, Self.dockRoom - 10)
+                        // Same room under the last row as Library.
+                        .contentMargins(.bottom, Self.dockRoom + 12, for: .scrollContent)
                         .haarPage()
                         .offset(y: tab == 2 ? 0 : -(geometry.size.height + 60))
                         .opacity(tab == 2 ? 1 : 0)
