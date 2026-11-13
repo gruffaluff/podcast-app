@@ -34,6 +34,7 @@ struct HaarNowView: View {
     @State private var showingOptions = false
     @State private var showingChapters = false
     @State private var showingNotes = false
+    @State private var confirmRemove = false
     /// The pill that shows when a new chapter starts.
     @State private var flash: ChapterFlash?
     @Namespace private var art
@@ -73,6 +74,14 @@ struct HaarNowView: View {
         }
         .sheet(isPresented: $showingNotes) {
             if let episode { EpisodeNotesView(episode: episode) }
+        }
+        .alert("Remove the download?", isPresented: $confirmRemove) {
+            Button("Cancel", role: .cancel) {}
+            Button("Remove", role: .destructive) {
+                if let episode { store.removeDownload(episode) }
+            }
+        } message: {
+            Text("It will stream instead, or you can download it again.")
         }
     }
 
@@ -121,6 +130,11 @@ struct HaarNowView: View {
             titleBlock(item, size: titleSize, compact: false)
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
+            if let episode {
+                episodeKeys(episode)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 6)
+            }
             Spacer(minLength: 10)
             controls(item, volume: volume)
                 .padding(.horizontal, 24)
@@ -142,7 +156,7 @@ struct HaarNowView: View {
         let lines: CGFloat = min(3, max(1, (CGFloat(title.count) / perLine).rounded(.up)))
         let titleHeight: CGFloat = 20 + lines * titleSize * 1.12
         let controlsHeight: CGFloat = HaarScrubLine.blockHeight + 10 + 70 + (volume ? 30 : 0)
-        let fixed: CGFloat = 44 + 8 + 20 + titleHeight + 12 + controlsHeight + 12 + HaarUpNextStack.height + bottomRoom
+        let fixed: CGFloat = 44 + 8 + 20 + titleHeight + Self.keysHeight + 6 + 12 + controlsHeight + 12 + HaarUpNextStack.height + bottomRoom
         let room: CGFloat = size.height - fixed
         return max(110, min(280, size.width - 48, room))
     }
@@ -241,6 +255,57 @@ struct HaarNowView: View {
     private func markPlayed() {
         guard let episode else { return }
         store.undoable("Marked played", episodes: [episode]) { player.finishEarly() }
+    }
+
+    // MARK: Episode keys
+
+    static let keysHeight: CGFloat = 36
+
+    /// Download · Transcribe · Mark played as three words spread evenly
+    /// under the title (Paul, 13 Nov 2026, D on
+    /// https://claude.ai/artifact/X49sL6x7gvwQoJMX3dqhed). Words you can
+    /// tap are in the accent; done ones are grey with a tick; while a
+    /// download or transcript is on its way the word fills with the accent
+    /// left to right as it goes (tap to stop).
+    private func episodeKeys(_ episode: PodcastEpisode) -> some View {
+        HStack(spacing: 0) {
+            downloadKey(episode)
+            transcriptKey(episode)
+            HaarKeyWord(text: "Mark played", state: .action, action: markPlayed)
+        }
+        .frame(height: Self.keysHeight)
+    }
+
+    private func downloadKey(_ episode: PodcastEpisode) -> some View {
+        if let fraction = downloads.progress[episode.episodeID] {
+            return HaarKeyWord(text: "Downloading \(Int(fraction * 100))%", state: .working(fraction)) {
+                store.removeDownload(episode)
+            }
+        }
+        if store.localAudioURL(for: episode) != nil {
+            return HaarKeyWord(text: "Downloaded", state: .done) { confirmRemove = true }
+        }
+        return HaarKeyWord(text: "Download", state: .action) { downloads.download(episode) }
+    }
+
+    private func transcriptKey(_ episode: PodcastEpisode) -> some View {
+        let id: String = episode.episodeID
+        if transcripts.isQueued(episode) {
+            let fraction: Double = episode.transcriptState == .transcribing
+                ? (transcripts.progress[id] ?? 0)
+                : (downloads.progress[id] ?? 0)
+            let text: String = episode.transcriptState == .transcribing
+                ? "Transcribing \(Int(fraction * 100))%"
+                : "Waiting…"
+            return HaarKeyWord(text: text, state: .working(fraction)) { transcripts.stop(episode) }
+        }
+        if episode.transcriptState == .ready {
+            return HaarKeyWord(text: "Words ready", state: .done) { setReading(true) }
+        }
+        if !transcripts.canTranscribeNow(episode) {
+            return HaarKeyWord(text: "Read along", state: .action) { setReading(true) }
+        }
+        return HaarKeyWord(text: "Transcribe", state: .action) { transcripts.transcribeNow(episode) }
     }
 
     // MARK: Artwork and title
@@ -614,6 +679,74 @@ struct HaarNowView: View {
 // MARK: - Transport
 
 /// The big play key: a filled circle in the colour of what's playing.
+/// One of the Now screen's episode keys: a word taking an equal share of
+/// the row. While something is on its way it fills with the accent from
+/// left to right as it goes.
+struct HaarKeyWord: View {
+    enum Kind: Equatable {
+        case action
+        case done
+        case working(Double)
+    }
+
+    let text: String
+    let state: Kind
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            label
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    @ViewBuilder private var label: some View {
+        switch state {
+        case .action:
+            word(text).foregroundStyle(Theme.accentText)
+        case .done:
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .bold))
+                word(text)
+            }
+            .foregroundStyle(Theme.muted)
+        case .working(let fraction):
+            word(text)
+                .foregroundStyle(Theme.muted.opacity(0.55))
+                .overlay(alignment: .leading) {
+                    word(text)
+                        .foregroundStyle(Theme.accentText)
+                        .mask(alignment: .leading) {
+                            GeometryReader { geometry in
+                                Rectangle()
+                                    .frame(width: geometry.size.width * CGFloat(min(1, max(0, fraction))))
+                            }
+                        }
+                }
+                .animation(.easeOut(duration: 0.4), value: fraction)
+        }
+    }
+
+    private func word(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 14, weight: .semibold))
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+    }
+
+    private var accessibilityText: String {
+        switch state {
+        case .working: "\(text), tap to stop"
+        default: text
+        }
+    }
+}
+
 struct HaarPlayCircle: View {
     let playing: Bool
     var size: CGFloat = 70
@@ -684,15 +817,20 @@ struct HaarTransport: View {
     private var sleepButton: some View {
         let on: Bool = player.sleepTimer != nil
         return Button { stepSleep() } label: {
-            VStack(spacing: 1) {
-                Image(systemName: on ? "moon.fill" : "moon")
-                    .font(.system(size: 20, weight: .regular))
-                if on {
-                    sleepLabel
+            // The moon never moves: the minutes sit under it as an overlay
+            // (Paul, 13 Nov 2026: it jumped up as the text came in).
+            Image(systemName: on ? "moon.fill" : "moon")
+                .font(.system(size: 20, weight: .regular))
+                .frame(width: 24, height: 24)
+                .overlay(alignment: .bottom) {
+                    if on {
+                        sleepLabel
+                            .fixedSize()
+                            .offset(y: 14)
+                    }
                 }
-            }
-            .foregroundStyle(on ? Theme.accentText : Theme.ink)
-            .frame(width: 48, height: 48)
+                .foregroundStyle(on ? Theme.accentText : Theme.ink)
+                .frame(width: 48, height: 48)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

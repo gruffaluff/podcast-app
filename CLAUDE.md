@@ -2115,8 +2115,26 @@ all the suggested picks.**
   pill); the grid (`HaarShowTile`) and the card (`haarGroupCard`) are
   gone. The old Carry on / Your shows card-height note is dropped (those
   cards aren't in the Haar Library).
+- Episode keys on Now (Paul, 13 Nov 2026: "still like to see download,
+  transcribe and mark as played somewhere"; options
+  https://claude.ai/artifact/X49sL6x7gvwQoJMX3dqhed, **Paul picked D**,
+  evenly spread, filling as they progress): three words spread evenly
+  under the title (`HaarNowView.episodeKeys`, `HaarKeyWord`): Download /
+  "Downloading 40%" (fills with the accent left to right, tap to stop) /
+  ✓ Downloaded (grey, tap to remove with a confirm); Transcribe /
+  "Transcribing 62%" (fills, tap to stop) / ✓ Words ready (tap to read
+  along); Mark played (with Undo). Still also in ⋯.
+- Sleep moon no longer jumps when the minutes appear: the moon stays put
+  and "15M" sits under it as an overlay (`HaarTransport.sleepButton`).
 
 ## Queued for the next app build
+
+- **Show page space** (Paul, 13 Nov 2026, build 152 screenshot: the show
+  sheet looks empty with one unplayed episode). Options
+  https://claude.ai/artifact/TQpmnvsJ7QjSMhXdm3JwY9: A the back catalogue
+  carries on below, faded (suggested), B about + your listening numbers
+  + when new ones usually land, C search box + played by month, D more
+  like this (same categories, Follow). Can combine. Waiting on Paul.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
