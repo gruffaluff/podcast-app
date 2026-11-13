@@ -195,7 +195,8 @@ to Nowhere / Top / Bottom" on the show page.
   summaries, video podcasts, video clip cards (stay as they are, no new
   work), Apple Watch (maybe later if others ask), speaker separation
   (removed: battery not worth it; publisher transcripts still name
-  speakers). Later: smart lists, folders, extra Podcasting 2.0 tags.
+  speakers; Paul confirmed again 13 Nov 2026: "not worth the hassle").
+  Later: smart lists, folders, extra Podcasting 2.0 tags.
   Off-phone transcription: not now (Groq-type services are pennies a
   month if ever wanted).
 - **Real-time new-episode alerts** (free; Paul approved 4 Nov 2026):
