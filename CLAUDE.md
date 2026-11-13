@@ -11,7 +11,12 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 12 Nov 2026): **"W1b Warm white, fine edge"**: white
+screen. Icon (Paul, 13 Nov 2026, with the Haar look): **"P1 Cassette in the
+haar"**: Poddeck's cassette in deep blue (#2B4766) half lost behind two
+bands of fog on a misty grey tile (`design/icon/icon_p1.svg` / `.png` from
+`design/icon/make_haar_icon.py`: rsvg-convert + Pillow; it also writes the
+app icon, `docs/icon.png` and the badge setting's IconPreview). Before that
+(12 Nov 2026): **"W1b Warm white, fine edge"**: white
 cassette with a thin warm-grey edge, ink window, olive / amber progress
 line, soft shadow on the off-white page (`design/icon/icon_w1.png` from
 `make_poster_icon.js`; W1 without the edge went out in build 145).
@@ -29,7 +34,30 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
-**Look: "Native warm"** (Paul, 11 Nov 2026, late, after build 142: "it
+**Look: "Haar"** (Paul, 13 Nov 2026: "work this as a version of Poddeck",
+"stick with P1"; the app keeps the name Poddeck, Haar names the look, after
+the cold sea fog off the North Sea). Mock-ups and a clickable prototype of
+every screen: https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7 (page "v4 ·
+Poddeck, Haar look"; earlier pages Nightcap, Tide, Tide Fog). The look:
+a calm misty grey page (#D3D8DB) with three slow drifting bands of white
+fog, tinted a little by the colour of what's playing (`FogBackdrop` in
+`App/Haar.swift`); frosted white cards with a fine white edge
+(`frostedCard`, used by `deckCard` / `posterCard`); soft charcoal ink
+(#1F2328, muted #4B5259); the playing episode's deep colour as the only
+colour (deep blue #2B4766 when nothing plays); titles in Instrument Serif
+(`Theme.big`, `Theme.serif`; bundled, OFL), everything else SF; plain text
+and icons instead of button chrome wherever it's clear (Paul: "just
+having text/icons in a lot of places … as long as it is clear"); no
+visible scroll bars. It's a colour scheme (`ColourScheme.haar`), the new
+default for a light iPhone (AUTO = Haar light / Night dark); Sand, Slate,
+Clay and Night stay pickable. The fuller Haar navigation (the player as
+home, Up next / Find / Library as layers with gestures, a three-button
+dock Now · Library · Find, read-along with the word lit as it's spoken,
+chapter timeline sheet, Library New inbox restyled, Find = search +
+Discover with charts) comes in later phases (see "Haar rework" below).
+Reverting: TestFlight keeps build 150 (Native warm) under Previous Builds
+for 90 days, and the git tag `native-warm-150` marks its code.
+Before that: **"Native warm"** (Paul, 11 Nov 2026, late, after build 142: "it
 just feels like a lost mess now"; picked direction 1 Native warm from
 https://claude.ai/artifact/LkL7nrKf76XCi77TH28Xb3, "just use a standard
 Apple font, SF something", rebuild overnight and go straight to a build).
@@ -1840,6 +1868,36 @@ check compiles it):
   clock: each bar a slow, smooth wave of its own (1.1–1.7 s, 4–9 pt),
   so redraws can't jolt them; still and level while paused.
 
+
+## Haar rework (13 Nov 2026, branch `haar-look`; UBDM until Paul says "build")
+
+Paul, 13 Nov 2026: "let's work on restyling it all and bringing over
+into live", "stick with P1". Every Poddeck feature stays; only the look
+and the way round the app change. Prototype with every screen (Poddeck
+features folded in): https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7.
+Built in phases so each one can be tried on the phone:
+1. **Look** (this branch, first PR): Haar colour scheme as the default,
+   fog page behind every screen, frosted cards, Instrument Serif titles,
+   P1 icon. Every screen picks it up through `Theme`, `deckCard`,
+   `posterCard`, `haarPage()` and `Theme.rowBackground`.
+2. **Player as home**: the player is the first screen; big artwork that
+   shrinks to the corner for read-along (line now in the serif, each word
+   lit as it's spoken, chapter breaks as a rule with the title); a
+   waveform-style progress line with chapter dots and faded ad sections;
+   chapter pill "4/6 · title" with ‹ › under it, opening the chapter
+   timeline sheet; a soft card when a new chapter starts; AirPlay and ⋯
+   (episode options) at the top; Up next stacked under the player.
+3. **Navigation**: iOS tab bar replaced by the floating dock Now ·
+   Library · Find; swipe up for Up next, down for Find, left for Library,
+   back the way you came; Find = search + Discover (new to you, UK charts
+   with serif rank numbers and movement, categories as text tabs).
+4. **Library and settings**: New inbox (Today / Yesterday / This week),
+   Carry on with rings, shows as an artwork grid (ranked first), shelves
+   (Downloads, Saved clips, History, Stats, Finished); show page as a
+   sheet with Episodes / Settings; settings with the fog slider and
+   "tint the mist with each show".
+Not decided yet: Dusk (a darker fog for evenings; Night stays the dark
+scheme for now).
 
 ## Queued for the next app build
 

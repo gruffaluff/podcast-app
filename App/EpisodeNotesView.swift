@@ -30,7 +30,7 @@ struct EpisodeNotesView: View {
                 }
                 .padding(.bottom, 16)
             }
-            .background(Theme.background)
+            .haarPage()
             .environment(\.showColour, pageColour)
             .navigationTitle("Episode notes")
             .navigationBarTitleDisplayMode(.inline)

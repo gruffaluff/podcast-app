@@ -113,7 +113,7 @@ struct LibraryView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 12)
             }
-            .background(Theme.background)
+            .haarPage()
             .refreshable { await store.refreshAll() }
             .onAppear { continuing = carryOn(playing: player.nowPlaying?.episodeID) }
             .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = carryOn(playing: id) }
@@ -568,7 +568,7 @@ private struct NewListView: View {
                 .foregroundStyle(Theme.muted)
                 .frame(maxWidth: .infinity)
         }
-        .background(Theme.background)
+        .haarPage()
         .safeAreaInset(edge: .bottom) {
             if !list.isEmpty {
                 NewActions(episodes: list)

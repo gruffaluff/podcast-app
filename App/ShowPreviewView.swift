@@ -27,7 +27,7 @@ struct ShowPreviewView: View {
     var body: some View {
         List {
             header
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets())
             Section {
@@ -40,10 +40,10 @@ struct ShowPreviewView: View {
                 } else if failed {
                     Text("Couldn't load this show's episodes. Pull down to try again.")
                         .foregroundStyle(Theme.muted)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                 } else {
                     HStack { Spacer(); ProgressView(); Spacer() }
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                 }
             } header: {
                 DeckHeader(title: "Latest episodes", detail: feed.map { "\($0.episodes.count) in all" })
@@ -63,7 +63,7 @@ struct ShowPreviewView: View {
                 .frame(height: overscroll > 0 ? overscroll + 40 : 0)
                 .ignoresSafeArea()
         }
-        .background(Theme.background)
+        .haarPage()
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }

@@ -30,7 +30,7 @@ struct UpNextView: View {
                     // A plain row, not a section header: plain lists pin
                     // headers to the top while scrolling.
                     header(episodes: episodes)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                         .listRowSeparator(.hidden)
                     ForEach(Array(store.queue.enumerated()), id: \.element.episode.id) { index, item in
                         if let episode = episodes[item.episode.id] {
@@ -53,7 +53,7 @@ struct UpNextView: View {
                                 .foregroundStyle(Theme.muted)
                         }
                         .padding(.vertical, 10)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                         .listRowSeparator(.hidden)
                         // Each suggestion is its own row (several links in one
                         // row all opened at once).
@@ -62,7 +62,7 @@ struct UpNextView: View {
                                 .font(Theme.mono(11, .bold))
                                 .tracking(1.4)
                                 .foregroundStyle(Theme.muted)
-                                .listRowBackground(Theme.background)
+                                .listRowBackground(Theme.rowBackground)
                                 .listRowSeparator(.hidden)
                             ForEach(suggestions) { item in
                                 NavigationLink {
@@ -88,7 +88,7 @@ struct UpNextView: View {
                         }
                     }
                     .tint(Theme.accentFill)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
                 }
             }
@@ -112,7 +112,7 @@ struct UpNextView: View {
             // panel's edges.
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .refreshable { await store.refreshAll() }
             .task(id: store.queue.isEmpty) {
                 if store.queue.isEmpty, suggestions.isEmpty {

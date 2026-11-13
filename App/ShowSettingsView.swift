@@ -42,7 +42,7 @@ struct ShowSettingsView: View {
                         }
                     }
                 }
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
 
                 Section {
                     DeckSwitch(options: [(label: "Off", value: AutoAddMode.off), (label: "Top", value: .top), (label: "Bottom", value: .bottom)], selection: autoAdd)
@@ -51,7 +51,7 @@ struct ShowSettingsView: View {
                 } footer: {
                     Text(autoAddExplanation)
                 }
-                .listRowBackground(Theme.background)
+                .listRowBackground(Theme.rowBackground)
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
 
                 Section {
@@ -134,7 +134,7 @@ struct ShowSettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .navigationTitle("Show settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -451,7 +451,7 @@ struct TopPriorityView: View {
             DiagnosticsSection()
         }
         .scrollContentBackground(.hidden)
-        .background(Theme.background)
+        .haarPage()
         .environment(\.editMode, .constant(.active))
         .navigationTitle("Shows")
         .navigationDestination(isPresented: $showingStorage) { StorageView() }

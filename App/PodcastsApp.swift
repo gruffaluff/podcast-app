@@ -48,8 +48,10 @@ struct PodcastsApp: App {
     private static func styleSystemBars() {
         // Follows the scheme's light / dark (Night is dark).
         let ink = UIColor.label
+        // Haar: big titles in Instrument Serif (falls back to SF bold).
+        let largeFont = (Theme.isHaar ? UIFont(name: Theme.serifName, size: 38) : nil) ?? UIFont.systemFont(ofSize: 34, weight: .bold)
         UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 34, weight: .bold), .foregroundColor: ink
+            .font: largeFont, .foregroundColor: ink
         ]
         UINavigationBar.appearance().titleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: ink
@@ -128,7 +130,7 @@ struct RootView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 128)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .haarPage()
         .onChange(of: quickActions.pending, initial: true) { _, action in
             guard let action else { return }
             quickActions.pending = nil

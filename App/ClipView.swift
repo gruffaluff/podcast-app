@@ -32,7 +32,7 @@ struct ClipView: View {
                 Section {
                     card
                         .frame(maxWidth: .infinity)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                 }
                 Section {
                     HStack {
@@ -63,7 +63,7 @@ struct ClipView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .haarPage()
             .navigationTitle("Share a clip")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

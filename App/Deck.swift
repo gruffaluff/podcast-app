@@ -302,9 +302,14 @@ extension View {
     /// list row and every card-like panel uses it.
     func deckCard(_ fill: Color = Theme.surface, radius: CGFloat = Theme.cardRadius) -> some View {
         background {
-            // Native warm: flat, like an iOS inset list (no shadows).
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .fill(fill)
+            // Haar: frosted white over the fog. Other schemes: flat, like an
+            // iOS inset list (no shadows).
+            if Theme.isHaar && fill == Theme.surface {
+                Color.clear.frostedCard(radius: radius)
+            } else {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(fill)
+            }
         }
     }
 
@@ -312,7 +317,7 @@ extension View {
     /// to drag has sand corners, not white ones) and the gaps between cards.
     func deckCardRow() -> some View {
         self
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.rowBackground)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 5, leading: 12, bottom: 5, trailing: 12))
     }

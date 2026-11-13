@@ -62,7 +62,7 @@ struct HistoryView: View {
             if episodes.isEmpty {
                 Text("Episodes you play will appear here.")
                     .foregroundStyle(Theme.muted)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
             }
             ForEach(episodes) { episode in
                 Button { player.play(episode) } label: {
@@ -76,7 +76,7 @@ struct HistoryView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Theme.background)
+        .haarPage()
         .navigationTitle("History")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { episodes = store.listeningHistory() }
@@ -200,7 +200,7 @@ struct StatsView: View {
             }
             .padding(16)
         }
-        .background(Theme.background)
+        .haarPage()
         .navigationTitle("Stats")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { stats = store.listeningStats() }
@@ -268,12 +268,12 @@ struct StorageView: View {
             } header: {
                 DeckHeader(title: "On this iPhone")
             }
-            .listRowBackground(Theme.background)
+            .listRowBackground(Theme.rowBackground)
 
             Section {
                 if rows.isEmpty {
                     Text("Nothing downloaded.").foregroundStyle(Theme.muted)
-                        .listRowBackground(Theme.background)
+                        .listRowBackground(Theme.rowBackground)
                 }
                 ForEach(rows) { row in
                     VStack(alignment: .leading, spacing: 8) {
@@ -305,7 +305,7 @@ struct StorageView: View {
                 Text("Played episodes' downloads are deleted automatically (straight away, or after 24 hours if you chose that). \"Latest 3\" keeps only a show's three newest downloads.")
                     .font(.footnote)
                     .foregroundStyle(Theme.muted)
-                    .listRowBackground(Theme.background)
+                    .listRowBackground(Theme.rowBackground)
                     .listRowSeparator(.hidden)
             } header: {
                 DeckHeader(title: "By show")
@@ -313,7 +313,7 @@ struct StorageView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Theme.background)
+        .haarPage()
         .navigationTitle("Storage")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }
