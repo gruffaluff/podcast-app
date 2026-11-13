@@ -2,15 +2,15 @@ import SwiftUI
 import SwiftData
 import PodcastCore
 
-/// Haar, phase 4: Library (Paul, 13 Nov 2026). New as an inbox by day
-/// (Today / Yesterday / This week; + adds to Up next, ✓ marks played,
-/// Add all / Mark all played), Carry on with progress rings, Your shows as
-/// an artwork grid with ranked Top shows first (their rank in the corner),
-/// then shelves: Downloads, Saved clips, History, Stats. Settings from the
-/// gear at the top. Used by `LibraryView` when the Haar look is on.
+/// Haar, phase 4: Library (Paul, 13 Nov 2026), reworked to the prototype
+/// ("Real · Library"). Small capital labels instead of big headings: NEW
+/// (one frosted card by day, Clear all), CARRY ON (plain rows with a ring
+/// in the show's colour), YOUR SHOWS (artwork grid, Top shows first with
+/// their rank beside the name), then one card of shelves: Downloads, Saved
+/// clips, History, Stats, Finished. The title, + and settings sit in
+/// `LibraryView`'s Haar header. Used by `LibraryView` in the Haar look.
 struct HaarLibrarySections: View {
     @Environment(LibraryStore.self) private var store
-    @Environment(PlayerModel.self) private var player
     let newEpisodes: [PodcastEpisode]
     let continuing: [PodcastEpisode]
     /// In the chosen sort order; Top shows are pulled to the front here.
@@ -21,51 +21,13 @@ struct HaarLibrarySections: View {
         VStack(alignment: .leading, spacing: 0) {
             newSection
             if !continuing.isEmpty {
-                title("Carry on")
-                VStack(spacing: 0) {
-                    ForEach(Array(continuing.enumerated()), id: \.element.episodeID) { index, episode in
-                        if index > 0 { hairline(leading: 70) }
-                        HaarCarryOnRow(episode: episode)
-                    }
-                }
-                .padding(.vertical, 4)
-                .frostedCard()
+                carryOnSection
+            }
+            yourShowsSection
+            HaarShelves()
                 .padding(.horizontal, 14)
-            }
-            HStack(alignment: .firstTextBaseline) {
-                title("Your shows", detail: "\(shows.count)")
-                sortMenu.padding(.trailing, 10)
-            }
-            showGrid
-            title("Shelves")
-            shelves
+                .padding(.top, 24)
         }
-    }
-
-    private func title(_ text: String, detail: String? = nil) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(text)
-                .font(Theme.big(24))
-                .foregroundStyle(Theme.ink)
-            if let detail {
-                Text(detail)
-                    .font(Theme.text(13, .medium))
-                    .foregroundStyle(Theme.muted)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 18)
-        .padding(.top, 22)
-        .padding(.bottom, 8)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
-    }
-
-    private func hairline(leading: CGFloat) -> some View {
-        Rectangle()
-            .fill(Theme.ink.opacity(0.08))
-            .frame(height: 1)
-            .padding(.leading, leading)
     }
 
     // MARK: New
@@ -74,9 +36,9 @@ struct HaarLibrarySections: View {
         case today, yesterday, week
         var label: String {
             switch self {
-            case .today: "Today"
-            case .yesterday: "Yesterday"
-            case .week: "This week"
+            case .today: "TODAY"
+            case .yesterday: "YESTERDAY"
+            case .week: "THIS WEEK"
             }
         }
         static func of(_ date: Date) -> Day {
@@ -87,77 +49,88 @@ struct HaarLibrarySections: View {
         }
     }
 
-    @ViewBuilder private var newSection: some View {
-        let total: TimeInterval = newEpisodes.reduce(0) { $0 + ($1.timeLeft ?? $1.duration ?? 0) }
-        title("New", detail: newEpisodes.isEmpty ? nil : "\(newEpisodes.count) · \(TimeFormat.length(total))")
-        if newEpisodes.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("All caught up")
+    private struct DayGroup: Identifiable {
+        let day: Day
+        let episodes: [PodcastEpisode]
+        var id: Int { day.rawValue }
+    }
+
+    private var newSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HaarSectionLabel(text: "New") {
+                if !newEpisodes.isEmpty { clearAllButton }
+            }
+            if newEpisodes.isEmpty {
+                Text("All caught up.")
                     .font(Theme.serif(22))
-                    .foregroundStyle(Theme.ink)
-                Text("New episodes land here as they come out, for a week.")
-                    .font(Theme.text(13))
                     .foregroundStyle(Theme.muted)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 2)
+            } else {
+                newCard
             }
-            .padding(.horizontal, 18)
-        } else {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(Day.allCases, id: \.rawValue) { day in
-                    let group: [PodcastEpisode] = newEpisodes.filter { Day.of($0.published) == day }
-                    if !group.isEmpty {
-                        Text(day.label)
-                            .font(Theme.text(12, .semibold))
-                            .foregroundStyle(Theme.muted)
-                            .padding(.horizontal, 14)
-                            .padding(.top, day == Day.of(newEpisodes[0].published) ? 10 : 14)
-                            .padding(.bottom, 2)
-                        ForEach(Array(group.enumerated()), id: \.element.episodeID) { index, episode in
-                            if index > 0 { hairline(leading: 70) }
-                            HaarInboxRow(episode: episode)
-                        }
-                    }
-                }
-                newActions
-                    .padding(.top, 6)
+        }
+        .padding(.top, 14)
+    }
+
+    /// Marks everything in New played, with Undo.
+    private var clearAllButton: some View {
+        Button {
+            let list: [PodcastEpisode] = newEpisodes
+            store.undoable("Marked \(list.count) played", episodes: list) { store.markPlayed(list) }
+        } label: {
+            Text("Clear all")
+                .font(Theme.text(13, .semibold))
+                .foregroundStyle(Theme.accentText)
+                .frame(minHeight: 32)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Marks every new episode as played")
+    }
+
+    private var newCard: some View {
+        let groups: [DayGroup] = Day.allCases.compactMap { day in
+            let group: [PodcastEpisode] = newEpisodes.filter { Day.of($0.published) == day }
+            return group.isEmpty ? nil : DayGroup(day: day, episodes: group)
+        }
+        return VStack(alignment: .leading, spacing: 0) {
+            ForEach(groups) { group in
+                newGroup(group.day, group.episodes)
             }
-            .padding(.bottom, 4)
-            .frostedCard()
-            .padding(.horizontal, 14)
+        }
+        .padding(.bottom, 4)
+        .haarGroupCard()
+        .padding(.horizontal, 14)
+    }
+
+    private func newGroup(_ day: Day, _ episodes: [PodcastEpisode]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(day.label)
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.1)
+                .foregroundStyle(Theme.muted)
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 2)
+                .accessibilityAddTraits(.isHeader)
+            ForEach(Array(episodes.enumerated()), id: \.element.episodeID) { index, episode in
+                if index > 0 { HaarHairline() }
+                HaarInboxRow(episode: episode)
+            }
         }
     }
 
-    /// Add all to Up next (only those not in it yet, oldest first) and
-    /// Mark all played, both with Undo, as plain words.
-    private var newActions: some View {
-        let allQueued: Bool = newEpisodes.allSatisfy { store.isQueued($0) }
-        return HStack(spacing: 0) {
-            Button {
-                let missing = newEpisodes.filter { !store.isQueued($0) }.sorted { $0.published < $1.published }
-                guard !missing.isEmpty else { return }
-                store.undoable("Added \(missing.count) to Up Next", episodes: []) {
-                    store.commit(QueueEngine.playLast(missing.map(\.queueEpisode), in: store.queue, settings: store.queueSettings))
-                }
-            } label: {
-                Label(allQueued ? "All in Up next" : "Add all to Up next", systemImage: allQueued ? "checkmark" : "plus")
-                    .font(Theme.text(13, .semibold))
-                    .foregroundStyle(allQueued ? Theme.muted : Theme.ink)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .contentShape(Rectangle())
+    // MARK: Carry on
+
+    private var carryOnSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HaarSectionLabel(text: "Carry on") { EmptyView() }
+            ForEach(continuing, id: \.episodeID) { episode in
+                HaarCarryOnRow(episode: episode)
             }
-            .buttonStyle(.plain)
-            .disabled(allQueued)
-            Button {
-                let list = newEpisodes
-                store.undoable("Marked \(list.count) played", episodes: list) { store.markPlayed(list) }
-            } label: {
-                Label("Mark all played", systemImage: "checkmark.circle")
-                    .font(Theme.text(13, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
         }
+        .padding(.top, 22)
     }
 
     // MARK: Your shows
@@ -182,128 +155,195 @@ struct HaarLibrarySections: View {
         return entries
     }
 
+    private var yourShowsSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HaarSectionLabel(text: "Your shows") { sortMenu }
+            showGrid
+        }
+        .padding(.top, 22)
+    }
+
     private var showGrid: some View {
-        let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+        let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
         return LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
             ForEach(ordered) { entry in
-                NavigationLink(value: entry.show) {
+                Button { store.showSheet = entry.show } label: {
                     HaarShowTile(show: entry.show, rank: entry.rank)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 18)
-    }
-
-    // MARK: Shelves
-
-    private var shelves: some View {
-        let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
-        return LazyVGrid(columns: columns, spacing: 12) {
-            shelf("Downloads", icon: "arrow.down.circle") { StorageView() }
-            shelf("Saved clips", icon: "quote.opening") { HaarSavedClipsView() }
-            shelf("History", icon: "clock.arrow.circlepath") { HistoryView() }
-            shelf("Stats", icon: "chart.bar") { StatsView() }
-        }
-        .padding(.horizontal, 14)
-    }
-
-    private func shelf<Destination: View>(_ name: String, icon: String, @ViewBuilder destination: @escaping () -> Destination) -> some View {
-        NavigationLink {
-            destination()
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(Theme.ink)
-                    .frame(width: 24)
-                Text(name)
-                    .font(Theme.text(15, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 14)
-            .frame(height: 56)
-            .frostedCard(radius: 16)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        .padding(.top, 4)
     }
 }
 
-/// One new episode: artwork (tap to play), title and show · length (tap
-/// for the episode page), then + (add to Up next) and ✓ (played, with
-/// Undo). Touch and hold for the usual episode menu.
+// MARK: - Pieces
+
+/// A section label: small spaced capitals in muted ink, with anything
+/// (Clear all, the sort key) on the right.
+private struct HaarSectionLabel<Trailing: View>: View {
+    let text: String
+    @ViewBuilder let trailing: () -> Trailing
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(text.uppercased())
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.3)
+                .foregroundStyle(Theme.muted)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 8)
+            trailing()
+        }
+        .frame(minHeight: 32)
+        .padding(.leading, 18)
+        .padding(.trailing, 14)
+        .padding(.bottom, 6)
+    }
+}
+
+/// A fine line between rows in a card, inset 16.
+private struct HaarHairline: View {
+    var body: some View {
+        Rectangle()
+            .fill(Theme.ink.opacity(0.07))
+            .frame(height: 1)
+            .padding(.leading, 16)
+    }
+}
+
+private extension View {
+    /// The prototype's grouped card: white over frosted glass with a fine
+    /// white edge, radius 22.
+    func haarGroupCard() -> some View {
+        background {
+            let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+            shape.fill(.ultraThinMaterial)
+                .overlay(shape.fill(Color.white.opacity(0.66)))
+                .overlay(shape.strokeBorder(Color.white, lineWidth: 1))
+        }
+    }
+}
+
+/// A show's own colour (measured from its artwork), the accent until known.
+@MainActor
+private func haarShowColour(_ url: URL?) -> Color {
+    ArtworkColors.shared.background(for: url) ?? Theme.accentText
+}
+
+/// "65 min".
+private func haarMinutes(_ seconds: TimeInterval) -> String {
+    guard seconds.isFinite, seconds > 0 else { return "" }
+    return "\(max(1, Int((seconds / 60).rounded()))) min"
+}
+
+/// One new episode: artwork (tap to play), the show in its colour, title,
+/// length and where it is in Up next; + (add to Up next, when it isn't
+/// there) and ✓ (played, with Undo). Tap the row for the episode page;
+/// touch and hold for the usual episode menu.
 private struct HaarInboxRow: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
 
+    private var showArtwork: URL? { episode.podcast?.artworkURL ?? episode.artwork }
+
+    private var isCurrent: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+
+    /// "65 min · In Up next, auto #1" or "65 min · Waiting for you".
+    private var meta: String {
+        let length: String = haarMinutes(episode.timeLeft ?? episode.duration ?? 0)
+        var place = "Waiting for you"
+        if isCurrent {
+            place = "Playing"
+        } else if let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
+            let auto: Bool = store.queue[index].source == .auto
+            place = "In Up next, \(auto ? "auto " : "")#\(index + 1)"
+        }
+        return [length, place].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
     var body: some View {
         let inQueue: Bool = store.isQueued(episode)
-        let isCurrent: Bool = player.nowPlaying?.episodeID == episode.episodeID
-        var parts: [String] = [episode.showTitle]
-        let length: TimeInterval = episode.timeLeft ?? episode.duration ?? 0
-        if length > 0 { parts.append(TimeFormat.length(length)) }
-        if isCurrent { parts.append("Playing") } else if inQueue { parts.append("In Up next") }
         return HStack(spacing: 12) {
-            Button {
-                if isCurrent { player.togglePlayPause() } else { player.play(episode) }
-            } label: {
-                ArtworkView(url: episode.artwork, title: episode.showTitle, size: 44, radius: 9)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isCurrent && player.isPlaying ? "Pause" : "Play")
-            VStack(alignment: .leading, spacing: 2) {
-                Text(episode.title)
-                    .font(Theme.text(15, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2, reservesSpace: true)
-                HStack(spacing: 6) {
-                    Text(parts.filter { !$0.isEmpty }.joined(separator: " · "))
-                        .font(Theme.text(12))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
-                    EpisodeLights(episode: episode)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture { store.notesEpisode = episode }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHint("Opens the episode page")
-            Button { store.playLast(episode) } label: {
-                Image(systemName: inQueue ? "checkmark" : "plus")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(inQueue ? Theme.muted : Theme.ink)
-                    .frame(width: 34, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(inQueue)
-            .accessibilityLabel(inQueue ? "In Up next" : "Add to Up next")
-            Button {
-                store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-            } label: {
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 17))
-                    .foregroundStyle(Theme.muted)
-                    .frame(width: 34, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Mark as played")
+            playButton
+            text
+            if !inQueue && !isCurrent { addButton }
+            playedButton
         }
-        .padding(.leading, 12)
+        .padding(.leading, 16)
         .padding(.trailing, 6)
-        .padding(.vertical, 6)
+        .padding(.vertical, 10)
         .contextMenu { EpisodeMenuItems(episode: episode) }
+        .task { await ArtworkColors.shared.load(showArtwork) }
+    }
+
+    private var playButton: some View {
+        Button {
+            if isCurrent { player.togglePlayPause() } else { player.play(episode) }
+        } label: {
+            ArtworkView(url: episode.artwork, title: episode.showTitle, size: 40, radius: 0)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isCurrent && player.isPlaying ? "Pause" : "Play")
+    }
+
+    private var text: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(episode.showTitle.uppercased())
+                .font(.system(size: 10, weight: .bold))
+                .tracking(0.6)
+                .foregroundStyle(haarShowColour(showArtwork))
+                .lineLimit(1)
+            Text(episode.title)
+                .font(Theme.text(14, .medium))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+            Text(meta)
+                .font(Theme.text(12))
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture { store.notesEpisode = episode }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Opens the episode page")
+    }
+
+    private var addButton: some View {
+        Button { store.playLast(episode) } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add to Up next")
+    }
+
+    private var playedButton: some View {
+        Button {
+            store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+        } label: {
+            Image(systemName: "checkmark")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.muted)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Mark as played")
     }
 }
 
-/// A started episode with a ring round its play key showing how far
-/// through it is.
+/// A started episode: a ring in the show's colour showing how far through
+/// it is (play / pause inside), the title, show and time left. Tap plays
+/// or pauses.
 private struct HaarCarryOnRow: View {
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
@@ -313,93 +353,269 @@ private struct HaarCarryOnRow: View {
         return min(1, max(0.03, episode.position / duration))
     }
 
+    private var showArtwork: URL? { episode.podcast?.artworkURL ?? episode.artwork }
+
     var body: some View {
         let isCurrent: Bool = player.nowPlaying?.episodeID == episode.episodeID
-        let left: String = episode.timeLeft.map { "\(TimeFormat.length($0)) left" } ?? ""
+        let playing: Bool = isCurrent && player.isPlaying
+        let left: String = episode.timeLeft.map { haarMinutes($0) }.map { $0.isEmpty ? "" : "\($0) left" } ?? ""
+        let meta: String = [episode.showTitle, left].filter { !$0.isEmpty }.joined(separator: " · ")
         return Button {
             if isCurrent { player.togglePlayPause() } else { player.play(episode) }
         } label: {
             HStack(spacing: 12) {
-                ArtworkView(url: episode.artwork, title: episode.showTitle, size: 44, radius: 9)
+                HaarRing(fraction: fraction, colour: haarShowColour(showArtwork), playing: playing)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(episode.title)
-                        .font(Theme.text(15, .semibold))
+                        .font(Theme.text(14, .medium))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
-                    Text([episode.showTitle, left].filter { !$0.isEmpty }.joined(separator: " · "))
+                    Text(meta)
                         .font(Theme.text(12))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                ZStack {
-                    Circle().stroke(Theme.ink.opacity(0.14), lineWidth: 2.5)
-                    Circle()
-                        .trim(from: 0, to: fraction)
-                        .stroke(Theme.ink, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    Image(systemName: isCurrent && player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.ink)
-                        .offset(x: isCurrent && player.isPlaying ? 0 : 1)
-                }
-                .frame(width: 34, height: 34)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .contextMenu { EpisodeMenuItems(episode: episode) }
-        .accessibilityLabel("\(isCurrent && player.isPlaying ? "Pause" : "Play") \(episode.title), \(left)")
+        .task { await ArtworkColors.shared.load(showArtwork) }
+        .accessibilityLabel("\(playing ? "Pause" : "Play") \(episode.title), \(meta)")
     }
 }
 
-/// A show in the grid: its artwork, the rank in the corner for Top shows,
-/// a count of new episodes, the name under it.
+/// A 36-point progress ring with a play / pause glyph inside.
+private struct HaarRing: View {
+    let fraction: Double
+    let colour: Color
+    let playing: Bool
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Theme.ink.opacity(0.12), lineWidth: 3)
+            Circle()
+                .trim(from: 0, to: fraction)
+                .stroke(colour, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Image(systemName: playing ? "pause.fill" : "play.fill")
+                .font(.system(size: 11))
+                .foregroundStyle(colour)
+                .offset(x: playing ? 0 : 1)
+        }
+        .frame(width: 36, height: 36)
+        .accessibilityHidden(true)
+    }
+}
+
+/// A show in the grid: its artwork with "n new" in the corner, then the
+/// name, with the rank as a serif number in front for Top shows.
 private struct HaarShowTile: View {
     let show: Podcast
     let rank: Int?
 
     var body: some View {
         let fresh: Int = ShowBadges.newCount(show)
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 7) {
             GeometryReader { geometry in
-                ArtworkView(url: show.artworkURL, title: show.title, size: geometry.size.width, radius: 14)
-                    .shadow(color: Color(hex: 0x28323C).opacity(0.14), radius: 8, y: 4)
-                    .overlay(alignment: .topLeading) {
-                        if let rank {
-                            Text("\(rank)")
-                                .font(Theme.serif(17))
-                                .foregroundStyle(Theme.ink)
-                                .frame(minWidth: 24, minHeight: 24)
-                                .padding(.horizontal, 3)
-                                .frostedCard(radius: 12)
-                                .padding(6)
-                                .accessibilityLabel("Top show number \(rank)")
-                        }
-                    }
-                    .overlay(alignment: .bottomTrailing) {
-                        if fresh > 0 {
-                            Text("\(fresh)")
-                                .font(Theme.text(11, .bold))
-                                .foregroundStyle(Theme.onAccent)
-                                .frame(minWidth: 20, minHeight: 20)
-                                .padding(.horizontal, 3)
-                                .background(Theme.accentFill, in: Capsule())
-                                .padding(6)
-                                .accessibilityLabel("\(fresh) new")
-                        }
+                ArtworkView(url: show.artworkURL, title: show.title, size: geometry.size.width, radius: 0)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .shadow(color: Color(hex: 0x28323C).opacity(0.14), radius: 12, y: 10)
+                    .overlay(alignment: .topTrailing) {
+                        if fresh > 0 { newPill(fresh) }
                     }
             }
             .aspectRatio(1, contentMode: .fit)
+            nameLine
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func newPill(_ count: Int) -> some View {
+        // A solid dark pill with a white edge, so it reads on any artwork
+        // (Paul, build 151: the counters were lost on the art).
+        Text("\(count) new")
+            .font(Theme.text(11, .bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 7)
+            .frame(minHeight: 20)
+            .background(Color(hex: 0x1F2328), in: Capsule())
+            .overlay(Capsule().strokeBorder(.white, lineWidth: 1.5))
+            .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+            .padding(6)
+            .accessibilityLabel("\(count) new")
+    }
+
+    private var nameLine: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            if let rank {
+                Text("\(rank)")
+                    .font(Theme.serif(18))
+                    .foregroundStyle(Theme.ink)
+                    .accessibilityLabel("Top show number \(rank)")
+            }
             Text(show.title)
                 .font(Theme.text(12, .semibold))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(2, reservesSpace: true)
                 .multilineTextAlignment(.leading)
         }
+    }
+}
+
+// MARK: - Shelves
+
+/// One card of shelves: Downloads, Saved clips, History, Stats, Finished,
+/// each with a line of what's there (worked out when Library appears).
+private struct HaarShelves: View {
+    @Environment(LibraryStore.self) private var store
+    @State private var info = Info()
+
+    struct Info {
+        var downloads = 0
+        var downloadBytes: Int64 = 0
+        var clips = 0
+        var month: TimeInterval = 0
+        var week: TimeInterval = 0
+        var finished = 0
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            shelf("Downloads", icon: "arrow.down.circle", meta: downloadsMeta) { StorageView() }
+            HaarHairline()
+            shelf("Saved clips", icon: "quote.opening", meta: "\(info.clips) clip\(info.clips == 1 ? "" : "s"), searchable") { HaarSavedClipsView() }
+            HaarHairline()
+            shelf("History", icon: "clock.arrow.circlepath", meta: historyMeta) { HistoryView() }
+            HaarHairline()
+            shelf("Stats", icon: "chart.bar", meta: statsMeta) { StatsView() }
+            HaarHairline()
+            shelf("Finished", icon: "checkmark.circle", meta: "\(info.finished) episode\(info.finished == 1 ? "" : "s")") { HaarFinishedView() }
+        }
+        .padding(.vertical, 4)
+        .haarGroupCard()
+        .onAppear { info = load() }
+    }
+
+    private var downloadsMeta: String {
+        let count = "\(info.downloads) episode\(info.downloads == 1 ? "" : "s")"
+        guard info.downloadBytes > 0 else { return count }
+        let size: String = ByteCountFormatter.string(fromByteCount: info.downloadBytes, countStyle: .file)
+        return "\(count) · \(size)"
+    }
+
+    private var historyMeta: String {
+        guard info.month >= 60 else { return "Everything you've played" }
+        let hours = Int(info.month / 3600)
+        let amount: String = hours >= 1 ? "\(hours) hour\(hours == 1 ? "" : "s")" : TimeFormat.length(info.month)
+        return "Last 30 days · \(amount)"
+    }
+
+    private var statsMeta: String {
+        guard info.week >= 60 else { return "Listening time and top shows" }
+        return "This week \(TimeFormat.length(info.week))"
+    }
+
+    private func load() -> Info {
+        var result = Info()
+        let storage = store.storageByShow()
+        result.downloads = storage.reduce(0) { $0 + $1.count }
+        result.downloadBytes = storage.reduce(Int64(0)) { $0 + $1.bytes }
+        result.clips = (try? store.context.fetchCount(FetchDescriptor<Bookmark>())) ?? 0
+        let stats = store.listeningStats()
+        result.month = stats.month
+        result.week = stats.week
+        let played = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.played == true })
+        result.finished = (try? store.context.fetchCount(played)) ?? 0
+        return result
+    }
+
+    private func shelf<Destination: View>(_ name: String, icon: String, meta: String, @ViewBuilder destination: @escaping () -> Destination) -> some View {
+        NavigationLink {
+            destination()
+        } label: {
+            HaarShelfRow(name: name, icon: icon, meta: meta)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct HaarShelfRow: View {
+    let name: String
+    let icon: String
+    let meta: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(Color(hex: 0x1F2328), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(Theme.text(15, .medium))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Text(meta)
+                    .font(Theme.text(12))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.muted.opacity(0.7))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Every played episode, most recently played first (Library's Finished
+/// shelf). Tap to play again.
+struct HaarFinishedView: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @State private var episodes: [PodcastEpisode] = []
+
+    var body: some View {
+        List {
+            if episodes.isEmpty {
+                Text("Episodes you finish will appear here.")
+                    .foregroundStyle(Theme.muted)
+                    .listRowBackground(Theme.rowBackground)
+            }
+            ForEach(episodes) { episode in
+                Button { player.play(episode) } label: {
+                    HistoryRow(episode: episode, showsProgress: false)
+                        .showCard(episode.showArtwork, title: episode.showTitle)
+                }
+                .buttonStyle(.plain)
+                .contextMenu { EpisodeMenuItems(episode: episode) }
+                .deckCardRow()
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .haarPage()
+        .navigationTitle("Finished")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { episodes = load() }
+    }
+
+    private func load() -> [PodcastEpisode] {
+        var descriptor = FetchDescriptor<PodcastEpisode>(
+            predicate: #Predicate { $0.played == true },
+            sortBy: [SortDescriptor(\.playedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 300
+        return (try? store.context.fetch(descriptor)) ?? []
     }
 }
 

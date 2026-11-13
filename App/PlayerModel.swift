@@ -99,6 +99,60 @@ final class PlayerModel {
         if next < chapters.count { seek(to: chapters[next].start) }
     }
 
+    /// "Stop at chapter end" (Haar chapters sheet): pauses, with a short
+    /// fade, when the chapter playing now ends. Cleared once it stops, when
+    /// the episode changes, or when switched off.
+    private(set) var stopsAtChapterEnd = false
+    /// Where to stop: the end of the chapter it was set in (re-anchored to
+    /// the chapter you land in after a jump, so a skip doesn't stop at once).
+    @ObservationIgnored private var chapterStopTime: TimeInterval?
+    /// The volume is being faded for the chapter stop.
+    @ObservationIgnored private var chapterFading = false
+
+    func setStopAtChapterEnd(_ on: Bool) {
+        guard on, let end = chapterEnd(at: currentTime), end > currentTime + 0.5 else {
+            clearChapterStop()
+            return
+        }
+        chapterStopTime = end
+        stopsAtChapterEnd = true
+    }
+
+    /// The end of the chapter playing at `time` (the next chapter's start,
+    /// or the episode's end for the last one).
+    private func chapterEnd(at time: TimeInterval) -> TimeInterval? {
+        guard let index = Chapters.index(at: time, in: chapters) else { return nil }
+        if let end = chapters[index].end, end > chapters[index].start { return end }
+        if index + 1 < chapters.count { return chapters[index + 1].start }
+        return duration > 0 ? duration : nil
+    }
+
+    private func clearChapterStop() {
+        if chapterFading {
+            player.volume = 1
+            chapterFading = false
+        }
+        chapterStopTime = nil
+        if stopsAtChapterEnd { stopsAtChapterEnd = false }
+    }
+
+    /// Called from `tick`: fades out over the last 3 seconds, then pauses.
+    private func checkChapterStop(at seconds: TimeInterval) {
+        guard let stop = chapterStopTime else { return }
+        let fade: TimeInterval = 3
+        let left = stop - seconds
+        if left <= 0.25 {
+            pause()
+            clearChapterStop()
+        } else if left < fade, player.timeControlStatus == .playing {
+            chapterFading = true
+            player.volume = Float(max(0, left / fade))
+        } else if chapterFading {
+            player.volume = 1
+            chapterFading = false
+        }
+    }
+
     /// Back to the start of this chapter, or the one before if it only just
     /// began.
     func previousChapter() {
@@ -171,6 +225,7 @@ final class PlayerModel {
             return
         }
         saveProgress()
+        clearChapterStop()
         nowPlaying = NowPlaying(
             episodeID: episode.episodeID,
             title: episode.title,
@@ -415,6 +470,15 @@ final class PlayerModel {
         let upper = duration > 0 ? duration : .greatestFiniteMagnitude
         let target = min(max(0, time), upper)
         currentTime = target
+        if chapterStopTime != nil {
+            // Stop at the end of the chapter it lands in.
+            if let end = chapterEnd(at: target), end > target + 0.5 {
+                chapterStopTime = end
+                if chapterFading { player.volume = 1; chapterFading = false }
+            } else {
+                clearChapterStop()
+            }
+        }
         player.seek(to: CMTime(seconds: target, preferredTimescale: 600)) { [weak self] _ in
             Task { @MainActor in self?.updateNowPlayingInfo() }
         }
@@ -427,6 +491,7 @@ final class PlayerModel {
         store.playingEpisodeID = nil
         player.replaceCurrentItem(with: nil)
         adScanner.stop()
+        clearChapterStop()
         currentAd = nil
         nowPlaying = nil
         currentTime = 0
@@ -448,6 +513,7 @@ final class PlayerModel {
         guard seconds.isFinite else { return }
         currentTime = seconds
         skipAdIfNeeded(at: seconds)
+        checkChapterStop(at: seconds)
         if player.timeControlStatus == .playing {
             adScanner.playhead(seconds, duration: duration)
         }

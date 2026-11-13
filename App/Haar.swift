@@ -29,9 +29,11 @@ struct FogBackdrop: View {
 
     private var playing: Color? { tint ? AccentColour.shared.colour : nil }
 
+    // The page takes on a mist of the show's colour (prototype: the whole
+    // page is the show's "mist", with a 16% glow of its deep colour).
     private var mist: Color {
         guard let playing else { return Theme.background }
-        return Theme.background.mix(with: playing, by: 0.12)
+        return Theme.background.mix(with: playing, by: 0.24)
     }
 
     var body: some View {
@@ -42,7 +44,7 @@ struct FogBackdrop: View {
                 LinearGradient(colors: [.white.opacity(0.42), .white.opacity(0)], startPoint: .top, endPoint: .center)
                 Circle()
                     .fill(playing ?? Theme.idleAccent)
-                    .opacity(0.10)
+                    .opacity(0.16)
                     .frame(width: w * 1.1, height: w * 1.1)
                     .blur(radius: 80)
                     .position(x: w * 0.45, y: h * 0.18)

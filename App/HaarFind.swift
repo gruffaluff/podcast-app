@@ -307,7 +307,7 @@ struct HaarFindView: View {
             resultCard {
                 ForEach(Array(shows.prefix(6).enumerated()), id: \.element.feedURL) { index, show in
                     if index > 0 { hairline }
-                    NavigationLink(value: show) {
+                    Button { store.showSheet = show } label: {
                         resultRow(artwork: show.artworkURL, artTitle: show.title, title: show.title, detail: show.author)
                     }
                     .buttonStyle(.plain)

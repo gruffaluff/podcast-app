@@ -135,13 +135,15 @@ struct RootView: View {
         content
         // Undo and No internet float above the tab bar (or Haar's dock)
         // while they show.
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: Theme.isHaar ? .top : .bottom) {
+            // Haar (prototype): toasts sit near the top, under the top bar.
             VStack(spacing: 6) {
                 OfflineBar()
                 UndoBar()
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, Theme.isHaar ? 84 : 128)
+            .padding(.horizontal, Theme.isHaar ? 20 : 12)
+            .padding(.top, Theme.isHaar ? 64 : 0)
+            .padding(.bottom, Theme.isHaar ? 0 : 128)
         }
         .haarPage()
         .onChange(of: quickActions.pending, initial: true) { _, action in
@@ -161,7 +163,8 @@ struct RootView: View {
             showingPlayer = false
             tab = 0
         }
-        .sheet(item: Binding(get: { store.notesEpisode }, set: { store.notesEpisode = $0 })) { episode in
+        .sheet(item: Binding(get: { store.showSheet == nil ? store.notesEpisode : nil },
+                             set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)
         }
         .sheet(isPresented: $showingWelcome) {
@@ -182,6 +185,8 @@ struct RootView: View {
         .onChange(of: store.revealShow) { _, show in
             guard show != nil else { return }
             store.notesEpisode = nil
+            // Haar: HaarRoot opens the show as a sheet where you are.
+            guard !Theme.isHaar else { return }
             showingPlayer = false
             tab = 1
             // Library pushes the show page; clear the request once it has.

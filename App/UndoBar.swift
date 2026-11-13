@@ -8,11 +8,41 @@ struct UndoBar: View {
         // Slides up and away instead of popping in and out.
         ZStack {
             if let action = store.undoAction {
-                bar(action)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                Group {
+                    if Theme.isHaar { toast(action) } else { bar(action) }
+                }
+                .transition(.move(edge: Theme.isHaar ? .top : .bottom).combined(with: .opacity))
             }
         }
         .animation(.snappy(duration: 0.3), value: store.undoAction?.id)
+    }
+
+    /// Haar (prototype): a dark toast near the top, "Marked played  Undo".
+    private func toast(_ action: UndoAction) -> some View {
+        HStack(spacing: 12) {
+            Text(action.label)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color(hex: 0xF4F2EE))
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Button { action.restore() } label: {
+                Text("Undo")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color(hex: 0xF4F2EE))
+                    .underline()
+                    .frame(minHeight: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 4)
+        .background(Color(hex: 0x1F2328), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
+        .task(id: action.id) {
+            do { try await Task.sleep(for: .seconds(6)) } catch { return }
+            if store.undoAction?.id == action.id { store.undoAction = nil }
+        }
     }
 
     private func bar(_ action: UndoAction) -> some View {

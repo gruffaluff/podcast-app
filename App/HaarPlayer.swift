@@ -1,69 +1,65 @@
 import SwiftUI
 import UIKit
+import MediaPlayer
 import PodcastCore
 
-/// Haar, phase 2 (Paul, 13 Nov 2026): the player is home, the first
-/// screen, on the fog. Big artwork with the title under it; tap the
-/// artwork (or Read along) and it shrinks into the corner while the
-/// transcript fills the space, the line now in the serif with each word
-/// lit as it's said. Under it: the chapter "4/6 · title" with ‹ ›, a
-/// waveform-style progress line (chapter dots, ads faded), the times,
-/// skip / play / skip, the volume, Options · Read along · Chapters, and
-/// what's up next as a small stack of cards (tap for Up next). AirPlay at
-/// the top left, ⋯ (episode options) at the top right. Mock-ups:
-/// https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7.
+/// Haar (Paul, 13 Nov 2026; reworked to the prototype the same night): the
+/// player is home, on the fog. Top to bottom: AirPlay, a grab handle (swipe
+/// down for Find) and ⋯; the artwork (280, rounded 46) with a Read along
+/// pill; the show and the title in the serif; the plain progress line with
+/// the times and the chapter control (‹ 3 Title ˅ ›) between them; speed,
+/// skip, the big play, skip, sleep; a thin volume line; and what's up next
+/// as a small stack of frosted cards.
+/// Read along and Up next open in place: the artwork shrinks to the
+/// corner (with the title beside it and ⌄ to go back) and the words, or
+/// the Up next cards, fill the page.
+/// Prototype: https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7.
 struct HaarNowView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
     @Environment(TranscriptService.self) private var transcripts
     @Environment(DownloadManager.self) private var downloads
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Opens the Up next layer (the card stack, or swipe up).
-    var openUpNext: () -> Void
+    /// Up next open in place (HaarRoot keeps it, for its swipes).
+    @Binding var showingUpNext: Bool
+    /// Read along on (kept between launches by HaarRoot).
+    @Binding var reading: Bool
     /// Opens Find (when there's nothing to play).
     var openFind: () -> Void
     /// Room left at the bottom for the floating dock.
     var bottomRoom: CGFloat = 76
 
-    /// Read-along on (the artwork shrinks into the corner). Kept between
-    /// launches, like the old player's transcript mode.
-    @AppStorage("haarReading") private var reading = false
     @State private var episode: PodcastEpisode?
     @State private var showingOptions = false
     @State private var showingChapters = false
     @State private var showingNotes = false
-    /// The card that floats in when a new chapter starts.
+    /// The pill that shows when a new chapter starts.
     @State private var flash: ChapterFlash?
     @Namespace private var art
 
+    /// The prototype's motion: a long, soft ease-out.
+    static let morph: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.7)
+    static let rise: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.55)
+
     struct ChapterFlash: Equatable {
         let number: Int
-        let count: Int
         let title: String
+    }
+
+    enum Mode { case listen, reading, upNext }
+
+    private var mode: Mode {
+        if showingUpNext { return .upNext }
+        return reading && player.nowPlaying != nil ? .reading : .listen
     }
 
     var body: some View {
         GeometryReader { geometry in
-            let height: CGFloat = geometry.size.height
-            VStack(spacing: 0) {
-                topBar
-                if let item = player.nowPlaying {
-                    playing(item, height: height, width: geometry.size.width)
-                } else {
-                    idle
-                }
-            }
-            .padding(.horizontal, 22)
-            .padding(.bottom, bottomRoom)
-            .frame(width: geometry.size.width, height: height)
+            page(size: geometry.size)
+                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
         }
-        .overlay(alignment: .top) {
-            if let flash {
-                chapterCard(flash)
-                    .padding(.top, 52)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
+        .overlay(alignment: .top) { toasts }
         .onChange(of: player.nowPlaying?.episodeID, initial: true) { _, id in
             episode = id.flatMap { store.episode($0) }
         }
@@ -72,48 +68,132 @@ struct HaarNowView: View {
         }
         .sheet(isPresented: $showingOptions) { PlayerOptionsSheet() }
         .sheet(isPresented: $showingChapters) {
-            ChaptersView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            HaarChaptersSheet()
+                .presentationDetents([.large])
         }
         .sheet(isPresented: $showingNotes) {
             if let episode { EpisodeNotesView(episode: episode) }
         }
     }
 
+    @ViewBuilder private func page(size: CGSize) -> some View {
+        switch mode {
+        case .listen:
+            if let item = player.nowPlaying {
+                listen(item, size: size)
+            } else {
+                idle(size: size)
+            }
+        case .reading:
+            if let item = player.nowPlaying {
+                readAlong(item, size: size)
+            }
+        case .upNext:
+            upNext(size: size)
+        }
+    }
+
+    private func setReading(_ on: Bool) {
+        withAnimation(reduceMotion ? nil : Self.morph) { reading = on }
+    }
+
+    private func closeUpNext() {
+        withAnimation(reduceMotion ? nil : Self.morph) { showingUpNext = false }
+    }
+
+    private func openUpNext() {
+        withAnimation(reduceMotion ? nil : Self.morph) { showingUpNext = true }
+    }
+
+    /// Whether the episode has words to read along to.
+    private var hasWords: Bool { episode?.transcriptState == .ready }
+
+    // MARK: Listen
+
+    private func listen(_ item: PlayerModel.NowPlaying, size: CGSize) -> some View {
+        let volume: Bool = Self.roomForVolume(size)
+        let titleSize: CGFloat = item.title.count > 44 ? 25 : 33
+        let side: CGFloat = artworkSide(size: size, title: item.title, titleSize: titleSize, volume: volume)
+        return VStack(spacing: 0) {
+            topBar
+            Spacer(minLength: 4)
+            bigArtwork(item, side: side)
+            titleBlock(item, size: titleSize, compact: false)
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+            Spacer(minLength: 10)
+            controls(item, volume: volume)
+                .padding(.horizontal, 24)
+            HaarUpNextStack(open: openUpNext, openFind: openFind)
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .transition(.opacity.combined(with: .offset(y: 30)))
+        }
+        .padding(.bottom, bottomRoom)
+    }
+
+    /// The volume line only where there's room (not on an iPhone SE).
+    static func roomForVolume(_ size: CGSize) -> Bool { size.height > 680 }
+
+    /// The artwork takes what the rest leaves, 280 at most.
+    private func artworkSide(size: CGSize, title: String, titleSize: CGFloat, volume: Bool) -> CGFloat {
+        let textWidth: CGFloat = max(100, size.width - 48)
+        let perLine: CGFloat = max(8, textWidth / (titleSize * 0.43))
+        let lines: CGFloat = min(3, max(1, (CGFloat(title.count) / perLine).rounded(.up)))
+        let titleHeight: CGFloat = 20 + lines * titleSize * 1.12
+        let controlsHeight: CGFloat = HaarScrubLine.blockHeight + 10 + 70 + (volume ? 30 : 0)
+        let fixed: CGFloat = 44 + 8 + 20 + titleHeight + 12 + controlsHeight + 12 + HaarUpNextStack.height + bottomRoom
+        let room: CGFloat = size.height - fixed
+        return max(110, min(280, size.width - 48, room))
+    }
+
     // MARK: Top
 
-    /// AirPlay on the left, where it's playing in the middle (only when
-    /// not on the iPhone), ⋯ on the right.
+    /// AirPlay on the left, a grab handle in the middle (swipe down, or
+    /// tap it, for Find), ⋯ on the right. They fade while a new chapter's
+    /// name shows.
     private var topBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "airplayaudio")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(Theme.ink)
-                .frame(width: 40, height: 40)
-                .allowsHitTesting(false)
-                .background(RoutePicker(tint: .clear))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Playing on \(player.outputName ?? "iPhone"). Choose another device")
-                .accessibilityAddTraits(.isButton)
+        HStack(spacing: 0) {
+            airPlay
             Spacer(minLength: 4)
-            if let output = player.outputName {
-                Text("Playing on \(output)")
-                    .font(Theme.text(12, .medium))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
+            Button(action: openFind) {
+                Capsule()
+                    .fill(Theme.ink.opacity(0.2))
+                    .frame(width: 40, height: 5)
+                    .frame(width: 80, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Find")
+            .accessibilityHint("Or swipe down on the player")
             Spacer(minLength: 4)
             optionsMenu
         }
+        .padding(.horizontal, 12)
         .frame(height: 44)
+        .opacity(flash == nil ? 1 : 0)
+        .animation(.easeOut(duration: 0.3), value: flash == nil)
     }
 
-    /// Episode options: notes, the show, download, transcript, share,
-    /// mark played.
+    private var airPlay: some View {
+        Image(systemName: player.outputName == nil ? "airplayaudio" : "airplayaudio.circle.fill")
+            .font(.system(size: 20, weight: .regular))
+            .foregroundStyle(player.outputName == nil ? Theme.ink : Theme.accentText)
+            .frame(width: 44, height: 44)
+            .allowsHitTesting(false)
+            .background(RoutePicker(tint: .clear))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Playing on \(player.outputName ?? "iPhone"). Choose another device")
+            .accessibilityAddTraits(.isButton)
+    }
+
+    /// Episode options: speed and sound, chapters, notes, the show,
+    /// download, transcript, share, mark played.
     @ViewBuilder private var optionsMenu: some View {
         if let episode {
             Menu {
+                Button("Speed and sound…", systemImage: "slider.horizontal.3") { showingOptions = true }
+                Button("Chapters", systemImage: "list.bullet") { showingChapters = true }
                 Button("Episode notes", systemImage: "doc.text") { showingNotes = true }
                 if let show = episode.podcast {
                     Button("Go to \(show.title)", systemImage: "square.stack") { store.revealShow = show }
@@ -126,14 +206,14 @@ struct HaarNowView: View {
                 Button("Mark as played", systemImage: "checkmark.circle") { markPlayed() }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Theme.ink)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("Episode options")
         } else {
-            Color.clear.frame(width: 40, height: 40)
+            Color.clear.frame(width: 44, height: 44)
         }
     }
 
@@ -163,443 +243,720 @@ struct HaarNowView: View {
         store.undoable("Marked played", episodes: [episode]) { player.finishEarly() }
     }
 
-    private func setReading(_ on: Bool) {
-        withAnimation(.spring(duration: 0.5, bounce: 0.12)) { reading = on }
-    }
+    // MARK: Artwork and title
 
-    // MARK: Playing
-
-    private func playing(_ item: PlayerModel.NowPlaying, height: CGFloat, width: CGFloat) -> some View {
-        // The artwork takes what the controls leave (a little smaller on
-        // small iPhones), never wider than the page.
-        let side: CGFloat = max(150, min(width - 64, height - 470 - bottomRoom))
-        let roomy: Bool = height > 760
-        return VStack(spacing: 0) {
-            if reading {
-                HStack(spacing: 12) {
-                    Button { setReading(false) } label: { artwork(item, size: 56) }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Show artwork")
-                    titleBlock(item, size: 21, lines: 2)
-                }
-                .padding(.top, 4)
-                if let episode {
-                    HaarReadAlong(episode: episode)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 8)
-                        .transition(.opacity)
-                } else {
-                    Spacer()
-                }
-            } else {
-                Spacer(minLength: 6)
-                Button { setReading(true) } label: { artwork(item, size: side) }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Artwork")
-                    .accessibilityHint("Shows the words as they're said")
-                Spacer(minLength: 10)
-                titleBlock(item, size: 28, lines: 2)
+    /// The artwork, filling whatever frame it's given (so it can grow and
+    /// shrink as it moves between the middle and the corner).
+    private func artworkImage(_ item: PlayerModel.NowPlaying, radius: CGFloat) -> some View {
+        Color.clear
+            .overlay {
+                CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
             }
-            chapterPill
-                .padding(.top, 8)
-            adBar
-                .padding(.top, 4)
-            HaarWave(episodeID: item.episodeID)
-                .padding(.top, 6)
-            transport
-                .padding(.top, 2)
-            if roomy {
-                volumeRow
-            }
-            controlsRow
-                .padding(.top, roomy ? 0 : 4)
-            HaarUpNextStack(open: openUpNext, openFind: openFind)
-                .padding(.top, 10)
-        }
-    }
-
-    private func artwork(_ item: PlayerModel.NowPlaying, size: CGFloat) -> some View {
-        ArtworkView(url: item.artworkURL, title: item.showTitle, size: size, radius: max(8, size * 0.07))
-            .shadow(color: Color(hex: 0x28323C).opacity(size > 100 ? 0.22 : 0.12), radius: size > 100 ? 24 : 6, y: size > 100 ? 12 : 3)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .matchedGeometryEffect(id: "artwork", in: art)
+            .accessibilityHidden(true)
     }
 
-    /// The title in the serif (tap for the notes), the show and date under
-    /// it (tap the show for its page), and the DL / TX letters.
-    private func titleBlock(_ item: PlayerModel.NowPlaying, size: CGFloat, lines: Int) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button { showingNotes = true } label: {
+    private func bigArtwork(_ item: PlayerModel.NowPlaying, side: CGFloat) -> some View {
+        Button { setReading(true) } label: {
+            artworkImage(item, radius: side > 200 ? 46 : side * 0.16)
+                .frame(width: side, height: side)
+                .shadow(color: Color(hex: 0x28323C).opacity(0.22), radius: 30, y: 30)
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .bottomTrailing) {
+            if hasWords {
+                readAlongPill
+                    .padding(14)
+                    .transition(.opacity)
+            }
+        }
+        .accessibilityLabel("Artwork")
+        .accessibilityHint("Shows the words as they're said")
+    }
+
+    private var readAlongPill: some View {
+        Button { setReading(true) } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "text.quote")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Read along")
+                    .font(.system(size: 13, weight: .semibold))
+            }
+            .foregroundStyle(Theme.ink)
+            .padding(.horizontal, 12)
+            .frame(height: 32)
+            .background(Capsule().fill(Color.white.opacity(0.78)))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The show (tap for its page) above the title (tap to read along).
+    private func titleBlock(_ item: PlayerModel.NowPlaying, size: CGFloat, compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: compact ? 3 : 6) {
+            Button {
+                if let show = episode?.podcast { store.revealShow = show }
+            } label: {
+                Text(item.showTitle.uppercased() + " ›")
+                    .font(.system(size: compact ? 10 : 11, weight: .bold))
+                    .tracking(1.3)
+                    .foregroundStyle(Theme.accentText)
+                    .lineLimit(1)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(item.showTitle)
+            .accessibilityHint("Opens the show")
+            Button { setReading(!reading) } label: {
                 Text(item.title)
                     .font(Theme.serif(size))
                     .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.leading)
-                    .lineLimit(lines)
+                    .lineLimit(compact ? 2 : 3)
+                    .minimumScaleFactor(compact ? 1 : 0.8)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isHeader)
-            .accessibilityHint("Opens the episode notes")
-            HStack(spacing: 8) {
-                Button {
-                    if let show = episode?.podcast { store.revealShow = show }
-                } label: {
-                    Text(showLine(item))
-                        .font(Theme.text(13, .medium))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Opens the show")
-                if let episode { EpisodeLights(episode: episode) }
-                Spacer(minLength: 0)
-            }
+            .accessibilityHint(reading ? "Back to the artwork" : "Shows the words as they're said")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .matchedGeometryEffect(id: "title", in: art, properties: .position, anchor: .topLeading)
     }
 
-    private func showLine(_ item: PlayerModel.NowPlaying) -> String {
-        var parts: [String] = [item.showTitle]
-        if let published = episode?.published, published > .distantPast {
-            parts.append(published.formatted(.dateTime.day().month(.abbreviated)))
-        }
-        return parts.filter { !$0.isEmpty }.joined(separator: " · ")
-    }
-
-    /// "‹  4/6 · The bunker  ›": tap the words for the chapter list.
-    @ViewBuilder private var chapterPill: some View {
-        let chapters = player.chapters
-        if !chapters.isEmpty {
-            let index: Int = player.currentChapterIndex ?? 0
-            HStack(spacing: 4) {
-                Button { player.previousChapter() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 13, weight: .semibold))
-                        .frame(width: 36, height: 32)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Previous chapter")
-                Button { showingChapters = true } label: {
-                    Text("\(index + 1)/\(chapters.count) · \(chapters[min(index, chapters.count - 1)].title)")
-                        .font(Theme.text(13, .medium))
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 32)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Chapter \(index + 1) of \(chapters.count), \(chapters[min(index, chapters.count - 1)].title)")
-                .accessibilityHint("Shows every chapter")
-                Button { player.nextChapter() } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .frame(width: 36, height: 32)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(index >= chapters.count - 1)
-                .accessibilityLabel("Next chapter")
-            }
-            .foregroundStyle(Theme.ink)
-        }
-    }
-
-    /// Skip back, play / pause, skip forward: plain symbols on the fog.
-    private var transport: some View {
-        HStack {
-            Spacer()
-            SkipButton(direction: .back, iconSize: 28, frame: 58)
-            Spacer()
-            Button { player.togglePlayPause() } label: {
-                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 44))
-                    .frame(width: 76, height: 66)
-                    .contentShape(Rectangle())
+    /// Read along and Up next: the artwork in the corner, the show and
+    /// title beside it, ⌄ to go back.
+    private func cornerHeader(_ item: PlayerModel.NowPlaying, backLabel: String, back: @escaping () -> Void) -> some View {
+        HStack(spacing: 14) {
+            Button(action: back) {
+                artworkImage(item, radius: 17)
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color(hex: 0x28323C).opacity(0.14), radius: 8, y: 5)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-            Spacer()
-            SkipButton(direction: .forward, iconSize: 28, frame: 58)
-            Spacer()
+            .accessibilityLabel(backLabel)
+            titleBlock(item, size: 15, compact: true)
+            Spacer(minLength: 6)
+            backButton(backLabel, action: back)
         }
-        .foregroundStyle(Theme.ink)
-        .tint(Theme.ink)
+        .padding(.leading, 20)
+        .padding(.trailing, 20)
+        .padding(.top, 12)
     }
 
-    private var volumeRow: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "speaker.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(Theme.muted)
-                .accessibilityHidden(true)
-            SystemVolumeSlider()
-                .frame(height: 30)
-                .tint(Theme.ink)
-            Image(systemName: "speaker.wave.3.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(Theme.muted)
-                .accessibilityHidden(true)
+    private func backButton(_ label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "chevron.down")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
-        .padding(.horizontal, 20)
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
-    /// Options (speed, trim, boost, sleep) · Read along · Chapters, as
-    /// plain words; lit ones in ink, the rest muted.
-    private var controlsRow: some View {
-        HStack(spacing: 0) {
-            Button { showingOptions = true } label: {
-                textKey(optionsSummary, icon: "slider.horizontal.3", lit: optionsOn)
+    // MARK: Controls
+
+    /// The progress line with the times and chapter, the transport and the
+    /// volume: the same block in Listen and Read along, so it glides
+    /// between the two.
+    private func controls(_ item: PlayerModel.NowPlaying, volume: Bool) -> some View {
+        VStack(spacing: 0) {
+            HaarScrubLine(episodeID: item.episodeID, openChapters: { showingChapters = true })
+            HaarTransport()
+                .padding(.top, 10)
+            if volume {
+                HaarVolumeLine()
+                    .padding(.top, 10)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Options: speed, trim, boost, sleep")
-            .accessibilityValue(optionsSummary)
-            Button { setReading(!reading) } label: {
-                textKey(reading ? "Artwork" : "Read along", icon: reading ? "photo" : "text.quote", lit: reading)
-            }
-            .buttonStyle(.plain)
-            Button { showingChapters = true } label: {
-                textKey("Chapters", icon: "list.bullet", lit: false)
-            }
-            .buttonStyle(.plain)
-            .disabled(player.chapters.isEmpty)
-            .opacity(player.chapters.isEmpty ? 0.4 : 1)
         }
+        .matchedGeometryEffect(id: "controls", in: art)
     }
 
-    private func textKey(_ title: String, icon: String, lit: Bool) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 12, weight: .medium))
-            Text(title).font(Theme.text(13, lit ? .semibold : .medium)).lineLimit(1)
-        }
-        .foregroundStyle(lit ? Theme.ink : Theme.muted)
-        .frame(maxWidth: .infinity, minHeight: 40)
-        .contentShape(Rectangle())
-    }
+    // MARK: Read along
 
-    private var optionsOn: Bool {
-        player.speed != 1 || player.trimSilences || player.boostVoices || player.sleepTimer != nil
-    }
-
-    /// "1.2× · Trim · Sleep" or just "Options".
-    private var optionsSummary: String {
-        var parts: [String] = []
-        if player.speed != 1 { parts.append(PlayerOptions.speedLabel(player.speed)) }
-        if player.trimSilences { parts.append("Trim") }
-        if player.boostVoices { parts.append("Boost") }
-        if player.sleepTimer != nil { parts.append("Sleep") }
-        return parts.isEmpty ? "Options" : parts.joined(separator: " · ")
-    }
-
-    /// While an ad plays: Skip ad and Not an ad. Just after a skip: Play ad
-    /// / Not an ad. Plain words on a frosted strip.
-    @ViewBuilder private var adBar: some View {
-        if let adBreak = player.currentAd {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Ad break").font(Theme.text(13, .semibold))
-                    Text("Show resumes at \(TimeFormat.clock(adBreak.end))").font(Theme.text(12)).foregroundStyle(Theme.muted)
+    private func readAlong(_ item: PlayerModel.NowPlaying, size: CGSize) -> some View {
+        VStack(spacing: 0) {
+            cornerHeader(item, backLabel: "Back to player") { setReading(false) }
+            Group {
+                if let episode {
+                    HaarReadAlong(episode: episode)
+                } else {
+                    Color.clear
                 }
-                Spacer(minLength: 4)
-                Button("Not an ad") { player.notAnAd(adBreak, transcripts: transcripts) }
-                    .font(Theme.text(13, .medium))
-                    .foregroundStyle(Theme.muted)
-                    .buttonStyle(.plain)
-                    .frame(minHeight: 40)
-                Button("Skip ad") { player.skipCurrentAd() }
-                    .font(Theme.text(14, .semibold))
-                    .foregroundStyle(Theme.accentText)
-                    .buttonStyle(.plain)
-                    .frame(minHeight: 40)
             }
-            .foregroundStyle(Theme.ink)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
-            .frostedCard(radius: 16)
-        } else if let adBreak = player.lastSkippedAd {
-            HStack(spacing: 12) {
-                Text("Ad skipped at \(TimeFormat.clock(adBreak.start))").font(Theme.text(13, .medium))
-                Spacer(minLength: 4)
-                Button("Play ad") { player.playAd(adBreak) }
-                    .font(Theme.text(13, .semibold)).buttonStyle(.plain).frame(minHeight: 36)
-                Button("Not an ad") { player.notAnAd(adBreak, transcripts: transcripts) }
-                    .font(Theme.text(13, .medium)).buttonStyle(.plain).frame(minHeight: 36)
-            }
-            .foregroundStyle(Theme.ink)
-            .padding(.horizontal, 16)
-            .frostedCard(radius: 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transition(AnyTransition.opacity.combined(with: .offset(y: 40)).animation(reduceMotion ? nil : Self.rise))
+            controls(item, volume: Self.roomForVolume(size))
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
         }
+        .padding(.bottom, bottomRoom)
     }
 
-    // MARK: Chapter card
+    // MARK: Up next
+
+    private func upNext(size: CGSize) -> some View {
+        VStack(spacing: 0) {
+            if let item = player.nowPlaying {
+                cornerHeader(item, backLabel: "Close Up next", back: closeUpNext)
+            } else {
+                HStack {
+                    Spacer()
+                    backButton("Close Up next", action: closeUpNext)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+            }
+            HaarUpNextList(close: closeUpNext, openFind: openFind)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(.bottom, max(0, bottomRoom - 12))
+    }
+
+    // MARK: Toasts
+
+    /// A new chapter's name at the very top, and the ad pill under the
+    /// top bar.
+    private var toasts: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                if let flash {
+                    chapterPill(flash)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .frame(height: 44)
+            if mode != .upNext {
+                adToast
+                    .padding(.top, 24)
+            }
+        }
+        .animation(.spring(duration: 0.45, bounce: 0.1), value: player.currentAd?.start)
+        .animation(.spring(duration: 0.45, bounce: 0.1), value: player.lastSkippedAd?.start)
+    }
 
     private func showFlash(from old: Int?, to new: Int?) {
         // Only when playing moves on into a new chapter, not on opening.
         guard player.isPlaying, let old, let new, new != old else { return }
         let chapters = player.chapters
         guard chapters.indices.contains(new) else { return }
-        let card = ChapterFlash(number: new + 1, count: chapters.count, title: chapters[new].title)
+        let card = ChapterFlash(number: new + 1, title: chapters[new].title)
         withAnimation(.spring(duration: 0.5, bounce: 0.15)) { flash = card }
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(3.2))
+            try? await Task.sleep(for: .seconds(3))
             if flash == card {
                 withAnimation(.easeOut(duration: 0.4)) { flash = nil }
             }
         }
     }
 
-    private func chapterCard(_ card: ChapterFlash) -> some View {
-        VStack(spacing: 3) {
-            Text("Chapter \(card.number) of \(card.count)")
-                .font(Theme.text(11, .semibold))
-                .tracking(0.6)
-                .foregroundStyle(Theme.muted)
+    private func chapterPill(_ card: ChapterFlash) -> some View {
+        HStack(spacing: 8) {
+            Text("CHAPTER \(card.number)")
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.3)
+                .foregroundStyle(Theme.accentText)
             Text(card.title)
-                .font(Theme.serif(22))
+                .font(Theme.serif(18))
                 .foregroundStyle(Theme.ink)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
+                .lineLimit(1)
         }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 12)
-        .frostedCard(radius: 20)
+        .padding(.horizontal, 16)
+        .frame(height: 36)
+        .haarQueueCard(radius: 18)
         .padding(.horizontal, 40)
         .onTapGesture { showingChapters = true }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
     }
 
+    /// While an ad plays: "Ad · Skip". Just after a skip: "Ad skipped ·
+    /// Play it". Touch and hold for Not an ad.
+    @ViewBuilder private var adToast: some View {
+        if let adBreak = player.currentAd {
+            adPill(text: "Ad", action: "Skip") { player.skipCurrentAd() }
+                .contextMenu {
+                    Button("Not an ad", systemImage: "xmark.circle") { player.notAnAd(adBreak, transcripts: transcripts) }
+                }
+                .accessibilityHint("Show resumes at \(TimeFormat.clock(adBreak.end))")
+                .transition(.move(edge: .top).combined(with: .opacity))
+        } else if let adBreak = player.lastSkippedAd {
+            adPill(text: "Ad skipped", action: "Play it") { player.playAd(adBreak) }
+                .contextMenu {
+                    Button("Not an ad", systemImage: "xmark.circle") { player.notAnAd(adBreak, transcripts: transcripts) }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    private func adPill(text: String, action: String, perform: @escaping () -> Void) -> some View {
+        Button(action: perform) {
+            HStack(spacing: 6) {
+                Text(text)
+                    .font(.system(size: 14, weight: .medium))
+                Text("·")
+                    .font(.system(size: 14))
+                    .opacity(0.6)
+                Text(action)
+                    .font(.system(size: 14, weight: .bold))
+            }
+            .foregroundStyle(Color(hex: 0xF4F2EE))
+            .padding(.horizontal, 18)
+            .frame(height: 40)
+            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(hex: 0x1F2328)))
+            .shadow(color: Color(hex: 0x1F2328).opacity(0.25), radius: 12, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(text). \(action)")
+    }
+
     // MARK: Nothing playing
 
     /// Nothing playing: the top of Up Next ready to play, or a way to find
     /// something.
-    @ViewBuilder private var idle: some View {
+    private func idle(size: CGSize) -> some View {
         let upcoming: PodcastEpisode? = store.queue.first.flatMap { store.episode($0.episode.id) }
-        VStack(spacing: 0) {
-            Spacer(minLength: 10)
-            if let upcoming {
-                Button { player.play(upcoming) } label: {
-                    ArtworkView(url: upcoming.artwork, title: upcoming.showTitle, size: 220, radius: 16)
-                        .shadow(color: Color(hex: 0x28323C).opacity(0.2), radius: 22, y: 10)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Play \(upcoming.title)")
-                Text(upcoming.position > 5 ? "Carry on" : "Up next")
-                    .font(Theme.text(12, .semibold))
-                    .tracking(0.6)
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 22)
-                Text(upcoming.title)
-                    .font(Theme.serif(26))
-                    .foregroundStyle(Theme.ink)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .padding(.top, 4)
-                Text([upcoming.showTitle, upcoming.timeLeft.map { TimeFormat.length($0) } ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(Theme.text(13, .medium))
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 4)
-                Button { player.play(upcoming) } label: {
-                    Label("Play", systemImage: "play.fill")
-                        .font(Theme.text(17, .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .frame(minWidth: 120, minHeight: 48)
+        let side: CGFloat = max(110, min(260, size.width - 48, size.height - bottomRoom - 420))
+        return VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button(action: openFind) {
+                    Capsule()
+                        .fill(Theme.ink.opacity(0.2))
+                        .frame(width: 40, height: 5)
+                        .frame(width: 80, height: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 14)
-            } else {
-                Text("Nothing playing")
-                    .font(Theme.serif(34))
-                    .foregroundStyle(Theme.ink)
-                Text("Up next is empty. Find a show, or pick an episode in your Library.")
-                    .font(Theme.text(14))
-                    .foregroundStyle(Theme.muted)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 8)
-                    .padding(.horizontal, 20)
-                Button(action: openFind) {
-                    Label("Find something", systemImage: "magnifyingglass")
-                        .font(Theme.text(16, .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .frame(minHeight: 48)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 14)
+                .accessibilityLabel("Find")
+                Spacer()
             }
-            Spacer(minLength: 10)
+            Spacer(minLength: 8)
+            if let upcoming {
+                idleUpcoming(upcoming, side: side)
+            } else {
+                idleEmpty
+            }
+            Spacer(minLength: 8)
             if upcoming != nil {
                 HaarUpNextStack(open: openUpNext, openFind: openFind, skipFirst: true)
+                    .padding(.horizontal, 20)
             }
         }
+        .padding(.bottom, bottomRoom)
         .frame(maxWidth: .infinity)
+    }
+
+    private func idleUpcoming(_ upcoming: PodcastEpisode, side: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button { player.play(upcoming) } label: {
+                Color.clear
+                    .frame(width: side, height: side)
+                    .overlay {
+                        CachedImage(url: upcoming.artwork) { Theme.placeholderColor(for: upcoming.showTitle) }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: side > 200 ? 46 : side * 0.16, style: .continuous))
+                    .shadow(color: Color(hex: 0x28323C).opacity(0.22), radius: 30, y: 30)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .accessibilityLabel("Play \(upcoming.title)")
+            Text((upcoming.position > 5 ? "Carry on · " : "Up next · ") + upcoming.showTitle)
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.3)
+                .textCase(.uppercase)
+                .foregroundStyle(Theme.accentText)
+                .lineLimit(1)
+                .padding(.top, 24)
+            Text(upcoming.title)
+                .font(Theme.serif(upcoming.title.count > 44 ? 25 : 33))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(3)
+                .minimumScaleFactor(0.8)
+                .padding(.top, 6)
+            HStack {
+                Text(HaarQueueText.meta(upcoming, speed: player.speed, transcripts: transcripts))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.muted)
+                Spacer(minLength: 8)
+                HaarPlayCircle(playing: false) { player.play(upcoming) }
+            }
+            .padding(.top, 10)
+        }
+        .padding(.horizontal, 24)
+    }
+
+    private var idleEmpty: some View {
+        VStack(spacing: 0) {
+            Text("Nothing playing")
+                .font(Theme.serif(34))
+                .foregroundStyle(Theme.ink)
+            Text("Up next is empty. Find a show, or pick an episode in your Library.")
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.muted)
+                .multilineTextAlignment(.center)
+                .padding(.top, 8)
+                .padding(.horizontal, 40)
+            Button(action: openFind) {
+                Text("Find something")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.accentText)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 10)
+        }
     }
 }
 
-// MARK: - Waveform progress
+// MARK: - Transport
 
-/// The progress line as a waveform (the shape is made up from the
-/// episode, the same every time; it isn't the real sound), played part in
-/// ink, the rest faded, ad breaks fainter still, chapter dots under it.
+/// The big play key: a filled circle in the colour of what's playing.
+struct HaarPlayCircle: View {
+    let playing: Bool
+    var size: CGFloat = 70
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: playing ? "pause.fill" : "play.fill")
+                .font(.system(size: size * 0.37, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .offset(x: playing ? 0 : size * 0.035)
+                .frame(width: size, height: size)
+                .background(Circle().fill(Theme.accentFill))
+                .shadow(color: Theme.accentFill.opacity(0.35), radius: 17, y: 14)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(playing ? "Pause" : "Play")
+    }
+}
+
+/// Speed, skip back, play, skip forward, sleep. Speed and sleep step
+/// through their usual choices with each tap (the full choices are in
+/// ⋯ → Speed and sound…).
+struct HaarTransport: View {
+    @Environment(PlayerModel.self) private var player
+
+    private static let speeds: [Double] = [1, 1.3, 1.5, 2]
+    private static let sleeps: [SleepTimerOption] = [.minutes(15), .minutes(30), .minutes(45), .minutes(60), .endOfEpisode]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            speedButton
+            Spacer(minLength: 4)
+            SkipButton(direction: .back, iconSize: 30, frame: 56)
+            Spacer(minLength: 4)
+            HaarPlayCircle(playing: player.isPlaying) { player.togglePlayPause() }
+            Spacer(minLength: 4)
+            SkipButton(direction: .forward, iconSize: 30, frame: 56)
+            Spacer(minLength: 4)
+            sleepButton
+        }
+        .foregroundStyle(Theme.ink)
+        .tint(Theme.ink)
+        .frame(height: 70)
+    }
+
+    private var speedButton: some View {
+        Button { player.setSpeed(Self.nextSpeed(after: player.speed)) } label: {
+            Text(PlayerOptions.speedLabel(player.speed))
+                .font(.system(size: 15, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(player.speed == 1 ? Theme.ink : Theme.accentText)
+                .frame(width: 48, height: 48)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Speed \(PlayerOptions.speedLabel(player.speed))")
+        .accessibilityHint("Tap for the next speed")
+    }
+
+    /// 1 → 1.3 → 1.5 → 2 → 1 (a speed in between goes to the next one up).
+    static func nextSpeed(after speed: Double) -> Double {
+        let current: Double = (speed * 10).rounded() / 10
+        return speeds.first { $0 > current + 0.01 } ?? 1
+    }
+
+    private var sleepButton: some View {
+        let on: Bool = player.sleepTimer != nil
+        return Button { stepSleep() } label: {
+            VStack(spacing: 1) {
+                Image(systemName: on ? "moon.fill" : "moon")
+                    .font(.system(size: 20, weight: .regular))
+                if on {
+                    sleepLabel
+                }
+            }
+            .foregroundStyle(on ? Theme.accentText : Theme.ink)
+            .frame(width: 48, height: 48)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(on ? "Sleep timer on" : "Sleep timer off")
+        .accessibilityHint("Tap for the next sleep time")
+    }
+
+    /// Minutes left on the sleep timer, or "end".
+    private var sleepLabel: some View {
+        TimelineView(.periodic(from: Date(), by: 15)) { context in
+            Text(sleepText(at: context.date))
+                .font(.system(size: 9, weight: .bold))
+                .monospacedDigit()
+        }
+    }
+
+    private func sleepText(at date: Date) -> String {
+        if player.sleepTimer == .endOfEpisode { return "END" }
+        guard let ends = player.sleepEndsAt else { return "" }
+        let minutes: Int = max(1, Int((ends.timeIntervalSince(date) / 60).rounded(.up)))
+        return "\(minutes)M"
+    }
+
+    /// Off → 15 → 30 → 45 → 60 → end of episode → off.
+    private func stepSleep() {
+        guard let current = player.sleepTimer else {
+            player.chooseSleepTimer(Self.sleeps[0])
+            return
+        }
+        if let index = Self.sleeps.firstIndex(of: current), index + 1 < Self.sleeps.count {
+            player.chooseSleepTimer(Self.sleeps[index + 1])
+        } else if current == .endOfEpisode {
+            player.setSleepTimer(nil)
+        } else {
+            // A time set elsewhere (5 minutes, or extended): on to the next one up.
+            let minutesNow: Int = player.sleepEndsAt.map { Int($0.timeIntervalSinceNow / 60) } ?? 0
+            let next: SleepTimerOption = Self.sleeps.first { (option: SleepTimerOption) -> Bool in
+                if case .minutes(let minutes) = option { return minutes > minutesNow }
+                return true
+            } ?? .endOfEpisode
+            player.chooseSleepTimer(next)
+        }
+    }
+}
+
+/// The volume as a thin line the width of the progress line, a small
+/// speaker at each end; the dot only shows while it's touched (Paul's
+/// pick "A", 13 Nov 2026).
+struct HaarVolumeLine: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "speaker.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(Theme.muted)
+                .accessibilityHidden(true)
+            HaarVolumeSlider()
+                .frame(height: 24)
+            Image(systemName: "speaker.wave.3.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(Theme.muted)
+                .accessibilityHidden(true)
+        }
+        .frame(height: 24)
+    }
+}
+
+/// The iPhone's own volume slider, drawn as a 2-point ink line; its knob
+/// is invisible until touched.
+struct HaarVolumeSlider: UIViewRepresentable {
+    func makeUIView(context: Context) -> CentredVolumeView {
+        let view = CentredVolumeView(frame: .zero)
+        let ink = UIColor(Theme.ink)
+        view.tintColor = ink
+        view.setVolumeThumbImage(Self.dot(16, colour: .clear), for: .normal)
+        view.setVolumeThumbImage(Self.dot(16, colour: ink), for: .highlighted)
+        view.setMinimumVolumeSliderImage(Self.track(ink), for: .normal)
+        view.setMaximumVolumeSliderImage(Self.track(ink.withAlphaComponent(0.16)), for: .normal)
+        return view
+    }
+
+    func updateUIView(_ view: CentredVolumeView, context: Context) {}
+
+    private static func dot(_ size: CGFloat, colour: UIColor) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+            colour.setFill()
+            UIBezierPath(ovalIn: CGRect(x: 2, y: 2, width: size - 4, height: size - 4)).fill()
+        }
+    }
+
+    /// A 2 pt rounded line that stretches.
+    private static func track(_ colour: UIColor) -> UIImage {
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 5, height: 2)).image { _ in
+            colour.setFill()
+            UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 5, height: 2), cornerRadius: 1).fill()
+        }
+        return image.resizableImage(withCapInsets: UIEdgeInsets(top: 0, left: 2, bottom: 0, right: 2))
+    }
+}
+
+/// ‹ 3 The bunker ˅ ›: the chapter now; ‹ › skip between chapters, the
+/// middle opens the chapter list (even when the episode has none).
+struct HaarChapterControl: View {
+    @Environment(PlayerModel.self) private var player
+    let open: () -> Void
+
+    var body: some View {
+        let chapters: [Chapter] = player.chapters
+        let index: Int? = player.currentChapterIndex
+        let canNext: Bool = !chapters.isEmpty && (index ?? -1) < chapters.count - 1
+        HStack(spacing: 0) {
+            arrow("chevron.left", label: "Previous chapter", enabled: !chapters.isEmpty) { player.previousChapter() }
+            Button(action: open) { middle(chapters: chapters, index: index) }
+                .buttonStyle(.plain)
+                .accessibilityLabel(accessibility(chapters: chapters, index: index))
+                .accessibilityHint("Shows every chapter")
+            arrow("chevron.right", label: "Next chapter", enabled: canNext) { player.nextChapter() }
+        }
+    }
+
+    private func middle(chapters: [Chapter], index: Int?) -> some View {
+        let title: String = index.flatMap { chapters.indices.contains($0) ? chapters[$0].title : nil } ?? "Chapters"
+        return HStack(spacing: 5) {
+            Text(index.map { "\($0 + 1)" } ?? "—")
+                .font(.system(size: 10, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.accentText)
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+            Image(systemName: "chevron.down")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(Theme.muted)
+        }
+        .padding(.horizontal, 4)
+        .frame(minHeight: 36)
+        .contentShape(Rectangle())
+    }
+
+    private func arrow(_ icon: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 26, height: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.25)
+        .accessibilityLabel(label)
+    }
+
+    private func accessibility(chapters: [Chapter], index: Int?) -> String {
+        guard let index, chapters.indices.contains(index) else { return "Chapters" }
+        return "Chapter \(index + 1) of \(chapters.count), \(chapters[index].title)"
+    }
+}
+
+// MARK: - Progress line
+
+/// The progress line, plain like Poddeck's (Paul, 13 Nov 2026: the
+/// waveform's shape needn't mimic the sound, simplify it): a thin line
+/// split by small gaps at chapters, played part in ink, the rest faded,
+/// ad breaks fainter, a dot at the play point that grows while you drag.
 /// Drag anywhere along it: it moves by how far the finger travels (a touch
 /// never jumps), finger lower down for finer, a bubble shows the chapter
 /// and time, and a jump of 2 minutes or more offers Undo.
-struct HaarWave: View {
+/// Under it: the time played, the chapter control, and the time left at
+/// this speed (tap it for when it ends: Paul's pick "B").
+struct HaarScrubLine: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
     let episodeID: String
+    /// Opens the chapter list.
+    let openChapters: () -> Void
 
     @State private var scrubTime: TimeInterval?
     @State private var scrubStart: TimeInterval?
     @State private var lastX: CGFloat?
     @State private var speedLabel: String?
+    /// Show "ends 21:42" instead of "−41:48".
+    @AppStorage("haarShowEnds") private var showEnds = false
 
-    static let bars = 64
-    static let height: CGFloat = 42
+    /// The touch band; the line sits in its middle.
+    static let height: CGFloat = 30
+    /// The line plus the time row under it.
+    static let blockHeight: CGFloat = 30 + 2 + 36
 
     var body: some View {
         let duration: TimeInterval = max(player.duration, 1)
         let shown: TimeInterval = scrubTime ?? player.currentTime
         let left: TimeInterval = max(0, player.duration - shown)
-        let ends: Date = Date().addingTimeInterval(left / max(player.speed, 0.5))
-        VStack(spacing: 6) {
-            GeometryReader { geometry in
-                let width: CGFloat = max(1, geometry.size.width)
-                ZStack(alignment: .topLeading) {
-                    WaveShape(heights: Self.heights(for: episodeID), progress: shown / duration,
-                              ads: adFractions, ink: Theme.ink, faded: Theme.ink.opacity(0.18))
-                        .frame(width: width, height: Self.height)
-                    dots(width: width)
-                        .offset(y: Self.height + 3)
-                    if scrubTime != nil {
-                        bubble(at: shown, x: CGFloat(shown / duration) * width, width: width)
-                    }
-                }
-                .contentShape(Rectangle())
-                .gesture(scrub(width: width, duration: duration))
-            }
-            .frame(height: Self.height + 9)
-            .accessibilityElement()
-            .accessibilityLabel("Position")
-            .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
-            .accessibilityAdjustableAction { direction in
-                switch direction {
-                case .increment: player.skipForwardBy()
-                case .decrement: player.skipBackward()
-                @unknown default: break
+        VStack(spacing: 2) {
+            line(shown: shown, left: left, duration: duration)
+            timeRow(shown: shown, left: left)
+        }
+    }
+
+    private func line(shown: TimeInterval, left: TimeInterval, duration: TimeInterval) -> some View {
+        GeometryReader { geometry in
+            let width: CGFloat = max(1, geometry.size.width)
+            ZStack(alignment: .topLeading) {
+                PlainLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
+                          grow: scrubTime == nil ? 0 : 1)
+                    .frame(width: width, height: Self.height)
+                    .animation(.easeOut(duration: 0.18), value: scrubTime == nil)
+                if scrubTime != nil {
+                    bubble(at: shown, x: CGFloat(shown / duration) * width, width: width)
                 }
             }
-            HStack {
-                Text(TimeFormat.clock(shown))
-                Spacer(minLength: 6)
-                Text(speedLabel ?? "ends " + UpNextTimes.clock(ends))
+            .contentShape(Rectangle())
+            .gesture(scrub(width: width, duration: duration))
+        }
+        .frame(height: Self.height)
+        .accessibilityElement()
+        .accessibilityLabel("Position")
+        .accessibilityValue("\(TimeFormat.clock(shown)), \(TimeFormat.clock(left)) left")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: player.skipForwardBy()
+            case .decrement: player.skipBackward()
+            @unknown default: break
+            }
+        }
+    }
+
+    /// Played · chapter · left (or ends).
+    private func timeRow(shown: TimeInterval, left: TimeInterval) -> some View {
+        let atSpeed: TimeInterval = left / max(player.speed, 0.5)
+        let ends: Date = Date().addingTimeInterval(atSpeed)
+        return HStack(spacing: 4) {
+            Text(TimeFormat.clock(shown))
+                .frame(minWidth: 56, alignment: .leading)
+            Spacer(minLength: 0)
+            middle
+            Spacer(minLength: 0)
+            Button { showEnds.toggle() } label: {
+                Text(showEnds ? "ends " + UpNextTimes.clock(ends) : "−" + TimeFormat.clock(atSpeed))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Spacer(minLength: 6)
-                Text("−" + TimeFormat.clock(left))
+                    .frame(minWidth: 56, minHeight: 36, alignment: .trailing)
+                    .contentShape(Rectangle())
             }
-            .font(Theme.text(12, .medium))
-            .monospacedDigit()
-            .foregroundStyle(Theme.muted)
+            .buttonStyle(.plain)
+            .accessibilityLabel(showEnds ? "Ends at \(UpNextTimes.clock(ends))" : "\(TimeFormat.clock(atSpeed)) left")
+            .accessibilityHint(showEnds ? "Shows the time left" : "Shows when it ends")
+        }
+        .font(.system(size: 12, weight: .medium))
+        .monospacedDigit()
+        .foregroundStyle(Theme.muted)
+        .frame(height: 36)
+    }
+
+    /// The chapter control, or how fast it's scrubbing while dragging.
+    @ViewBuilder private var middle: some View {
+        if let speedLabel {
+            Text(speedLabel)
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        } else {
+            HaarChapterControl(open: openChapters)
+                .layoutPriority(1)
         }
     }
 
@@ -611,22 +968,10 @@ struct HaarWave: View {
         }
     }
 
-    /// Small dots under the wave where each chapter starts; filled once
-    /// reached.
-    private func dots(width: CGFloat) -> some View {
-        let duration: TimeInterval = max(player.duration, 1)
-        let now: TimeInterval = scrubTime ?? player.currentTime
-        return ZStack(alignment: .leading) {
-            ForEach(Array(player.chapters.enumerated()), id: \.offset) { _, chapter in
-                let x: CGFloat = CGFloat(min(1, max(0, chapter.start / duration))) * width
-                Circle()
-                    .fill(chapter.start <= now ? Theme.ink : Theme.ink.opacity(0.25))
-                    .frame(width: 4, height: 4)
-                    .offset(x: max(0, min(width - 4, x - 2)))
-            }
-        }
-        .frame(width: width, height: 4, alignment: .leading)
-        .allowsHitTesting(false)
+    /// Where each chapter starts, as a fraction of the episode.
+    private var chapterStarts: [Double] {
+        guard player.duration > 0 else { return [] }
+        return player.chapters.map { $0.start / player.duration }
     }
 
     private func scrub(width: CGFloat, duration: TimeInterval) -> some Gesture {
@@ -690,144 +1035,80 @@ struct HaarWave: View {
         .position(x: centre, y: -26)
         .allowsHitTesting(false)
     }
-
-    /// Bar heights (0.18–1) made from the episode's ID: a calm, speech-like
-    /// shape that's the same every time the episode is shown.
-    static func heights(for id: String) -> [Double] {
-        var seed: UInt64 = 1469598103934665603
-        for byte in id.utf8 {
-            seed = (seed ^ UInt64(byte)) &* 1099511628211
-        }
-        var values: [Double] = []
-        values.reserveCapacity(bars)
-        var smooth: Double = 0.5
-        for index in 0..<bars {
-            seed = seed &* 6364136223846793005 &+ 1442695040888963407
-            let random: Double = Double((seed >> 33) % 1000) / 1000
-            smooth = smooth * 0.55 + random * 0.45
-            let swell: Double = 0.75 + 0.25 * sin(Double(index) / 5.3)
-            values.append(max(0.18, min(1, smooth * swell * 1.25)))
-        }
-        return values
-    }
 }
 
-/// Draws the bars: played in ink, the rest faded, ads fainter.
-private struct WaveShape: View {
-    let heights: [Double]
+/// Draws the line: chapter gaps, played in ink, ahead faded, ads fainter,
+/// and the play-point dot. `grow` (0 at rest, 1 while dragging) animates
+/// it a little thicker with a bigger dot.
+private struct PlainLine: View, Animatable {
     let progress: Double
+    let chapterStarts: [Double]
     let ads: [ClosedRange<Double>]
-    let ink: Color
-    let faded: Color
+    var grow: Double
+
+    var animatableData: Double {
+        get { grow }
+        set { grow = newValue }
+    }
 
     var body: some View {
         Canvas { context, size in
-            let count: Int = heights.count
-            guard count > 0 else { return }
-            let step: CGFloat = size.width / CGFloat(count)
-            let barWidth: CGFloat = max(1.5, step * 0.55)
-            for index in 0..<count {
-                let middle: Double = (Double(index) + 0.5) / Double(count)
-                let inAd: Bool = ads.contains { $0.contains(middle) }
-                let barHeight: CGFloat = max(3, CGFloat(heights[index]) * size.height)
-                let rect = CGRect(x: CGFloat(index) * step + (step - barWidth) / 2,
-                                  y: (size.height - barHeight) / 2,
-                                  width: barWidth, height: barHeight)
-                let played: Bool = middle <= progress
-                var colour: Color = played ? ink : faded
-                if inAd { colour = played ? ink.opacity(0.35) : faded.opacity(0.45) }
-                context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2), with: .color(colour))
-            }
+            Self.draw(in: context, size: size, progress: progress, chapterStarts: chapterStarts, ads: ads, grow: CGFloat(grow))
         }
         .accessibilityHidden(true)
     }
+
+    // Split out (with explicit types) so the compiler checks it quickly.
+    private static func draw(in context: GraphicsContext, size: CGSize, progress: Double,
+                             chapterStarts: [Double], ads: [ClosedRange<Double>], grow: CGFloat) {
+        let ink: Color = Theme.ink
+        let dot: CGFloat = 12 + 6 * grow
+        let x0: CGFloat = dot / 2
+        let span: CGFloat = max(1, size.width - dot)
+        let thickness: CGFloat = 5 + 4 * grow
+        let top: CGFloat = (size.height - thickness) / 2
+        let playedX: CGFloat = x0 + span * CGFloat(min(1, max(0, progress)))
+        let inner: [Double] = chapterStarts.filter { $0 > 0.002 && $0 < 0.998 }.sorted()
+        let cuts: [Double] = [0] + inner + [1]
+        let gap: CGFloat = 3
+        for index in 0..<(cuts.count - 1) {
+            let start: CGFloat = x0 + span * CGFloat(cuts[index]) + (index > 0 ? gap / 2 : 0)
+            let end: CGFloat = x0 + span * CGFloat(cuts[index + 1]) - (index < cuts.count - 2 ? gap / 2 : 0)
+            guard end > start else { continue }
+            let shape = Path(roundedRect: CGRect(x: start, y: top, width: end - start, height: thickness),
+                             cornerRadius: thickness / 2)
+            var segment = context
+            segment.clip(to: shape)
+            segment.fill(shape, with: .color(ink.opacity(0.16)))
+            if playedX > start {
+                let played = CGRect(x: start, y: top, width: min(end, playedX) - start, height: thickness)
+                segment.fill(Path(played), with: .color(ink))
+            }
+            for ad in ads {
+                let adStart: CGFloat = max(start, x0 + span * CGFloat(ad.lowerBound))
+                let adEnd: CGFloat = min(end, x0 + span * CGFloat(ad.upperBound))
+                guard adEnd > adStart else { continue }
+                // Ads read paler than the rest, played or not.
+                let adRect = CGRect(x: adStart, y: top, width: adEnd - adStart, height: thickness)
+                segment.fill(Path(adRect), with: .color(Theme.background.opacity(0.55)))
+            }
+        }
+        let dotRect = CGRect(x: playedX - dot / 2, y: (size.height - dot) / 2, width: dot, height: dot)
+        context.fill(Path(ellipseIn: dotRect), with: .color(ink))
+    }
 }
 
-// MARK: - Up next stack
-
-/// What's up next, as the top card of a small stack (two card edges
-/// behind it); tap for the whole of Up next.
-struct HaarUpNextStack: View {
-    @Environment(LibraryStore.self) private var store
-    @Environment(PlayerModel.self) private var player
-    let open: () -> Void
-    let openFind: () -> Void
-    /// With nothing playing, the first in Up Next is already shown big.
-    var skipFirst = false
-
-    var body: some View {
-        let waiting: [QueueItem] = store.queue.filter { $0.episode.id != player.nowPlaying?.episodeID }
-        let shown: [QueueItem] = Array(waiting.dropFirst(skipFirst ? 1 : 0))
-        let next: PodcastEpisode? = shown.first.flatMap { store.episode($0.episode.id) }
-        Button(action: next == nil && waiting.isEmpty ? openFind : open) {
-            ZStack(alignment: .top) {
-                if shown.count > 2 {
-                    edge.padding(.horizontal, 26).offset(y: 12)
-                }
-                if shown.count > 1 {
-                    edge.padding(.horizontal, 13).offset(y: 6)
-                }
-                card(next: next, count: shown.count)
-            }
-            .padding(.bottom, shown.count > 2 ? 12 : (shown.count > 1 ? 6 : 0))
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens Up next")
-    }
-
-    private var edge: some View {
-        Color.clear
-            .frame(height: 56)
-            .frostedCard(radius: 18)
-            .opacity(0.7)
-    }
-
-    private func card(next: PodcastEpisode?, count: Int) -> some View {
-        HStack(spacing: 12) {
-            if let next {
-                ArtworkView(url: next.artwork, title: next.showTitle, size: 40, radius: 8)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(count > 1 ? "Up next · \(count) waiting" : "Up next")
-                        .font(Theme.text(11, .semibold))
-                        .foregroundStyle(Theme.muted)
-                    Text(next.title)
-                        .font(Theme.text(14, .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                }
-            } else {
-                Image(systemName: "text.line.first.and.arrowtriangle.forward")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Theme.muted)
-                    .frame(width: 40, height: 40)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Up next is empty")
-                        .font(Theme.text(14, .semibold))
-                        .foregroundStyle(Theme.ink)
-                    Text("Find something to listen to")
-                        .font(Theme.text(12))
-                        .foregroundStyle(Theme.muted)
-                }
-            }
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.up")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.muted)
-        }
-        .padding(.horizontal, 12)
-        .frame(height: 56)
-        .frostedCard(radius: 18)
-    }
-}
 
 // MARK: - Read along
 
 /// The transcript as you listen: the line now in the serif with each word
 /// lit as it's said (timed across the line; transcripts give a time per
-/// line, not per word), the lines either side smaller and faded, chapter
-/// breaks as a thin rule with the chapter's name. Tap a line to play from
-/// it; touch and hold to share a clip or copy. Scrolling by hand stops it
-/// following for a few seconds (or tap Back to now).
+/// line, not per word): the word now in the show's colour, words said in
+/// ink, words to come faint. Other lines smaller and muted, heard ones
+/// fainter; the speaker's name when it changes; chapter breaks as a fine
+/// rule with the chapter's name. Tap a line to play from it; touch and
+/// hold to share a clip or copy. Scrolling by hand stops it following for
+/// a few seconds (or tap Back to now). Make a clip under it.
 struct HaarReadAlong: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
@@ -842,6 +1123,8 @@ struct HaarReadAlong: View {
     @State private var anchorTime: TimeInterval = 0
     @State private var anchorDate = Date()
 
+    private static let anchor = UnitPoint(x: 0.5, y: 0.32)
+
     private var isPlayingThis: Bool { player.nowPlaying?.episodeID == episode.episodeID }
 
     private var nowIndex: Int? {
@@ -853,10 +1136,13 @@ struct HaarReadAlong: View {
     var body: some View {
         Group {
             if lines.isEmpty {
-                TranscriptStatusView(episode: episode, onDark: false)
+                HaarWordsOnTheWay(episode: episode)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                list
+                VStack(spacing: 0) {
+                    list
+                    clipButton
+                }
             }
         }
         .task(id: episode.transcriptStateRaw) { load() }
@@ -883,23 +1169,17 @@ struct HaarReadAlong: View {
         let now: Int? = nowIndex
         return ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 14) {
+                LazyVStack(alignment: .leading, spacing: 16) {
                     ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
-                        if let chapter = chapterStarting(at: index) {
-                            chapterRule(chapter.number, chapter.title)
-                        }
-                        row(line, index: index, now: now)
+                        entry(line, index: index, now: now)
                             .id(index)
                     }
                 }
+                .padding(.horizontal, 24)
                 .padding(.vertical, 40)
             }
             .scrollIndicators(.hidden)
-            .mask {
-                LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.1),
-                                       .init(color: .black, location: 0.86), .init(color: .clear, location: 1)],
-                               startPoint: .top, endPoint: .bottom)
-            }
+            .mask { Self.fade }
             .onScrollPhaseChange { _, phase in
                 if phase == .interacting {
                     resume?.cancel()
@@ -915,30 +1195,56 @@ struct HaarReadAlong: View {
             }
             .onChange(of: now) { _, index in
                 guard let index, !followPaused else { return }
-                withAnimation(.easeInOut(duration: 0.7)) { proxy.scrollTo(index, anchor: UnitPoint(x: 0.5, y: 0.32)) }
+                withAnimation(.easeInOut(duration: 0.7)) { proxy.scrollTo(index, anchor: Self.anchor) }
             }
             .onAppear {
-                if let now { proxy.scrollTo(now, anchor: UnitPoint(x: 0.5, y: 0.32)) }
+                if let now { proxy.scrollTo(now, anchor: Self.anchor) }
             }
             .overlay(alignment: .bottom) {
-                if followPaused, now != nil {
-                    Button {
-                        followPaused = false
-                        if let now {
-                            withAnimation(.easeInOut(duration: 0.6)) { proxy.scrollTo(now, anchor: UnitPoint(x: 0.5, y: 0.32)) }
-                        }
-                    } label: {
-                        Text("Back to now")
-                            .font(Theme.text(13, .semibold))
-                            .foregroundStyle(Theme.ink)
-                            .padding(.horizontal, 16)
-                            .frame(minHeight: 36)
-                            .frostedCard(radius: 18)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.bottom, 6)
+                if followPaused, let now {
+                    backToNow { withAnimation(.easeInOut(duration: 0.6)) { proxy.scrollTo(now, anchor: Self.anchor) } }
                 }
             }
+        }
+    }
+
+    private static var fade: LinearGradient {
+        LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.1),
+                               .init(color: .black, location: 0.86), .init(color: .clear, location: 1)],
+                       startPoint: .top, endPoint: .bottom)
+    }
+
+    private func backToNow(_ scroll: @escaping () -> Void) -> some View {
+        Button {
+            followPaused = false
+            scroll()
+        } label: {
+            Text("Back to now")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 36)
+                .haarQueueCard(radius: 18)
+        }
+        .buttonStyle(.plain)
+        .padding(.bottom, 6)
+    }
+
+    /// A chapter rule and the speaker's name where they belong, then the line.
+    @ViewBuilder private func entry(_ line: TranscriptLayout.Line, index: Int, now: Int?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let chapter = chapterStarting(at: index) {
+                chapterRule(chapter)
+                    .padding(.bottom, 4)
+            }
+            if let speaker = speakerChange(at: index) {
+                Text(speaker.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.3)
+                    .foregroundStyle(Theme.accentText)
+                    .lineLimit(1)
+            }
+            row(line, index: index, now: now)
         }
     }
 
@@ -949,25 +1255,20 @@ struct HaarReadAlong: View {
             if isNow {
                 TimelineView(.animation(minimumInterval: 0.1, paused: !player.isPlaying)) { context in
                     Text(litText(line, at: context.date))
-                        .font(Theme.serif(25))
+                        .font(Theme.serif(31))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
                 Text(line.text)
-                    .font(Theme.text(16))
-                    .foregroundStyle(Theme.ink.opacity(heard ? 0.38 : 0.55))
+                    .font(.system(size: 16))
+                    .lineSpacing(7)
+                    .foregroundStyle(Theme.muted)
+                    .opacity(heard ? 0.5 : 1)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture {
-            if isPlayingThis {
-                player.seek(to: line.start)
-            } else {
-                player.play(episode)
-                player.seek(to: line.start)
-            }
-        }
+        .onTapGesture { play(from: line) }
         .contextMenu {
             Button("Share a clip", systemImage: "scissors") { clip = ClipRequest(line: line, quote: line.text) }
             Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = line.text }
@@ -976,7 +1277,17 @@ struct HaarReadAlong: View {
         .accessibilityHint("Plays from here")
     }
 
-    /// The line now with the words said so far in ink, the rest faded.
+    private func play(from line: TranscriptLayout.Line) {
+        if isPlayingThis {
+            player.seek(to: line.start)
+        } else {
+            player.play(episode)
+            player.seek(to: line.start)
+        }
+    }
+
+    /// The line now: words said in ink, the word now in the show's
+    /// colour, words to come faint.
     private func litText(_ line: TranscriptLayout.Line, at date: Date) -> AttributedString {
         let words: [Substring] = line.text.split(separator: " ")
         let span: TimeInterval = max(0.5, line.end - line.start)
@@ -984,37 +1295,190 @@ struct HaarReadAlong: View {
         let time: TimeInterval = anchorTime + since
         let done: Double = min(1, max(0, (time - line.start) / span))
         let litCount: Int = Int((done * Double(words.count)).rounded(.up))
+        let ink: Color = Theme.ink
+        let accent: Color = Theme.accentText
+        let faint: Color = Theme.ink.opacity(0.32)
         var text = AttributedString()
         for (index, word) in words.enumerated() {
             var piece = AttributedString(String(word) + (index == words.count - 1 ? "" : " "))
-            piece.foregroundColor = index < litCount ? Theme.ink : Theme.ink.opacity(0.3)
+            if index < litCount - 1 {
+                piece.foregroundColor = ink
+            } else if index == litCount - 1 {
+                piece.foregroundColor = accent
+            } else {
+                piece.foregroundColor = faint
+            }
             text += piece
         }
         return text
     }
 
+    /// The speaker's name when it changes from the line before.
+    private func speakerChange(at index: Int) -> String? {
+        guard lines.indices.contains(index), let speaker = lines[index].speaker, !speaker.isEmpty else { return nil }
+        let previous: String? = index > 0 ? lines[index - 1].speaker : nil
+        return speaker == previous ? nil : speaker
+    }
+
     /// The chapter that starts at this line (the first line at or after
     /// its start), if any.
-    private func chapterStarting(at index: Int) -> (number: Int, title: String)? {
+    private func chapterStarting(at index: Int) -> String? {
         let chapters = player.chapters
         guard isPlayingThis, !chapters.isEmpty, lines.indices.contains(index) else { return nil }
         let start: TimeInterval = lines[index].start
         let previous: TimeInterval = index > 0 ? lines[index - 1].start : -1
         guard let found = chapters.firstIndex(where: { $0.start > previous && $0.start <= start }) else { return nil }
-        return (found + 1, chapters[found].title)
+        return chapters[found].title
     }
 
-    private func chapterRule(_ number: Int, _ title: String) -> some View {
+    private func chapterRule(_ title: String) -> some View {
         HStack(spacing: 10) {
-            Rectangle().fill(Theme.ink.opacity(0.2)).frame(height: 1)
-            Text("\(number) · \(title)")
+            Rectangle().fill(Theme.accentText.opacity(0.3)).frame(height: 1)
+            Text(title)
                 .font(Theme.serif(16).italic())
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(Theme.accentText)
                 .lineLimit(1)
                 .layoutPriority(1)
-            Rectangle().fill(Theme.ink.opacity(0.2)).frame(height: 1)
+            Rectangle().fill(Theme.accentText.opacity(0.3)).frame(height: 1)
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("Chapter: \(title)")
+    }
+
+    /// Make a clip of the line now (or the first line).
+    private var clipButton: some View {
+        Button {
+            let index: Int = nowIndex ?? 0
+            guard lines.indices.contains(index) else { return }
+            clip = ClipRequest(line: lines[index], quote: lines[index].text)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "scissors")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Make a clip")
+                    .font(.system(size: 15, weight: .bold))
+            }
+            .foregroundStyle(Theme.accentText)
+            .frame(minHeight: 36)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 2)
+    }
+}
+
+/// Read along before there are words: where the transcript has got to, a
+/// short note, and Transcribe now (made on the iPhone from the download).
+struct HaarWordsOnTheWay: View {
+    @Environment(TranscriptService.self) private var transcripts
+    @Environment(DownloadManager.self) private var downloads
+    let episode: PodcastEpisode
+
+    private var working: Bool {
+        episode.transcriptState == .transcribing || transcripts.isQueued(episode) || transcripts.isRequested(episode)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let label = statusLabel {
+                Text(label)
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.3)
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.accentText)
+                    .padding(.bottom, 10)
+            }
+            Text(headline)
+                .font(Theme.serif(34))
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if let fraction = progress {
+                bar(fraction)
+                    .padding(.top, 16)
+            }
+            Text("Chapters, search and clips switch on once the words are in. Poddeck makes them on your phone, from the downloaded episode.")
+                .font(.system(size: 14))
+                .lineSpacing(7)
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 16)
+            actions
+                .padding(.top, 12)
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
+
+    private var headline: String {
+        switch episode.transcriptState {
+        case .failed: return "No words this time."
+        case .none where !working && !transcripts.isFetchingPublisher(episode): return "No words yet."
+        default: return "Words are on their way."
+        }
+    }
+
+    /// "TRANSCRIBING ON YOUR PHONE · 64%", "DOWNLOADING FIRST · 40%",
+    /// "WAITING TO TRANSCRIBE"…
+    private var statusLabel: String? {
+        let id: String = episode.episodeID
+        switch episode.transcriptState {
+        case .transcribing:
+            if let fraction = transcripts.progress[id] { return "TRANSCRIBING ON YOUR PHONE · \(Int(fraction * 100))%" }
+            return "TRANSCRIBING ON YOUR PHONE"
+        case .failed:
+            return "COULDN'T MAKE A TRANSCRIPT"
+        default:
+            if transcripts.isFetchingPublisher(episode) { return "GETTING THE SHOW'S TRANSCRIPT" }
+            guard working else { return nil }
+            if let fraction = downloads.progress[id] { return "DOWNLOADING FIRST · \(Int(fraction * 100))%" }
+            return "WAITING TO TRANSCRIBE"
+        }
+    }
+
+    private var progress: Double? {
+        let id: String = episode.episodeID
+        if episode.transcriptState == .transcribing { return transcripts.progress[id] }
+        guard working else { return nil }
+        return downloads.progress[id]
+    }
+
+    private func bar(_ fraction: Double) -> some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.ink.opacity(0.14))
+                Capsule()
+                    .fill(Theme.accentFill)
+                    .frame(width: geometry.size.width * CGFloat(min(1, max(0, fraction))))
+            }
+        }
+        .frame(height: 4)
+        .animation(.easeOut(duration: 0.4), value: fraction)
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var actions: some View {
+        if working {
+            HStack(spacing: 18) {
+                Text("Transcribing now…")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.accentText.opacity(0.7))
+                Button("Stop") { transcripts.stop(episode) }
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Theme.muted)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Stop transcribing")
+            }
+            .frame(minHeight: 44)
+        } else if !transcripts.isFetchingPublisher(episode) {
+            Button { transcripts.transcribeNow(episode) } label: {
+                Text(episode.transcriptState == .failed ? "Try again" : "Transcribe now")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.accentText)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
     }
 }

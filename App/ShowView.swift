@@ -6,6 +6,8 @@ struct ShowView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
+    /// Inside the Haar show sheet: open its Settings page instead.
+    @Environment(\.openShowSettings) private var openShowSettings
     let show: Podcast
     /// The page's colour, fixed when it opens so nothing changes colour
     /// while it's on screen (Paul, 11 Nov 2026). Unknown = neutral for
@@ -32,6 +34,10 @@ struct ShowView: View {
 
     /// Worked out when the menu item is tapped, not on every redraw.
     @State private var addAllTitle = ""
+
+    private func openSettings() {
+        if let openShowSettings { openShowSettings() } else { showingSettings = true }
+    }
 
     private func askAddAll() {
         let count = store.backCatalogue(of: show).count
@@ -144,7 +150,7 @@ struct ShowView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button("Show settings", systemImage: "slider.horizontal.3") { showingSettings = true }
+                        Button("Show settings", systemImage: "slider.horizontal.3") { openSettings() }
                         Button("Select episodes", systemImage: "checkmark.circle") { selecting = true }
                         // The whole back catalogue, oldest first (Paul, 9 Nov 2026).
                         Button("Add all to Up Next, oldest first", systemImage: "text.append") { askAddAll() }
@@ -285,7 +291,7 @@ struct ShowView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Following. Tap to unfollow")
-                Button { showingSettings = true } label: {
+                Button { openSettings() } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "slider.horizontal.3")
                         Text(modeName).font(.system(size: 14, weight: .semibold))

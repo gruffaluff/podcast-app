@@ -1969,6 +1969,116 @@ tab bar and the Native warm screens (`RootView.content`).
   iPhone, word lighting timing, the chart marks from the second day, fog
   cost (the page fog is drawn under each layer).
 
+## Done in build 152 (13 Nov 2026, PR #70; Paul: "add in everything outstanding and build")
+
+- **Matching the Haar prototype's last row** (Paul, 13 Nov 2026: "not
+  looking or flowing and operating as well as the mock up",
+  https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7, page v4, row "Real
+  example: Elis James and John Robins, #592"). Gap list given to Paul in
+  three batches: 1 colour + Now screen (show colour as the accent and
+  page mist, filled play circle with speed / sleep beside it, bigger
+  rounder artwork, show name above the title, chapter in the time row,
+  Up next stack with meta line), 2 motion (Up next and Read along as
+  in-place morphs, translucent Library / Find layers, rounded sheets
+  above the dock, top toasts), 3 Library / show page / chapters
+  (timeline, Stop at chapter end, Skip this chapter, empty states).
+  Decided so far (Paul, 13 Nov 2026): keep the Your shows badge fix
+  (rank beside the name, "n new" pill), not the prototype's badges on
+  the art; keep a volume slider; keep the ending time if it fits.
+  Volume and ending time (mock-ups
+  https://claude.ai/artifact/Tv46pEoExxAgwruXE6MYtr): **Paul picked
+  volume A** (a thin line under the transport, the width of the progress
+  line, small speaker icons each end, dot only while touched; hidden on
+  the smallest iPhones) **and ending time B** (tap the time left to swap
+  "−41:48" for "ends 21:42" and back). Paul: "add in everything
+  outstanding and build" (13 Nov 2026). All three batches built the same
+  evening by four helpers in parallel, merged on this branch:
+  - Colour: the page mist mixes 24% of the show's colour (was 12%), its
+    glow 16%; Undo is a dark toast near the top in Haar (`UndoBar`
+    toast, `RootView` overlay).
+  - Now (`App/HaarPlayer.swift`): AirPlay · grab handle (tap = Find) · ⋯
+    (adds "Speed and sound…" = `PlayerOptionsSheet`, and Chapters);
+    artwork up to 280 pt radius 46 with a Read along pill when words are
+    ready; show name in accent caps above the serif title (33, or 25 over
+    44 characters); plain line; time row with `HaarChapterControl` in the
+    middle (opens the chapters sheet even with none) and time left that
+    swaps to "ends HH:MM" on tap ("haarShowEnds"); `HaarTransport`:
+    speed cycler 1 / 1.3 / 1.5 / 2×, skips, a 70 pt play circle in the
+    accent, sleep moon cycling Off / 15 / 30 / 45 / 60 / End;
+    `HaarVolumeLine` (hidden at 680 pt tall or less); the Up next stack
+    (`App/HaarUpNext.swift`, 76 pt frosted card, two peeking above, "47
+    min left · skips 2 ads · words ready"); ad as a dark pill at the top;
+    chapter flash pill. Gone: the Options words row, chapter pill row,
+    "ends" middle text, "Playing on", the big ad block.
+  - Read along: the same screen morphs (0.7 s): artwork to a 60 pt
+    corner square, ⌄ back, words rise in; `HaarWordsOnTheWay` empty state
+    ("Words are on their way.", %, Transcribe now); speaker names, the
+    current word in the accent, chapter rules in italic serif, Make a
+    clip.
+  - Up next (`HaarUpNextList`): in place, not a sheet; cards fly in;
+    "clears by" time; long-press reorder; swipe right Play next / left
+    Played with Undo; rank pills; the episode playing isn't listed; Keep
+    playing toggle at the end.
+  - Navigation (`HaarRoot`): swipes start at 12 pt and fire at 48;
+    Library slides from the right and Find from the top on the 0.7 s
+    curve over a see-through layer (Library still draws its own fog, so
+    it's solid); dock 224×58 with one sliding dot, no play button.
+  - Library (`HaarLibrary.swift`, `LibraryView`): serif "Library" 44
+    header with + and sliders, summary "9 shows · 3 ranked · 26 unplayed",
+    caps section labels, New as one card by day with Clear all, Carry on
+    rings on the left in the show's colour, tiles radius 24 (rank and "n
+    new" pill as Paul chose), Shelves as one card with detail lines and a
+    new Finished list.
+  - Show page (`HaarShow.swift`, `HaarShowParts.swift`): its own Haar
+    page in a translucent radius-36 sheet: 88 pt artwork, serif 32 name,
+    "Twice a week · 592 episodes", Following ✓ / ▶ Play latest, Episodes /
+    Settings tabs under the header, episodes in one card with NEW / IN UP
+    NEXT / PLAYED labels (tap plays, swipes, menu), Settings with the
+    Top priority ↑ #n ↓, switches, and word choices for where new
+    episodes go, intro / outro skip, speed, keep downloads. Not on it
+    (yet): searching the show's episodes and Select mode. Older values
+    outside the word choices show nothing underlined.
+  - Chapters (`HaarChapters.swift`, `HaarChaptersSheet`): timeline sheet
+    (rail, nodes, current in serif accent with minutes left), "Chapters
+    arrive with the words." when there are none, From the show / Auto
+    words, Stop at chapter end (`PlayerModel.setStopAtChapterEnd`,
+    fades and pauses at the chapter's end) and Skip this chapter.
+
+- **Haar show page, swipe back, plain line** (Paul, 13 Nov 2026, after
+  build 151: "let's work the show page and swipe back (if valid)"; "the
+  waveform shape doesn't need to mimic the real sound … simplify this
+  line like Poddeck had"). On the branch, not built:
+  - Show pages open as a sheet over wherever you are
+    (`HaarShowSheet` in `App/HaarShow.swift`, from `store.showSheet`,
+    presented by `HaarRoot`): Episodes / Settings as two words at the
+    top with Done; Episodes is the usual `ShowView` (kept alive so it
+    keeps its place), Settings is `ShowSettingsView(embedded: true)`; the
+    show page's settings key and "Show settings" switch to the Settings
+    page (`\.openShowSettings`). Opened from Library's grid, Find's
+    "Your shows", the player's ⋯ Go to show / show name and an episode
+    page's show (`revealShow` → HaarRoot; no tab switch, no push). An
+    episode page opened from the sheet shows over it (the root view's
+    episode sheet stands aside while a show sheet is up).
+  - Swipe right on Library's first page goes back to Now (`SwipeRight`,
+    a pan that only starts when moving right, so scrolling isn't
+    touched; pages pushed on Library, e.g. History, keep iOS's back
+    swipe). Valid now that shows no longer push inside Library.
+  - The waveform is gone: `HaarScrubLine` is a plain line like
+    Poddeck's (5 pt, split by 3 pt gaps at chapters, played in ink,
+    ahead faded, ads paler, an ink dot at the play point; thicker with a
+    bigger dot while dragging). Same drag rules, bubble and Undo.
+  - Your shows grid (Paul's build 151 screenshot: the counters were lost
+    on the artwork and the 1–4 rank badges didn't work): the rank is off
+    the artwork, a serif number beside the show's name; the new count is
+    a solid dark pill with a white edge, "1 new", in the top corner
+    (`HaarShowTile`).
+  - Last rows stuck behind the dock (Paul's build 151 screenshot:
+    Library's Shelves couldn't scroll clear): Library and Find got their
+    room as safe-area padding round their navigation stacks, which didn't
+    reach the lists inside; now a bottom scroll margin of dock + 12 pt
+    (`contentMargins` in `HaarRoot`), which also covers pages pushed on
+    them (History, Stats…).
+
 ## Queued for the next app build
 
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
