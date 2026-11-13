@@ -1796,7 +1796,11 @@ check compiles it):
   and every full-row swipe action (`PosterSwipe`) now happens inside one
   animation (`LibraryStore.listChange`, snappy 0.32 s), so lists close
   up, move and reopen smoothly, Undo included; the Undo bar slides up
-  from the bottom and away (`UndoBar`). On the branch.
+  from the bottom and away (`UndoBar`). Show pages (Paul's second
+  recording): the swipe was put on inside the row's white card, so only
+  the words slid and they ran over the coloured action block; the swipe
+  is now outside the card (`ShowView` `leadingSwipe` / `trailingSwipe`),
+  so the whole card slides, like Up Next. On the branch.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

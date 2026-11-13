@@ -98,6 +98,7 @@ struct ShowView: View {
                     .tag(episode.episodeID)
                     .modifier(ShowEpisodeCard(url: show.artworkURL, title: show.title,
                                               playing: player.nowPlaying?.episodeID == episode.episodeID))
+                    .posterSwipe(leading: leadingSwipe(episode), trailing: trailingSwipe(episode), enabled: !selecting)
                 }
             }
         }
@@ -224,15 +225,23 @@ struct ShowView: View {
                 store.undoable("Marked \(older.count) played", episodes: older) { store.markPlayed(older) }
             }
         }
-        // Full-row swipes (poster look): right to play next, left played
-        // (or unplayed).
-        .posterSwipe(
-            leading: PosterSwipeAction(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", colour: Poster.swipeAdd) { store.playNext(episode) },
-            trailing: episode.played
-                ? PosterSwipeAction(title: "Unplayed", icon: "circle", colour: Theme.muted, action: { store.markUnplayed(episode) })
-                : PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed, action: {
-                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                }))
+    }
+
+    /// Full-row swipes (poster look): right to play next, left played (or
+    /// unplayed). Put on outside the row's card, so the whole card slides
+    /// over the action (inside it, only the words moved and slid over the
+    /// coloured block; Paul's recording, 13 Nov 2026).
+    private func leadingSwipe(_ episode: PodcastEpisode) -> PosterSwipeAction {
+        PosterSwipeAction(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", colour: Poster.swipeAdd) { store.playNext(episode) }
+    }
+
+    private func trailingSwipe(_ episode: PodcastEpisode) -> PosterSwipeAction {
+        if episode.played {
+            return PosterSwipeAction(title: "Unplayed", icon: "circle", colour: Theme.muted) { store.markUnplayed(episode) }
+        }
+        return PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed) {
+            store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+        }
     }
 
     /// The show's header, plain on the warm page (Paul, 12 Nov 2026: the
