@@ -135,13 +135,15 @@ struct RootView: View {
         content
         // Undo and No internet float above the tab bar (or Haar's dock)
         // while they show.
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: Theme.isHaar ? .top : .bottom) {
+            // Haar (prototype): toasts sit near the top, under the top bar.
             VStack(spacing: 6) {
                 OfflineBar()
                 UndoBar()
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, Theme.isHaar ? 84 : 128)
+            .padding(.horizontal, Theme.isHaar ? 20 : 12)
+            .padding(.top, Theme.isHaar ? 64 : 0)
+            .padding(.bottom, Theme.isHaar ? 0 : 128)
         }
         .haarPage()
         .onChange(of: quickActions.pending, initial: true) { _, action in
