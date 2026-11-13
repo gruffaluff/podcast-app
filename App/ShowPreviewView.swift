@@ -144,7 +144,7 @@ struct ShowPreviewView: View {
         let meta = [episode.published.map { $0.formatted(date: .abbreviated, time: .omitted) },
                     episode.duration.map { TimeFormat.clock($0) }].compactMap { $0 }.joined(separator: " · ")
         return VStack(alignment: .leading, spacing: 4) {
-            PosterRowText(label: meta, title: episode.title, titleSize: 18, lines: 3)
+            PosterRowText(label: meta, title: episode.title, titleSize: 18, lines: 2)
             if !summary.isEmpty {
                 Text(summary)
                     .font(isOpen ? .subheadline : .caption)

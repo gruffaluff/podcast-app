@@ -448,15 +448,15 @@ private struct EpisodeRow: View {
             // A poster row: when, how long and its state on the label line
             // ("● NEW" unplayed, "✓ PLAYED" faded), then the title big.
             PosterRowText(label: label, title: episode.title, titleSize: 18, lines: 2, dim: episode.played && !isPlaying, onColour: isPlaying)
-            if !episode.summary.isEmpty {
-                Text(episode.summary)
-                    .font(expanded ? .subheadline : .caption)
-                    .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : (expanded ? Theme.ink : Theme.muted))
-                    .lineLimit(expanded ? nil : 1)
-            }
-            if !episode.played || isPlaying {
-                EpisodeLights(episode: episode, onDark: isPlaying)
-            }
+            // Every line is always there (blank when there's nothing to
+            // show), so all the rows are one size (Paul, 13 Nov 2026).
+            Text(episode.summary.isEmpty ? " " : episode.summary)
+                .font(expanded ? .subheadline : .caption)
+                .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : (expanded ? Theme.ink : Theme.muted))
+                .lineLimit(expanded ? nil : 1)
+            EpisodeLights(episode: episode, onDark: isPlaying)
+                .opacity(!episode.played || isPlaying ? 1 : 0)
+                .accessibilityHidden(episode.played && !isPlaying)
         }
         .padding(.vertical, 2)
         .frame(maxWidth: .infinity, alignment: .leading)

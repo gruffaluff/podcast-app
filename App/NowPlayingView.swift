@@ -897,7 +897,9 @@ private struct PlayerUpNextCard: View {
                     Text(episode.title)
                         .font(Theme.title(17))
                         .foregroundStyle(Theme.ink)
-                        .lineLimit(2)
+                        // Two lines' room even for a short title, so the
+                        // rows are all one size (Paul, 13 Nov 2026).
+                        .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
                     Text(detail(episode))
                         .font(Theme.mono(8.5))

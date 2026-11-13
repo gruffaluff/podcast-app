@@ -1812,6 +1812,18 @@ check compiles it):
   switches in the accent; no footers; "+5" beside the sleep timer while
   it runs. On the branch.
 
+- **Rows one size everywhere** (Paul, 13 Nov 2026, two player Up Next
+  screenshots: a one-line title made a shorter row; "keep these rows a
+  consistent size regardless of text … apply this rule throughout. If it
+  needs to be bigger, so be it"). Episode titles always take two lines'
+  room (`.lineLimit(2, reservesSpace: true)`): Up Next tab and pulled-up
+  (`QueueRow`), the player's Up Next (`PlayerUpNextCard`), Library's New
+  card, and every `PosterRowText` (show pages, show previews, now 2 lines
+  not 3, Search, Discover, History, Storage, Chapters, suggestions), whose
+  label line is also always there. Show page rows always keep their notes
+  line and DL / TX line (blank / hidden when there's nothing). Carry on
+  rows were already one line each. On the branch.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
