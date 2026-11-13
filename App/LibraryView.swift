@@ -79,6 +79,11 @@ struct LibraryView: View {
             ScrollView {
                 // Lazy: rows are only made as they scroll into view.
                 LazyVStack(alignment: .leading, spacing: 10) {
+                    if Theme.isHaar {
+                        // Haar: the title, + and settings in the page (no
+                        // navigation bar title), with a summary line.
+                        haarHeader
+                    }
                     if shows.isEmpty {
                         emptyState
                     } else if Theme.isHaar {
@@ -126,6 +131,8 @@ struct LibraryView: View {
             .onAppear { continuing = carryOn(playing: player.nowPlaying?.episodeID) }
             .onChange(of: player.nowPlaying?.episodeID) { _, id in continuing = carryOn(playing: id) }
             .tabTitle("Library")
+            // Haar draws its own serif title and keys in the page.
+            .toolbar(Theme.isHaar ? .hidden : .automatic, for: .navigationBar)
             .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
             // From the player's / an episode page's show name.
             .onChange(of: store.revealShow, initial: true) { _, show in
@@ -137,21 +144,17 @@ struct LibraryView: View {
             // (Paul, build 143: their own row left gaps above and below).
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    if Theme.isHaar {
-                        // Haar: History and Stats are shelves at the foot of
-                        // Library; settings live here (there's no Up Next tab).
-                        Button { showingSettings = true } label: { Image(systemName: "gearshape") }
-                            .accessibilityLabel("Shows and settings")
-                    } else {
+                    // Haar hides this bar: its keys sit in `haarHeader`.
+                    if !Theme.isHaar {
                         NavigationLink { HistoryView() } label: { Image(systemName: "clock.arrow.circlepath") }
                             .accessibilityLabel("History")
                         NavigationLink { StatsView() } label: { Image(systemName: "chart.bar") }
                             .accessibilityLabel("Stats")
+                        Button { addingShow = true } label: {
+                            Image(systemName: "plus")
+                        }
+                        .accessibilityLabel("Add a show")
                     }
-                    Button { addingShow = true } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("Add a show")
                 }
             }
             .sheet(isPresented: $addingShow) { AddShowView() }
@@ -169,6 +172,55 @@ struct LibraryView: View {
     }
 
     private var sort: ShowsSort { ShowsSort(rawValue: showsSort) ?? .newestEpisode }
+
+    // MARK: Haar header
+
+    /// "Library" in the serif with + (Add a show) and the settings key on
+    /// the right, then "9 shows · 3 ranked · 26 unplayed".
+    private var haarHeader: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: 0) {
+                Text("Library")
+                    .font(Theme.serif(44))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                haarHeaderKey("plus", label: "Add a show") { addingShow = true }
+                haarHeaderKey("slider.horizontal.3", label: "Shows and settings") { showingSettings = true }
+            }
+            if !shows.isEmpty {
+                Text(haarSummary)
+                    .font(Theme.text(13))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 8)
+        .padding(.top, 6)
+    }
+
+    private func haarHeaderKey(_ icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 19, weight: .medium))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    /// Followed shows · Top shows · unplayed episodes.
+    private var haarSummary: String {
+        let ranked: Int = shows.filter { $0.autoAdd == .top }.count
+        let unplayedQuery = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.played == false })
+        let unplayed: Int = (try? store.context.fetchCount(unplayedQuery)) ?? 0
+        let showWord: String = shows.count == 1 ? "show" : "shows"
+        return "\(shows.count) \(showWord) · \(ranked) ranked · \(unplayed) unplayed"
+    }
 
     /// Started episodes, the one playing first (it's shown as the dark
     /// playing card, like everywhere else).
