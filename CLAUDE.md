@@ -2081,6 +2081,27 @@ tab bar and the Native warm screens (`RootView.content`).
 
 ## Queued for the next app build
 
+- **After build 152** (Paul, 13 Nov 2026, screenshots of the show
+  Settings tab, the Now screen and Up next's Keep playing row): scrolling
+  "not the smoothest … low framerate"; the Settings word choices look odd
+  all left-aligned; not sure about the sliding layers ("swiping between
+  screens using the menu bar?"); iOS's own volume bar pops up at the side
+  when the volume changes; title font "nice but too elegant"; menus like
+  Keep playing were plain text in the mock-up, no white card ("replicate
+  throughout", e.g. Downloads / Saved clips); the New box looks odd; other
+  ways to show Your shows. Being fixed on the branch (no choice needed):
+  smoother scrolling (one fog, no live blur under cards), plain-text menu
+  rows, keeping iOS's volume bar away. Options to pick from:
+  https://claude.ai/artifact/BPRLRv99kWnq74Hr3aKdKp (1 title font: Now
+  Instrument Serif, A Fraunces soft (suggested), B Newsreader, C SF
+  Rounded, D Bricolage Grotesque, E SF Pro bold; 2 moving between Now /
+  Library / Find: Now slide, A quick fade (suggested), B pages side by
+  side, C instant; 3 settings choices: Now left-aligned, A spread across
+  (suggested), B soft switch, C value on the right; 4 New: Now card by
+  day, A plain list (suggested), B artwork row, C one-line summary; 5 Your
+  shows: Now 3 across, A plain list (suggested), B 2 across, C Top shows
+  row then a list). Waiting on Paul's picks.
+
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
   asked if they matched; they don't). In Native warm, Your shows cards
   are ~60 pt, Carry on ~66 pt, the playing Carry on card ~70 pt
