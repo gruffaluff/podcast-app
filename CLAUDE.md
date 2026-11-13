@@ -2100,7 +2100,10 @@ tab bar and the Native warm screens (`RootView.content`).
   (suggested), B soft switch, C value on the right; 4 New: Now card by
   day, A plain list (suggested), B artwork row, C one-line summary; 5 Your
   shows: Now 3 across, A plain list (suggested), B 2 across, C Top shows
-  row then a list). Waiting on Paul's picks.
+  row then a list). Paul asked to see SF Rounded with the suggested
+  picks together: https://claude.ai/artifact/32Yjrqvdz3igPu7m1wHoFN (Now,
+  Up next, Library, show settings, Find; the dock fades between screens).
+  Waiting on Paul's picks.
 
 - **Carry on and Your shows cards one height** (Paul, 13 Nov 2026, FNB:
   asked if they matched; they don't). In Native warm, Your shows cards
