@@ -1899,6 +1899,76 @@ Built in phases so each one can be tried on the phone:
 Not decided yet: Dusk (a darker fog for evenings; Night stays the dark
 scheme for now).
 
+Phases 2-4 built the same evening (Paul, 13 Nov 2026: "get all phases
+worked through while I do dinner and bedtime and then we can build and
+test it all in one go"), same branch / PR #69, not merged. Built without a
+compiler (GitHub's check compiles it). Only in the Haar look: every other
+scheme (Sand, Slate, Clay, Night, so also AUTO in dark mode) keeps iOS's
+tab bar and the Native warm screens (`RootView.content`).
+- Player as home: `App/HaarPlayer.swift` (`HaarNowView`). Top: AirPlay,
+  "Playing on …" when not the iPhone, ⋯ menu (episode notes, go to show,
+  download / remove / stop, transcribe now / stop / read along, share
+  link, mark played). Big artwork + serif title (tap the title for notes,
+  the show line for the show); tap the artwork or "Read along" and it
+  shrinks beside the title while `HaarReadAlong` fills the space (line
+  now in the serif, words lit across the line's time, interpolated
+  between the player's twice-a-second updates; chapter rules; tap a line
+  to play from it; hold for Share a clip / Copy; Back to now). Chapter
+  pill "‹ 4/6 · title ›" (tap for `ChaptersView` as a sheet), a frosted
+  chapter card floats in for 3 s when a new chapter starts while playing.
+  `HaarWave`: 64 bars (shape made up from the episode ID, not the real
+  sound), played in ink, ads fainter, chapter dots under; drag anywhere,
+  moves by how far the finger travels, lower = finer, bubble, Undo for 2
+  min+ jumps (no "start from the play point" rule here: a touch can't
+  jump). Times + "ends 19:42", skip / play / skip, the volume (only on
+  taller screens), Options (`PlayerOptionsSheet`, summary like "1.2× ·
+  Trim") · Read along · Chapters as plain words, `HaarUpNextStack` (next
+  episode as the top of a small card stack; tap for Up next). Nothing
+  playing: the top of Up Next big with Play, or "Nothing playing" + Find
+  something. No episode notes on the page (⋯ → Episode notes).
+- Navigation: `App/HaarRoot.swift`. The old full-screen player and the
+  mini player aren't used in Haar ("open the player" goes home). Library
+  slides in from the right, Find drops from the top (each made the first
+  time, then kept, so they keep their place); Up next is `UpNextSheet`
+  (medium / large). Swipes on home: up Up next, down Find, left Library
+  (the waveform, read-along and buttons keep their own touches). Back:
+  the dock, Find's handle (swipe up), Up next swipes down. No swipe back
+  from Library (it would fight the show page's own back swipe). `HaarDock`
+  floats at the bottom (Now · Library · Find, dot under the current one,
+  a play / pause on the left when away from Now). Layers get bottom
+  padding so their last rows clear the dock; Undo sits 84 pt up.
+  `tab` is 0 Now, 1 Library, 2 Find in Haar.
+- Find: `App/HaarFind.swift` (`HaarFindView`). One box: Your shows,
+  Episodes (tap plays), Said in your episodes (transcript search), New
+  shows (Apple's directory). Empty: recent searches, New to you (like a
+  followed show), the chart with category words (All, News, Comedy…)
+  and `HaarChartRow` (big serif rank, ▲ n / ▼ n / NEW / – under it, Follow
+  as a word). Movement: `ChartHistory` keeps each chart's ranks per day
+  in UserDefaults ("chartHistory.<uk or genre id>"); the first day shows
+  no marks.
+- Library: `App/HaarLibrary.swift` (`HaarLibrarySections`, used by
+  LibraryView in Haar). New grouped Today / Yesterday / This week (one
+  week, as before; artwork plays, row opens the episode page, + adds to
+  Up next, ✓ played with Undo; Add all to Up next / Mark all played),
+  Carry on with a ring round play, Your shows as a 3-across artwork grid
+  (Top shows first with their rank in the corner, new-this-week count),
+  shelves: Downloads (`StorageView`), Saved clips (`HaarSavedClipsView`),
+  History, Stats. The gear (top right) opens the settings screen
+  (`TopPriorityView`; in Haar there's no Up Next tab to open it from).
+  Show pages are still pushed, not a sheet with Episodes / Settings tabs
+  (the push keeps "go to show" and the back swipe working; the settings
+  key on the show page covers settings).
+- Settings → Colours (Haar only): Fog slider (light to thick, "haarFog",
+  0–1.4, default 1) and "Tint the mist with each show" ("haarTint",
+  default on), read by `FogBackdrop`. Not synced (this iPhone).
+- Opened up for reuse: `RoutePicker`, `PlayerOptionsSheet`,
+  `SystemVolumeSlider` (NowPlayingView.swift), `TranscriptResultRow`,
+  `ClipRow` (SearchView.swift).
+- To check on the phone: swipes on home vs scrubbing / read-along
+  scrolling, the dock over the last rows, the artwork size on a smaller
+  iPhone, word lighting timing, the chart marks from the second day, fog
+  cost (the page fog is drawn under each layer).
+
 ## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
