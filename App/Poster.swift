@@ -180,17 +180,18 @@ struct PosterRowText: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            if !label.isEmpty {
-                Text(label.uppercased())
-                    .font(Theme.mono(9.5))
-                    .tracking(0.8)
-                    .foregroundStyle(onColour ? Poster.paper.opacity(0.8) : Theme.muted)
-                    .lineLimit(1)
-            }
+            // The label line is always there (blank if empty): one height.
+            Text(label.isEmpty ? " " : label.uppercased())
+                .font(Theme.mono(9.5))
+                .tracking(0.8)
+                .foregroundStyle(onColour ? Poster.paper.opacity(0.8) : Theme.muted)
+                .lineLimit(1)
             Text(title)
                 .font(Theme.title(titleSize))
                 .foregroundStyle(onColour ? Poster.paper : (dim ? Theme.muted : Theme.ink))
-                .lineLimit(lines)
+                // Always the room of `lines` lines, so every row is the same
+                // height whatever the title (Paul, 13 Nov 2026).
+                .lineLimit(lines, reservesSpace: true)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -293,7 +294,9 @@ private struct PosterSwipe: ViewModifier {
         let direction: CGFloat = offset > 0 ? 1 : -1
         withAnimation(.easeOut(duration: 0.18)) { offset = direction * 480 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            fire.action()
+            // Animated, so the list closes up (or the row moves) smoothly
+            // instead of jumping (Paul's recording, 13 Nov 2026).
+            withAnimation(LibraryStore.listChange) { fire.action() }
             withAnimation(.spring(duration: 0.35)) { offset = 0 } completion: { side = 0 }
         }
     }

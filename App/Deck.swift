@@ -321,6 +321,16 @@ extension View {
     /// the lifted copy is just the rounded card, with no square of the
     /// page round it (Paul, build 145 screenshot). The row's own
     /// background is clear, so only the card is lifted.
+    /// For a sheet opened from inside the player: the player paints its
+    /// text and keys in light paper, and a sheet opened from within it took
+    /// that on (Paul, 13 Nov 2026: Share a clip's Cancel / Share and switch
+    /// labels were washed out). Back to the app's ink and accent.
+    func normalColours() -> some View {
+        self
+            .foregroundStyle(Theme.ink)
+            .tint(Theme.accentFill)
+    }
+
     func reorderCardRow() -> some View {
         self
             .contentShape(.dragPreview, RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))

@@ -500,7 +500,7 @@ private struct NewPaperLine: View {
                     Text(episode.title)
                         .font(Theme.title(17))
                         .foregroundStyle(Theme.ink)
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: true)
                 }
                 HStack(spacing: 6) {
                     Text(line)

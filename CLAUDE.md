@@ -195,7 +195,8 @@ to Nowhere / Top / Bottom" on the show page.
   summaries, video podcasts, video clip cards (stay as they are, no new
   work), Apple Watch (maybe later if others ask), speaker separation
   (removed: battery not worth it; publisher transcripts still name
-  speakers). Later: smart lists, folders, extra Podcasting 2.0 tags.
+  speakers; Paul confirmed again 13 Nov 2026: "not worth the hassle").
+  Later: smart lists, folders, extra Podcasting 2.0 tags.
   Off-phone transcription: not now (Groq-type services are pennies a
   month if ever wanted).
 - **Real-time new-episode alerts** (free; Paul approved 4 Nov 2026):
@@ -1786,6 +1787,59 @@ check compiles it):
   "5 more minutes" while it runs. The in-player panel is gone, so nothing
   on the player moves. Paul: keep labels like "Options" centred under
   their icons (the mock-up's weren't; the app's are).
+
+## Done in build 150 (13 Nov 2026, PR #68; Paul: "build")
+
+- **Smoother swipes and Undo** (Paul's recording, 13 Nov 2026, build
+  149: swiping an Up Next row to Played, the row vanished in one jump
+  and the rows below leapt up; Undo popped it back; the Undo bar popped
+  in and out). Every change that can be undone (`LibraryStore.undoable`)
+  and every full-row swipe action (`PosterSwipe`) now happens inside one
+  animation (`LibraryStore.listChange`, snappy 0.32 s), so lists close
+  up, move and reopen smoothly, Undo included; the Undo bar slides up
+  from the bottom and away (`UndoBar`). Show pages (Paul's second
+  recording): the swipe was put on inside the row's white card, so only
+  the words slid and they ran over the coloured action block; the swipe
+  is now outside the card (`ShowView` `leadingSwipe` / `trailingSwipe`),
+  so the whole card slides, like Up Next.
+
+- **Options sheet tidied** (Paul's build 149 screenshot, 13 Nov 2026:
+  blue icons and + didn't fit, the see-through glass was too cloudy, and
+  the sleep timer was hidden until you swiped up): `PlayerOptionsSheet`
+  is now one compact layout sized exactly to its contents
+  (`presentationDetents([.height(measured)])`), so everything shows at
+  once; solid warm page (`presentationBackground(Theme.background)`) with
+  white cards; icons, − / + and Done in ink, the chosen quick speed and
+  switches in the accent; no footers; "+5" beside the sleep timer while
+  it runs.
+
+- **Rows one size everywhere** (Paul, 13 Nov 2026, two player Up Next
+  screenshots: a one-line title made a shorter row; "keep these rows a
+  consistent size regardless of text … apply this rule throughout. If it
+  needs to be bigger, so be it"). Episode titles always take two lines'
+  room (`.lineLimit(2, reservesSpace: true)`): Up Next tab and pulled-up
+  (`QueueRow`), the player's Up Next (`PlayerUpNextCard`), Library's New
+  card, and every `PosterRowText` (show pages, show previews, now 2 lines
+  not 3, Search, Discover, History, Storage, Chapters, suggestions), whose
+  label line is also always there. Show page rows always keep their notes
+  line and DL / TX line (blank / hidden when there's nothing). Carry on
+  rows were already one line each.
+
+- **Sheets from inside the player washed out** (Paul's screenshot, 13
+  Nov 2026: Share a clip's Cancel / Share and the Include audio / Link to
+  the moment labels were pale on pale). The player paints its text and
+  keys in paper, and sheets opened from inside it (Share a clip from the
+  transcript panel, the full Chapters list from the chapters panel) took
+  that on. They now reset to ink and the accent (`normalColours()` in
+  Deck.swift).
+
+- **Playing bars calmer** (Paul's recording, 13 Nov 2026: the little
+  red bars on the playing card were "a bit wild", jumping about). They
+  were a repeating animation that every redraw of the row (its progress
+  line ticks twice a second) restarted. `PlayingBars` now follows the
+  clock: each bar a slow, smooth wave of its own (1.1–1.7 s, 4–9 pt),
+  so redraws can't jolt them; still and level while paused.
+
 
 ## Queued for the next app build
 

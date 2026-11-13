@@ -98,6 +98,7 @@ struct ShowView: View {
                     .tag(episode.episodeID)
                     .modifier(ShowEpisodeCard(url: show.artworkURL, title: show.title,
                                               playing: player.nowPlaying?.episodeID == episode.episodeID))
+                    .posterSwipe(leading: leadingSwipe(episode), trailing: trailingSwipe(episode), enabled: !selecting)
                 }
             }
         }
@@ -224,15 +225,23 @@ struct ShowView: View {
                 store.undoable("Marked \(older.count) played", episodes: older) { store.markPlayed(older) }
             }
         }
-        // Full-row swipes (poster look): right to play next, left played
-        // (or unplayed).
-        .posterSwipe(
-            leading: PosterSwipeAction(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", colour: Poster.swipeAdd) { store.playNext(episode) },
-            trailing: episode.played
-                ? PosterSwipeAction(title: "Unplayed", icon: "circle", colour: Theme.muted, action: { store.markUnplayed(episode) })
-                : PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed, action: {
-                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                }))
+    }
+
+    /// Full-row swipes (poster look): right to play next, left played (or
+    /// unplayed). Put on outside the row's card, so the whole card slides
+    /// over the action (inside it, only the words moved and slid over the
+    /// coloured block; Paul's recording, 13 Nov 2026).
+    private func leadingSwipe(_ episode: PodcastEpisode) -> PosterSwipeAction {
+        PosterSwipeAction(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", colour: Poster.swipeAdd) { store.playNext(episode) }
+    }
+
+    private func trailingSwipe(_ episode: PodcastEpisode) -> PosterSwipeAction {
+        if episode.played {
+            return PosterSwipeAction(title: "Unplayed", icon: "circle", colour: Theme.muted) { store.markUnplayed(episode) }
+        }
+        return PosterSwipeAction(title: "Played", icon: "checkmark", colour: Poster.swipePlayed) {
+            store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
+        }
     }
 
     /// The show's header, plain on the warm page (Paul, 12 Nov 2026: the
@@ -439,15 +448,15 @@ private struct EpisodeRow: View {
             // A poster row: when, how long and its state on the label line
             // ("● NEW" unplayed, "✓ PLAYED" faded), then the title big.
             PosterRowText(label: label, title: episode.title, titleSize: 18, lines: 2, dim: episode.played && !isPlaying, onColour: isPlaying)
-            if !episode.summary.isEmpty {
-                Text(episode.summary)
-                    .font(expanded ? .subheadline : .caption)
-                    .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : (expanded ? Theme.ink : Theme.muted))
-                    .lineLimit(expanded ? nil : 1)
-            }
-            if !episode.played || isPlaying {
-                EpisodeLights(episode: episode, onDark: isPlaying)
-            }
+            // Every line is always there (blank when there's nothing to
+            // show), so all the rows are one size (Paul, 13 Nov 2026).
+            Text(episode.summary.isEmpty ? " " : episode.summary)
+                .font(expanded ? .subheadline : .caption)
+                .foregroundStyle(isPlaying ? Poster.paper.opacity(0.8) : (expanded ? Theme.ink : Theme.muted))
+                .lineLimit(expanded ? nil : 1)
+            EpisodeLights(episode: episode, onDark: isPlaying)
+                .opacity(!episode.played || isPlaying ? 1 : 0)
+                .accessibilityHidden(episode.played && !isPlaying)
         }
         .padding(.vertical, 2)
         .frame(maxWidth: .infinity, alignment: .leading)

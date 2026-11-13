@@ -284,7 +284,8 @@ struct QueueRow: View {
             Text(episode.title)
                 .font(Theme.title(17))
                 .foregroundStyle(isPlaying ? Poster.paper : Theme.ink)
-                .lineLimit(2)
+                // Two lines' room even for a short title: rows stay one size.
+                .lineLimit(2, reservesSpace: true)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

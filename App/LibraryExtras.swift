@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 import PodcastCore
 
 /// Something Paul just did that an Undo bar can reverse.
@@ -14,10 +15,16 @@ struct UndoAction: Identifiable {
 extension LibraryStore {
     /// Runs a change to some episodes (and maybe Up Next) and offers Undo:
     /// their played state, position and Up Next go back as they were.
+    /// How lists move when a change adds or takes away rows.
+    static let listChange: Animation = .snappy(duration: 0.32)
+
     func undoable(_ label: String, episodes: [PodcastEpisode], _ change: () -> Void) {
         let queueBefore = queue
         let before = episodes.map { ($0.episodeID, $0.played, $0.playedAt, $0.position) }
-        change()
+        // Animated, so a row that leaves a list closes up smoothly and
+        // comes back the same way on Undo (Paul, 13 Nov 2026: it vanished
+        // in one jump and the rows below leapt up).
+        withAnimation(Self.listChange) { change() }
         undoAction = UndoAction(label: label) { [weak self] in
             guard let self else { return }
             let saved = self.episodes(before.map(\.0))
@@ -28,7 +35,9 @@ extension LibraryStore {
                 episode.position = position
             }
             let present = self.episodes(queueBefore.map(\.episode.id))
-            self.commit(queueBefore.filter { present[$0.episode.id] != nil })
+            withAnimation(Self.listChange) {
+                self.commit(queueBefore.filter { present[$0.episode.id] != nil })
+            }
             self.undoAction = nil
         }
     }
