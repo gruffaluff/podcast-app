@@ -113,11 +113,10 @@ struct HaarShowSheet: View {
 /// a blur), instead of the fog page.
 private struct HaarShowSheetBackground: View {
     var body: some View {
-        ZStack {
-            Rectangle().fill(.ultraThinMaterial)
-            Color(red: 240 / 255, green: 241 / 255, blue: 240 / 255).opacity(0.9)
-        }
-        .ignoresSafeArea()
+        // The app's misty grey page, not near-white (Paul, 14 Nov 2026:
+        // the show cards were "quite white … not on theme").
+        Theme.background
+            .ignoresSafeArea()
     }
 }
 
@@ -342,7 +341,7 @@ private struct HaarShowEpisodes: View {
         }
         .padding(.horizontal, 12)
         .frame(height: 40)
-        .background(Color.white.opacity(0.7), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color.white.opacity(0.4), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     /// Titles and notes that contain every word typed.

@@ -14,11 +14,11 @@ import Observation
 /// and fonts in each; only these colours change. The player and mini
 /// player keep taking their colour from the artwork.
 enum ColourScheme: String, CaseIterable, Identifiable {
-    case haar, sand, slate, clay, night
+    case deck, deckNight, haar, sand, slate, clay, night
 
     var id: String { rawValue }
-    var label: String { rawValue.capitalized }
-    var isDark: Bool { self == .night }
+    var label: String { self == .deckNight ? "Deck night" : rawValue.capitalized }
+    var isDark: Bool { self == .night || self == .deckNight }
 
     /// The settings key (synced through iCloud with the other settings).
     /// Its default, "auto", follows the iPhone: Haar when it's light (the
@@ -28,8 +28,10 @@ enum ColourScheme: String, CaseIterable, Identifiable {
     static let auto = "auto"
 
     /// The scheme a saved setting means, given the iPhone's light / dark.
+    /// Deck (Paul, 14 Nov 2026) is the default: Deck when light, Deck
+    /// night when dark.
     static func resolve(_ setting: String, systemDark: Bool) -> ColourScheme {
-        ColourScheme(rawValue: setting) ?? (systemDark ? .night : .haar)
+        ColourScheme(rawValue: setting) ?? (systemDark ? .deckNight : .deck)
     }
 
     /// The scheme in use. RootView sets it from the saved setting before
@@ -51,6 +53,23 @@ enum ColourScheme: String, CaseIterable, Identifiable {
 
     var palette: Palette {
         switch self {
+        case .deck:
+            // Deck (Paul, 14 Nov 2026, "I love it"; prototype
+            // https://claude.ai/artifact/CC3pxxR1XwBGtnp13xAdbB): a warm
+            // off-white page, white cards with a fine warm edge, ink text;
+            // no accent of its own (the show's artwork colour is used).
+            Palette(background: 0xEEEBE5, surface: 0xFFFFFF, hairline: 0xF0ECE5, controlBorder: 0xE5E1D9,
+                    ink: 0x1C1B1A, muted: 0x6B6862, accentFill: 0x1C1B1A, accentText: 0x1C1B1A,
+                    onAccent: 0xFFFFFF, highlight: 0xF4EFE4, adText: 0x6E4A12,
+                    display: 0x1C1B1A, displayText: 0xFFFFFF, displayDim: 0xC9C5BD,
+                    plate: 0xE5E1D9, playing: 0x1C1B1A)
+        case .deckNight:
+            // Deck in the dark: the same layout, dark warm page and cards.
+            Palette(background: 0x141312, surface: 0x211F1D, hairline: 0x2C2A27, controlBorder: 0x37342F,
+                    ink: 0xF2EFEA, muted: 0xA29E96, accentFill: 0xF2EFEA, accentText: 0xF2EFEA,
+                    onAccent: 0x141312, highlight: 0x2E2B26, adText: 0xFFD66B,
+                    display: 0x2C2A27, displayText: 0xF2EFEA, displayDim: 0x8B877F,
+                    plate: 0x2C2A27, playing: 0x3A3733)
         case .haar:
             // Haar (Paul, 13 Nov 2026): a calm misty grey page with drifting
             // fog (`FogBackdrop`), frosted white cards, soft charcoal ink and
@@ -107,7 +126,7 @@ enum Theme {
     static var hairline: Color { Color(hex: p.hairline) }
 
     /// Corner radius of every list card.
-    static var cardRadius: CGFloat { isHaar ? 18 : 12 }
+    static var cardRadius: CGFloat { isDeck ? 22 : (isHaar ? 18 : 12) }
     /// Deck 0: the plate under the bottom deck.
     static var plate: Color { Color(hex: p.plate) }
     /// Deck 0: the card of the episode playing, wherever it shows (Up Next,
@@ -153,9 +172,42 @@ enum Theme {
     /// The accent when nothing is playing.
     static let softBlack = Color(hex: 0x2B2925)
     /// Haar's deep blue when nothing plays; soft black in the other light schemes.
-    static var idleAccent: Color { ColourScheme.current == .haar ? Color(hex: 0x2B4766) : softBlack }
+    static var idleAccent: Color {
+        switch ColourScheme.current {
+        case .haar: Color(hex: 0x2B4766)
+        case .deck: Color(hex: 0x1C1B1A)
+        default: softBlack
+        }
+    }
     /// Is the Haar look on (fog page, frosted cards, serif titles)?
     static var isHaar: Bool { ColourScheme.current == .haar }
+    /// Is the Deck look on (Paul, 14 Nov 2026): Up next as a deck of
+    /// episode cards, Shows as a deck of show cards, the floating pill
+    /// Up next · Shows · Find, Outfit type, warm page.
+    static var isDeck: Bool { ColourScheme.current == .deck || ColourScheme.current == .deckNight }
+
+    // MARK: Deck tokens (prototype: https://claude.ai/artifact/CC3pxxR1XwBGtnp13xAdbB)
+
+    /// Faint text (#8B877F).
+    static var faint: Color { Color(hex: ColourScheme.current.isDark ? 0x7C7870 : 0x8B877F) }
+    /// The fine card edge (#E5E1D9).
+    static var cardEdge: Color { Color(hex: p.controlBorder) }
+    /// Lines inside cards (#F0ECE5).
+    static var cardLine: Color { Color(hex: p.hairline) }
+    /// Ad sections and the Skip ad chip.
+    static let deckAd = Color(hex: 0xFFD66B)
+    /// Outfit (OFL, bundled in App/Fonts), the Deck type: titles 800,
+    /// body 500-600, small labels 700 in capitals. Falls back to SF.
+    static func outfit(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
+        let name: String
+        switch weight {
+        case .heavy, .black: name = "Outfit-ExtraBold"
+        case .bold: name = "Outfit-Bold"
+        case .medium, .regular, .light, .thin, .ultraLight: name = "Outfit-Medium"
+        default: name = "Outfit-SemiBold"
+        }
+        return .custom(name, size: scaled(size, max: 1.25))
+    }
     /// Behind list rows: clear in Haar so the fog shows through, the page
     /// colour otherwise.
     static var rowBackground: Color { isHaar ? .clear : background }
@@ -196,6 +248,7 @@ enum Theme {
         // Haar: SF Rounded bold (Paul, 13 Nov 2026: Instrument Serif "too
         // elegant"; picked SF Rounded from
         // https://claude.ai/artifact/32Yjrqvdz3igPu7m1wHoFN).
+        if isDeck { return outfit(size * 0.92, .heavy) }
         if isHaar { return rounded(size * 0.88) }
         return .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
     }
@@ -210,13 +263,15 @@ enum Theme {
     /// SF Rounded bold, drawn smaller than the serif sizes it replaced as
     /// it's wider and heavier. Other looks: SF bold.
     static func serif(_ size: CGFloat) -> Font {
-        isHaar ? rounded(size * 0.86) : .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
+        if isDeck { return outfit(size * 0.86, .heavy) }
+        return isHaar ? rounded(size * 0.86) : .system(size: scaled(size * 0.9, max: 1.2), weight: .bold)
     }
 
     /// Row titles (episodes, shows, chapters) and the transcript's lines:
     /// SF Pro semibold.
     static func title(_ size: CGFloat) -> Font {
-        .system(size: scaled(size * 0.9, max: 1.25), weight: .semibold)
+        if isDeck { return outfit(size * 0.92, .bold) }
+        return .system(size: scaled(size * 0.9, max: 1.25), weight: .semibold)
     }
 
     /// Follows the iPhone's text size setting (Dynamic Type), within limits
@@ -234,13 +289,15 @@ enum Theme {
     /// cards, the mini player, share cards) and icons in round keys stay
     /// fixed on purpose.
     static func text(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .system(size: scaled(size), weight: weight)
+        if isDeck { return outfit(size, weight) }
+        return .system(size: scaled(size), weight: weight)
     }
 
     /// Labels, times and counters: SF Pro, small and a little heavier,
     /// with figures that don't jump about as they change.
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         let heavier: Font.Weight = (weight == .regular || weight == .light || weight == .thin || weight == .ultraLight) ? .medium : .semibold
+        if isDeck { return outfit(size + 0.5, weight == .regular ? .semibold : .bold).monospacedDigit() }
         return .system(size: scaled(size + 0.5), weight: heavier).monospacedDigit()
     }
 }

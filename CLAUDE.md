@@ -11,7 +11,12 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 13 Nov 2026, with the Haar look): **"P1 Cassette in the
+screen. Icon (Paul, 14 Nov 2026, with the Deck look): **A "The deck"**:
+three cards, blue #4C8DFF back-left, red #FF5A45 back-right, a white front
+card with an ink edge and an ink play triangle, on the warm #EEEBE5 tile
+(`design/icon/icon_deck_a.svg` / `.png` from `make_deck_icon_a.py`; it
+also writes the app icon, `docs/icon.png` and the badge's IconPreview).
+Before that (13 Nov 2026, with the Haar look): **"P1 Cassette in the
 haar"**: Poddeck's cassette in deep blue (#2B4766) half lost behind two
 bands of fog on a misty grey tile (`design/icon/icon_p1.svg` / `.png` from
 `design/icon/make_haar_icon.py`: rsvg-convert + Pillow; it also writes the
@@ -2136,6 +2141,90 @@ all the suggested picks.**
   stands out"; it only had the pale see-through layer).
 - Sleep moon no longer jumps when the minutes appear: the moon stays put
   and "15M" sits under it as an overlay (`HaarTransport.sleepButton`).
+
+## Done in build 154 (14 Nov 2026, PR #72; Paul: "get a full build going so I can test when I'm home")
+
+
+- **Deck redesign** (Paul, 14 Nov 2026: "I love it"; prototype
+  https://claude.ai/artifact/CC3pxxR1XwBGtnp13xAdbB, file and build notes in
+  `design/deck/`; mock-ups page "v10" on
+  https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7). Up next is a deck of
+  episode cards (top card = the one playing; swipe left Played, right a
+  little "Next in line", right far "To the bottom"; tap the stack to fan
+  it out), Shows a deck of show cards, Find = search + charts; a floating
+  white pill Up next · Shows · Find, a mini player on Shows / Find, the
+  full player as a gradient in the show's colour, Settings behind a gear.
+  Outfit type (bundled, OFL), warm page #EEEBE5, white cards. Every
+  feature stays; `QueueEngine` rules don't change. Paul's answers: carry
+  on from the PR #72 branch (its fixes go out with Deck), plain warm page
+  (no fog), icon A "The deck", build the Layout setting now. Deck is the
+  new default (AUTO = Deck / Deck night); Haar, Sand, Slate, Clay and
+  Night stay pickable with their old screens. Phase 1 (on the branch):
+  `ColourScheme.deck` / `.deckNight`, `Theme.isDeck`, `Theme.outfit`,
+  `App/Fonts/Outfit-*.ttf`, `DeckRoot` (pill, mini player, pages).
+  Then four helpers in parallel, merged on the branch, compiled first
+  time on GitHub's check:
+  - Up next (`DeckUpNext*.swift`): header with the deck mark, "n · done
+    by", gear (Settings sheet); top card (`DeckTopCard`) with swipes
+    (left Played, right 90–200 Next in line, past 200 To the bottom,
+    haptics, stamps), Skip ad chip; four stacked edges with start times;
+    empty deck card; the fan (`DeckUpNextFan`: List + onMove, pull down
+    past 110 to close, row swipes, Keep playing). Fan cards sit 6 pt
+    apart rather than overlapping (iOS's drag-to-reorder stays safe).
+    Next in line / To the bottom reorder `store.queue` as hand placed and
+    load the new top in the player.
+  - Layout setting (`DeckLayout.swift`, "deckLayout": Standard / Big
+    buttons / Calm / Read along; only the top card changes;
+    `DeckLayoutView` in Settings → Look).
+  - Player (`DeckPlayer*.swift`): gradient in the show's colour, ⌄ /
+    UP NEXT · n or PLAYING ON / ⋯, artwork that shrinks for Read along
+    (`DeckReadAlong`), chapter pill + Skip ad, white scrub line (Haar
+    drag rules, Undo), transport, volume on tall screens, Options ·
+    Read along · Chapters · AirPlay; `DeckPlayerChaptersSheet`.
+  - Shows (`DeckShows*.swift`, `DeckShowDeck.swift`): show deck (new
+    first, then Top rank, then A–Z), All your shows tiles, New sheet;
+    `DeckShowPage` (pills, Top / Bottom / Nowhere, episodes with keys and
+    two-distance swipes via `deckShowSwipe`, ⋯ menu); `DeckEpisodePage`
+    (shown by EpisodeNotesView in Deck).
+  - Find (`DeckFind.swift`): search sections, charts with movement,
+    `DeckFollowSheet` (where new episodes go, Alerts, Download the
+    newest; the newest is dealt in on Done); Settings
+    (`DeckSettings.swift`: every Shows-screen setting in grouped cards,
+    `DeckPriorityView`).
+  - Not done: Select mode on the show page; ShowPreviewView still uses
+    the old follow button. To check on the phone: swipe distances (90 /
+    200 pt), pull-down to close the fan, dragging in the fan, the pill
+    over last rows, mini player clearance, Read along timing, Deck night,
+    smaller iPhones.
+
+- **After build 153** (Paul, 14 Nov 2026), on the branch, not built:
+  - Now / Library / Find switch instantly (no fade).
+  - Up next closes by pulling its list down from the top (it only took
+    the swipe on its heading).
+  - Now's transcript word says "Read along" when the words are ready
+    (was "Words ready"); the Read along pill on the artwork is gone; no
+    ticks on done words (Downloaded / Read along just go grey).
+  - Smoother motion: the 0.7 s curves are 0.4 s smooth moves
+    (`HaarNowView.morph` / `rise`, `HaarRoot.slide`); Up next's cards fade
+    in together instead of flying up one by one (the artwork lagged
+    behind its card).
+  - Show page on the app's grey page (`Theme.background`), rows the same
+    grey with hairlines, no white card edge (Paul: "quite white … not on
+    theme").
+  - Mini player and episode page (Paul, 14 Nov 2026: "your picks" from
+    https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH):
+    - **B, slim bar above the dock** over Library and Find while
+      something is on (`HaarMiniBar` in HaarRoot.swift): artwork, title,
+      show · minutes left, play / pause, skip forward, a thin progress
+      line along its foot; tap it to go back to Now. Layers' bottom room
+      grows to clear it.
+    - **A, words like Now** on the episode page in Haar
+      (`HaarEpisodeWords` in EpisodeNotesView.swift): "2nd in Up next"
+      (opens Up next) / "Add to Up next" / "Played" (tap for unplayed);
+      Download / "Downloading 40%" / Downloaded (remove with a confirm);
+      Transcribe / "Transcribing 62%" / Read along (opens the transcript).
+      The white status cards (`EpisodeStatusRows`) and DL / TX letters
+      stay for the other looks; the notes are plain text in Haar.
 
 ## Queued for the next app build
 

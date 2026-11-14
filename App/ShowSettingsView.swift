@@ -320,7 +320,7 @@ struct TopPriorityView: View {
             } header: {
                 DeckHeader(title: "Colours")
             } footer: {
-                Text("Auto uses Haar, or Night when your iPhone is in dark mode. The app redraws in the new colours.")
+                Text("Auto uses Deck, or Deck night when your iPhone is in dark mode. The app redraws in the new colours.")
             }
             .listRowBackground(Theme.surface)
 
