@@ -2250,6 +2250,12 @@ all the suggested picks.**
   effort to drag down"). The Deck player closes past 110 pt or a fast
   flick (`DeckPlayerView`), and the fanned-out Up next past 110 pt
   (`DeckUpNextFan`). Plan: close at about 60 pt, and on a lighter flick.
+- **Tab pill and the last stacked card** (Paul, 14 Nov 2026, FNB,
+  screenshot of the bottom of Up next): the black capsule moving between
+  Up next · Shows · Find is slow (make it instant or a very quick move,
+  `DeckTabPill`); the last of the stacked edges under the top card is
+  much taller than its content, a big empty white area (size it to its
+  content like the others, `DeckUpNext.swift` edges).
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
