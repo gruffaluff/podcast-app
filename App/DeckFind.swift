@@ -44,7 +44,7 @@ struct DeckFindView: View {
         NavigationStack(path: $path) {
             page
                 .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
-                .navigationDestination(for: Podcast.self) { ShowView(show: $0) }
+                .navigationDestination(for: Podcast.self) { DeckShowPage(show: $0) }
         }
     }
 

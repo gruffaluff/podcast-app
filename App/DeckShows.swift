@@ -9,17 +9,7 @@ import PodcastCore
 // opens this week's new episodes; + goes to Find to add a show. Show pages
 // are pushed on this tab's own NavigationStack (also from `revealShow`).
 
-/// Switches Deck's page (0 Up next, 1 Shows, 2 Find). DeckRoot sets it.
-private struct DeckSelectTabKey: EnvironmentKey {
-    static let defaultValue: (Int) -> Void = { _ in }
-}
-
-extension EnvironmentValues {
-    var deckSelectTab: (Int) -> Void {
-        get { self[DeckSelectTabKey.self] }
-        set { self[DeckSelectTabKey.self] = newValue }
-    }
-}
+// `\.deckSelectTab` (switch Deck's page) is defined in DeckUpNext.swift.
 
 /// One followed show with what the Shows tab shows about it, worked out
 /// once per redraw.
