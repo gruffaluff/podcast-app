@@ -2246,6 +2246,11 @@ all the suggested picks.**
 
 ## Queued for the next app build
 
+- **Shorter swipe down to close** (Paul, 14 Nov 2026, FNB: "too much
+  effort to drag down"). The Deck player closes past 110 pt or a fast
+  flick (`DeckPlayerView`), and the fanned-out Up next past 110 pt
+  (`DeckUpNextFan`). Plan: close at about 60 pt, and on a lighter flick.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
