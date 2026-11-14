@@ -59,8 +59,15 @@ struct HaarRoot: View {
                     .accessibilityHidden(true)
             }
             .overlay(alignment: .bottom) {
-                HaarDock(tab: tab, go: go)
-                    .offset(y: safeBottom - dockLift)
+                VStack(spacing: 10) {
+                    if showsMiniBar {
+                        HaarMiniBar { go(0) }
+                            .padding(.horizontal, 16)
+                            .transition(.opacity)
+                    }
+                    HaarDock(tab: tab, go: go)
+                }
+                .offset(y: safeBottom - dockLift)
             }
         }
         // A show opens as a sheet over wherever you are.
@@ -93,6 +100,16 @@ struct HaarRoot: View {
         }
     }
 
+    /// The mini player shows over Library and Find while something is on
+    /// (Paul, 14 Nov 2026, B on
+    /// https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH).
+    private var showsMiniBar: Bool { tab != 0 && player.nowPlaying != nil }
+
+    /// Room under a layer's last row: the dock, and the mini player when it shows.
+    private var layerRoom: CGFloat {
+        Self.dockRoom + 12 + (player.nowPlaying != nil ? HaarMiniBar.height + 10 : 0)
+    }
+
     // MARK: Layers
 
     private func now(bottomRoom: CGFloat) -> some View {
@@ -112,7 +129,7 @@ struct HaarRoot: View {
             // navigation stack, and pages pushed on it); the safe-area
             // padding used before didn't, so the last rows stayed stuck
             // behind the dock (Paul's build 151 screenshot, Shelves).
-            .contentMargins(.bottom, Self.dockRoom + 12, for: .scrollContent)
+            .contentMargins(.bottom, layerRoom, for: .scrollContent)
             // See-through layer over the player (LibraryView draws its own
             // fog page inside, so this shows only where that doesn't reach).
             .background { HaarLayerBackground() }
@@ -125,7 +142,7 @@ struct HaarRoot: View {
     private func find(height: CGFloat) -> some View {
         HaarFindView(close: { go(0) })
             // Same room under the last row as Library.
-            .contentMargins(.bottom, Self.dockRoom + 12, for: .scrollContent)
+            .contentMargins(.bottom, layerRoom, for: .scrollContent)
             // A see-through layer: the player shows faintly behind.
             .background { HaarLayerBackground() }
             .opacity(tab == 2 ? 1 : 0)
@@ -266,5 +283,87 @@ struct HaarDock: View {
         .buttonStyle(.plain)
         .accessibilityLabel(title)
         .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
+
+/// The mini player over Library and Find: artwork, title, show · time
+/// left, play / pause and skip forward, with a thin progress line along its
+/// foot. Tap it (not its buttons) to go back to Now.
+struct HaarMiniBar: View {
+    @Environment(PlayerModel.self) private var player
+    let open: () -> Void
+
+    static let height: CGFloat = 60
+
+    var body: some View {
+        if let item = player.nowPlaying {
+            HStack(spacing: 10) {
+                Color.clear
+                    .frame(width: 42, height: 42)
+                    .overlay {
+                        CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(item.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                    Text(subtitle(item))
+                        .font(.system(size: 12))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Button { player.togglePlayPause() } label: {
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 40, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                SkipButton(direction: .forward, iconSize: 20, frame: 40)
+                    .foregroundStyle(Theme.ink)
+                    .tint(Theme.ink)
+            }
+            .padding(.horizontal, 10)
+            .frame(height: Self.height)
+            .background(alignment: .bottomLeading) { progress }
+            .background(Color(red: 244 / 255, green: 246 / 255, blue: 247 / 255).opacity(0.96))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.white, lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
+            .shadow(color: Color(hex: 0x1F2328).opacity(0.16), radius: 15, y: 12)
+            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .onTapGesture(perform: open)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Goes back to Now")
+        }
+    }
+
+    private var progress: some View {
+        GeometryReader { geometry in
+            let fraction: Double = player.duration > 0 ? min(1, max(0, player.currentTime / player.duration)) : 0
+            Rectangle()
+                .fill(Theme.accentFill)
+                .frame(width: geometry.size.width * CGFloat(fraction), height: 3)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func subtitle(_ item: PlayerModel.NowPlaying) -> String {
+        let left: TimeInterval = max(0, player.duration - player.currentTime)
+        guard player.duration > 0 else { return item.showTitle }
+        let minutes = Int((left / 60).rounded(.up))
+        return item.showTitle + " · \(minutes) min left"
     }
 }

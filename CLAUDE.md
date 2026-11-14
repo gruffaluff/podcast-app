@@ -2153,8 +2153,20 @@ all the suggested picks.**
   - Show page on the app's grey page (`Theme.background`), rows the same
     grey with hairlines, no white card edge (Paul: "quite white … not on
     theme").
-  - Waiting on Paul: a mini player when off Now, and new episode page
-    status rows (mock-ups in the reply).
+  - Mini player and episode page (Paul, 14 Nov 2026: "your picks" from
+    https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH):
+    - **B, slim bar above the dock** over Library and Find while
+      something is on (`HaarMiniBar` in HaarRoot.swift): artwork, title,
+      show · minutes left, play / pause, skip forward, a thin progress
+      line along its foot; tap it to go back to Now. Layers' bottom room
+      grows to clear it.
+    - **A, words like Now** on the episode page in Haar
+      (`HaarEpisodeWords` in EpisodeNotesView.swift): "2nd in Up next"
+      (opens Up next) / "Add to Up next" / "Played" (tap for unplayed);
+      Download / "Downloading 40%" / Downloaded (remove with a confirm);
+      Transcribe / "Transcribing 62%" / Read along (opens the transcript).
+      The white status cards (`EpisodeStatusRows`) and DL / TX letters
+      stay for the other looks; the notes are plain text in Haar.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

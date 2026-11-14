@@ -23,7 +23,15 @@ struct EpisodeNotesView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     poster
                     VStack(alignment: .leading, spacing: 14) {
-                        EpisodeStatusRows(episode: episode)
+                        // Haar: three words like the Now screen instead of
+                        // the white cards that looked like buttons (Paul,
+                        // 14 Nov 2026, A on
+                        // https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH).
+                        if Theme.isHaar {
+                            HaarEpisodeWords(episode: episode)
+                        } else {
+                            EpisodeStatusRows(episode: episode)
+                        }
                         EpisodeNotesText(episode: episode)
                     }
                     .padding(.horizontal, 16)
@@ -80,7 +88,7 @@ struct EpisodeNotesView: View {
                 .lineLimit(4)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-            EpisodeLights(episode: episode)
+            if !Theme.isHaar { EpisodeLights(episode: episode) }
             EpisodePageKeys(episode: episode, colour: pageColour)
         }
         .padding(.horizontal, 16)
@@ -177,8 +185,8 @@ struct EpisodeNotesText: View {
                     })
             }
         }
-        .padding(14)
-        .deckCard()
+        .padding(Theme.isHaar ? 0 : 14)
+        .modifier(NotesCard())
     }
 
     private var detail: String {
@@ -213,5 +221,84 @@ struct EpisodeNotesText: View {
             }
         }
         return result
+    }
+}
+
+
+/// The notes sit in a card everywhere but Haar, where they're plain text on
+/// the page.
+private struct NotesCard: ViewModifier {
+    func body(content: Content) -> some View {
+        if Theme.isHaar { content } else { content.deckCard() }
+    }
+}
+
+/// The episode page's state in Haar: where it is in Up next, its download
+/// and its words, as three words spread across like the Now screen. Tap a
+/// word to act on it; a download or transcript on its way fills the word.
+private struct HaarEpisodeWords: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(DownloadManager.self) private var downloads
+    @Environment(TranscriptService.self) private var transcripts
+    @Environment(\.dismiss) private var dismiss
+    let episode: PodcastEpisode
+    @State private var showingTranscript = false
+    @State private var confirmRemove = false
+
+    var body: some View {
+        HStack(spacing: 0) {
+            upNextWord
+            downloadWord
+            transcriptWord
+        }
+        .frame(height: 36)
+        .sheet(isPresented: $showingTranscript) { TranscriptView(episode: episode) }
+        .alert("Remove the download?", isPresented: $confirmRemove) {
+            Button("Cancel", role: .cancel) {}
+            Button("Remove", role: .destructive) { store.removeDownload(episode) }
+        } message: {
+            Text("It will stream instead, or you can download it again.")
+        }
+    }
+
+    private var upNextWord: HaarKeyWord {
+        if let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
+            return HaarKeyWord(text: "\(EpisodeStatusRows.ordinal(index + 1)) in Up next", state: .action) {
+                store.revealInUpNext = episode.episodeID
+                dismiss()
+            }
+        }
+        if episode.played {
+            return HaarKeyWord(text: "Played", state: .done) {
+                store.markUnplayed(episode)
+            }
+        }
+        return HaarKeyWord(text: "Add to Up next", state: .action) { store.playLast(episode) }
+    }
+
+    private var downloadWord: HaarKeyWord {
+        if let fraction = downloads.progress[episode.episodeID] {
+            return HaarKeyWord(text: "Downloading \(Int(fraction * 100))%", state: .working(fraction)) {
+                store.removeDownload(episode)
+            }
+        }
+        if store.localAudioURL(for: episode) != nil {
+            return HaarKeyWord(text: "Downloaded", state: .done) { confirmRemove = true }
+        }
+        return HaarKeyWord(text: "Download", state: .action) { downloads.download(episode) }
+    }
+
+    private var transcriptWord: HaarKeyWord {
+        let id: String = episode.episodeID
+        if transcripts.isQueued(episode) {
+            let transcribing: Bool = episode.transcriptState == .transcribing
+            let fraction: Double = transcribing ? (transcripts.progress[id] ?? 0) : (downloads.progress[id] ?? 0)
+            return HaarKeyWord(text: transcribing ? "Transcribing \(Int(fraction * 100))%" : "Waiting…",
+                               state: .working(fraction)) { transcripts.stop(episode) }
+        }
+        if episode.transcriptState == .ready {
+            return HaarKeyWord(text: "Read along", state: .done) { showingTranscript = true }
+        }
+        return HaarKeyWord(text: "Transcribe", state: .action) { transcripts.transcribeNow(episode) }
     }
 }
