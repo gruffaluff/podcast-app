@@ -283,13 +283,14 @@ private struct DeckFanRow: View {
 
     @ViewBuilder private var grip: some View {
         if isOn {
-            Color.clear.frame(width: 30, height: 44)
+            Color.clear.frame(width: 30, height: 58)
         } else {
+            // Paul, 14 Nov 2026: the handle sits in the middle of the card
+            // (86 pt row less 14 pt top padding = 58 pt either side of centre 43).
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Theme.faint)
-                .frame(width: 30, height: 44)
-                .padding(.top, -6)
+                .frame(width: 30, height: 58)
                 .accessibilityHidden(true)
         }
     }

@@ -2277,6 +2277,10 @@ all the suggested picks.**
   scroll". Plan: a vertical list or a two-across grid under the show
   deck, so every show is visible by scrolling down the page with full
   names (`DeckShowDeck.swift`, "All your shows").
+- **Up next reorder handle centred** (Paul, 14 Nov 2026, screenshot of
+  the fanned-out Up next: "3 lines middle aligned"): the ≡ handle sat
+  near the top of each card; it is now centred top to bottom
+  (`DeckUpNextFan` `grip`). On the branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
