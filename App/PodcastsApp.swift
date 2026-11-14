@@ -50,9 +50,12 @@ struct PodcastsApp: App {
         let ink = UIColor.label
         // Haar: big titles in SF Rounded bold.
         let plainLarge = UIFont.systemFont(ofSize: 34, weight: .bold)
-        let largeFont = Theme.isHaar
-            ? UIFont(descriptor: plainLarge.fontDescriptor.withDesign(.rounded) ?? plainLarge.fontDescriptor, size: 34)
-            : plainLarge
+        var largeFont: UIFont = plainLarge
+        if Theme.isDeck {
+            largeFont = UIFont(name: "Outfit-ExtraBold", size: 34) ?? plainLarge
+        } else if Theme.isHaar {
+            largeFont = UIFont(descriptor: plainLarge.fontDescriptor.withDesign(.rounded) ?? plainLarge.fontDescriptor, size: 34)
+        }
         UINavigationBar.appearance().largeTitleTextAttributes = [
             .font: largeFont, .foregroundColor: ink
         ]
@@ -91,7 +94,7 @@ struct RootView: View {
                 showingPlayer = true
             }
         case QuickActions.search:
-            tab = Theme.isHaar ? 2 : 3
+            tab = (Theme.isHaar || Theme.isDeck) ? 2 : 3
         default:
             tab = 0
         }
@@ -112,7 +115,12 @@ struct RootView: View {
     /// and a floating dock. Every other scheme: iOS's tab bar with the
     /// mini player above it (Native warm).
     @ViewBuilder private var content: some View {
-        if Theme.isHaar {
+        if Theme.isDeck {
+            // Deck (Paul, 14 Nov 2026): Up next · Shows · Find in a
+            // floating pill, the player full screen over everything.
+            DeckRoot(tab: $tab, showingPlayer: $showingPlayer)
+                .onAppear { if tab > 2 { tab = 2 } }
+        } else if Theme.isHaar {
             HaarRoot(tab: $tab)
                 .onAppear { if tab > 2 { tab = 2 } }
         } else {
@@ -143,6 +151,7 @@ struct RootView: View {
         // Undo and No internet float above the tab bar (or Haar's dock)
         // while they show.
         .overlay(alignment: Theme.isHaar ? .top : .bottom) {
+            // Deck: just above the pill (and the mini player).
             // Haar (prototype): toasts sit near the top, under the top bar.
             VStack(spacing: 6) {
                 OfflineBar()
@@ -150,7 +159,7 @@ struct RootView: View {
             }
             .padding(.horizontal, Theme.isHaar ? 20 : 12)
             .padding(.top, Theme.isHaar ? 64 : 0)
-            .padding(.bottom, Theme.isHaar ? 0 : 128)
+            .padding(.bottom, Theme.isHaar ? 0 : (Theme.isDeck ? 156 : 128))
         }
         .haarPage()
         .onChange(of: quickActions.pending, initial: true) { _, action in
@@ -162,7 +171,7 @@ struct RootView: View {
         // The player fills the whole screen (Paul: no page showing through
         // at the top); swipe down to close it.
         .fullScreenCover(isPresented: Theme.isHaar ? Binding.constant(false) : $showingPlayer) {
-            NowPlayingView()
+            if Theme.isDeck { DeckPlayerView() } else { NowPlayingView() }
         }
         // Haar: the player is home, so "open the player" goes home.
         .onChange(of: showingPlayer) { _, open in

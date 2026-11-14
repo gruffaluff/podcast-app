@@ -2139,6 +2139,26 @@ all the suggested picks.**
 
 ## Queued for the next app build
 
+- **Deck redesign** (Paul, 14 Nov 2026: "I love it"; prototype
+  https://claude.ai/artifact/CC3pxxR1XwBGtnp13xAdbB, file and build notes in
+  `design/deck/`; mock-ups page "v10" on
+  https://claude.ai/artifact/MyaR1XmhaAy6Vf17WGv2i7). Up next is a deck of
+  episode cards (top card = the one playing; swipe left Played, right a
+  little "Next in line", right far "To the bottom"; tap the stack to fan
+  it out), Shows a deck of show cards, Find = search + charts; a floating
+  white pill Up next · Shows · Find, a mini player on Shows / Find, the
+  full player as a gradient in the show's colour, Settings behind a gear.
+  Outfit type (bundled, OFL), warm page #EEEBE5, white cards. Every
+  feature stays; `QueueEngine` rules don't change. Paul's answers: carry
+  on from the PR #72 branch (its fixes go out with Deck), plain warm page
+  (no fog), icon A "The deck", build the Layout setting now. Deck is the
+  new default (AUTO = Deck / Deck night); Haar, Sand, Slate, Clay and
+  Night stay pickable with their old screens. Phase 1 (on the branch):
+  `ColourScheme.deck` / `.deckNight`, `Theme.isDeck`, `Theme.outfit`,
+  `App/Fonts/Outfit-*.ttf`, `DeckRoot` (pill, mini player, pages),
+  placeholders `DeckUpNextView`, `DeckShowsView`, `DeckFindView`,
+  `DeckPlayerView`, `DeckSettingsView` being built next.
+
 - **After build 153** (Paul, 14 Nov 2026), on the branch, not built:
   - Now / Library / Find switch instantly (no fade).
   - Up next closes by pulling its list down from the top (it only took
