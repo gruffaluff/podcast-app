@@ -4,7 +4,7 @@ import PodcastCore
 
 // Deck (Paul, 14 Nov 2026): the show deck on the Shows tab (prototype
 // renderShows). One big card for the show on top, two more fanned behind
-// it; swipe sideways (or ‹ ›) to go through the shows.
+// it; swipe sideways (or ‹ ›) to go through the shows with new episodes.
 
 /// The deck of show cards with the ‹ dots › under it.
 struct DeckShowStack: View {

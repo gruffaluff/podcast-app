@@ -2281,6 +2281,15 @@ all the suggested picks.**
   the fanned-out Up next: "3 lines middle aligned"): the ≡ handle sat
   near the top of each card; it is now centred top to bottom
   (`DeckUpNextFan` `grip`). On the branch, not built.
+- **Show deck only holds shows with new episodes** (Paul, 14 Nov 2026,
+  asked what the show deck's swipes were for, then: "let's show shows
+  with new episodes"): the deck on the Shows tab is now just the shows
+  with something new this week (Top rank, then A–Z), so swiping through
+  it is catching up show by show; with nothing new it's an "All caught
+  up" card. All your shows below still lists every show
+  (`DeckShowsView.newDeck`, `DeckShowsCaughtUp`). On the branch, not
+  built. Still to decide: a "new since you last looked" triage (swipe
+  right play next, left skip, + by your rules).
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

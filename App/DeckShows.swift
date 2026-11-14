@@ -126,13 +126,24 @@ struct DeckShowsView: View {
                 DeckShowsEmpty { selectTab(2) }
                     .padding(.top, 24)
             } else {
-                DeckShowStack(entries: entries, index: $index)
+                newDeck(entries.filter { !$0.fresh.isEmpty })
                     .padding(.top, 18)
                 DeckAllShowsRow(entries: entries)
                     .padding(.top, 22)
             }
         }
         .padding(.bottom, 16)
+    }
+
+    /// The deck holds only shows with something new (Paul, 14 Nov 2026:
+    /// "let's show shows with new episodes"), so swiping through it is
+    /// catching up show by show; All your shows below lists every show.
+    @ViewBuilder private func newDeck(_ withNew: [DeckShowEntry]) -> some View {
+        if withNew.isEmpty {
+            DeckShowsCaughtUp()
+        } else {
+            DeckShowStack(entries: withNew, index: $index)
+        }
     }
 
     private func reveal(_ show: Podcast?) {
@@ -185,6 +196,26 @@ struct DeckShowsHeader: View {
         .padding(.leading, 22)
         .padding(.trailing, 14)
         .padding(.top, 8)
+    }
+}
+
+/// Followed shows, but nothing new in any of them.
+private struct DeckShowsCaughtUp: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("All caught up")
+                .font(Theme.outfit(22, .heavy))
+                .foregroundStyle(Theme.ink)
+            Text("Shows with new episodes stack up here.")
+                .font(Theme.outfit(14, .medium))
+                .foregroundStyle(Theme.muted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 28)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity)
+        .deckPlainCard(radius: 28, lifted: true)
+        .padding(.horizontal, 16)
     }
 }
 
