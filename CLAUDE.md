@@ -2256,6 +2256,10 @@ all the suggested picks.**
   `DeckTabPill`); the last of the stacked edges under the top card is
   much taller than its content, a big empty white area (size it to its
   content like the others, `DeckUpNext.swift` edges).
+- **"Unplayed" cut to "Unplay…"** on the Deck show page (Paul, 14 Nov
+  2026, screenshot): the EPISODES label, Unplayed / All pills, Select and
+  All played don't fit one row (`DeckShowEpisodeList.filterRow`). Plan:
+  EPISODES on its own line above, pills never squeezed (`fixedSize`).
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
