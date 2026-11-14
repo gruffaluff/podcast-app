@@ -76,6 +76,9 @@ struct DeckTopCard: View {
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.deckOpenPlayer) private var openPlayer
     @AppStorage(DeckLayout.key) private var layoutRaw: String = DeckLayout.standard.rawValue
+    /// Artwork or the words being said in the top card's picture area
+    /// (Paul, 14 Nov 2026: "a button to switch between artwork and transcript").
+    @AppStorage("deckTopWords") private var showWords = false
 
     let episode: PodcastEpisode
     let plan: DeckQueuePlan
@@ -121,10 +124,12 @@ struct DeckTopCard: View {
     // MARK: Look
 
     @ViewBuilder private func cardContent(_ info: DeckTopInfo) -> some View {
-        let actions = DeckTopActions(play: play, open: open, options: { showingOptions = true })
+        let actions = DeckTopActions(play: play, open: open, options: { showingOptions = true },
+                                     toggleWords: { showWords.toggle() })
+        let words = DeckTopWords(showing: showWords, line: currentLine(info), ready: !lines.isEmpty)
         switch layout {
-        case .standard: DeckStandardTop(info: info, actions: actions, calm: false)
-        case .calm: DeckStandardTop(info: info, actions: actions, calm: true)
+        case .standard: DeckStandardTop(info: info, actions: actions, calm: false, words: words)
+        case .calm: DeckStandardTop(info: info, actions: actions, calm: true, words: words)
         case .big: DeckBigTop(info: info, actions: actions)
         case .read: DeckReadTop(info: info, actions: actions, line: currentLine(info))
         }
@@ -255,16 +260,19 @@ struct DeckTopCard: View {
     // MARK: Read along
 
     private var lineKey: String {
-        layoutRaw == DeckLayout.read.rawValue ? episode.episodeID + "|" + episode.transcriptStateRaw : ""
+        wantsLines ? episode.episodeID + "|" + episode.transcriptStateRaw : ""
     }
 
     private func loadLines() {
-        guard layoutRaw == DeckLayout.read.rawValue, let transcript = transcripts.transcript(for: episode) else {
+        guard wantsLines, let transcript = transcripts.transcript(for: episode) else {
             lines = []
             return
         }
         lines = TranscriptLayout.lines(from: TranscriptAlign.aligned(transcript, anchors: episode.syncAnchors).segments)
     }
+
+    /// Lines are read only when something shows them.
+    private var wantsLines: Bool { layoutRaw == DeckLayout.read.rawValue || showWords }
 
     private func currentLine(_ info: DeckTopInfo) -> TranscriptLayout.Line? {
         let time: TimeInterval = info.time + 0.2
@@ -298,6 +306,15 @@ struct DeckTopActions {
     let play: () -> Void
     let open: () -> Void
     let options: () -> Void
+    var toggleWords: () -> Void = {}
+}
+
+/// What the top card's picture area shows: the artwork, or the line being
+/// said (`ready` false when the episode has no words yet).
+struct DeckTopWords {
+    var showing: Bool = false
+    var line: TranscriptLayout.Line? = nil
+    var ready: Bool = false
 }
 
 // MARK: - Shared pieces

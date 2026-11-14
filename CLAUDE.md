@@ -2306,6 +2306,18 @@ all the suggested picks.**
   whole top card opens the player (its own keys still do their thing);
   the episode's artwork colour is measured ahead so the player opens in
   colour, not dark grey (`DeckUpNextTop.open`). On the branch, not built.
+- **Artwork / transcript switch on Up next's top card** (Paul, 14 Nov
+  2026, screenshot: "a button to switch between artwork and transcript
+  here"): a round key in the picture area's bottom corner (speech bubble
+  while the artwork shows, picture while the words show) swaps the
+  artwork for the line being said, white on the show's colour, following
+  playback ("No words for this episode yet. Open the player to
+  transcribe it." when there's no transcript). Remembered as
+  "deckTopWords" (this iPhone). Standard and Calm layouts
+  (`DeckTopWordsSwitch`, `DeckTopWordsView`). On the branch, not built.
+- **No internet bar** (Paul, 14 Nov 2026: "icon could be clearer and
+  more border aligned"): cloud-with-a-line icon a little bigger, rounder
+  bar, and in Deck its edges line up with the cards (16 pt).
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
