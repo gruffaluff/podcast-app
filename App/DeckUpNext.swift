@@ -73,14 +73,8 @@ struct DeckUpNextView: View {
     }
 
     private var settingsSheet: some View {
-        NavigationStack {
-            DeckSettingsView()
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") { showingSettings = false }
-                    }
-                }
-        }
+        // DeckSettingsView has its own navigation and Done button.
+        DeckSettingsView()
     }
 }
 

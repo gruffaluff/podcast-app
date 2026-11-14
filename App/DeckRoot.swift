@@ -42,6 +42,7 @@ struct DeckRoot: View {
         }
         .overlay(alignment: .bottom) { bottom }
         .environment(\.deckOpenPlayer, { showingPlayer = true })
+        .environment(\.deckSelectTab, { tab = $0 })
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }
     }
 
