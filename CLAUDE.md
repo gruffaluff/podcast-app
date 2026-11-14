@@ -2265,6 +2265,18 @@ all the suggested picks.**
   and blends in. Plan: give it a clear edge and a stronger shadow (or a
   soft fade of the page colour behind the bottom of the screen) so it
   stands off whatever scrolls under it (`DeckTabPill`, `DeckRoot`).
+- **Show deck dots unclear** (Paul, 14 Nov 2026, FNB, screenshot of the
+  ‹ dots › row under the show deck: "little unclear"): the dots for the
+  other shows are so faint they nearly vanish on the page, and a long row
+  of them says little. Plan: darker dots (or a "3 of 12" count in place
+  of dots when there are many) so it reads as "show 1 of 12, swipe or
+  tap the arrows" (`DeckShowDeck.swift` pager row).
+- **All your shows stacked, not sideways** (Paul, 14 Nov 2026, FNB,
+  screenshot: the tiles scroll sideways and cut off at the edges, names
+  cut to "Sport's Strangest C…"): "maybe we stack your shows rather than
+  scroll". Plan: a vertical list or a two-across grid under the show
+  deck, so every show is visible by scrolling down the page with full
+  names (`DeckShowDeck.swift`, "All your shows").
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
