@@ -2289,6 +2289,15 @@ Paul's notes after build 155, all in Deck:
 - **Swipe left / right on the tab pill** (Paul, 14 Nov 2026, FNB: "add
   swipe left and right on the menu bar"): swiping along the Up next ·
   Shows · Find pill moves to the next / previous tab (`DeckTabPill`).
+- **Alignment pass** (Paul, 14 Nov 2026, FNB, screenshot of the Deck
+  player's chapter row "‹ 4/14 · Best Among Imperfect Options ›": "not
+  center aligned. Can we make sure alignment throughout is right"): the
+  ‹ pill › row sits left of centre (the pill grows with its title, so the
+  arrows aren't evenly placed round the middle). Plan: arrows in fixed
+  slots at each side, pill centred between them and shrinking long titles
+  (`DeckPlayer*` chapter row); then check every Deck screen for things
+  that should be centred or lined up (player rows, top card, sheets, the
+  pill, headers) and fix them in the same build.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
