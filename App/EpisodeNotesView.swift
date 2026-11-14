@@ -20,33 +20,44 @@ struct EpisodeNotesView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    poster
-                    VStack(alignment: .leading, spacing: 14) {
-                        // Haar: three words like the Now screen instead of
-                        // the white cards that looked like buttons (Paul,
-                        // 14 Nov 2026, A on
-                        // https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH).
-                        if Theme.isHaar {
-                            HaarEpisodeWords(episode: episode)
-                        } else {
-                            EpisodeStatusRows(episode: episode)
-                        }
-                        EpisodeNotesText(episode: episode)
-                    }
-                    .padding(.horizontal, 16)
+                if Theme.isDeck {
+                    // Deck (Paul, 14 Nov 2026): white cards, prototype
+                    // renderEpisode (DeckEpisodePage.swift).
+                    DeckEpisodePage(episode: episode, colour: pageColour, openShow: openShow)
+                } else {
+                    standardPage
                 }
-                .padding(.bottom, 16)
             }
             .haarPage()
             .environment(\.showColour, pageColour)
-            .navigationTitle("Episode notes")
+            .navigationTitle(Theme.isDeck ? "" : "Episode notes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
         .transcribeExplainer()
+    }
+
+    /// Every look but Deck.
+    private var standardPage: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            poster
+            VStack(alignment: .leading, spacing: 14) {
+                // Haar: three words like the Now screen instead of
+                // the white cards that looked like buttons (Paul,
+                // 14 Nov 2026, A on
+                // https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH).
+                if Theme.isHaar {
+                    HaarEpisodeWords(episode: episode)
+                } else {
+                    EpisodeStatusRows(episode: episode)
+                }
+                EpisodeNotesText(episode: episode)
+            }
+            .padding(.horizontal, 16)
+        }
+        .padding(.bottom, 16)
     }
 
     /// The top of the page on the warm page (Paul, 12 Nov 2026: the printed
