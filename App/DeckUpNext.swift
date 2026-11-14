@@ -234,13 +234,15 @@ private struct DeckEdgeCard: View {
     let episode: PodcastEpisode
     let label: String
     let start: Date?
-    /// The bottom card shows whole, so it's only as tall as its row (Paul,
-    /// 14 Nov 2026: it was a big empty white card).
+    /// The bottom card shows whole, so it's shorter than the others (Paul,
+    /// 14 Nov 2026: it was a big empty white card), but still a little
+    /// taller than the 72 pt of the card above that shows below the step,
+    /// so that card's foot never pokes out under it (build 156 screenshot).
     var last: Bool = false
     let action: () -> Void
 
     var body: some View {
-        let height: CGFloat = last ? 62 : 120
+        let height: CGFloat = last ? 84 : 120
         return Button(action: action) {
             HStack(alignment: .top, spacing: 12) {
                 DeckUpNextArtwork(episode: episode, size: 34, radius: 9)

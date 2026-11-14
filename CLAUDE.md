@@ -2281,6 +2281,15 @@ Paul's notes after build 155, all in Deck:
 
 ## Queued for the next app build
 
+- **Last stacked card, again** (Paul, 14 Nov 2026, build 156 screenshot:
+  "some rendering issues with the cards"): the 62 pt last card was
+  shorter than the bit of the card above showing below the 48 pt step
+  (72 pt), so that card's foot poked out under it as a second edge. Last
+  card now 84 pt (`DeckEdgeCard`). On the branch, not built.
+- **Swipe left / right on the tab pill** (Paul, 14 Nov 2026, FNB: "add
+  swipe left and right on the menu bar"): swiping along the Up next ·
+  Shows · Find pill moves to the next / previous tab (`DeckTabPill`).
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
