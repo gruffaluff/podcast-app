@@ -9,6 +9,7 @@ import PodcastCore
 // far Play last. The episode playing is the ink card.
 
 struct DeckShowEpisodeList: View {
+    @Environment(LibraryStore.self) private var store
     let show: Podcast
     let colour: Color
     let markAll: () -> Void
@@ -16,6 +17,10 @@ struct DeckShowEpisodeList: View {
     @State private var query = ""
     /// The episode opened up to show its keys (one at a time).
     @State private var expanded: String?
+    /// Select mode (CLAUDE.md: Select → Select all → Mark as played /
+    /// unplayed): tap episodes to tick them, then act on them all.
+    @State private var selecting = false
+    @State private var selected: Set<String> = []
 
     var body: some View {
         let episodes: [PodcastEpisode] = visible()
@@ -23,15 +28,61 @@ struct DeckShowEpisodeList: View {
             DeckShowSearchBox(query: $query, count: show.episodes.count)
             filterRow
                 .padding(.top, 6)
+            if selecting {
+                DeckShowSelectBar(count: selected.count,
+                                  allSelected: !episodes.isEmpty && selected.count == episodes.count,
+                                  selectAll: { selectAll(episodes) },
+                                  act: { act($0, episodes: episodes) })
+            }
             if episodes.isEmpty {
                 empty
             }
             LazyVStack(spacing: 8) {
                 ForEach(episodes, id: \.episodeID) { episode in
-                    DeckShowEpisodeCard(episode: episode, colour: colour, expanded: $expanded)
+                    row(episode)
                 }
             }
         }
+    }
+
+    @ViewBuilder private func row(_ episode: PodcastEpisode) -> some View {
+        if selecting {
+            DeckShowSelectRow(episode: episode, colour: colour,
+                              on: selected.contains(episode.episodeID)) { toggle(episode) }
+        } else {
+            DeckShowEpisodeCard(episode: episode, colour: colour, expanded: $expanded)
+        }
+    }
+
+    private func toggle(_ episode: PodcastEpisode) {
+        let id: String = episode.episodeID
+        if selected.contains(id) { selected.remove(id) } else { selected.insert(id) }
+    }
+
+    private func selectAll(_ episodes: [PodcastEpisode]) {
+        if selected.count == episodes.count {
+            selected = []
+        } else {
+            selected = Set(episodes.map(\.episodeID))
+        }
+    }
+
+    private func act(_ action: DeckShowSelectBar.Action, episodes: [PodcastEpisode]) {
+        let chosen: [PodcastEpisode] = episodes.filter { selected.contains($0.episodeID) }
+        guard !chosen.isEmpty else { return }
+        switch action {
+        case .played:
+            store.undoable("Marked \(chosen.count) played", episodes: chosen) { store.markPlayed(chosen) }
+        case .unplayed:
+            store.undoable("Marked \(chosen.count) unplayed", episodes: chosen) { store.markUnplayed(chosen) }
+        case .upNext:
+            let oldestFirst: [PodcastEpisode] = chosen.sorted { $0.published < $1.published }
+            store.undoable("Added \(oldestFirst.count) to Up next", episodes: []) {
+                for episode in oldestFirst { store.playLast(episode) }
+            }
+        }
+        selected = []
+        selecting = false
     }
 
     /// Newest first; unplayed only unless All is on or something's typed
@@ -54,8 +105,23 @@ struct DeckShowEpisodeList: View {
             Spacer(minLength: 8)
             filter("Unplayed", on: !showAll) { showAll = false }
             filter("All", on: showAll) { showAll = true }
+            Button {
+                withAnimation(.snappy(duration: 0.25)) {
+                    selecting.toggle()
+                    selected = []
+                    expanded = nil
+                }
+            } label: {
+                Text(selecting ? "Done" : "Select")
+                    .font(Theme.outfit(13, .semibold))
+                    .foregroundStyle(selecting ? Theme.ink : Theme.muted)
+                    .frame(minHeight: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 4)
             Button(action: markAll) {
-                Text("Mark all played")
+                Text("All played")
                     .font(Theme.outfit(13, .semibold))
                     .foregroundStyle(Theme.muted)
                     .frame(minHeight: 36)
@@ -347,5 +413,81 @@ private struct DeckShowEpisodeKeys: View {
             .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+
+/// Select mode's bar: "n selected", Select all / None, and Played,
+/// Unplayed, Up next for everything ticked.
+struct DeckShowSelectBar: View {
+    enum Action { case played, unplayed, upNext }
+
+    let count: Int
+    let allSelected: Bool
+    let selectAll: () -> Void
+    let act: (Action) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(count == 1 ? "1 selected" : "\(count) selected")
+                    .font(Theme.outfit(14, .bold))
+                    .foregroundStyle(Theme.ink)
+                Spacer(minLength: 8)
+                Button(action: selectAll) {
+                    Text(allSelected ? "Select none" : "Select all")
+                        .font(Theme.outfit(13, .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(minHeight: 32)
+                }
+                .buttonStyle(.plain)
+            }
+            HStack(spacing: 6) {
+                key("Played", .played)
+                key("Unplayed", .unplayed)
+                key("Up next", .upNext)
+            }
+            .disabled(count == 0)
+            .opacity(count == 0 ? 0.45 : 1)
+        }
+        .padding(12)
+        .deckPlainCard(radius: 18)
+    }
+
+    private func key(_ title: String, _ action: Action) -> some View {
+        Button { act(action) } label: {
+            DeckShowPill(title: title, on: action == .played, height: 36)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// An episode row in Select mode: a round tick, then the card's text.
+private struct DeckShowSelectRow: View {
+    let episode: PodcastEpisode
+    let colour: Color
+    let on: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(on ? Theme.ink : Theme.faint)
+                DeckShowEpisodeText(episode: episode, colour: colour, playing: false)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background {
+                let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+                shape.fill(Theme.surface)
+                    .overlay(shape.strokeBorder(on ? Theme.ink : Theme.cardEdge, lineWidth: on ? 1.5 : 1))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? [.isSelected] : [])
     }
 }

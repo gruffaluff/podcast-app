@@ -17,6 +17,9 @@ struct ShowPreviewView: View {
         _pageColour = State(initialValue: ArtworkColors.shared.background(for: item.artworkURL))
     }
     @State private var follower = Follower()
+    /// Deck: Follow opens the Deck follow sheet (where new episodes go,
+    /// alerts, download the newest) instead of the old settings sheet.
+    @State private var deckFollower = DeckFollower()
     @State private var feed: ParsedFeed?
     @State private var failed = false
     @State private var expanded: String?
@@ -68,9 +71,22 @@ struct ShowPreviewView: View {
         .task { await load() }
         .refreshable { await load() }
         .sheet(item: $follower.justFollowed) { ShowSettingsView(show: $0, justFollowed: true) }
+        .sheet(item: $deckFollower.sheetShow) { DeckFollowSheet(show: $0) }
+    }
+
+    private var followBusy: Bool { Theme.isDeck ? deckFollower.busy : follower.busy }
+    private var followFailed: Bool { Theme.isDeck ? deckFollower.failed : follower.failed }
+
+    private func followTapped() {
+        if Theme.isDeck {
+            Task { await deckFollower.follow(item, store: store) }
+        } else {
+            Task { await follower.follow(item, store: store) }
+        }
     }
 
     private var followedShow: Podcast? {
+        if let followed = deckFollower.followed { return followed }
         if let followed = follower.followed { return followed }
         return item.feedURL.flatMap { store.podcast(feedURL: $0.absoluteString) }
     }
@@ -109,18 +125,16 @@ struct ShowPreviewView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Button {
-                    Task { await follower.follow(item, store: store) }
-                } label: {
+                Button(action: followTapped) {
                     Group {
-                        if follower.busy { ProgressView().tint(tint) } else { Text(follower.failed ? "TRY AGAIN" : "+ FOLLOW").font(Theme.mono(13, .bold)) }
+                        if followBusy { ProgressView().tint(tint) } else { Text(followFailed ? "TRY AGAIN" : "+ FOLLOW").font(Theme.mono(13, .bold)) }
                     }
                     .foregroundStyle(tint)
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
                 }
                 .buttonStyle(.plain)
-                .disabled(follower.busy)
+                .disabled(followBusy)
             }
             if let summary = feed?.summary.map(PlainText.notesFromHTML), !summary.isEmpty {
                 Text(summary)

@@ -11,7 +11,12 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 14 Nov 2026, with the Deck look): **A "The deck"**:
+screen. Icon (Paul, 14 Nov 2026, after build 154: A looked too like an
+existing app): **"E · P card"**: the white P (Outfit ExtraBold) on an ink
+card, a coral #EC6550 card tilted behind it, on a light warm-grey #EAE9E4
+tile (`design/icon/icon_deck_ep.svg` / `.png`, rendered with Playwright
+and the bundled Outfit font: app icon, `docs/icon.png`, IconPreview).
+Before that (14 Nov 2026, build 154): **A "The deck"**:
 three cards, blue #4C8DFF back-left, red #FF5A45 back-right, a white front
 card with an ink edge and an ink play triangle, on the warm #EEEBE5 tile
 (`design/icon/icon_deck_a.svg` / `.png` from `make_deck_icon_a.py`; it
@@ -2225,6 +2230,19 @@ all the suggested picks.**
       Transcribe / "Transcribing 62%" / Read along (opens the transcript).
       The white status cards (`EpisodeStatusRows`) and DL / TX letters
       stay for the other looks; the notes are plain text in Haar.
+
+## Done in build 155 (14 Nov 2026, PR #73; Paul: "work on the not dones yet and get it all in")
+
+- App icon "E · P card" (see the icon line at the top; Paul: A was too
+  like an existing app).
+- Select mode on the Deck show page (`DeckShowEpisodeList`): Select /
+  Done beside Unplayed · All · All played; tap episodes to tick them;
+  a bar with "n selected", Select all / none, Played, Unplayed and Up next
+  (oldest first), all with Undo (`DeckShowSelectBar`, `DeckShowSelectRow`).
+- Show previews (Find, charts) follow through the Deck follow sheet in
+  Deck (`ShowPreviewView` uses `DeckFollower` / `DeckFollowSheet`; the
+  old settings sheet stays for the other looks); Open show goes to the
+  Deck show page.
 
 ## Queued for the next app build
 
