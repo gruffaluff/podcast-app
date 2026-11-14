@@ -157,7 +157,8 @@ struct RootView: View {
                 OfflineBar()
                 UndoBar()
             }
-            .padding(.horizontal, Theme.isHaar ? 20 : 12)
+            // Deck: the same 16 pt edges as the cards above (Paul: line it up).
+            .padding(.horizontal, Theme.isHaar ? 20 : (Theme.isDeck ? 16 : 12))
             .padding(.top, Theme.isHaar ? 64 : 0)
             .padding(.bottom, Theme.isHaar ? 0 : (Theme.isDeck ? 156 : 128))
         }

@@ -40,6 +40,7 @@ struct DeckRoot: View {
             page(1) { DeckShowsView() }
             page(2) { DeckFindView() }
         }
+        .overlay(alignment: .bottom) { bottomFade }
         .overlay(alignment: .bottom) { bottom }
         .environment(\.deckOpenPlayer, { showingPlayer = true })
         .environment(\.deckSelectTab, { tab = $0 })
@@ -60,6 +61,16 @@ struct DeckRoot: View {
 
     private func room(for index: Int) -> CGFloat {
         Self.pillRoom + (index != 0 && player.nowPlaying != nil ? Self.miniRoom : 0)
+    }
+
+    /// A soft fade of the page colour behind the pill, so cards scrolling
+    /// under it fade away instead of meeting it edge to edge.
+    private var bottomFade: some View {
+        LinearGradient(colors: [Theme.background.opacity(0), Theme.background.opacity(0.92)],
+                       startPoint: .top, endPoint: .bottom)
+            .frame(height: 96)
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
     }
 
     private var bottom: some View {
@@ -89,12 +100,21 @@ struct DeckTabPill: View {
         .padding(.horizontal, 6)
         .frame(height: 52)
         .background(Capsule().fill(Theme.surface))
-        .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 13, y: 8)
+        // A clear edge and a deeper shadow so it stands off white cards
+        // scrolling under it (Paul, 14 Nov 2026: "menu gets lost").
+        .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.14), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.22), radius: 18, y: 10)
+        .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
     }
 
     private func item(_ index: Int) -> some View {
         let on: Bool = tab == index
-        return Button { tab = index } label: {
+        // Instant: no animation carries the ink capsule across (Paul: slow).
+        return Button {
+            var instant = Transaction(animation: nil)
+            instant.disablesAnimations = true
+            withTransaction(instant) { tab = index }
+        } label: {
             Text(Self.names[index])
                 .font(Theme.outfit(15, on ? .bold : .semibold))
                 .foregroundStyle(on ? Theme.background : Theme.muted)
@@ -103,6 +123,7 @@ struct DeckTabPill: View {
                 .frame(height: 40)
                 .background(Capsule().fill(on ? Theme.ink : Color.clear))
                 .contentShape(Capsule())
+                .transaction { $0.animation = nil }
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? [.isSelected] : [])

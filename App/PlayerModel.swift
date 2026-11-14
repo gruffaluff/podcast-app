@@ -219,9 +219,11 @@ final class PlayerModel {
     // MARK: Controls
 
     /// Plays an episode from where Paul left off (or from the start if played).
-    func play(_ episode: PodcastEpisode) {
+    /// `autoplay: false` loads it ready to play without starting it (used
+    /// to open the Deck player on Up next's top card when nothing is loaded).
+    func play(_ episode: PodcastEpisode, autoplay: Bool = true) {
         if nowPlaying?.episodeID == episode.episodeID {
-            resume()
+            if autoplay { resume() }
             return
         }
         saveProgress()
@@ -262,8 +264,12 @@ final class PlayerModel {
         if start > 1 {
             player.seek(to: CMTime(seconds: start, preferredTimescale: 600))
         }
-        resume()
-        startBedtimeTimerIfNeeded()
+        if autoplay {
+            resume()
+            startBedtimeTimerIfNeeded()
+        } else {
+            pause()
+        }
         loadArtwork(episode.artwork)
         showChapters = []
         chapterSource = .show

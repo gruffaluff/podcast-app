@@ -2244,6 +2244,41 @@ all the suggested picks.**
   old settings sheet stays for the other looks); Open show goes to the
   Deck show page.
 
+## Done in build 156 (14 Nov 2026, PR #74; Paul: "Let's build here as I can't use it properly without")
+
+Paul's notes after build 155, all in Deck:
+- **Shorter swipe down to close**: the player closes past 60 pt (was
+  110) or a light flick; the fanned-out Up next past 60 pt.
+- **Tab pill**: switching tabs is instant (no animation carries the ink
+  capsule across); a fine ink edge, a deeper shadow and a soft fade of
+  the page colour behind the bottom of the screen, so it stands off
+  white cards scrolling under it (`DeckTabPill`, `DeckRoot.bottomFade`).
+- **Last stacked card** under Up next's top card is only as tall as its
+  row (62 pt; it was a 120 pt mostly empty card).
+- **"Unplayed" no longer cut short** on the show page: EPISODES on its
+  own line, the Unplayed / All pills never squeezed, Select and All
+  played on the right.
+- **Show deck**: only shows with new episodes (Top rank, then A–Z);
+  "All caught up" card when none (`DeckShowsView.newDeck`). Dots only up
+  to 6 shows and darker, "3 of 12" in ink beyond that.
+- **All your shows**: two across down the page, each tile the artwork
+  edge to edge with the name in white over a dark fade and "n new" as a
+  pill in the corner (`DeckAllShowsRow`, `DeckShowTile`).
+- **Up next fan**: the ≡ handle centred on each card.
+- **Opening the player from Up next**: the black flash was the player
+  opening with nothing loaded (e.g. just after opening the app) and
+  closing itself. The top card now loads its episode first, ready but
+  not playing (`PlayerModel.play(_:autoplay: false)`); the whole top
+  card opens the player; the episode artwork's colour is measured ahead.
+- **Artwork / transcript switch** on Up next's top card: a round key in
+  the picture's corner swaps the artwork for the line being said
+  (white on the show's colour; "No words for this episode yet…" when
+  there's none). Remembered as "deckTopWords" (this iPhone).
+- **No internet bar**: cloud-with-a-line icon, rounder, lined up with
+  the cards (16 pt) in Deck.
+- Still to decide: a "new since you last looked" triage screen (swipe
+  right play next, left skip, + by your rules).
+
 ## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done

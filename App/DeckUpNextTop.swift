@@ -76,6 +76,9 @@ struct DeckTopCard: View {
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.deckOpenPlayer) private var openPlayer
     @AppStorage(DeckLayout.key) private var layoutRaw: String = DeckLayout.standard.rawValue
+    /// Artwork or the words being said in the top card's picture area
+    /// (Paul, 14 Nov 2026: "a button to switch between artwork and transcript").
+    @AppStorage("deckTopWords") private var showWords = false
 
     let episode: PodcastEpisode
     let plan: DeckQueuePlan
@@ -98,6 +101,11 @@ struct DeckTopCard: View {
         cardContent(info)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background { cardBackground }
+            // Paul, 14 Nov 2026: tap anywhere on the card for the player
+            // (its own keys still do their own thing).
+            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .onTapGesture { open() }
+            .accessibilityHint("Opens the player")
             .overlay(alignment: .topTrailing) { adChip.padding(28) }
             .overlay(alignment: .topTrailing) { playedStamp }
             .overlay(alignment: .topLeading) { moveStamp }
@@ -108,15 +116,20 @@ struct DeckTopCard: View {
             .sheet(isPresented: $showingOptions) { PlayerOptionsSheet() }
             .task(id: lineKey) { loadLines() }
             .task(id: episode.podcast?.artworkURL) { await ArtworkColors.shared.load(episode.podcast?.artworkURL) }
+            // The player's colour comes from the episode's own artwork:
+            // measure it ahead so the player opens in colour, not dark grey.
+            .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
     }
 
     // MARK: Look
 
     @ViewBuilder private func cardContent(_ info: DeckTopInfo) -> some View {
-        let actions = DeckTopActions(play: play, open: openPlayer, options: { showingOptions = true })
+        let actions = DeckTopActions(play: play, open: open, options: { showingOptions = true },
+                                     toggleWords: { showWords.toggle() })
+        let words = DeckTopWords(showing: showWords, line: currentLine(info), ready: !lines.isEmpty)
         switch layout {
-        case .standard: DeckStandardTop(info: info, actions: actions, calm: false)
-        case .calm: DeckStandardTop(info: info, actions: actions, calm: true)
+        case .standard: DeckStandardTop(info: info, actions: actions, calm: false, words: words)
+        case .calm: DeckStandardTop(info: info, actions: actions, calm: true, words: words)
         case .big: DeckBigTop(info: info, actions: actions)
         case .read: DeckReadTop(info: info, actions: actions, line: currentLine(info))
         }
@@ -148,6 +161,17 @@ struct DeckTopCard: View {
 
     private func play() {
         moves.playNow(episode)
+    }
+
+    /// Opens the full player on this episode. When nothing is loaded yet
+    /// (e.g. just after opening the app) it's loaded first, ready to play
+    /// but not started: the player closed itself with nothing loaded, which
+    /// showed as a brief black screen (Paul, 14 Nov 2026).
+    private func open() {
+        if player.nowPlaying?.episodeID != episode.episodeID {
+            player.play(episode, autoplay: false)
+        }
+        openPlayer()
     }
 
     /// Skip ad, while an ad plays (the same call as the players' ad pill).
@@ -236,16 +260,19 @@ struct DeckTopCard: View {
     // MARK: Read along
 
     private var lineKey: String {
-        layoutRaw == DeckLayout.read.rawValue ? episode.episodeID + "|" + episode.transcriptStateRaw : ""
+        wantsLines ? episode.episodeID + "|" + episode.transcriptStateRaw : ""
     }
 
     private func loadLines() {
-        guard layoutRaw == DeckLayout.read.rawValue, let transcript = transcripts.transcript(for: episode) else {
+        guard wantsLines, let transcript = transcripts.transcript(for: episode) else {
             lines = []
             return
         }
         lines = TranscriptLayout.lines(from: TranscriptAlign.aligned(transcript, anchors: episode.syncAnchors).segments)
     }
+
+    /// Lines are read only when something shows them.
+    private var wantsLines: Bool { layoutRaw == DeckLayout.read.rawValue || showWords }
 
     private func currentLine(_ info: DeckTopInfo) -> TranscriptLayout.Line? {
         let time: TimeInterval = info.time + 0.2
@@ -279,6 +306,15 @@ struct DeckTopActions {
     let play: () -> Void
     let open: () -> Void
     let options: () -> Void
+    var toggleWords: () -> Void = {}
+}
+
+/// What the top card's picture area shows: the artwork, or the line being
+/// said (`ready` false when the episode has no words yet).
+struct DeckTopWords {
+    var showing: Bool = false
+    var line: TranscriptLayout.Line? = nil
+    var ready: Bool = false
 }
 
 // MARK: - Shared pieces

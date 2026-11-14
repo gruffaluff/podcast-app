@@ -12,6 +12,7 @@ struct DeckStandardTop: View {
     let info: DeckTopInfo
     let actions: DeckTopActions
     let calm: Bool
+    var words = DeckTopWords()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -40,8 +41,12 @@ struct DeckStandardTop: View {
                 let side: CGFloat = max(40, min(geometry.size.height - 28, geometry.size.width - 28))
                 ZStack {
                     LinearGradient(colors: [info.colour, info.dark], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    DeckUpNextArtwork(episode: info.episode, size: side, radius: 16)
-                        .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
+                    if words.showing {
+                        DeckTopWordsView(words: words)
+                    } else {
+                        DeckUpNextArtwork(episode: info.episode, size: side, radius: 16)
+                            .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
+                    }
                 }
             }
             .frame(minHeight: 110, maxHeight: 214)
@@ -52,6 +57,10 @@ struct DeckStandardTop: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Open the player")
+        .overlay(alignment: .bottomTrailing) {
+            DeckTopWordsSwitch(showing: words.showing, action: actions.toggleWords)
+                .padding(10)
+        }
     }
 
     private var titles: some View {
@@ -251,5 +260,59 @@ struct DeckReadTop: View {
                 .contentTransition(.opacity)
                 .animation(.easeInOut(duration: 0.3), value: line?.start)
         }
+    }
+}
+
+/// The words being said, white on the show's colour, in the top card's
+/// picture area.
+struct DeckTopWordsView: View {
+    let words: DeckTopWords
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let speaker = words.line?.speaker, !speaker.isEmpty {
+                Text(speaker)
+                    .font(Theme.outfit(12, .bold))
+                    .foregroundStyle(Color.white.opacity(0.7))
+                    .lineLimit(1)
+            }
+            Text(text)
+                .font(Theme.outfit(words.ready ? 21 : 16, words.ready ? .bold : .semibold))
+                .foregroundStyle(Color.white.opacity(words.ready ? 1 : 0.8))
+                .lineLimit(5)
+                .minimumScaleFactor(0.6)
+                .contentTransition(.opacity)
+                .animation(.easeInOut(duration: 0.3), value: words.line?.start)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(.leading, 18)
+        .padding(.trailing, 56)
+        .padding(.vertical, 16)
+    }
+
+    private var text: String {
+        guard words.ready else { return "No words for this episode yet. Open the player to transcribe it." }
+        return words.line?.text ?? ""
+    }
+}
+
+/// The round key in the picture area's corner: the transcript icon while
+/// the artwork shows, the picture icon while the words show.
+struct DeckTopWordsSwitch: View {
+    let showing: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: showing ? "photo" : "quote.bubble")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Color.black.opacity(0.35)))
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(showing ? "Show the artwork" : "Show the transcript")
     }
 }

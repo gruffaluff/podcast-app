@@ -26,8 +26,12 @@ struct OfflineBar: View {
 
     var body: some View {
         if !network.online {
-            HStack(spacing: 8) {
-                Image(systemName: "wifi.slash")
+            HStack(spacing: 10) {
+                // Paul, 14 Nov 2026: a clearer icon (Wi-Fi with a line
+                // through it was hard to read at this size).
+                Image(systemName: "icloud.slash")
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 18)
                 Text("NO INTERNET · DOWNLOADS STILL PLAY")
                     .font(Theme.mono(11, .bold))
                     .lineLimit(1)
@@ -36,8 +40,8 @@ struct OfflineBar: View {
             }
             .foregroundStyle(Theme.displayText)
             .padding(.horizontal, 14)
-            .frame(minHeight: 34)
-            .background(Theme.display, in: RoundedRectangle(cornerRadius: 12))
+            .frame(minHeight: 36)
+            .background(Theme.display, in: RoundedRectangle(cornerRadius: Theme.isDeck ? 18 : 12, style: .continuous))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("No internet. Downloaded episodes still play.")
         }

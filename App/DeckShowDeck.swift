@@ -4,7 +4,7 @@ import PodcastCore
 
 // Deck (Paul, 14 Nov 2026): the show deck on the Shows tab (prototype
 // renderShows). One big card for the show on top, two more fanned behind
-// it; swipe sideways (or ‹ ›) to go through the shows.
+// it; swipe sideways (or ‹ ›) to go through the shows with new episodes.
 
 /// The deck of show cards with the ‹ dots › under it.
 struct DeckShowStack: View {
@@ -278,11 +278,13 @@ private struct DeckShowDots: View {
     }
 
     @ViewBuilder private var middle: some View {
-        if count <= 12 {
+        // Dots only for a few shows, and dark enough to see; a count after
+        // that (Paul, 14 Nov 2026: the faint dots were "a little unclear").
+        if count <= 6 {
             HStack(spacing: 6) {
                 ForEach(0..<count, id: \.self) { index in
                     Capsule()
-                        .fill(index == current ? Theme.ink : Theme.cardEdge)
+                        .fill(index == current ? Theme.ink : Theme.faint.opacity(0.55))
                         .frame(width: index == current ? 18 : 6, height: 6)
                 }
             }
@@ -290,9 +292,9 @@ private struct DeckShowDots: View {
             .accessibilityLabel("Show \(current + 1) of \(count)")
         } else {
             Text("\(current + 1) of \(count)")
-                .font(Theme.outfit(13, .semibold))
+                .font(Theme.outfit(15, .bold))
                 .monospacedDigit()
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(Theme.ink)
         }
     }
 
@@ -309,53 +311,81 @@ private struct DeckShowDots: View {
     }
 }
 
-/// "All your shows": a sideways row of small tiles (artwork, name, n NEW);
-/// tap one for its page.
+/// "All your shows": every show, two across down the page (Paul, 14 Nov
+/// 2026: "stack your shows rather than scroll", then "full card images
+/// with text on top"). Tap one for its page.
 struct DeckAllShowsRow: View {
     let entries: [DeckShowEntry]
+    private let columns: [GridItem] = [GridItem(.flexible(), spacing: 12),
+                                       GridItem(.flexible(), spacing: 12)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             DeckShowLabel(text: "All your shows")
                 .padding(.horizontal, 22)
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 10) {
-                    ForEach(entries) { entry in
-                        NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
-                            .buttonStyle(.plain)
-                    }
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(entries) { entry in
+                    NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
+                        .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
             }
-            .scrollIndicators(.hidden)
+            .padding(.horizontal, 16)
         }
     }
 }
 
+/// A square tile that is the show's artwork, edge to edge, with the name
+/// in white over a dark fade at the foot and "n new" in the corner.
 private struct DeckShowTile: View {
     let entry: DeckShowEntry
 
     var body: some View {
-        let colour: Color = DeckShowColour.of(entry.show)
-        VStack(alignment: .leading, spacing: 4) {
-            ArtworkView(url: entry.show.artworkURL, title: entry.show.title, size: 60, radius: 12)
-            Text(entry.show.title)
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay { art }
+            .overlay(alignment: .bottom) { shade }
+            .overlay(alignment: .bottomLeading) { name }
+            .overlay(alignment: .topTrailing) { badge }
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(Theme.cardEdge, lineWidth: 1))
+            .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.10), radius: 8, y: 4)
+            .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .accessibilityElement(children: .combine)
+    }
+
+    private var art: some View {
+        CachedImage(url: entry.show.artworkURL) { Theme.placeholderColor(for: entry.show.title) }
+    }
+
+    private var shade: some View {
+        LinearGradient(colors: [Color.black.opacity(0), Color.black.opacity(0.72)],
+                       startPoint: .top, endPoint: .bottom)
+            .frame(height: 96)
+            .allowsHitTesting(false)
+    }
+
+    private var name: some View {
+        Text(entry.show.title)
+            .font(Theme.outfit(15, .heavy))
+            .foregroundStyle(Color.white)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+            .shadow(color: Color.black.opacity(0.35), radius: 3, y: 1)
+            .padding(12)
+    }
+
+    @ViewBuilder private var badge: some View {
+        if !entry.fresh.isEmpty {
+            Text("\(entry.fresh.count) new")
                 .font(Theme.outfit(12, .bold))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-            if !entry.fresh.isEmpty {
-                Text("\(entry.fresh.count) NEW")
-                    .font(Theme.outfit(10, .heavy))
-                    .foregroundStyle(DeckShowColour.dark(colour))
-            }
-            Spacer(minLength: 0)
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Color(hex: 0x1C1B1A)))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.85), lineWidth: 1))
+                .padding(9)
         }
-        .padding(7)
-        .frame(width: 92, height: 118, alignment: .topLeading)
-        .deckPlainCard(radius: 18)
-        .accessibilityElement(children: .combine)
     }
 }
 
