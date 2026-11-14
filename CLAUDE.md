@@ -11,7 +11,12 @@ original screen mockups are in `design/`.
 "Podspot", but "PodSpot: Find My Headphones" already exists on the App
 Store and app names must be unique. If "Poddeck" turns out to be taken in
 App Store Connect, register "Poddeck Player" and keep "Poddeck" on the home
-screen. Icon (Paul, 13 Nov 2026, with the Haar look): **"P1 Cassette in the
+screen. Icon (Paul, 14 Nov 2026, with the Deck look): **A "The deck"**:
+three cards, blue #4C8DFF back-left, red #FF5A45 back-right, a white front
+card with an ink edge and an ink play triangle, on the warm #EEEBE5 tile
+(`design/icon/icon_deck_a.svg` / `.png` from `make_deck_icon_a.py`; it
+also writes the app icon, `docs/icon.png` and the badge's IconPreview).
+Before that (13 Nov 2026, with the Haar look): **"P1 Cassette in the
 haar"**: Poddeck's cassette in deep blue (#2B4766) half lost behind two
 bands of fog on a misty grey tile (`design/icon/icon_p1.svg` / `.png` from
 `design/icon/make_haar_icon.py`: rsvg-convert + Pillow; it also writes the
