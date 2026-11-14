@@ -2296,6 +2296,16 @@ all the suggested picks.**
   (`DeckShowsView.newDeck`, `DeckShowsCaughtUp`). On the branch, not
   built. Still to decide: a "new since you last looked" triage (swipe
   right play next, left skip, + by your rules).
+- **Opening the player from Up next** (Paul, 14 Nov 2026: tapping the
+  top card's artwork "starts to load but I just get a black screen
+  briefly"; "you should be able to click on the whole card"): when
+  nothing was loaded yet (e.g. just after opening the app) the player
+  opened with nothing in it and closed itself straight away. Now the top
+  card loads its episode first, ready but not playing
+  (`PlayerModel.play(_:autoplay: false)`), then opens the player; the
+  whole top card opens the player (its own keys still do their thing);
+  the episode's artwork colour is measured ahead so the player opens in
+  colour, not dark grey (`DeckUpNextTop.open`). On the branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

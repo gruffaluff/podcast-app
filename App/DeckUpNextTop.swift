@@ -98,6 +98,11 @@ struct DeckTopCard: View {
         cardContent(info)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background { cardBackground }
+            // Paul, 14 Nov 2026: tap anywhere on the card for the player
+            // (its own keys still do their own thing).
+            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .onTapGesture { open() }
+            .accessibilityHint("Opens the player")
             .overlay(alignment: .topTrailing) { adChip.padding(28) }
             .overlay(alignment: .topTrailing) { playedStamp }
             .overlay(alignment: .topLeading) { moveStamp }
@@ -108,12 +113,15 @@ struct DeckTopCard: View {
             .sheet(isPresented: $showingOptions) { PlayerOptionsSheet() }
             .task(id: lineKey) { loadLines() }
             .task(id: episode.podcast?.artworkURL) { await ArtworkColors.shared.load(episode.podcast?.artworkURL) }
+            // The player's colour comes from the episode's own artwork:
+            // measure it ahead so the player opens in colour, not dark grey.
+            .task(id: episode.artwork) { await ArtworkColors.shared.load(episode.artwork) }
     }
 
     // MARK: Look
 
     @ViewBuilder private func cardContent(_ info: DeckTopInfo) -> some View {
-        let actions = DeckTopActions(play: play, open: openPlayer, options: { showingOptions = true })
+        let actions = DeckTopActions(play: play, open: open, options: { showingOptions = true })
         switch layout {
         case .standard: DeckStandardTop(info: info, actions: actions, calm: false)
         case .calm: DeckStandardTop(info: info, actions: actions, calm: true)
@@ -148,6 +156,17 @@ struct DeckTopCard: View {
 
     private func play() {
         moves.playNow(episode)
+    }
+
+    /// Opens the full player on this episode. When nothing is loaded yet
+    /// (e.g. just after opening the app) it's loaded first, ready to play
+    /// but not started: the player closed itself with nothing loaded, which
+    /// showed as a brief black screen (Paul, 14 Nov 2026).
+    private func open() {
+        if player.nowPlaying?.episodeID != episode.episodeID {
+            player.play(episode, autoplay: false)
+        }
+        openPlayer()
     }
 
     /// Skip ad, while an ad plays (the same call as the players' ad pill).
