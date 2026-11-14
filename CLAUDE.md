@@ -2139,6 +2139,23 @@ all the suggested picks.**
 
 ## Queued for the next app build
 
+- **After build 153** (Paul, 14 Nov 2026), on the branch, not built:
+  - Now / Library / Find switch instantly (no fade).
+  - Up next closes by pulling its list down from the top (it only took
+    the swipe on its heading).
+  - Now's transcript word says "Read along" when the words are ready
+    (was "Words ready"); the Read along pill on the artwork is gone; no
+    ticks on done words (Downloaded / Read along just go grey).
+  - Smoother motion: the 0.7 s curves are 0.4 s smooth moves
+    (`HaarNowView.morph` / `rise`, `HaarRoot.slide`); Up next's cards fade
+    in together instead of flying up one by one (the artwork lagged
+    behind its card).
+  - Show page on the app's grey page (`Theme.background`), rows the same
+    grey with hairlines, no white card edge (Paul: "quite white … not on
+    theme").
+  - Waiting on Paul: a mini player when off Now, and new episode page
+    status rows (mock-ups in the reply).
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public

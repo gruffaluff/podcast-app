@@ -227,8 +227,12 @@ struct HaarUpNextList: View {
     let close: () -> Void
     let openFind: () -> Void
 
-    /// The cards fly in from the stack, one after another.
+    /// The cards fade in together (they used to fly up one after another,
+    /// and the artwork in each card lagged behind its card: Paul, 14 Nov
+    /// 2026).
     @State private var appeared = false
+    /// Pulled down past the top: close once.
+    @State private var closing = false
 
     static let playedColour = Color(hex: 0x6B7178)
 
@@ -322,6 +326,17 @@ struct HaarUpNextList: View {
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
         .environment(\.defaultMinListRowHeight, 0)
+        // Pull the list down from the top to close Up next (Paul, 14 Nov
+        // 2026: "can't swipe down on Up next to minimise"; only the
+        // heading took the swipe before).
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, pulled in
+            if pulled < -70, !closing {
+                closing = true
+                close()
+            }
+        }
     }
 
     private func row(index: Int, item: QueueItem, episode: PodcastEpisode) -> some View {
@@ -329,7 +344,6 @@ struct HaarUpNextList: View {
         let showName: String = episode.podcast?.title ?? episode.showTitle
         let source: String? = HaarQueueText.source(item, settings: store.queueSettings)
         let label: String = (source.map { showName + " · " + $0 } ?? showName).uppercased()
-        let delay: Double = Double(min(index, 12)) * 0.045
         return HaarQueueCardContent(episode: episode, label: label, labelColour: colour,
                                     meta: HaarQueueText.meta(episode, speed: player.speed, transcripts: transcripts),
                                     rank: index + 1, rankColour: colour)
@@ -339,9 +353,8 @@ struct HaarUpNextList: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityHint("Plays it now")
             .posterSwipe(leading: playNextAction(episode), trailing: playedAction(episode))
-            .offset(y: appeared ? 0 : 240 + CGFloat(index) * 14)
             .opacity(appeared ? 1 : 0)
-            .animation(reduceMotion ? nil : HaarNowView.morph.delay(delay), value: appeared)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: appeared)
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 4.5, leading: 20, bottom: 4.5, trailing: 20))

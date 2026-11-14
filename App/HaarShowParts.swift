@@ -398,8 +398,9 @@ struct HaarShowHairline: View {
 /// The frosted fill of a grouped card (white over a blur).
 struct HaarShowCardFill: View {
     var body: some View {
-        // Plain fill, no material (a live blur per card cost frames).
-        Color.white.opacity(0.66)
+        // The page's own grey: rows sit on the page with hairlines between
+        // (it still covers the swipe's action block as a row slides).
+        Theme.background
     }
 }
 
@@ -415,10 +416,6 @@ private struct HaarShowGroup: ViewModifier {
                 if filled { HaarShowCardFill() }
             }
             .clipShape(shape)
-            .overlay {
-                shape.strokeBorder(Color.white.opacity(0.9), lineWidth: 1)
-                    .allowsHitTesting(false)
-            }
     }
 }
 

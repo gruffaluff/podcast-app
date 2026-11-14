@@ -28,7 +28,7 @@ struct HaarRoot: View {
     static let dockRoom: CGFloat = 76
     static let readingKey = "haarReading"
     /// The layers' slide: the prototype's long, soft ease-out.
-    static let slide: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.7)
+    static let slide: Animation = .smooth(duration: 0.4)
     /// Moving between Now, Library and Find: a quick cross-fade in place
     /// (Paul, 13 Nov 2026, after build 152; the layers used to slide).
     static let fade: Animation = .easeInOut(duration: 0.2)
@@ -142,7 +142,10 @@ struct HaarRoot: View {
     /// closes Up next and Read along on the player.
     private func go(_ next: Int) {
         guard next != tab || showingUpNext || reading else { return }
-        withAnimation(next != tab ? (reduceMotion ? nil : Self.fade) : motion) {
+        // Instant between Now, Library and Find (Paul, 14 Nov 2026: "make
+        // transitions instant instead of fade"); closing Up next / Read
+        // along on the way keeps its morph only when staying on Now.
+        withAnimation(next != tab ? nil : motion) {
             showingUpNext = false
             reading = false
             tab = next
@@ -150,9 +153,7 @@ struct HaarRoot: View {
     }
 
     private func openUpNext() {
-        if tab != 0 {
-            withAnimation(reduceMotion ? nil : Self.fade) { tab = 0 }
-        }
+        if tab != 0 { tab = 0 }
         withAnimation(motion) { showingUpNext = true }
     }
 

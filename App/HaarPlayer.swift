@@ -40,8 +40,10 @@ struct HaarNowView: View {
     @Namespace private var art
 
     /// The prototype's motion: a long, soft ease-out.
-    static let morph: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.7)
-    static let rise: Animation = .timingCurve(0.2, 0.8, 0.2, 1, duration: 0.55)
+    // Shorter, smoother moves (Paul, 14 Nov 2026: animations "a bit
+    // jerky"; the 0.7 s curve read as lag).
+    static let morph: Animation = .smooth(duration: 0.4)
+    static let rise: Animation = .smooth(duration: 0.35)
 
     struct ChapterFlash: Equatable {
         let number: Int
@@ -300,7 +302,7 @@ struct HaarNowView: View {
             return HaarKeyWord(text: text, state: .working(fraction)) { transcripts.stop(episode) }
         }
         if episode.transcriptState == .ready {
-            return HaarKeyWord(text: "Words ready", state: .done) { setReading(true) }
+            return HaarKeyWord(text: "Read along", state: .done) { setReading(true) }
         }
         if !transcripts.canTranscribeNow(episode) {
             return HaarKeyWord(text: "Read along", state: .action) { setReading(true) }
@@ -329,31 +331,8 @@ struct HaarNowView: View {
                 .shadow(color: Color(hex: 0x28323C).opacity(0.22), radius: 30, y: 30)
         }
         .buttonStyle(.plain)
-        .overlay(alignment: .bottomTrailing) {
-            if hasWords {
-                readAlongPill
-                    .padding(14)
-                    .transition(.opacity)
-            }
-        }
         .accessibilityLabel("Artwork")
         .accessibilityHint("Shows the words as they're said")
-    }
-
-    private var readAlongPill: some View {
-        Button { setReading(true) } label: {
-            HStack(spacing: 5) {
-                Image(systemName: "text.quote")
-                    .font(.system(size: 11, weight: .semibold))
-                Text("Read along")
-                    .font(.system(size: 13, weight: .semibold))
-            }
-            .foregroundStyle(Theme.ink)
-            .padding(.horizontal, 12)
-            .frame(height: 32)
-            .background(Capsule().fill(Color.white.opacity(0.78)))
-        }
-        .buttonStyle(.plain)
     }
 
     /// The show (tap for its page) above the title (tap to read along).
@@ -708,12 +687,8 @@ struct HaarKeyWord: View {
         case .action:
             word(text).foregroundStyle(Theme.accentText)
         case .done:
-            HStack(spacing: 4) {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .bold))
-                word(text)
-            }
-            .foregroundStyle(Theme.muted)
+            // No tick (Paul, 14 Nov 2026): done ones are just quieter.
+            word(text).foregroundStyle(Theme.muted)
         case .working(let fraction):
             word(text)
                 .foregroundStyle(Theme.muted.opacity(0.55))
