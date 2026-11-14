@@ -27,7 +27,8 @@ struct DeckPlayerView: View {
     @State private var showingOptions = false
     @State private var showingChapters = false
     @State private var showingNotes = false
-    /// How far a swipe down has pulled the player (it closes past 110).
+    /// How far a swipe down has pulled the player (it closes past 60, or a
+    /// light flick: Paul, 14 Nov 2026, "too much effort to drag down").
     @State private var pull: CGFloat = 0
     @Namespace private var art
 
@@ -167,7 +168,7 @@ struct DeckPlayerView: View {
                 pull = down > 0 && abs(down) > abs(value.translation.width) ? down : 0
             }
             .onEnded { (value: DragGesture.Value) in
-                if value.translation.height > 110 || value.predictedEndTranslation.height > 260 {
+                if value.translation.height > 60 || value.predictedEndTranslation.height > 150 {
                     dismiss()
                 } else {
                     withAnimation(.spring(duration: 0.3)) { pull = 0 }

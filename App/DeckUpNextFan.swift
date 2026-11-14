@@ -18,7 +18,7 @@ struct DeckUpNextFan: View {
     @State private var pulled: CGFloat = 0
     @State private var closing = false
 
-    private static let closeLine: CGFloat = 110
+    private static let closeLine: CGFloat = 60
 
     /// The cards: Up next in order, with the episode playing first if it
     /// isn't in Up next itself.

@@ -2244,80 +2244,42 @@ all the suggested picks.**
   old settings sheet stays for the other looks); Open show goes to the
   Deck show page.
 
-## Queued for the next app build
+## Done in build 156 (14 Nov 2026, PR #74; Paul: "Let's build here as I can't use it properly without")
 
-- **Shorter swipe down to close** (Paul, 14 Nov 2026, FNB: "too much
-  effort to drag down"). The Deck player closes past 110 pt or a fast
-  flick (`DeckPlayerView`), and the fanned-out Up next past 110 pt
-  (`DeckUpNextFan`). Plan: close at about 60 pt, and on a lighter flick.
-- **Tab pill and the last stacked card** (Paul, 14 Nov 2026, FNB,
-  screenshot of the bottom of Up next): the black capsule moving between
-  Up next · Shows · Find is slow (make it instant or a very quick move,
-  `DeckTabPill`); the last of the stacked edges under the top card is
-  much taller than its content, a big empty white area (size it to its
-  content like the others, `DeckUpNext.swift` edges).
-- **"Unplayed" cut to "Unplay…"** on the Deck show page (Paul, 14 Nov
-  2026, screenshot): the EPISODES label, Unplayed / All pills, Select and
-  All played don't fit one row (`DeckShowEpisodeList.filterRow`). Plan:
-  EPISODES on its own line above, pills never squeezed (`fixedSize`).
-- **Tab pill lost over white cards** (Paul, 14 Nov 2026, FNB,
-  screenshot of Find's chart): the white pill sits on white chart cards
-  and blends in. Plan: give it a clear edge and a stronger shadow (or a
-  soft fade of the page colour behind the bottom of the screen) so it
-  stands off whatever scrolls under it (`DeckTabPill`, `DeckRoot`).
-- **Show deck dots unclear** (Paul, 14 Nov 2026, FNB, screenshot of the
-  ‹ dots › row under the show deck: "little unclear"): the dots for the
-  other shows are so faint they nearly vanish on the page, and a long row
-  of them says little. Plan: darker dots (or a "3 of 12" count in place
-  of dots when there are many) so it reads as "show 1 of 12, swipe or
-  tap the arrows" (`DeckShowDeck.swift` pager row).
-- **All your shows stacked, not sideways** (Paul, 14 Nov 2026, FNB,
-  screenshot: the tiles scroll sideways and cut off at the edges, names
-  cut to "Sport's Strangest C…"): "maybe we stack your shows rather than
-  scroll". Plan: a vertical list or a two-across grid under the show
-  deck, so every show is visible by scrolling down the page with full
-  names (`DeckShowDeck.swift`, "All your shows"). Then (Paul, 14 Nov
-  2026, same screenshot: "these cards could look a lot better. Maybe
-  full card images with text on top"): done on the branch, not built:
-  two across down the page (`DeckAllShowsRow`, `LazyVGrid`), each tile
-  the show's artwork edge to edge, square, radius 22, the name in white
-  (2 lines) over a dark fade at the foot, "n new" as a dark pill with a
-  white edge in the top corner (`DeckShowTile`).
-- **Up next reorder handle centred** (Paul, 14 Nov 2026, screenshot of
-  the fanned-out Up next: "3 lines middle aligned"): the ≡ handle sat
-  near the top of each card; it is now centred top to bottom
-  (`DeckUpNextFan` `grip`). On the branch, not built.
-- **Show deck only holds shows with new episodes** (Paul, 14 Nov 2026,
-  asked what the show deck's swipes were for, then: "let's show shows
-  with new episodes"): the deck on the Shows tab is now just the shows
-  with something new this week (Top rank, then A–Z), so swiping through
-  it is catching up show by show; with nothing new it's an "All caught
-  up" card. All your shows below still lists every show
-  (`DeckShowsView.newDeck`, `DeckShowsCaughtUp`). On the branch, not
-  built. Still to decide: a "new since you last looked" triage (swipe
+Paul's notes after build 155, all in Deck:
+- **Shorter swipe down to close**: the player closes past 60 pt (was
+  110) or a light flick; the fanned-out Up next past 60 pt.
+- **Tab pill**: switching tabs is instant (no animation carries the ink
+  capsule across); a fine ink edge, a deeper shadow and a soft fade of
+  the page colour behind the bottom of the screen, so it stands off
+  white cards scrolling under it (`DeckTabPill`, `DeckRoot.bottomFade`).
+- **Last stacked card** under Up next's top card is only as tall as its
+  row (62 pt; it was a 120 pt mostly empty card).
+- **"Unplayed" no longer cut short** on the show page: EPISODES on its
+  own line, the Unplayed / All pills never squeezed, Select and All
+  played on the right.
+- **Show deck**: only shows with new episodes (Top rank, then A–Z);
+  "All caught up" card when none (`DeckShowsView.newDeck`). Dots only up
+  to 6 shows and darker, "3 of 12" in ink beyond that.
+- **All your shows**: two across down the page, each tile the artwork
+  edge to edge with the name in white over a dark fade and "n new" as a
+  pill in the corner (`DeckAllShowsRow`, `DeckShowTile`).
+- **Up next fan**: the ≡ handle centred on each card.
+- **Opening the player from Up next**: the black flash was the player
+  opening with nothing loaded (e.g. just after opening the app) and
+  closing itself. The top card now loads its episode first, ready but
+  not playing (`PlayerModel.play(_:autoplay: false)`); the whole top
+  card opens the player; the episode artwork's colour is measured ahead.
+- **Artwork / transcript switch** on Up next's top card: a round key in
+  the picture's corner swaps the artwork for the line being said
+  (white on the show's colour; "No words for this episode yet…" when
+  there's none). Remembered as "deckTopWords" (this iPhone).
+- **No internet bar**: cloud-with-a-line icon, rounder, lined up with
+  the cards (16 pt) in Deck.
+- Still to decide: a "new since you last looked" triage screen (swipe
   right play next, left skip, + by your rules).
-- **Opening the player from Up next** (Paul, 14 Nov 2026: tapping the
-  top card's artwork "starts to load but I just get a black screen
-  briefly"; "you should be able to click on the whole card"): when
-  nothing was loaded yet (e.g. just after opening the app) the player
-  opened with nothing in it and closed itself straight away. Now the top
-  card loads its episode first, ready but not playing
-  (`PlayerModel.play(_:autoplay: false)`), then opens the player; the
-  whole top card opens the player (its own keys still do their thing);
-  the episode's artwork colour is measured ahead so the player opens in
-  colour, not dark grey (`DeckUpNextTop.open`). On the branch, not built.
-- **Artwork / transcript switch on Up next's top card** (Paul, 14 Nov
-  2026, screenshot: "a button to switch between artwork and transcript
-  here"): a round key in the picture area's bottom corner (speech bubble
-  while the artwork shows, picture while the words show) swaps the
-  artwork for the line being said, white on the show's colour, following
-  playback ("No words for this episode yet. Open the player to
-  transcribe it." when there's no transcript). Remembered as
-  "deckTopWords" (this iPhone). Standard and Calm layouts
-  (`DeckTopWordsSwitch`, `DeckTopWordsView`). On the branch, not built.
-- **No internet bar** (Paul, 14 Nov 2026: "icon could be clearer and
-  more border aligned"): cloud-with-a-line icon a little bigger, rounder
-  bar, and in Deck its edges line up with the cards (16 pt).
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

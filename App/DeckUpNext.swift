@@ -219,6 +219,7 @@ private struct DeckStack: View {
                 DeckEdgeCard(episode: episode,
                              label: plan.label(for: episode),
                              start: plan.starts[episode.episodeID],
+                             last: index == rest.count - 1,
                              action: fan)
                     .offset(y: cardHeight + 14 + CGFloat(index) * Self.edgeStep)
                     .zIndex(Double(index + 1))
@@ -233,10 +234,14 @@ private struct DeckEdgeCard: View {
     let episode: PodcastEpisode
     let label: String
     let start: Date?
+    /// The bottom card shows whole, so it's only as tall as its row (Paul,
+    /// 14 Nov 2026: it was a big empty white card).
+    var last: Bool = false
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        let height: CGFloat = last ? 62 : 120
+        return Button(action: action) {
             HStack(alignment: .top, spacing: 12) {
                 DeckUpNextArtwork(episode: episode, size: 34, radius: 9)
                 VStack(alignment: .leading, spacing: 1) {
@@ -260,7 +265,7 @@ private struct DeckEdgeCard: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 13)
-            .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 120, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
             .background(edgeShape.fill(Theme.surface))
             .overlay(edgeShape.strokeBorder(Theme.cardEdge, lineWidth: 1))
             .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.07), radius: 8, y: -6)

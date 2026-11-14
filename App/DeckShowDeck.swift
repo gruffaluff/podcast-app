@@ -278,11 +278,13 @@ private struct DeckShowDots: View {
     }
 
     @ViewBuilder private var middle: some View {
-        if count <= 12 {
+        // Dots only for a few shows, and dark enough to see; a count after
+        // that (Paul, 14 Nov 2026: the faint dots were "a little unclear").
+        if count <= 6 {
             HStack(spacing: 6) {
                 ForEach(0..<count, id: \.self) { index in
                     Capsule()
-                        .fill(index == current ? Theme.ink : Theme.cardEdge)
+                        .fill(index == current ? Theme.ink : Theme.faint.opacity(0.55))
                         .frame(width: index == current ? 18 : 6, height: 6)
                 }
             }
@@ -290,9 +292,9 @@ private struct DeckShowDots: View {
             .accessibilityLabel("Show \(current + 1) of \(count)")
         } else {
             Text("\(current + 1) of \(count)")
-                .font(Theme.outfit(13, .semibold))
+                .font(Theme.outfit(15, .bold))
                 .monospacedDigit()
-                .foregroundStyle(Theme.muted)
+                .foregroundStyle(Theme.ink)
         }
     }
 

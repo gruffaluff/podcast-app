@@ -99,12 +99,21 @@ struct DeckShowEpisodeList: View {
         return showAll ? all : all.filter { !$0.played }
     }
 
+    /// EPISODES on its own line, then the pills (never squeezed: Paul saw
+    /// "Unplay…") with Select and All played on the right.
     private var filterRow: some View {
-        HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             DeckShowLabel(text: "Episodes")
-            Spacer(minLength: 8)
+                .padding(.horizontal, 6)
+            filterKeys
+        }
+    }
+
+    private var filterKeys: some View {
+        HStack(spacing: 6) {
             filter("Unplayed", on: !showAll) { showAll = false }
             filter("All", on: showAll) { showAll = true }
+            Spacer(minLength: 8)
             Button {
                 withAnimation(.snappy(duration: 0.25)) {
                     selecting.toggle()
@@ -138,6 +147,7 @@ struct DeckShowEpisodeList: View {
             withAnimation(LibraryStore.listChange) { action() }
         } label: {
             DeckShowPill(title: title, on: on, height: 30)
+                .fixedSize()
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? [.isSelected] : [])
