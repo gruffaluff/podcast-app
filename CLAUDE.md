@@ -2260,6 +2260,11 @@ all the suggested picks.**
   2026, screenshot): the EPISODES label, Unplayed / All pills, Select and
   All played don't fit one row (`DeckShowEpisodeList.filterRow`). Plan:
   EPISODES on its own line above, pills never squeezed (`fixedSize`).
+- **Tab pill lost over white cards** (Paul, 14 Nov 2026, FNB,
+  screenshot of Find's chart): the white pill sits on white chart cards
+  and blends in. Plan: give it a clear edge and a stronger shadow (or a
+  soft fade of the page colour behind the bottom of the screen) so it
+  stands off whatever scrolls under it (`DeckTabPill`, `DeckRoot`).
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
