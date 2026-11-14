@@ -2142,7 +2142,8 @@ all the suggested picks.**
 - Sleep moon no longer jumps when the minutes appear: the moon stays put
   and "15M" sits under it as an overlay (`HaarTransport.sleepButton`).
 
-## Queued for the next app build
+## Done in build 154 (14 Nov 2026, PR #72; Paul: "get a full build going so I can test when I'm home")
+
 
 - **Deck redesign** (Paul, 14 Nov 2026: "I love it"; prototype
   https://claude.ai/artifact/CC3pxxR1XwBGtnp13xAdbB, file and build notes in
@@ -2160,9 +2161,41 @@ all the suggested picks.**
   new default (AUTO = Deck / Deck night); Haar, Sand, Slate, Clay and
   Night stay pickable with their old screens. Phase 1 (on the branch):
   `ColourScheme.deck` / `.deckNight`, `Theme.isDeck`, `Theme.outfit`,
-  `App/Fonts/Outfit-*.ttf`, `DeckRoot` (pill, mini player, pages),
-  placeholders `DeckUpNextView`, `DeckShowsView`, `DeckFindView`,
-  `DeckPlayerView`, `DeckSettingsView` being built next.
+  `App/Fonts/Outfit-*.ttf`, `DeckRoot` (pill, mini player, pages).
+  Then four helpers in parallel, merged on the branch, compiled first
+  time on GitHub's check:
+  - Up next (`DeckUpNext*.swift`): header with the deck mark, "n · done
+    by", gear (Settings sheet); top card (`DeckTopCard`) with swipes
+    (left Played, right 90–200 Next in line, past 200 To the bottom,
+    haptics, stamps), Skip ad chip; four stacked edges with start times;
+    empty deck card; the fan (`DeckUpNextFan`: List + onMove, pull down
+    past 110 to close, row swipes, Keep playing). Fan cards sit 6 pt
+    apart rather than overlapping (iOS's drag-to-reorder stays safe).
+    Next in line / To the bottom reorder `store.queue` as hand placed and
+    load the new top in the player.
+  - Layout setting (`DeckLayout.swift`, "deckLayout": Standard / Big
+    buttons / Calm / Read along; only the top card changes;
+    `DeckLayoutView` in Settings → Look).
+  - Player (`DeckPlayer*.swift`): gradient in the show's colour, ⌄ /
+    UP NEXT · n or PLAYING ON / ⋯, artwork that shrinks for Read along
+    (`DeckReadAlong`), chapter pill + Skip ad, white scrub line (Haar
+    drag rules, Undo), transport, volume on tall screens, Options ·
+    Read along · Chapters · AirPlay; `DeckPlayerChaptersSheet`.
+  - Shows (`DeckShows*.swift`, `DeckShowDeck.swift`): show deck (new
+    first, then Top rank, then A–Z), All your shows tiles, New sheet;
+    `DeckShowPage` (pills, Top / Bottom / Nowhere, episodes with keys and
+    two-distance swipes via `deckShowSwipe`, ⋯ menu); `DeckEpisodePage`
+    (shown by EpisodeNotesView in Deck).
+  - Find (`DeckFind.swift`): search sections, charts with movement,
+    `DeckFollowSheet` (where new episodes go, Alerts, Download the
+    newest; the newest is dealt in on Done); Settings
+    (`DeckSettings.swift`: every Shows-screen setting in grouped cards,
+    `DeckPriorityView`).
+  - Not done: Select mode on the show page; ShowPreviewView still uses
+    the old follow button. To check on the phone: swipe distances (90 /
+    200 pt), pull-down to close the fan, dragging in the fan, the pill
+    over last rows, mini player clearance, Read along timing, Deck night,
+    smaller iPhones.
 
 - **After build 153** (Paul, 14 Nov 2026), on the branch, not built:
   - Now / Library / Find switch instantly (no fade).
@@ -2192,6 +2225,8 @@ all the suggested picks.**
       Transcribe / "Transcribing 62%" / Read along (opens the transcript).
       The white status cards (`EpisodeStatusRows`) and DL / TX letters
       stay for the other looks; the notes are plain text in Haar.
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
