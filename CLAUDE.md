@@ -2276,7 +2276,13 @@ all the suggested picks.**
   cut to "Sport's Strangest C…"): "maybe we stack your shows rather than
   scroll". Plan: a vertical list or a two-across grid under the show
   deck, so every show is visible by scrolling down the page with full
-  names (`DeckShowDeck.swift`, "All your shows").
+  names (`DeckShowDeck.swift`, "All your shows"). Then (Paul, 14 Nov
+  2026, same screenshot: "these cards could look a lot better. Maybe
+  full card images with text on top"): done on the branch, not built:
+  two across down the page (`DeckAllShowsRow`, `LazyVGrid`), each tile
+  the show's artwork edge to edge, square, radius 22, the name in white
+  (2 lines) over a dark fade at the foot, "n new" as a dark pill with a
+  white edge in the top corner (`DeckShowTile`).
 - **Up next reorder handle centred** (Paul, 14 Nov 2026, screenshot of
   the fanned-out Up next: "3 lines middle aligned"): the ≡ handle sat
   near the top of each card; it is now centred top to bottom
