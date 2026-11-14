@@ -2231,6 +2231,19 @@ all the suggested picks.**
       The white status cards (`EpisodeStatusRows`) and DL / TX letters
       stay for the other looks; the notes are plain text in Haar.
 
+## Done in build 155 (14 Nov 2026, PR #73; Paul: "work on the not dones yet and get it all in")
+
+- App icon "E · P card" (see the icon line at the top; Paul: A was too
+  like an existing app).
+- Select mode on the Deck show page (`DeckShowEpisodeList`): Select /
+  Done beside Unplayed · All · All played; tap episodes to tick them;
+  a bar with "n selected", Select all / none, Played, Unplayed and Up next
+  (oldest first), all with Undo (`DeckShowSelectBar`, `DeckShowSelectRow`).
+- Show previews (Find, charts) follow through the Deck follow sheet in
+  Deck (`ShowPreviewView` uses `DeckFollower` / `DeckFollowSheet`; the
+  old settings sheet stays for the other looks); Open show goes to the
+  Deck show page.
+
 ## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
