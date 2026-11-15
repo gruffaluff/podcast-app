@@ -2351,7 +2351,16 @@ Paul's notes after build 155, all in Deck:
 - **Show deck swipe feels like nothing happens** (Paul, 15 Nov 2026:
   "maybe it just needs to be a row you swipe along"). Suggested a
   sideways row of show cards with the next one peeking in from the right,
-  following the finger and snapping to each card. Waiting on Paul.
+  following the finger and snapping to each card. **Paul: "build it that
+  way"** (15 Nov 2026): done on the branch, not built: `DeckShowStack` is a
+  sideways `ScrollView` of `DeckShowCard`s (screen width less 56 pt, 12 pt
+  apart, settling on each card with `.viewAligned`), the ‹ › keys and dots
+  still under it; the fanned back cards are gone.
+- **Sort for All your shows?** (Paul, 15 Nov 2026: "what order … do we
+  have the sort order button"): today the same order as the cards (new
+  first, Top rank, A–Z); no sort key in Deck. Offered a ⇅ key beside the
+  label (New first / Name A–Z / Latest episode / Top ranking). Waiting on
+  Paul.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
