@@ -42,6 +42,11 @@ struct DeckRoot: View {
     @Binding var tab: Int
     @Binding var showingPlayer: Bool
     @State private var made: Set<Int> = [0]
+    /// "Up next as" Tabs or Card deck (Paul, 15 Nov 2026: tabs).
+    @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
+    @State private var tabsModel = DeckTabsModel()
+
+    private var tabsMode: Bool { home != DeckHome.deck }
 
     /// Room under every list's last row: the pill, and the mini player on
     /// Shows and Find while something is on.
@@ -50,7 +55,9 @@ struct DeckRoot: View {
 
     var body: some View {
         ZStack {
-            page(0) { DeckUpNextView() }
+            page(0) {
+                if tabsMode { DeckTabsView() } else { DeckUpNextView() }
+            }
             page(1) { DeckShowsView() }
             page(2) { DeckFindView() }
         }
@@ -58,7 +65,22 @@ struct DeckRoot: View {
         .overlay(alignment: .bottom) { bottom }
         .environment(\.deckOpenPlayer, { showingPlayer = true })
         .environment(\.deckSelectTab, { tab = $0 })
+        .environment(tabsModel)
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }
+        // Tabs: an open tab, full screen; closing it goes to the overview.
+        .fullScreenCover(isPresented: pagerShown) {
+            DeckTabsPager(openPlayer: { showingPlayer = true })
+                .environment(tabsModel)
+                .presentationBackground(.clear)
+        }
+        .onChange(of: tabsModel.pagerOpen) { _, open in
+            if !open { tab = 0 }
+        }
+    }
+
+    private var pagerShown: Binding<Bool> {
+        Binding(get: { tabsMode && tabsModel.pagerOpen },
+                set: { tabsModel.pagerOpen = $0 })
     }
 
     /// Each page is made the first time it's shown, then kept (so it keeps
@@ -78,7 +100,9 @@ struct DeckRoot: View {
     }
 
     private func room(for index: Int) -> CGFloat {
-        Self.pillRoom + (index != 0 && player.nowPlaying != nil ? Self.miniRoom : 0)
+        // Tabs: Safari's bar is the mini player too.
+        if tabsMode { return DeckTabsBar.room }
+        return Self.pillRoom + (index != 0 && player.nowPlaying != nil ? Self.miniRoom : 0)
     }
 
     /// A soft fade of the page colour behind the pill, so cards scrolling
@@ -91,7 +115,16 @@ struct DeckRoot: View {
             .allowsHitTesting(false)
     }
 
-    private var bottom: some View {
+    @ViewBuilder private var bottom: some View {
+        if tabsMode {
+            DeckTabsBar(tab: $tab)
+                .padding(.bottom, 8)
+        } else {
+            pillAndMini
+        }
+    }
+
+    private var pillAndMini: some View {
         VStack(spacing: 10) {
             if tab != 0 && player.nowPlaying != nil {
                 DeckMiniPlayer { showingPlayer = true }
