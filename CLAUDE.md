@@ -2492,6 +2492,21 @@ Paul's notes after build 155, all in Deck:
 
 ## Queued for the next app build
 
+- **Last row of the full Up next list under the tab pill** (Paul, 15 Nov
+  2026, FNB, build 158 screenshot): the "Keep playing new episodes" row
+  at the foot of the fanned list can't scroll clear: the pill and the
+  page-colour fade behind it cut through its title and switch. Plan: give
+  the fan list (and any Deck list ending in a row like this) bottom room
+  of the pill's height + fade + 16 pt, so the last row always scrolls
+  fully above the pill.
+
+- **Ring / dial on the player?** (Paul, 15 Nov 2026: "ideas about somehow
+  incorporating a ring or dial display into the now playing screen … not
+  sure what I mean yet"). Ideas given in chat (progress ring round the
+  artwork with chapter ticks, scrub by dragging round it, play key ring,
+  sleep / chapter rings, ring that shrinks into Read along); waiting on
+  Paul's pick for mock-ups. Not built.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
