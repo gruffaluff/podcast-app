@@ -285,20 +285,86 @@ private struct DeckShowDots: View {
 /// with text on top"). Tap one for its page.
 struct DeckAllShowsRow: View {
     let entries: [DeckShowEntry]
+    /// Paul, 15 Nov 2026: "add the sort button". Kept on this iPhone.
+    @AppStorage("deckShowsSort") private var sortRaw: String = DeckShowsSort.newFirst.rawValue
     private let columns: [GridItem] = [GridItem(.flexible(), spacing: 12),
                                        GridItem(.flexible(), spacing: 12)]
 
+    private var sort: DeckShowsSort { DeckShowsSort(rawValue: sortRaw) ?? .newFirst }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DeckShowLabel(text: "All your shows")
-                .padding(.horizontal, 22)
+            HStack(alignment: .firstTextBaseline) {
+                DeckShowLabel(text: "All your shows")
+                Spacer(minLength: 8)
+                sortMenu
+            }
+            .padding(.leading, 22)
+            .padding(.trailing, 16)
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(entries) { entry in
+                ForEach(sort.sorted(entries)) { entry in
                     NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
                         .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16)
+        }
+    }
+
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort", selection: $sortRaw) {
+                ForEach(DeckShowsSort.allCases, id: \.rawValue) { option in
+                    Text(option.title).tag(option.rawValue)
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(.system(size: 11, weight: .bold))
+                Text(sort.title)
+                    .font(Theme.outfit(12, .semibold))
+            }
+            .foregroundStyle(Theme.muted)
+            .frame(minHeight: 32)
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Sort your shows: " + sort.title)
+    }
+}
+
+/// The orders for All your shows.
+enum DeckShowsSort: String, CaseIterable {
+    case newFirst, name, latestEpisode, topRank
+
+    var title: String {
+        switch self {
+        case .newFirst: return "New first"
+        case .name: return "Name A–Z"
+        case .latestEpisode: return "Latest episode"
+        case .topRank: return "Top ranking"
+        }
+    }
+
+    /// The entries come in "new first" order (new, Top rank, A–Z).
+    func sorted(_ entries: [DeckShowEntry]) -> [DeckShowEntry] {
+        switch self {
+        case .newFirst:
+            return entries
+        case .name:
+            return entries.sorted { $0.show.title.localizedStandardCompare($1.show.title) == .orderedAscending }
+        case .latestEpisode:
+            let latest: [String: Date] = Dictionary(entries.map {
+                ($0.id, $0.show.episodes.map(\.published).max() ?? .distantPast)
+            }, uniquingKeysWith: { first, _ in first })
+            return entries.sorted { (latest[$0.id] ?? .distantPast) > (latest[$1.id] ?? .distantPast) }
+        case .topRank:
+            return entries.sorted { a, b in
+                let first: Int = a.rank ?? 999
+                let second: Int = b.rank ?? 999
+                if first != second { return first < second }
+                return a.show.title.localizedStandardCompare(b.show.title) == .orderedAscending
+            }
         }
     }
 }

@@ -2359,8 +2359,17 @@ Paul's notes after build 155, all in Deck:
 - **Sort for All your shows?** (Paul, 15 Nov 2026: "what order … do we
   have the sort order button"): today the same order as the cards (new
   first, Top rank, A–Z); no sort key in Deck. Offered a ⇅ key beside the
-  label (New first / Name A–Z / Latest episode / Top ranking). Waiting on
-  Paul.
+  label (New first / Name A–Z / Latest episode / Top ranking). **Paul:
+  "add the sort button"** (15 Nov 2026): on the branch, not built: a small
+  ⇅ menu on the right of the ALL YOUR SHOWS label showing the chosen order
+  (New first, the default / Name A–Z / Latest episode / Top ranking, then
+  A–Z), kept on this iPhone as "deckShowsSort" (`DeckShowsSort`).
+- **Missing from the Deck look** (Paul asked 15 Nov 2026 "what else are we
+  missing"; checked the code): Carry on (started, unfinished episodes) has
+  no home; Saved clips can't be reached; Add a show by pasting a link (RSS,
+  private / Patreon feeds, Apple Podcasts links) isn't in Find; the show's
+  own settings (speed, skip intro / outro, keep downloads) open the older
+  look's sheet. Asked Paul which to do.
 - **Show preview in the Deck look** (Paul, 15 Nov 2026, screenshot of
   The News Agents from Find: "the show screen via Find is still the old
   one"): shows you don't follow yet now open like a followed show's page:
