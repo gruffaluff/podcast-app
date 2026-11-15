@@ -2298,6 +2298,11 @@ Paul's notes after build 155, all in Deck:
   (`DeckPlayer*` chapter row); then check every Deck screen for things
   that should be centred or lined up (player rows, top card, sheets, the
   pill, headers) and fix them in the same build.
+- **Undo bar lost on the page** (Paul, 15 Nov 2026, FNB: "the undo pop
+  up is the same colour as the background so gets lost a bit. Make it
+  clearer"): in Deck the Undo bar uses the page colour. Plan: a dark ink
+  bar with white text and a bold UNDO, a soft shadow, the same 16 pt
+  edges as the cards (`UndoBar` in Deck).
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
