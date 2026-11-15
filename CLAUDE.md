@@ -2331,6 +2331,10 @@ Paul's notes after build 155, all in Deck:
   Undo bar floated over the stacked cards): in Deck it sits 10 pt above
   the pill, and above the mini player on Shows / Find while something is
   on (`RootView.deckToastLift`). On the branch, not built.
+- **Swipe up to open Up next** (Paul, 15 Nov 2026: "can swipe up on the
+  up next queue open it"): swiping up on the deck (top card or the cards
+  under it) fans out the whole list, like tapping the cards under it
+  (`DeckStack.swipeUp`). On the branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

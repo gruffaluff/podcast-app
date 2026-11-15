@@ -205,6 +205,23 @@ private struct DeckStack: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        // Paul, 15 Nov 2026: swipe up on the deck to fan out the whole of
+        // Up next (tapping the cards under the top one still does too).
+        // The top card's own sideways swipes only start when moving
+        // sideways, so they don't clash.
+        .contentShape(Rectangle())
+        .simultaneousGesture(swipeUp)
+    }
+
+    private var swipeUp: some Gesture {
+        DragGesture(minimumDistance: 16, coordinateSpace: .global)
+            .onEnded { (value: DragGesture.Value) in
+                let up: CGFloat = -value.translation.height
+                let sideways: CGFloat = abs(value.translation.width)
+                let flick: Bool = -value.predictedEndTranslation.height > 120
+                guard up > sideways, up > 40 || flick else { return }
+                fan()
+            }
     }
 
     /// 448 points on a big iPhone, shorter on small ones (at least 340).
