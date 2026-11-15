@@ -322,7 +322,8 @@ private struct DeckFindResults: View {
     @ViewBuilder private var directorySection: some View {
         if !directory.isEmpty || searching {
             DeckFind.label(searching && directory.isEmpty ? "New shows · searching…" : "New shows")
-            VStack(spacing: 8) {
+            // Made as they scroll into view, like the chart.
+            LazyVStack(spacing: 8) {
                 ForEach(directory) { item in
                     DeckChartRow(item: item, rank: nil, move: nil)
                 }
@@ -588,7 +589,9 @@ private struct DeckChartSection: View {
     }
 
     private var rows: some View {
-        VStack(spacing: 8) {
+        // Smoother scrolling (Paul, 15 Nov 2026): rows are made as they
+        // scroll into view (each one looks up whether you follow the show).
+        LazyVStack(spacing: 8) {
             ForEach(Array(chart.enumerated()), id: \.element.id) { index, item in
                 DeckChartRow(item: item, rank: index + 1, move: moves[item.id])
             }

@@ -80,6 +80,8 @@ struct DeckTopCard: View {
     /// Artwork or the words being said in the top card's picture area
     /// (Paul, 14 Nov 2026: "a button to switch between artwork and transcript").
     @AppStorage("deckTopWords") private var showWords = false
+    /// False while Shows or Find is on screen (this page is kept, hidden).
+    @Environment(\.deckPageShown) private var pageShown
 
     let episode: PodcastEpisode
     let plan: DeckQueuePlan
@@ -158,10 +160,14 @@ struct DeckTopCard: View {
     private func makeInfo() -> DeckTopInfo {
         let current: Bool = player.nowPlaying?.episodeID == episode.episodeID
         let duration: TimeInterval = current && player.duration > 0 ? player.duration : (episode.duration ?? 0)
-        let time: TimeInterval = current ? player.currentTime : episode.position
+        // Smoother scrolling (Paul, 15 Nov 2026): while hidden behind Shows
+        // or Find the card doesn't read the player's clock (it would redraw
+        // twice a second for nobody); it catches up the moment it's shown.
+        let live: Bool = current && pageShown
+        let time: TimeInterval = live ? player.currentTime : episode.position
         let ads: [AdBreak] = current ? player.adBreaks : episode.adBreaks
         var chapter: String?
-        if current, let index = player.currentChapterIndex, player.chapters.indices.contains(index) {
+        if live, let index = player.currentChapterIndex, player.chapters.indices.contains(index) {
             chapter = player.chapters[index].title
         }
         let artURL: URL? = episode.podcast?.artworkURL ?? episode.artwork
