@@ -2415,6 +2415,14 @@ Paul's notes after build 155, all in Deck:
 
 ## Queued for the next app build
 
+- **Bottom stacked card filled in** (Paul, 15 Nov 2026, build 157
+  screenshot: the last card under Up next's top card had empty space;
+  "either expand the info into the space or tighten up. I'd suggest more
+  info"): the bottom card now has a third line, "9 Nov · 52m" (or "12m
+  left" once started), and the DL / TX letters under its start time
+  (`DeckEdgeCard.detail`). The cards above it keep two lines (only their
+  top shows). On the branch, not built.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public

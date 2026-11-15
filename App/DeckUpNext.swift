@@ -236,6 +236,8 @@ private struct DeckEdgeCard: View {
     /// 14 Nov 2026: it was a big empty white card), but still a little
     /// taller than the 72 pt of the card above that shows below the step,
     /// so that card's foot never pokes out under it (build 156 screenshot).
+    /// It has a third line (date · length) and the DL / TX letters, so its
+    /// room isn't empty (Paul, 15 Nov 2026).
     var last: Bool = false
     let action: () -> Void
 
@@ -253,15 +255,28 @@ private struct DeckEdgeCard: View {
                         .font(Theme.outfit(12, .medium))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
+                    if last {
+                        Text(detail)
+                            .font(Theme.outfit(12, .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.muted.opacity(0.8))
+                            .lineLimit(1)
+                            .padding(.top, 3)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if let start {
-                    Text(UpNextTimes.clock(start))
-                        .font(Theme.outfit(12, .medium))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.muted)
-                        .padding(.top, 2)
+                VStack(alignment: .trailing, spacing: 6) {
+                    if let start {
+                        Text(UpNextTimes.clock(start))
+                            .font(Theme.outfit(12, .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.muted)
+                    }
+                    if last {
+                        EpisodeLights(episode: episode)
+                    }
                 }
+                .padding(.top, 2)
             }
             .padding(.horizontal, 16)
             .padding(.top, 13)
@@ -277,6 +292,19 @@ private struct DeckEdgeCard: View {
     }
 
     private var edgeShape: RoundedRectangle { RoundedRectangle(cornerRadius: 24, style: .continuous) }
+
+    /// The bottom card's third line (Paul, 15 Nov 2026: fill its space):
+    /// "9 Nov · 52m", or "9 Nov · 12m left" once started.
+    private var detail: String {
+        let date: String = episode.published.formatted(.dateTime.day().month(.abbreviated))
+        guard let duration = episode.duration, duration > 0 else { return date }
+        let left: TimeInterval = episode.timeLeft ?? duration
+        let started: Bool = episode.position > 30 && left > 0
+        let time: String = started
+            ? DeckUpNextTime.length(left) + " left"
+            : DeckUpNextTime.length(duration)
+        return date + " · " + time
+    }
 }
 
 /// Nothing in Up next.
