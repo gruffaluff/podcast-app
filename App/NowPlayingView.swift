@@ -1224,9 +1224,23 @@ struct PlayerOptionsSheet: View {
     private var sleepRow: some View {
         HStack(spacing: 8) {
             Menu {
-                Button("Off") { player.setSleepTimer(nil) }
+                Button("Off") {
+                    player.setSleepTimer(nil)
+                    player.setStopAtChapterEnd(false)
+                }
                 ForEach(SleepTimerOption.all, id: \.self) { option in
-                    Button(option.label) { player.chooseSleepTimer(option) }
+                    Button(option.label) {
+                        player.setStopAtChapterEnd(false)
+                        player.chooseSleepTimer(option)
+                    }
+                }
+                // End of chapter (Paul, 15 Nov 2026): uses the chapter stop
+                // (fades and pauses when the chapter playing now ends).
+                if !player.chapters.isEmpty {
+                    Button("End of chapter") {
+                        player.setSleepTimer(nil)
+                        player.setStopAtChapterEnd(true)
+                    }
                 }
             } label: {
                 HStack {
@@ -1259,6 +1273,7 @@ struct PlayerOptionsSheet: View {
         if let ends = player.sleepEndsAt {
             return "\(max(1, Int((ends.timeIntervalSinceNow / 60).rounded(.up)))) min left"
         }
+        if player.stopsAtChapterEnd { return "End of chapter" }
         switch player.sleepTimer {
         case .none: return "Off"
         case .some(.endOfEpisode): return "End of episode"

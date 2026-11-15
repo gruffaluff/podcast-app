@@ -167,8 +167,11 @@ struct DeckPlayerView: View {
     /// it's clearly going down it follows the finger; letting go past
     /// 60 pt or on a light flick slides the player away first and then
     /// closes it without iOS's own animation on top (which made it jump).
+    /// Paul, 15 Nov 2026 (after build 157): still needed "a real motion".
+    /// It now starts after 4 pt and closes past 36 pt, on any downward
+    /// flick (300 pt/s) or a predicted 90 pt, so a light brush down will do.
     private var closeSwipe: some Gesture {
-        DragGesture(minimumDistance: 8, coordinateSpace: .global)
+        DragGesture(minimumDistance: 4, coordinateSpace: .global)
             .onChanged { (value: DragGesture.Value) in
                 let down: CGFloat = value.translation.height
                 let sideways: CGFloat = abs(value.translation.width)
@@ -179,7 +182,9 @@ struct DeckPlayerView: View {
             }
             .onEnded { (value: DragGesture.Value) in
                 guard pull > 0 else { return }
-                if value.translation.height > 60 || value.predictedEndTranslation.height > 140 {
+                let far: Bool = value.translation.height > 36
+                let flick: Bool = value.velocity.height > 300 || value.predictedEndTranslation.height > 90
+                if far || flick {
                     slideAwayAndClose()
                 } else {
                     withAnimation(.spring(duration: 0.3, bounce: 0.1)) { pull = 0 }
@@ -188,8 +193,8 @@ struct DeckPlayerView: View {
     }
 
     private func slideAwayAndClose() {
-        withAnimation(.easeOut(duration: 0.2)) { pull = 1200 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        withAnimation(.easeOut(duration: 0.18)) { pull = 1200 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
             var quiet = Transaction(animation: nil)
             quiet.disablesAnimations = true
             withTransaction(quiet) { dismiss() }

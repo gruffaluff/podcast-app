@@ -106,24 +106,6 @@ struct DeckTabPill: View {
         .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.14), lineWidth: 1))
         .shadow(color: Color.black.opacity(0.22), radius: 18, y: 10)
         .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
-        // Paul, 15 Nov 2026: swipe along the pill to change tab.
-        .simultaneousGesture(swipe)
-    }
-
-    private var swipe: some Gesture {
-        DragGesture(minimumDistance: 14)
-            .onEnded { (value: DragGesture.Value) in
-                let across: CGFloat = value.translation.width
-                let flick: CGFloat = value.predictedEndTranslation.width
-                guard abs(across) > abs(value.translation.height) else { return }
-                guard abs(across) > 30 || abs(flick) > 90 else { return }
-                let next: Int = min(2, max(0, tab + (across < 0 ? -1 : 1)))
-                guard next != tab else { return }
-                var instant = Transaction(animation: nil)
-                instant.disablesAnimations = true
-                withTransaction(instant) { tab = next }
-                UISelectionFeedbackGenerator().selectionChanged()
-            }
     }
 
     private func item(_ index: Int) -> some View {
