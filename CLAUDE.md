@@ -2608,6 +2608,14 @@ Paul's notes after build 155, all in Deck:
 
 ## Queued for the next app build
 
+- **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
+  Mac job that runs the app in a simulated iPhone with made-up shows,
+  does the main gestures and saves screenshots for checking before Paul
+  installs. Free while the repo is public; from 1 Dec (private) Mac time
+  counts 10× against the free 2,000 minutes (~15 runs a month, stops at
+  the limit, no charge). **Paul: "Let's see how this one goes first"**
+  (build 159). Not built.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
