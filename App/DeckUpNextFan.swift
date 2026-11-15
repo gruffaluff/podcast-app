@@ -12,6 +12,9 @@ struct DeckUpNextFan: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let plan: DeckQueuePlan
+    /// Up next suggestions (Paul, 15 Nov 2026), under the last card when
+    /// Up next is nearly out; worked out by DeckUpNextView.
+    var suggestions: [PodcastEpisode] = []
     let close: () -> Void
 
     /// How far the list is pulled down past its top.
@@ -38,6 +41,11 @@ struct DeckUpNextFan: View {
                         .moveDisabled(episode.episodeID == plan.playingID)
                 }
                 .onMove { source, destination in move(from: source, to: destination, rows: shown) }
+                if !suggestions.isEmpty {
+                    DeckSuggestionsSection(episodes: suggestions)
+                        .padding(.top, 14)
+                        .plainFanRow()
+                }
                 footer
             }
             .listStyle(.plain)

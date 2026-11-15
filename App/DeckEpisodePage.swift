@@ -104,6 +104,8 @@ private struct DeckEpisodeKeys: View {
         HStack(spacing: 8) {
             playButton
             square("plus", label: "Play next", on: false) { store.playNext(episode) }
+            // Save for later (Paul, 15 Nov 2026).
+            DeckSaveForLaterKey(episode: episode)
             square("checkmark", label: episode.played ? "Mark unplayed" : "Mark played", on: episode.played) { togglePlayed() }
         }
     }
