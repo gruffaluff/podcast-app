@@ -2413,7 +2413,7 @@ Paul's notes after build 155, all in Deck:
   tap for all of them). The printed poster header stays for the other
   looks (`DeckShowPreview`, `ShowPreviewView.deckBody`).
 
-## Queued for the next app build
+## Done in build 158 (15 Nov 2026, PR #76; Paul: "Build")
 
 - **Bottom stacked card filled in** (Paul, 15 Nov 2026, build 157
   screenshot: the last card under Up next's top card had empty space;
@@ -2421,18 +2421,18 @@ Paul's notes after build 155, all in Deck:
   info"): the bottom card now has a third line, "9 Nov · 52m" (or "12m
   left" once started), and the DL / TX letters under its start time
   (`DeckEdgeCard.detail`). The cards above it keep two lines (only their
-  top shows). On the branch, not built.
+  top shows).
 
 - **Undo puts the card back on top** (Paul, 15 Nov 2026: undoing a swipe
   on Up next's top card put the episode back in the queue, but the next
   one stayed on top). Played (left swipe) and Next in line / To the
   bottom (right swipes) on the episode that's on now: Undo also loads it
   back in the player where it was, playing if it was
-  (`DeckQueueMoves.comesBackOnTop`). On the branch, not built.
+  (`DeckQueueMoves.comesBackOnTop`).
 
 - **After build 157, Paul's list** (15 Nov 2026: "get working on 1-7"
-  from the ideas list, plus three notes). On the branch, not built; four
-  helpers in parallel, merged here:
+  from the ideas list, plus three notes). Four helpers in
+  parallel, merged on the branch:
   - **No swipe on the tab pill** (Paul: "unneeded"): removed; taps only.
   - **Pull down to close the player, lighter** (Paul: "you have to put a
     real motion in"): starts after 4 pt, closes past 36 pt, on a flick
@@ -2488,7 +2488,9 @@ Paul's notes after build 155, all in Deck:
   little out of place and not well proportioned"): everything centred in
   a 96 pt card: 60 pt artwork, then show (caps), title (two lines' room)
   and one info line "17:08 · 1h 1m  DL TX"; the ≡ handle level with it
-  (`DeckUpNextFan` row). On the branch, not built.
+  (`DeckUpNextFan` row).
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
