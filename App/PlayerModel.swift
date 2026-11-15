@@ -764,8 +764,14 @@ final class PlayerModel {
     private func skipAdIfNeeded(at time: TimeInterval) {
         let adBreak = adBreaks.first { $0.contains(time) && !allowedAds.contains($0.start) }
         if currentAd != adBreak { currentAd = adBreak }
-        guard skipAds, player.timeControlStatus != .paused, let adBreak else { return }
+        guard let adBreak, player.timeControlStatus != .paused, skipsAdsForCurrentShow else { return }
         skip(adBreak)
+    }
+
+    /// Whether ads skip by themselves for what's playing: the show's own
+    /// choice, else the global setting (per-show ad skipping, Paul, 15 Nov 2026).
+    var skipsAdsForCurrentShow: Bool {
+        ShowAdSkip.skips(feed: currentShowFeed, global: skipAds)
     }
 
     /// The Skip ad button: jumps to where the show resumes.

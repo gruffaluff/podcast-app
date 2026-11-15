@@ -14,6 +14,8 @@ struct DeckShowSettingsSheet: View {
     let show: Podcast
     @State private var addedAll = false
     @State private var markedOlder = false
+    /// This show's ad skipping (per-show ad skipping, Paul, 15 Nov 2026).
+    @State private var adSkip: ShowAdSkip.Mode = .followSettings
 
     var body: some View {
         NavigationStack {
@@ -37,6 +39,7 @@ struct DeckShowSettingsSheet: View {
             }
         }
         .tint(Theme.ink)
+        .onAppear { adSkip = ShowAdSkip.mode(for: show.feedURL) }
     }
 
     // MARK: Groups
@@ -56,7 +59,7 @@ struct DeckShowSettingsSheet: View {
 
     private var playback: some View {
         DeckSetGroup("Playback for this show",
-                     footer: "Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end.") {
+                     footer: playbackFooter) {
             DeckSetChoice(icon: "gauge.with.dots.needle.33percent", title: "Speed",
                           options: ShowSettingsView.speedChoices, selection: speed)
             DeckSetLine()
@@ -65,7 +68,33 @@ struct DeckShowSettingsSheet: View {
             DeckSetLine()
             DeckSetChoice(icon: "backward.end", title: "Skip outro",
                           options: ShowSettingsView.skipOptions, selection: seconds(\.skipOutro))
+            DeckSetLine()
+            DeckSetChoice(icon: "forward.circle", title: "Skip ads", options: adSkipOptions,
+                          selection: adSkipBinding)
         }
+    }
+
+    private var playbackFooter: String {
+        let global: String = player.skipAds ? "on" : "off"
+        return "Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end. "
+            + "Skip ads on Default follows Skip ads automatically in Settings (\(global) now); Always or Never is for this show only."
+    }
+
+    /// Default says what the global setting is today.
+    private var adSkipOptions: [(label: String, value: ShowAdSkip.Mode)] {
+        let defaultLabel: String = player.skipAds ? "Default (on)" : "Default (off)"
+        return [
+            (label: defaultLabel, value: ShowAdSkip.Mode.followSettings),
+            (label: "Always", value: ShowAdSkip.Mode.always),
+            (label: "Never", value: ShowAdSkip.Mode.never),
+        ]
+    }
+
+    private var adSkipBinding: Binding<ShowAdSkip.Mode> {
+        Binding(get: { adSkip }, set: { mode in
+            adSkip = mode
+            ShowAdSkip.set(mode, for: show.feedURL)
+        })
     }
 
     private var older: some View {
