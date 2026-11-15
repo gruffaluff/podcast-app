@@ -2313,6 +2313,20 @@ Paul's notes after build 155, all in Deck:
   light flick the player slides away itself and then closes with no
   second animation (`DeckPlayerView.closeSwipe`, `slideAwayAndClose`).
   On the branch, not built.
+- **Up next top card: Transcribe now, download key, no flash** (Paul, 15
+  Nov 2026: loves the transcript key; "yes" to Transcribe now in the
+  empty space; "couldn't we also get a DL button on the other side";
+  recording: the "no words yet" note flashed up before the transcript).
+  With the words on and none yet: "No words for this episode yet." and a
+  white Transcribe now key; while on its way "Downloading first 40%" /
+  "Transcribing 62%" with a bar and Stop; the words appear by themselves
+  when ready. The lines now load the moment the key is tapped (they
+  loaded a beat later, so the note flashed first) and nothing shows while
+  a ready transcript loads. A round download key in the picture's bottom
+  left: arrow to download, a filling ring while it downloads (tap stops
+  it), filled when on the phone (tap to remove, with a check)
+  (`DeckTopDownloadKey`, `DeckTopWords.Status / Download`). On the
+  branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

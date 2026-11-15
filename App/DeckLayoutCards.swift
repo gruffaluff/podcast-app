@@ -42,7 +42,8 @@ struct DeckStandardTop: View {
                 ZStack {
                     LinearGradient(colors: [info.colour, info.dark], startPoint: .topLeading, endPoint: .bottomTrailing)
                     if words.showing {
-                        DeckTopWordsView(words: words)
+                        DeckTopWordsView(words: words, transcribe: actions.transcribe,
+                                         stop: actions.stopTranscribing)
                     } else {
                         DeckUpNextArtwork(episode: info.episode, size: side, radius: 16)
                             .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
@@ -59,6 +60,10 @@ struct DeckStandardTop: View {
         .accessibilityLabel("Open the player")
         .overlay(alignment: .bottomTrailing) {
             DeckTopWordsSwitch(showing: words.showing, action: actions.toggleWords)
+                .padding(10)
+        }
+        .overlay(alignment: .bottomLeading) {
+            DeckTopDownloadKey(state: words.download, action: actions.downloadTapped)
                 .padding(10)
         }
     }
@@ -264,11 +269,34 @@ struct DeckReadTop: View {
 }
 
 /// The words being said, white on the show's colour, in the top card's
-/// picture area.
+/// picture area. With no words yet: Transcribe now, or how far it has got.
 struct DeckTopWordsView: View {
     let words: DeckTopWords
+    var transcribe: () -> Void = {}
+    var stop: () -> Void = {}
 
     var body: some View {
+        content
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.horizontal, 56)
+            .padding(.vertical, 16)
+    }
+
+    @ViewBuilder private var content: some View {
+        switch words.status {
+        case .ready:
+            // Ready but still loading: nothing rather than a wrong note.
+            if words.ready { line } else { Color.clear }
+        case .working(let label, let fraction):
+            working(label, fraction)
+        case .canStart:
+            start
+        case .none:
+            note("No words for this episode yet.")
+        }
+    }
+
+    private var line: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let speaker = words.line?.speaker, !speaker.isEmpty {
                 Text(speaker)
@@ -276,23 +304,113 @@ struct DeckTopWordsView: View {
                     .foregroundStyle(Color.white.opacity(0.7))
                     .lineLimit(1)
             }
-            Text(text)
-                .font(Theme.outfit(words.ready ? 21 : 16, words.ready ? .bold : .semibold))
-                .foregroundStyle(Color.white.opacity(words.ready ? 1 : 0.8))
+            Text(words.line?.text ?? "")
+                .font(Theme.outfit(21, .bold))
+                .foregroundStyle(Color.white)
                 .lineLimit(5)
                 .minimumScaleFactor(0.6)
                 .contentTransition(.opacity)
                 .animation(.easeInOut(duration: 0.3), value: words.line?.start)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .padding(.leading, 18)
-        .padding(.trailing, 56)
-        .padding(.vertical, 16)
     }
 
-    private var text: String {
-        guard words.ready else { return "No words for this episode yet. Open the player to transcribe it." }
-        return words.line?.text ?? ""
+    private var start: some View {
+        VStack(spacing: 12) {
+            note("No words for this episode yet.")
+            Button(action: transcribe) {
+                Text("Transcribe now")
+                    .font(Theme.outfit(15, .bold))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 18)
+                    .frame(height: 40)
+                    .background(Capsule().fill(Color.white))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func working(_ label: String, _ fraction: Double) -> some View {
+        VStack(spacing: 10) {
+            Text("\(label) \(Int(fraction * 100))%")
+                .font(Theme.outfit(16, .bold))
+                .monospacedDigit()
+                .foregroundStyle(Color.white)
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.25))
+                    Capsule().fill(Color.white)
+                        .frame(width: geometry.size.width * min(1, max(0, fraction)))
+                }
+            }
+            .frame(width: 150, height: 5)
+            Button(action: stop) {
+                Text("Stop")
+                    .font(Theme.outfit(14, .semibold))
+                    .foregroundStyle(Color.white.opacity(0.8))
+                    .frame(minHeight: 32)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func note(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.outfit(15, .semibold))
+            .foregroundStyle(Color.white.opacity(0.85))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+    }
+}
+
+/// The round key in the picture's other corner: download (arrow), a ring
+/// filling while it downloads (tap to stop), filled when it's on the phone
+/// (tap to remove, with a check).
+struct DeckTopDownloadKey: View {
+    let state: DeckTopWords.Download
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            icon
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Color.black.opacity(0.35)))
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    @ViewBuilder private var icon: some View {
+        switch state {
+        case .none:
+            Image(systemName: "arrow.down")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Color.white)
+        case .downloading(let fraction):
+            ZStack {
+                Circle().stroke(Color.white.opacity(0.3), lineWidth: 2.5)
+                Circle().trim(from: 0, to: min(1, max(0.02, fraction)))
+                    .stroke(Color.white, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                RoundedRectangle(cornerRadius: 1.5).fill(Color.white).frame(width: 7, height: 7)
+            }
+            .frame(width: 22, height: 22)
+        case .done:
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Color.white)
+        }
+    }
+
+    private var label: String {
+        switch state {
+        case .none: return "Download"
+        case .downloading(let fraction): return "Downloading, \(Int(fraction * 100)) percent. Tap to stop"
+        case .done: return "Downloaded. Tap to remove"
+        }
     }
 }
 
