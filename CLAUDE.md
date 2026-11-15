@@ -2517,7 +2517,11 @@ Paul's notes after build 155, all in Deck:
   line being said, the ring keeps going), search / clip marks as dots on
   the ring, chapter segments named from the transcript, the line curved
   along the ring. Suggested scrub by words + words inside the circle +
-  marks on the ring. Waiting on Paul. Not built.
+  marks on the ring. Paul asked if it works on the Up next top card too:
+  yes, as a display ring round the round artwork (the card's left / right
+  swipes would fight a drag-round dial, so scrubbing there would need a
+  touch and hold first, or stay in the player); its words key turns the
+  circle over to the line being said. Waiting on Paul. Not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
