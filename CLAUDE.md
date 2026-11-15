@@ -2361,6 +2361,17 @@ Paul's notes after build 155, all in Deck:
   first, Top rank, A–Z); no sort key in Deck. Offered a ⇅ key beside the
   label (New first / Name A–Z / Latest episode / Top ranking). Waiting on
   Paul.
+- **Show preview in the Deck look** (Paul, 15 Nov 2026, screenshot of
+  The News Agents from Find: "the show screen via Find is still the old
+  one"): shows you don't follow yet now open like a followed show's page:
+  white header card (104 pt artwork, name, "publisher · genre · n
+  episodes"), one wide ink Follow pill (Try again if it failed; once
+  followed "Following · Open show" in the show's colour, opening the Deck
+  show page), the description, then LATEST EPISODES · n in all as white
+  cards (date · length, title with two lines' room, two lines of notes,
+  tap for all of them). The printed poster header stays for the other
+  looks (`DeckShowPreview`, `ShowPreviewView.deckBody`). On the branch,
+  not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
