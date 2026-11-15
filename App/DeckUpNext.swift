@@ -28,6 +28,9 @@ struct DeckUpNextView: View {
 
     @State private var fanned = false
     @State private var showingSettings = false
+    /// Up next suggestions, worked out when Up next or what's playing
+    /// changes (not on every redraw). Empty unless Up next is nearly out.
+    @State private var suggestions: [PodcastEpisode] = []
 
     var body: some View {
         let plan: DeckQueuePlan = DeckQueuePlan(store: store, player: player)
@@ -36,7 +39,7 @@ struct DeckUpNextView: View {
                              fan: { openFan(plan) },
                              settings: { showingSettings = true })
             if fanned {
-                DeckUpNextFan(plan: plan, close: closeFan)
+                DeckUpNextFan(plan: plan, suggestions: suggestions, close: closeFan)
                     .transition(.opacity)
             } else {
                 deck(plan)
@@ -50,16 +53,49 @@ struct DeckUpNextView: View {
             guard id != nil else { return }
             withAnimation(.easeOut(duration: 0.2)) { fanned = true }
         }
+        .onChange(of: suggestionKey, initial: true) { _, _ in reloadSuggestions() }
+        .onChange(of: store.lastChecked) { _, _ in reloadSuggestions() }
+    }
+
+    // Up next suggestions (Paul, 15 Nov 2026).
+
+    /// What the suggestions depend on: Up next's order and what's playing.
+    private var suggestionKey: [String] {
+        store.queue.map(\.episode.id) + [player.nowPlaying?.episodeID ?? ""]
+    }
+
+    /// Suggestions only when one episode or none is left after the one
+    /// playing (or after the top card, when nothing plays).
+    private func reloadSuggestions() {
+        let ids: [String] = store.queue.map(\.episode.id)
+        let playing: String? = player.nowPlaying?.episodeID
+        let left: Int = playing.map { id in ids.filter { $0 != id }.count } ?? max(0, ids.count - 1)
+        guard left <= 1 else {
+            if !suggestions.isEmpty { suggestions = [] }
+            return
+        }
+        suggestions = store.deckSuggestions(excluding: playing)
     }
 
     @ViewBuilder private func deck(_ plan: DeckQueuePlan) -> some View {
         if let top = plan.top {
-            DeckStack(plan: plan, top: top, fan: { openFan(plan) })
-        } else {
+            DeckStack(plan: plan, top: top, suggestions: suggestions, fan: { openFan(plan) })
+        } else if suggestions.isEmpty {
             DeckEmptyCard { selectTab(2) }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 .frame(maxHeight: .infinity, alignment: .top)
+        } else {
+            // Empty, with suggestions under the card: scrolls if they don't fit.
+            ScrollView {
+                VStack(spacing: 16) {
+                    DeckEmptyCard { selectTab(2) }
+                    DeckSuggestionsSection(episodes: suggestions)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+            }
+            .scrollIndicators(.hidden)
         }
     }
 
@@ -170,18 +206,29 @@ struct DeckMark: View {
 private struct DeckStack: View {
     let plan: DeckQueuePlan
     let top: PodcastEpisode
+    /// Up next suggestions to show under the deck (empty when there's
+    /// enough in Up next).
+    let suggestions: [PodcastEpisode]
     let fan: () -> Void
 
     private static let edgeStep: CGFloat = 48
 
     var body: some View {
         GeometryReader { geometry in
-            let cardHeight: CGFloat = Self.cardHeight(for: geometry.size.height)
+            let layout: DeckStackLayout = DeckStackLayout(available: geometry.size.height,
+                                                          restCount: plan.rest.count,
+                                                          suggestions: suggestions.count)
+            let cardHeight: CGFloat = layout.cardHeight
             ZStack(alignment: .top) {
                 edges(below: cardHeight)
                 DeckTopCard(episode: top, plan: plan)
                     .frame(height: cardHeight)
                     .zIndex(10)
+                if layout.fitting > 0 {
+                    DeckSuggestionsSection(episodes: Array(suggestions.prefix(layout.fitting)))
+                        .offset(y: layout.suggestionsTop)
+                        .zIndex(20)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -210,6 +257,14 @@ private struct DeckStack: View {
         min(448, max(340, available * 0.66))
     }
 
+    /// How far the edges under the top card reach below it.
+    static func edgesRoom(restCount: Int) -> CGFloat {
+        guard restCount > 0 else { return 0 }
+        // 14 pt gap, a 48 pt step per card but the last, which shows 84 pt whole.
+        let shown: Int = min(restCount, 4)
+        return 14 + CGFloat(shown - 1) * edgeStep + 84
+    }
+
     private func edges(below cardHeight: CGFloat) -> some View {
         let rest: [PodcastEpisode] = Array(plan.rest.prefix(4))
         return ZStack(alignment: .top) {
@@ -223,6 +278,37 @@ private struct DeckStack: View {
                     .zIndex(Double(index + 1))
             }
         }
+    }
+}
+
+/// Where the top card and the suggestions under the deck go: the top card
+/// gives up some height (down to 340 pt) so up to three suggestions fit
+/// above the tab pill; any that still don't fit are left for the full list.
+private struct DeckStackLayout {
+    let cardHeight: CGFloat
+    let fitting: Int
+    let suggestionsTop: CGFloat
+
+    init(available: CGFloat, restCount: Int, suggestions: Int) {
+        let natural: CGFloat = DeckStack.cardHeight(for: available)
+        let edges: CGFloat = DeckStack.edgesRoom(restCount: restCount)
+        // 8 pt above the deck, 16 pt above the suggestions, the pill below.
+        let fixed: CGFloat = 8 + edges + 16 + DeckRoot.pillRoom
+        guard suggestions > 0 else {
+            cardHeight = natural
+            fitting = 0
+            suggestionsTop = 0
+            return
+        }
+        let wanted: CGFloat = DeckSuggestionsSection.height(for: suggestions)
+        let card: CGFloat = min(natural, max(340, available - fixed - wanted))
+        var count: Int = suggestions
+        while count > 0 && card + fixed + DeckSuggestionsSection.height(for: count) > available {
+            count -= 1
+        }
+        cardHeight = card
+        fitting = count
+        suggestionsTop = card + edges + 16
     }
 }
 

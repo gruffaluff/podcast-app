@@ -377,6 +377,8 @@ final class LibraryStore {
     /// Marks an episode played, takes it out of Up Next and deletes its
     /// download (or keeps it for 24 hours, if that setting is on).
     func markPlayed(_ episodeID: String) {
+        // Save for later (Paul, 15 Nov 2026): heard, so off that list too.
+        SaveForLater.remove(episodeID)
         if let episode = self.episode(episodeID) {
             episode.played = true
             episode.playedAt = Date()

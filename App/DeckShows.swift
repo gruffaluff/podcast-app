@@ -133,6 +133,9 @@ struct DeckShowsView: View {
             } else {
                 DeckCarryOnSection()
                     .padding(.top, 18)
+                // Save for later (Paul, 15 Nov 2026): only when something's saved.
+                DeckSavedForLaterLink()
+                    .padding(.top, 10)
                 newDeck(entries.filter { !$0.fresh.isEmpty })
                     .padding(.top, 18)
                 DeckAllShowsRow(entries: entries)
