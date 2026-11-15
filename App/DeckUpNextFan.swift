@@ -44,10 +44,13 @@ struct DeckUpNextFan: View {
             .scrollContentBackground(.hidden)
             .scrollIndicators(.hidden)
             .environment(\.defaultMinListRowHeight, 0)
+            // Smoother scrolling (Paul, 15 Nov 2026): only the pull past the
+            // top is passed on, so ordinary scrolling (which is never past
+            // the top) doesn't call back on every frame.
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y + geometry.contentInsets.top
-            } action: { _, offset in
-                pulled = max(0, -offset)
+                max(0, -(geometry.contentOffset.y + geometry.contentInsets.top))
+            } action: { _, pull in
+                pulled = pull
             }
             .onScrollPhaseChange { old, _ in
                 guard old == .interacting, pulled > Self.closeLine, !closing else { return }
@@ -212,9 +215,12 @@ private struct DeckFanRow: View {
 
     private var card: some View {
         let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        // Smoother scrolling (Paul, 15 Nov 2026): the shadow is cast by the
+        // plain shape, not by the shape and its edge drawn together, which
+        // is cheaper to draw on every card while scrolling. Looks the same.
         return shape.fill(isOn ? Theme.playingCard : Theme.surface)
-            .overlay(shape.strokeBorder(isOn ? Theme.playingCard : Theme.cardEdge, lineWidth: 1))
             .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.06), radius: 6, y: -2)
+            .overlay(shape.strokeBorder(isOn ? Theme.playingCard : Theme.cardEdge, lineWidth: 1))
     }
 
     private func near() {
@@ -278,7 +284,11 @@ private struct DeckFanRow: View {
 
     /// "Playing · 34m" for the one on, "16:20 · 26m" for the others.
     private var timeWords: String {
-        let left: String = DeckUpNextTime.length(DeckQueuePlan.left(episode, player: player) / plan.speed)
+        // Smoother scrolling (Paul, 15 Nov 2026): from the plan's 10-second
+        // snapshot of the playhead, so this row doesn't redraw twice a
+        // second while the list scrolls (it only shows whole minutes).
+        let remaining: TimeInterval = DeckQueuePlan.left(episode, player: player, playhead: plan.playhead)
+        let left: String = DeckUpNextTime.length(remaining / plan.speed)
         if isOn { return (player.isPlaying ? "Playing" : "Paused") + " · " + left }
         guard let start = plan.starts[episode.episodeID] else { return left }
         return UpNextTimes.clock(start) + " · " + left

@@ -28,9 +28,16 @@ struct DeckUpNextView: View {
 
     @State private var fanned = false
     @State private var showingSettings = false
+    /// Smoother scrolling (Paul, 15 Nov 2026): where the episode playing
+    /// had got to, refreshed every 10 seconds (and on a jump or a new
+    /// episode) by `DeckPlayheadWatch`. Reading the player's clock here
+    /// redrew the whole of Up next, fan list included, and fetched every
+    /// episode again twice a second. The top card and the playing row
+    /// still follow the clock themselves.
+    @State private var playhead: TimeInterval?
 
     var body: some View {
-        let plan: DeckQueuePlan = DeckQueuePlan(store: store, player: player)
+        let plan: DeckQueuePlan = DeckQueuePlan(store: store, player: player, playhead: playhead)
         VStack(spacing: 0) {
             DeckUpNextHeader(plan: plan, fanned: fanned,
                              fan: { openFan(plan) },
@@ -44,6 +51,7 @@ struct DeckUpNextView: View {
             }
         }
         .deckPage()
+        .background { DeckPlayheadWatch { playhead = $0 } }
         .sheet(isPresented: $showingSettings) { settingsSheet }
         // "In Up next · 2nd" on an episode page opens the full list.
         .onChange(of: store.revealInUpNext, initial: true) { _, id in
@@ -329,6 +337,26 @@ struct DeckUpNextArtwork: View {
 
 // MARK: - Times and labels
 
+/// Reports where the episode playing has got to every 10 seconds, on a
+/// jump and when the episode changes. Only this empty view follows the
+/// player's clock (twice a second), so Up next itself redraws rarely.
+private struct DeckPlayheadWatch: View {
+    @Environment(PlayerModel.self) private var player
+    @Environment(\.deckPageShown) private var pageShown
+    let changed: (TimeInterval) -> Void
+
+    var body: some View {
+        let id: String = player.nowPlaying?.episodeID ?? ""
+        // Hidden behind Shows or Find: no need to follow the clock at all.
+        let step: String = pageShown ? String(Int(player.currentTime / 10)) : "hidden"
+        let key: String = id + "|" + step
+        Color.clear
+            .frame(width: 0, height: 0)
+            .onChange(of: key, initial: true) { _, _ in changed(player.currentTime) }
+            .accessibilityHidden(true)
+    }
+}
+
 /// Up next worked out once per redraw: the top card, the rest, when each
 /// starts at the current speed and when it's all done.
 @MainActor
@@ -347,8 +375,12 @@ struct DeckQueuePlan {
     let speed: Double
     let playingID: String?
     let settings: QueueSettings
+    /// The snapshot of where the episode playing had got to.
+    let playhead: TimeInterval?
 
-    init(store: LibraryStore, player: PlayerModel) {
+    /// `playhead`: where the episode playing has got to, as a snapshot
+    /// (see `DeckUpNextView.playhead`); nil uses its saved place.
+    init(store: LibraryStore, player: PlayerModel, playhead: TimeInterval?) {
         let ids: [String] = store.queue.map(\.episode.id)
         let found: [String: PodcastEpisode] = store.episodes(ids)
         let queued: [PodcastEpisode] = ids.compactMap { found[$0] }
@@ -367,6 +399,7 @@ struct DeckQueuePlan {
         speed = speedNow
         playingID = playing
         settings = store.queueSettings
+        self.playhead = playhead
 
         // Starts: the top card first (from now), then the rest in order.
         var clock: Date = Date()
@@ -375,7 +408,7 @@ struct DeckQueuePlan {
         let order: [PodcastEpisode] = (topEpisode.map { [$0] } ?? []) + rest
         for episode in order {
             startMap[episode.episodeID] = clock
-            let left: TimeInterval = Self.left(episode, player: player) / speedNow
+            let left: TimeInterval = Self.left(episode, player: player, playhead: playhead) / speedNow
             clock = clock.addingTimeInterval(left)
             seconds += left
         }
@@ -392,10 +425,11 @@ struct DeckQueuePlan {
         return inQueue ? all.count : all.count + 1
     }
 
-    /// Episode time still to hear (live for the one playing).
-    static func left(_ episode: PodcastEpisode, player: PlayerModel) -> TimeInterval {
-        if player.nowPlaying?.episodeID == episode.episodeID, player.duration > 0 {
-            return max(0, player.duration - player.currentTime)
+    /// Time still to hear from a snapshot of the playhead (doesn't read
+    /// the player's clock, so the view asking isn't redrawn by it).
+    static func left(_ episode: PodcastEpisode, player: PlayerModel, playhead: TimeInterval?) -> TimeInterval {
+        if let playhead, player.nowPlaying?.episodeID == episode.episodeID, player.duration > 0 {
+            return max(0, player.duration - playhead)
         }
         return episode.timeLeft ?? episode.duration ?? 0
     }

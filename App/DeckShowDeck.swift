@@ -224,8 +224,15 @@ struct DeckShowArtBlock: View {
                                  startPoint: .topLeading, endPoint: .bottomTrailing))
             .frame(height: height)
             .overlay {
+                // Smoother scrolling (Paul, 15 Nov 2026): the shadow is cast
+                // by a plain rounded shape the size of the artwork, behind
+                // it, rather than worked out from the picture itself.
                 ArtworkView(url: show.artworkURL, title: show.title, size: art, radius: 16)
-                    .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
+                    .background {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(colour)
+                            .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
+                    }
             }
     }
 }
@@ -384,7 +391,14 @@ private struct DeckShowTile: View {
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(Theme.cardEdge, lineWidth: 1))
-            .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.10), radius: 8, y: 4)
+            // Smoother scrolling (Paul, 15 Nov 2026): the shadow comes from a
+            // plain rounded shape behind the tile, not from the artwork,
+            // fade and words drawn together, which was slow for every tile.
+            .background {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Theme.surface)
+                    .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.10), radius: 8, y: 4)
+            }
             .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .accessibilityElement(children: .combine)
     }

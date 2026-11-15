@@ -42,12 +42,36 @@ public enum TimeFormat {
         }
         if seconds < 24 * 60 * 60 { return "\(Int(seconds / 3600))h ago" }
         if seconds < 7 * 24 * 60 * 60 { return "\(Int(seconds / 86_400))d ago" }
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.timeZone = calendar.timeZone
-        formatter.locale = Locale(identifier: "en_GB")
-        formatter.dateFormat = calendar.isDate(date, equalTo: now, toGranularity: .year) ? "d MMM" : "d MMM yyyy"
-        return formatter.string(from: date)
+        let sameYear: Bool = calendar.isDate(date, equalTo: now, toGranularity: .year)
+        return AgoDateFormatters.shared.string(from: date, sameYear: sameYear, calendar: calendar)
+    }
+}
+
+/// Smoother scrolling (Paul, 15 Nov 2026): the two date formatters "ago"
+/// needs, made once and reused. A new DateFormatter for every older
+/// episode row was slow work while lists scrolled. DateFormatter is safe
+/// to share for formatting; the lock covers swapping the calendar.
+final class AgoDateFormatters: @unchecked Sendable {
+    static let shared = AgoDateFormatters()
+
+    private let lock = NSLock()
+    private var calendar: Calendar?
+    private let thisYear = DateFormatter()
+    private let otherYear = DateFormatter()
+
+    func string(from date: Date, sameYear: Bool, calendar: Calendar) -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        if self.calendar != calendar {
+            for (formatter, format) in [(thisYear, "d MMM"), (otherYear, "d MMM yyyy")] {
+                formatter.calendar = calendar
+                formatter.timeZone = calendar.timeZone
+                formatter.locale = Locale(identifier: "en_GB")
+                formatter.dateFormat = format
+            }
+            self.calendar = calendar
+        }
+        return (sameYear ? thisYear : otherYear).string(from: date)
     }
 }
 
