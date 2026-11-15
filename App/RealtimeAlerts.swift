@@ -2,9 +2,9 @@ import CloudKit
 import CryptoKit
 import Foundation
 
-/// Real-time new-episode alerts (free): a GitHub Actions job checks Paul's
-/// feeds every ~15 minutes (scripts/new_episode_alerts.py). It reads which
-/// shows he follows from a record the app keeps in Poddeck's iCloud public
+/// Real-time new-episode alerts (free): a GitHub Actions job checks the app
+/// owner's feeds every ~15 minutes (scripts/new_episode_alerts.py); only the
+/// owner's phone takes part (`isOwner`). It reads which shows they follow from a record the app keeps in Poddeck's iCloud public
 /// database, and when it finds a new episode it saves a record there; iCloud
 /// then pushes to the phone. Shows with the bell on get a visible alert
 /// ("New from …"); the others a silent push that just updates Up Next.
@@ -32,6 +32,11 @@ enum RealtimeAlerts {
             CloudSync.note(CloudProblem(message: "iCloud account \(account)"), in: "Alerts")
             return
         }
+        // Instant alerts are for the app's owner only: the job reads one
+        // shared "follows" record and its alert records reach every phone
+        // subscribed to them. Anyone else gets their alerts from the
+        // background check (local notifications), so nothing here runs.
+        guard await isOwner() else { return }
         let shows = store.allShows
         let feeds = shows.map(\.feedURL).sorted()
         let alertFeeds = shows.filter(\.notify).map(\.feedURL).sorted()
@@ -53,6 +58,78 @@ enum RealtimeAlerts {
         }
         if await subscribeIfNeeded() {
             CloudSync.note(nil, in: "Alerts", detail: "\(summary) sent · alerts on")
+        }
+    }
+
+    // MARK: - Owner only
+
+    /// "yes" / "no": whether this phone's iCloud user made the "follows"
+    /// record (or there is none yet), so instant alerts are theirs.
+    static let ownerKey = "alertsOwner"
+    private static let ownerCheckedKey = "alertsOwnerChecked"
+
+    /// True when this phone is known not to be the owner's: the settings
+    /// screen then explains where its alerts come from.
+    static var isKnownNonOwner: Bool {
+        UserDefaults.standard.string(forKey: ownerKey) == "no"
+    }
+
+    static let nonOwnerNote = "Instant alerts are set up for the app's owner; your alerts come from the background check."
+
+    /// Public-database records can only be changed by whoever made them,
+    /// and each one remembers its maker, so the maker of the "follows"
+    /// record is the owner. Checked at most once a day. On an error the
+    /// last answer stands if it was "yes"; otherwise nothing is done.
+    private static func isOwner() async -> Bool {
+        let defaults = UserDefaults.standard
+        let saved = defaults.string(forKey: ownerKey)
+        if let saved, let checked = defaults.object(forKey: ownerCheckedKey) as? Date,
+           Date().timeIntervalSince(checked) < 24 * 3600 {
+            return saved == "yes"
+        }
+        let owner: Bool
+        do {
+            let me = try await container.userRecordID()
+            do {
+                let follows = try await database.record(for: CKRecord.ID(recordName: "follows"))
+                // iCloud gives the current user's own records the creator
+                // name CKCurrentUserDefaultName instead of their record ID.
+                guard let creator = follows.creatorUserRecordID else {
+                    // Can't tell: treated like an error, nothing cached.
+                    return saved == "yes"
+                }
+                owner = creator.recordName == me.recordName
+                    || creator.recordName == CKCurrentUserDefaultName
+            } catch let error as CKError where error.code == .unknownItem {
+                owner = true   // no list yet: this phone starts it
+            }
+        } catch {
+            CloudSync.note(error, in: "Alerts")
+            return saved == "yes"
+        }
+        defaults.set(owner ? "yes" : "no", forKey: ownerKey)
+        defaults.set(Date(), forKey: ownerCheckedKey)
+        if !owner { await stepAside() }
+        return owner
+    }
+
+    /// Not the owner's phone: drop any alert subscriptions it made earlier
+    /// (so the owner's alerts stop reaching it) and forget what it sent.
+    private static func stepAside() async {
+        let ids: Set<String> = ["new-episode-alerts", "new-episode-updates"]
+        do {
+            let mine = try await database.allSubscriptions().map(\.subscriptionID).filter { ids.contains($0) }
+            if !mine.isEmpty {
+                let (_, results) = try await database.modifySubscriptions(saving: [], deleting: mine)
+                for (_, result) in results { _ = try result.get() }
+            }
+            UserDefaults.standard.removeObject(forKey: subscriptionsKey)
+            UserDefaults.standard.removeObject(forKey: lastFollowsKey)
+            CloudSync.note(nil, in: "Alerts", detail: nonOwnerNote)
+        } catch {
+            // Tried again on the next check.
+            UserDefaults.standard.removeObject(forKey: ownerCheckedKey)
+            CloudSync.note(error, in: "Alerts")
         }
     }
 

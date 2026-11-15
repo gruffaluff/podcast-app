@@ -562,7 +562,11 @@ struct ICloudStatusRows: View {
         Group {
             line("ACCOUNT", account, bad: account != "available")
             line("SYNC", status["Sync"] ?? "nothing yet", bad: status["Sync"]?.hasPrefix("PROBLEM") ?? false)
-            line("ALERTS", status["Alerts"] ?? "nothing yet (pull down on Up Next)", bad: status["Alerts"]?.hasPrefix("PROBLEM") ?? false)
+            if RealtimeAlerts.isKnownNonOwner {
+                line("ALERTS", RealtimeAlerts.nonOwnerNote, bad: false)
+            } else {
+                line("ALERTS", status["Alerts"] ?? "nothing yet (pull down on Up Next)", bad: status["Alerts"]?.hasPrefix("PROBLEM") ?? false)
+            }
         }
         .task {
             account = await CloudSync.accountDescription()
