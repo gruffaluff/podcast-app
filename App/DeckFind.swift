@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import SwiftData
 import PodcastCore
 
@@ -45,6 +46,12 @@ struct DeckFindView: View {
             page
                 .navigationDestination(for: DirectoryItem.self) { ShowPreviewView(item: $0) }
                 .navigationDestination(for: Podcast.self) { DeckShowPage(show: $0) }
+        }
+        // The pinned Find tab (Paul, 15 Nov 2026: tabs): the search box
+        // takes the keyboard.
+        .onReceive(NotificationCenter.default.publisher(for: .deckFocusFind)) { _ in
+            path = NavigationPath()
+            fieldFocused = true
         }
     }
 

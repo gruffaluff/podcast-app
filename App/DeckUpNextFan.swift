@@ -132,7 +132,9 @@ struct DeckUpNextFan: View {
                 .padding(.top, 14)
             keepPlaying
         }
-        .padding(.bottom, 24)
+        // Room for the Keep playing row to scroll clear of the tab pill
+        // and the fade behind it (Paul, 15 Nov 2026, build 158 screenshot).
+        .padding(.bottom, 24 + DeckRoot.pillRoom)
         .plainFanRow()
     }
 
