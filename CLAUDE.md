@@ -2504,8 +2504,13 @@ Paul's notes after build 155, all in Deck:
   incorporating a ring or dial display into the now playing screen … not
   sure what I mean yet"). Ideas given in chat (progress ring round the
   artwork with chapter ticks, scrub by dragging round it, play key ring,
-  sleep / chapter rings, ring that shrinks into Read along); waiting on
-  Paul's pick for mock-ups. Not built.
+  sleep / chapter rings, ring that shrinks into Read along). Mock-ups of
+  all seven on the Deck player: https://claude.ai/artifact/NAcNA5PK5DvzThGXqF2v2R
+  (1 progress ring round the artwork with chapter ticks, 2 dial: round
+  artwork, drag round the ring to scrub, finer towards the middle,
+  3 chapter ring, 4 ring round the play key, 5 sleep timer ring, 6 ring
+  follows into Read along, 7 the same ring on Carry on / mini player).
+  Suggested 1 + 2 + 7. Waiting on Paul's pick. Not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
