@@ -2337,8 +2337,7 @@ Paul's notes after build 155, all in Deck:
 - **Up next list: time and DL / TX lined up** (Paul, 15 Nov 2026,
   screenshot): the start time now sits on the show line (same baseline)
   and DL / TX beside the title's first line, instead of a separate column
-  floating between them (`DeckUpNextFan` row `titles`). On the branch,
-  not built.
+  floating between them (`DeckUpNextFan` row `titles`).
 - **Header mark updated** (Paul, 15 Nov 2026, screenshot of the Up next
   header: "icon update"): the little mark beside "Poddeck" was still icon
   A's three cards; now the E · P card (white P on ink, coral card tilted
@@ -2385,8 +2384,7 @@ Paul's notes after build 155, all in Deck:
     white cards like Settings: Download new episodes, Alert me, Keep
     downloads; Speed / Skip intro / Skip outro for this show; Older
     episodes (Add all to Up next, Mark older played with Undo).
-- **Go for all** (Paul, 15 Nov 2026: "yes that's good. Go for all"), on
-  the branch, not built:
+- **Go for all** (Paul, 15 Nov 2026: "yes that's good. Go for all"):
   - Undo bar in Deck: near-black (#1C1B1A) with white words and a white
     Undo pill, 52 pt, soft shadow (`UndoBar.deckBar`).
   - Swipe along the tab pill: right for the next tab, left for the one
@@ -2413,8 +2411,7 @@ Paul's notes after build 155, all in Deck:
   show page), the description, then LATEST EPISODES · n in all as white
   cards (date · length, title with two lines' room, two lines of notes,
   tap for all of them). The printed poster header stays for the other
-  looks (`DeckShowPreview`, `ShowPreviewView.deckBody`). On the branch,
-  not built.
+  looks (`DeckShowPreview`, `ShowPreviewView.deckBody`).
 
 ## Queued for the next app build
 
