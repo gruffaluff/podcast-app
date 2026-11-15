@@ -2521,7 +2521,20 @@ Paul's notes after build 155, all in Deck:
   yes, as a display ring round the round artwork (the card's left / right
   swipes would fight a drag-round dial, so scrubbing there would need a
   touch and hold first, or stay in the player); its words key turns the
-  circle over to the line being said. Waiting on Paul. Not built.
+  circle over to the line being said. Then (Paul: mock the app with the
+  dials, and a Safari-style app where each episode is a tab you close /
+  mark played, Discover and Your shows as pinned tabs):
+  https://claude.ai/artifact/26rUAiLq5wFzQRJzqUcEL7. 1 The dial: Up next
+  top card with a ring round round artwork + words key, the player dial
+  (tap to turn over to the words, drag round to scrub with the line at
+  that point in the middle, clip / search dots on the ring), Shows with
+  rings on Carry on / new / mini player. 2 Episodes as tabs: tab overview
+  (Up next as tabs in queue order, × closes = played with Undo, tab
+  groups Up next / New / Saved, pinned Find / Your shows / Discover), an
+  open tab (player as a page, Safari-style bar at the bottom: swipe along
+  it for the next tab, count opens the overview), a pinned Your shows
+  tab. Note on the page: the two fit together (ring as each tab's
+  progress, the dial player inside a tab). Waiting on Paul. Not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
