@@ -2510,7 +2510,14 @@ Paul's notes after build 155, all in Deck:
   artwork, drag round the ring to scrub, finer towards the middle,
   3 chapter ring, 4 ring round the play key, 5 sleep timer ring, 6 ring
   follows into Read along, 7 the same ring on Carry on / mini player).
-  Suggested 1 + 2 + 7. Waiting on Paul's pick. Not built.
+  Suggested 1 + 2 + 7. Paul (15 Nov 2026): "could be the next thing to
+  help stand out … just unsure how transcripts fit in". Transcript ideas
+  given: scrub by words (the dial's bubble shows the line said at that
+  point), words inside the circle (tap the artwork, it turns over to the
+  line being said, the ring keeps going), search / clip marks as dots on
+  the ring, chapter segments named from the transcript, the line curved
+  along the ring. Suggested scrub by words + words inside the circle +
+  marks on the ring. Waiting on Paul. Not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
