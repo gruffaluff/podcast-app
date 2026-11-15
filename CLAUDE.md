@@ -2276,8 +2276,8 @@ Paul's notes after build 155, all in Deck:
   there's none). Remembered as "deckTopWords" (this iPhone).
 - **No internet bar**: cloud-with-a-line icon, rounder, lined up with
   the cards (16 pt) in Deck.
-- Still to decide: a "new since you last looked" triage screen (swipe
-  right play next, left skip, + by your rules).
+- "New since you last looked" triage: Paul said go (15 Nov 2026); see
+  the queue.
 
 ## Queued for the next app build
 
@@ -2386,6 +2386,25 @@ Paul's notes after build 155, all in Deck:
     white cards like Settings: Download new episodes, Alert me, Keep
     downloads; Speed / Skip intro / Skip outro for this show; Older
     episodes (Add all to Up next, Mark older played with Undo).
+- **Go for all** (Paul, 15 Nov 2026: "yes that's good. Go for all"), on
+  the branch, not built:
+  - Undo bar in Deck: near-black (#1C1B1A) with white words and a white
+    Undo pill, 52 pt, soft shadow (`UndoBar.deckBar`).
+  - Swipe along the tab pill: right for the next tab, left for the one
+    before, instantly, with a tick (`DeckTabPill.swipe`).
+  - Alignment: the player's chapter row has its ‹ › in fixed 44 pt slots
+    at each edge and the pill centred between them (long titles shrink a
+    little, then cut off); during an ad Skip ad / Play ad takes the
+    pill's place (`DeckChapterRow`). Other Deck rows checked in the code.
+  - "New since you last looked": the Shows tab's New · n opens a catch-up,
+    one big card at a time, oldest first: swipe right Play next, left Skip
+    (marked played), or keys Skip / + Up next (Keep when already queued) /
+    Play next; "Already 3rd in Up next" on the card; Keep the rest / Skip
+    the rest; "All caught up". Each one dealt with is remembered on this
+    iPhone ("deckTriaged", newest 400), and the pill counts only those not
+    looked at yet. "List" switches to the week's list as before with Add
+    all / Mark all played (`DeckTriage`, `DeckTriageCard`,
+    `DeckShowsNewSheet`).
 - **Show preview in the Deck look** (Paul, 15 Nov 2026, screenshot of
   The News Agents from Find: "the show screen via Find is still the old
   one"): shows you don't follow yet now open like a followed show's page:

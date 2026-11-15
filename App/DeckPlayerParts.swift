@@ -5,40 +5,50 @@ import PodcastCore
 
 // MARK: - Chapter row
 
-/// "‹ 4/6 · title ›" (tap the pill for the chapter list) with Skip ad in
-/// amber on the right while an ad plays ("Play ad" just after one is
-/// skipped). The row keeps its height when there's nothing to show, so
-/// nothing below moves.
+/// "‹ 4/6 · title ›" (tap the pill for the chapter list). Paul, 15 Nov
+/// 2026 ("not center aligned"): the arrows sit in fixed slots at each edge
+/// and the pill is centred between them, shrinking long titles, so the row
+/// is centred whatever the title. While an ad plays, Skip ad (amber) takes
+/// the pill's place, and Play ad just after one is skipped. The row keeps
+/// its height when there's nothing to show, so nothing below moves.
 struct DeckChapterRow: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     let openChapters: () -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 0) {
             if !player.chapters.isEmpty {
-                chapters
+                arrow("chevron.left", label: "Previous chapter", enabled: true) { player.previousChapter() }
+            } else {
+                Color.clear.frame(width: 44, height: 32)
             }
-            Spacer(minLength: 0)
-            adChip
-                .fixedSize()
+            middle
+                .frame(maxWidth: .infinity)
+            if !player.chapters.isEmpty {
+                arrow("chevron.right", label: "Next chapter", enabled: canNext) { player.nextChapter() }
+            } else {
+                Color.clear.frame(width: 44, height: 32)
+            }
         }
         .frame(height: 32)
         .animation(.easeOut(duration: 0.25), value: player.currentAd?.start)
         .animation(.easeOut(duration: 0.25), value: player.lastSkippedAd?.start)
     }
 
-    private var chapters: some View {
-        let list: [Chapter] = player.chapters
-        let index: Int? = player.currentChapterIndex
-        let canNext: Bool = (index ?? -1) < list.count - 1
-        return HStack(spacing: 4) {
-            arrow("chevron.left", label: "Previous chapter", enabled: true) { player.previousChapter() }
+    private var canNext: Bool { (player.currentChapterIndex ?? -1) < player.chapters.count - 1 }
+
+    @ViewBuilder private var middle: some View {
+        if player.currentAd != nil || player.lastSkippedAd != nil {
+            adChip
+                .fixedSize()
+        } else if !player.chapters.isEmpty {
+            let list: [Chapter] = player.chapters
+            let index: Int? = player.currentChapterIndex
             Button(action: openChapters) { pill(list, index: index) }
                 .buttonStyle(.plain)
                 .accessibilityLabel(accessibility(list, index: index))
                 .accessibilityHint("Shows every chapter")
-            arrow("chevron.right", label: "Next chapter", enabled: canNext) { player.nextChapter() }
         }
     }
 
@@ -49,6 +59,8 @@ struct DeckChapterRow: View {
             .font(Theme.outfit(13, .semibold))
             .monospacedDigit()
             .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .truncationMode(.tail)
             .padding(.horizontal, 12)
             .frame(height: 32)
             .background(Capsule().fill(Color.white.opacity(0.16)))
@@ -58,7 +70,7 @@ struct DeckChapterRow: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
-                .frame(width: 30, height: 32)
+                .frame(width: 44, height: 32)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

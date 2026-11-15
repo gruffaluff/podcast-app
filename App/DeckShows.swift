@@ -88,6 +88,7 @@ struct DeckShowsView: View {
     /// Which show is on top of the deck.
     @State private var index = 0
     @State private var showingNew = false
+    @AppStorage(DeckTriage.key) private var triaged: String = ""
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -117,7 +118,11 @@ struct DeckShowsView: View {
     }
 
     private func content(_ entries: [DeckShowEntry]) -> some View {
-        let newCount: Int = entries.reduce(0) { $0 + $1.fresh.count }
+        // "New · n" counts what you haven't looked at in the catch-up yet.
+        let seen: Set<String> = DeckTriage.seen(triaged)
+        let newCount: Int = entries.reduce(0) { total, entry in
+            total + entry.fresh.filter { !seen.contains($0.episodeID) }.count
+        }
         return VStack(alignment: .leading, spacing: 0) {
             DeckShowsHeader(count: entries.count, newCount: newCount,
                             openNew: { showingNew = true },

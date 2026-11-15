@@ -9,7 +9,7 @@ struct UndoBar: View {
         ZStack {
             if let action = store.undoAction {
                 Group {
-                    if Theme.isHaar { toast(action) } else { bar(action) }
+                    if Theme.isHaar { toast(action) } else if Theme.isDeck { deckBar(action) } else { bar(action) }
                 }
                 .transition(.move(edge: Theme.isHaar ? .top : .bottom).combined(with: .opacity))
             }
@@ -39,6 +39,37 @@ struct UndoBar: View {
         .padding(.vertical, 4)
         .background(Color(hex: 0x1F2328), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
+        .task(id: action.id) {
+            do { try await Task.sleep(for: .seconds(6)) } catch { return }
+            if store.undoAction?.id == action.id { store.undoAction = nil }
+        }
+    }
+
+    /// Deck (Paul, 15 Nov 2026: it was "the same colour as the background
+    /// so gets lost"): a near-black bar with white words and a white Undo
+    /// pill, a soft shadow, on the cards' 16 pt edges.
+    private func deckBar(_ action: UndoAction) -> some View {
+        HStack(spacing: 12) {
+            Text(action.label)
+                .font(Theme.outfit(15, .semibold))
+                .foregroundStyle(Color.white)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Button { action.restore() } label: {
+                Text("Undo")
+                    .font(Theme.outfit(15, .bold))
+                    .foregroundStyle(Color(hex: 0x1C1B1A))
+                    .padding(.horizontal, 16)
+                    .frame(height: 36)
+                    .background(Capsule().fill(Color.white))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 8)
+        .frame(height: 52)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(hex: 0x1C1B1A)))
+        .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
         .task(id: action.id) {
             do { try await Task.sleep(for: .seconds(6)) } catch { return }
             if store.undoAction?.id == action.id { store.undoAction = nil }
