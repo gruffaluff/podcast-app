@@ -5,12 +5,15 @@ import PodcastCore
 /// design/deck/poddeck-prototype.html, `renderPlayer`). The whole screen
 /// is a gradient from the show's artwork colour to its dark shade to near
 /// black, all text white. Top: ⌄ close (or swipe down), "UP NEXT · n" (or
-/// "PLAYING ON …"), ⋯ for the episode page. Then the big rounded artwork
-/// (tap it for Read along: it shrinks beside the title and the words fill
-/// the space), the show (tap for its page) and the title. At the bottom:
-/// the chapter pill "‹ 4/6 · title ›" with Skip ad beside it during an
-/// ad, the progress line, elapsed / ends / left, skip · play · skip, and
-/// Options · Read along · Chapters · AirPlay.
+/// "PLAYING ON …"), ⋯ for the episode page. Then the dial (Paul, 15 Nov
+/// 2026: dial; DeckPlayerDial.swift): round artwork in a progress ring you
+/// drag round to scrub, tap it to turn it over to the words; the show (tap
+/// for its page) and the title. At the bottom: the chapter pill
+/// "‹ 4/6 · title ›" with Skip ad beside it during an ad, elapsed / ends /
+/// left, skip · play · skip, and Options · Read along · Chapters · AirPlay.
+/// Read along (its button) slides the dial into the corner as a small
+/// ringed circle and the words fill the space; there the straight
+/// progress line comes back, as the dial isn't on screen.
 /// Built in small pieces (DeckPlayerParts.swift, DeckPlayerReadAlong.swift,
 /// DeckPlayerChapters.swift) so GitHub's check compiles it quickly.
 struct DeckPlayerView: View {
@@ -30,6 +33,8 @@ struct DeckPlayerView: View {
     /// How far a swipe down has pulled the player (it closes past 60, or a
     /// light flick: Paul, 14 Nov 2026, "too much effort to drag down").
     @State private var pull: CGFloat = 0
+    /// Where a drag round the dial has got to (the dial and the times row).
+    @State private var dialScrub = DeckDialScrub()
 
     static let neutral = Color(hex: 0x3A3833)
     static let bottomColour = Color(hex: 0x17161A)
@@ -104,7 +109,8 @@ struct DeckPlayerView: View {
         .overlayPreferenceValue(DeckArtworkSpot.self) { (spot: Anchor<CGRect>?) in
             GeometryReader { (proxy: GeometryProxy) in
                 if let spot {
-                    movingArtwork(item, in: proxy[spot])
+                    DeckPlayerDial(item: item, episode: episode, rect: proxy[spot],
+                                   colour: colour ?? Self.neutral, scrub: dialScrub)
                 }
             }
         }
@@ -120,9 +126,10 @@ struct DeckPlayerView: View {
         }
     }
 
-    /// Room left for the artwork once everything else has its place.
+    /// Room left for the dial once everything else has its place (the
+    /// times row is 20 pt where the progress line and times took 48).
     private func artworkSide(_ size: CGSize, volume: Bool) -> CGFloat {
-        let fixed: CGFloat = 44 + 92 + 44 + 62 + 96 + 64 + (volume ? 34 : 0) + 40
+        let fixed: CGFloat = 44 + 92 + 44 + 34 + 96 + 64 + (volume ? 34 : 0) + 40
         let byHeight: CGFloat = size.height - fixed
         return max(120, min(size.width - 72, byHeight))
     }
@@ -210,38 +217,18 @@ struct DeckPlayerView: View {
     // MARK: Artwork and title
 
     /// Where the artwork sits in this mode: an empty spot that reports its
-    /// place. One picture is drawn over it (`movingArtwork`).
+    /// place. One picture is drawn over it (`DeckPlayerDial`).
     private func artworkSpot() -> some View {
         Color.clear
             .contentShape(Rectangle())
             .anchorPreference(key: DeckArtworkSpot.self, value: .bounds) { $0 }
     }
 
-    /// The one artwork picture, slid and resized between the listening spot
-    /// and the corner square for Read along (Paul, 15 Nov 2026: shrinking
-    /// and growing was "a little unsmooth": it was two copies cross-fading,
-    /// with the corners and shadow jumping). Its corners and shadow follow
-    /// its size, so they change smoothly with it.
-    private func movingArtwork(_ item: PlayerModel.NowPlaying, in rect: CGRect) -> some View {
-        let big: Bool = rect.width > 90
-        let radius: CGFloat = big ? 28 : 13
-        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        return Color.clear
-            .overlay {
-                CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
-            }
-            .clipShape(shape)
-            .background {
-                shape
-                    .fill(Color.black)
-                    .shadow(color: Color.black.opacity(big ? 0.35 : 0), radius: 30, y: 24)
-                    .opacity(big ? 1 : 0)
-            }
-            .frame(width: rect.width, height: rect.height)
-            .position(x: rect.midX, y: rect.midY)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-    }
+    // The one picture drawn over the spot is the dial (DeckPlayerDial):
+    // it slides and resizes between the listening spot and Read along's
+    // corner (Paul, 15 Nov 2026: shrinking and growing was "a little
+    // unsmooth" as two copies cross-faded), round in both, with the ring
+    // following it into the corner (Paul, 15 Nov 2026: dial).
 
     private func setReading(_ on: Bool) {
         withAnimation(reduceMotion ? nil : Self.morph) { reading = on }
@@ -250,14 +237,12 @@ struct DeckPlayerView: View {
     private func listenTop(_ item: PlayerModel.NowPlaying, side: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 8)
-            Button { setReading(true) } label: {
-                artworkSpot()
-                    .frame(width: side, height: side)
-            }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity)
-            .accessibilityLabel("Artwork")
-            .accessibilityHint("Shows the words as they're said")
+            // The dial takes its own touches (drawn over this spot); Read
+            // along opens from its button only (Paul, 15 Nov 2026: dial).
+            artworkSpot()
+                .frame(width: side, height: side)
+                .frame(maxWidth: .infinity)
+                .accessibilityHidden(true)
             Spacer(minLength: 12)
             titleBlock(item)
                 .padding(.horizontal, 24)
@@ -342,7 +327,12 @@ struct DeckPlayerView: View {
         VStack(spacing: 0) {
             DeckChapterRow(openChapters: { showingChapters = true })
                 .padding(.bottom, 10)
-            DeckPlayerScrub()
+            if reading {
+                DeckPlayerScrub()
+            } else {
+                // The dial replaces the straight line (Paul, 15 Nov 2026: dial).
+                DeckDialTimes(scrub: dialScrub)
+            }
             DeckPlayerTransport()
                 .padding(.top, 10)
             if volume {

@@ -241,16 +241,8 @@ struct DeckPlayerScrub: View {
     }
 
     private func finish() {
-        if let target = scrubTime, let start = scrubStart, abs(target - start) > 0.5 {
-            player.seek(to: target)
-            if abs(target - start) >= 120 {
-                let player = self.player
-                let store = self.store
-                store.undoAction = UndoAction(label: "Jumped to \(TimeFormat.clock(target))") {
-                    player.seek(to: start)
-                    store.undoAction = nil
-                }
-            }
+        if let target = scrubTime, let start = scrubStart {
+            DeckScrubJump.commit(to: target, from: start, player: player, store: store)
         }
         scrubTime = nil
         scrubStart = nil
