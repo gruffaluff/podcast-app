@@ -2490,7 +2490,7 @@ Paul's notes after build 155, all in Deck:
   and one info line "17:08 · 1h 1m  DL TX"; the ≡ handle level with it
   (`DeckUpNextFan` row).
 
-## Queued for the next app build
+## Done in build 159 (15 Nov 2026, PR #77; Paul: "add it all and build")
 
 - **Last row of the full Up next list under the tab pill** (Paul, 15 Nov
   2026, FNB, build 158 screenshot): the "Keep playing new episodes" row
@@ -2593,9 +2593,20 @@ Paul's notes after build 155, all in Deck:
     folded into Find (empty search = New to you + charts), a "Tabs · Your
     shows · Find" switcher of words at the top of each pinned page, and
     swiping along the bottom bar moves between those pages (swipe up still
-    = tabs). In the mock-up now; not in the app yet (the app has three
-    pinned tabs and no switcher). Waiting on Paul's verdict.
+    = tabs); then edge swipes instead of the bar. **Paul: "add it all and build"** (15 Nov 2026): built
+    (`App/DeckSections.swift`, `.deckSections(current:)` on the tab grid,
+    Your shows and Find's first pages): the row of words "Tabs · n · Your
+    shows · Find" at the top of each (the pinned tab pills are gone; Find
+    with an empty box is Discover), and a swipe that starts at the left /
+    right screen edge moves to the section before / after (only on each
+    section's first page, so iOS's own swipe back still works on pushed
+    pages). Swiping along the bottom bar still moves between episodes;
+    swiping up still shows the tabs. Reorder Up next: touch and hold a
+    tab, then drag it onto another tab's place (shares the hold with the
+    menu: check on the phone).
 
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

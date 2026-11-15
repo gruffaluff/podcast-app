@@ -205,9 +205,6 @@ struct DeckTabsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 DeckTabsHeader(settings: { showingSettings = true })
-                DeckTabsPins(find: openFind, shows: { selectTab(1) }, discover: { selectTab(2) })
-                    .padding(.horizontal, 16)
-                    .padding(.top, 6)
                 DeckTabsGroups(counts: [upNext.count, fresh.count, saved.count])
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
@@ -223,6 +220,9 @@ struct DeckTabsView: View {
         }
         .scrollIndicators(.hidden)
         .deckPage()
+        // Tabs · Your shows · Find and the edge swipes replace the pinned
+        // tabs (Paul, 15 Nov 2026: Discover is part of Find now).
+        .deckSections(current: 0)
         .refreshable { await store.refreshAll() }
         .sheet(isPresented: $showingSettings) { DeckSettingsView() }
         .onChange(of: suggestionKey, initial: true) { _, _ in reloadSuggestions() }
@@ -240,14 +240,6 @@ struct DeckTabsView: View {
         case .upNext: return upNext
         case .new: return fresh
         case .saved: return saved
-        }
-    }
-
-    private func openFind() {
-        selectTab(2)
-        // After the Find page has been made and shown.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            NotificationCenter.default.post(name: .deckFocusFind, object: nil)
         }
     }
 
@@ -334,41 +326,6 @@ private struct DeckTabsHeader: View {
         .padding(.trailing, 10)
         .padding(.top, 8)
         .frame(height: 52)
-    }
-}
-
-/// Pinned tabs: Find, Your shows, Discover.
-private struct DeckTabsPins: View {
-    let find: () -> Void
-    let shows: () -> Void
-    let discover: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            pin("Find", icon: "magnifyingglass", action: find)
-            pin("Your shows", icon: "square.grid.2x2.fill", action: shows)
-            pin("Discover", icon: "star.fill", action: discover)
-        }
-    }
-
-    private func pin(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                Text(title)
-                    .font(Theme.outfit(12, .bold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(Theme.ink)
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.surface))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.cardEdge, lineWidth: 1))
-            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title + ", pinned tab")
     }
 }
 
