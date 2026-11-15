@@ -90,7 +90,7 @@ private struct DeckUpNextHeader: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            DeckMark(size: 26)
+            DeckMark(size: 30)
             Text("Poddeck")
                 .font(Theme.outfit(26, .heavy))
                 .tracking(-0.6)
@@ -134,52 +134,33 @@ private struct DeckUpNextHeader: View {
     }
 }
 
-/// Poddeck's mark: three cards, blue back left, red back right, and a
-/// white front card with an ink edge and an ink play triangle.
+/// Poddeck's mark, the app icon "E · P card" (Paul, 14 Nov 2026; this was
+/// still icon A's three cards until 15 Nov): a white P on an ink card with
+/// a coral card tilted behind it. Measured off icon_deck_ep.svg.
 struct DeckMark: View {
     var size: CGFloat = 26
 
     var body: some View {
-        let w: CGFloat = size * 0.4
-        let h: CGFloat = size * 0.53
-        let r: CGFloat = size * 0.09
+        let k: CGFloat = size / 70
         ZStack {
-            card(Color(hex: 0x4C8DFF), w: w, h: h, r: r).rotationEffect(.degrees(-14))
-            card(Color(hex: 0xFF5A45), w: w, h: h, r: r).rotationEffect(.degrees(10))
-            front(w: w, h: h, r: r)
+            RoundedRectangle(cornerRadius: 9 * k, style: .continuous)
+                .fill(Color(hex: 0xEC6550))
+                .frame(width: 48 * k, height: 64 * k)
+                .rotationEffect(.degrees(8))
+                .offset(x: 4 * k, y: 2 * k)
+            RoundedRectangle(cornerRadius: 9 * k, style: .continuous)
+                .fill(Color(hex: 0x1E1D1B))
+                .frame(width: 48 * k, height: 64 * k)
+                .overlay {
+                    Text("P")
+                        .font(Theme.outfit(46 * k, .heavy))
+                        .foregroundStyle(Color.white)
+                        .offset(x: 0.5 * k, y: 1 * k)
+                }
+                .offset(x: -6 * k, y: -3 * k)
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
-    }
-
-    private func card(_ colour: Color, w: CGFloat, h: CGFloat, r: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: r, style: .continuous)
-            .fill(colour)
-            .frame(width: w, height: h)
-    }
-
-    private func front(w: CGFloat, h: CGFloat, r: CGFloat) -> some View {
-        let shape = RoundedRectangle(cornerRadius: r, style: .continuous)
-        return shape.fill(Color.white)
-            .overlay(shape.strokeBorder(Color(hex: 0x1C1B1A), lineWidth: max(1, size * 0.03)))
-            .overlay {
-                DeckPlayTriangle()
-                    .fill(Color(hex: 0x1C1B1A))
-                    .frame(width: w * 0.4, height: h * 0.38)
-                    .offset(x: w * 0.04)
-            }
-            .frame(width: w, height: h)
-    }
-}
-
-private struct DeckPlayTriangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.closeSubpath()
-        return path
     }
 }
 

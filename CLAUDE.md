@@ -2340,6 +2340,10 @@ Paul's notes after build 155, all in Deck:
   and DL / TX beside the title's first line, instead of a separate column
   floating between them (`DeckUpNextFan` row `titles`). On the branch,
   not built.
+- **Header mark updated** (Paul, 15 Nov 2026, screenshot of the Up next
+  header: "icon update"): the little mark beside "Poddeck" was still icon
+  A's three cards; now the E · P card (white P on ink, coral card tilted
+  behind), 30 pt (`DeckMark`). On the branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
