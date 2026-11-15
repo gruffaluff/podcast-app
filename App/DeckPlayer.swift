@@ -161,19 +161,39 @@ struct DeckPlayerView: View {
     }
 
     /// Swipe down on the top part of the player to close it.
+    /// Paul, 15 Nov 2026 (recording): the pull was janky and hit and miss.
+    /// The finger is now measured against the screen, not the player that
+    /// moves with it (each movement counted twice, so it juddered); once
+    /// it's clearly going down it follows the finger; letting go past
+    /// 60 pt or on a light flick slides the player away first and then
+    /// closes it without iOS's own animation on top (which made it jump).
     private var closeSwipe: some Gesture {
-        DragGesture(minimumDistance: 12)
+        DragGesture(minimumDistance: 8, coordinateSpace: .global)
             .onChanged { (value: DragGesture.Value) in
                 let down: CGFloat = value.translation.height
-                pull = down > 0 && abs(down) > abs(value.translation.width) ? down : 0
+                let sideways: CGFloat = abs(value.translation.width)
+                guard pull > 0 || (down > 0 && down > sideways) else { return }
+                var still = Transaction(animation: nil)
+                still.disablesAnimations = true
+                withTransaction(still) { pull = max(0, down) }
             }
             .onEnded { (value: DragGesture.Value) in
-                if value.translation.height > 60 || value.predictedEndTranslation.height > 150 {
-                    dismiss()
+                guard pull > 0 else { return }
+                if value.translation.height > 60 || value.predictedEndTranslation.height > 140 {
+                    slideAwayAndClose()
                 } else {
-                    withAnimation(.spring(duration: 0.3)) { pull = 0 }
+                    withAnimation(.spring(duration: 0.3, bounce: 0.1)) { pull = 0 }
                 }
             }
+    }
+
+    private func slideAwayAndClose() {
+        withAnimation(.easeOut(duration: 0.2)) { pull = 1200 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            var quiet = Transaction(animation: nil)
+            quiet.disablesAnimations = true
+            withTransaction(quiet) { dismiss() }
+        }
     }
 
     // MARK: Artwork and title

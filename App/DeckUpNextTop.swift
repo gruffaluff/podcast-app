@@ -74,6 +74,7 @@ struct DeckTopCard: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
+    @Environment(DownloadManager.self) private var downloads
     @Environment(\.deckOpenPlayer) private var openPlayer
     @AppStorage(DeckLayout.key) private var layoutRaw: String = DeckLayout.standard.rawValue
     /// Artwork or the words being said in the top card's picture area
@@ -86,6 +87,7 @@ struct DeckTopCard: View {
     @State private var offset: CGFloat = 0
     @State private var zone: DeckUpNextSwipeZone?
     @State private var showingOptions = false
+    @State private var confirmRemove = false
     @State private var lines: [TranscriptLayout.Line] = []
 
     private var moves: DeckQueueMoves { DeckQueueMoves(store: store, player: player) }
@@ -114,6 +116,12 @@ struct DeckTopCard: View {
             .gesture(DeckUpNextPan(isEnabled: true, changed: moved, ended: released))
             .accessibilityActions { accessibilityMoves }
             .sheet(isPresented: $showingOptions) { PlayerOptionsSheet() }
+            .alert("Remove the download?", isPresented: $confirmRemove) {
+                Button("Remove", role: .destructive) { store.removeDownload(episode) }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("It will stream next time, or you can download it again.")
+            }
             .task(id: lineKey) { loadLines() }
             .task(id: episode.podcast?.artworkURL) { await ArtworkColors.shared.load(episode.podcast?.artworkURL) }
             // The player's colour comes from the episode's own artwork:
@@ -125,8 +133,12 @@ struct DeckTopCard: View {
 
     @ViewBuilder private func cardContent(_ info: DeckTopInfo) -> some View {
         let actions = DeckTopActions(play: play, open: open, options: { showingOptions = true },
-                                     toggleWords: { showWords.toggle() })
-        let words = DeckTopWords(showing: showWords, line: currentLine(info), ready: !lines.isEmpty)
+                                     toggleWords: toggleWords,
+                                     transcribe: { transcripts.transcribeNow(episode) },
+                                     stopTranscribing: { transcripts.stop(episode) },
+                                     downloadTapped: downloadTapped)
+        let words = DeckTopWords(showing: showWords, line: currentLine(info), ready: !lines.isEmpty,
+                                 status: wordsStatus, download: downloadState)
         switch layout {
         case .standard: DeckStandardTop(info: info, actions: actions, calm: false, words: words)
         case .calm: DeckStandardTop(info: info, actions: actions, calm: true, words: words)
@@ -161,6 +173,41 @@ struct DeckTopCard: View {
 
     private func play() {
         moves.playNow(episode)
+    }
+
+    /// Lines are read straight away when the words are switched on, so the
+    /// "no words yet" note doesn't flash up first (Paul's recording, 15 Nov
+    /// 2026).
+    private func toggleWords() {
+        showWords.toggle()
+        loadLines()
+    }
+
+    /// Where this episode's words are, for the picture area when they're on.
+    private var wordsStatus: DeckTopWords.Status {
+        let id: String = episode.episodeID
+        if episode.transcriptState == .ready { return .ready }
+        if transcripts.isQueued(episode) {
+            if episode.transcriptState == .transcribing {
+                return .working("Transcribing", transcripts.progress[id] ?? 0)
+            }
+            return .working("Downloading first", downloads.progress[id] ?? 0)
+        }
+        return transcripts.canTranscribeNow(episode) ? .canStart : .none
+    }
+
+    /// The download key in the picture's other corner (Paul, 15 Nov 2026).
+    private var downloadState: DeckTopWords.Download {
+        if let fraction = downloads.progress[episode.episodeID] { return .downloading(fraction) }
+        return store.localAudioURL(for: episode) != nil ? .done : .none
+    }
+
+    private func downloadTapped() {
+        switch downloadState {
+        case .none: downloads.download(episode)
+        case .downloading: store.removeDownload(episode)
+        case .done: confirmRemove = true
+        }
     }
 
     /// Opens the full player on this episode. When nothing is loaded yet
@@ -307,14 +354,33 @@ struct DeckTopActions {
     let open: () -> Void
     let options: () -> Void
     var toggleWords: () -> Void = {}
+    var transcribe: () -> Void = {}
+    var stopTranscribing: () -> Void = {}
+    var downloadTapped: () -> Void = {}
 }
 
 /// What the top card's picture area shows: the artwork, or the line being
 /// said (`ready` false when the episode has no words yet).
 struct DeckTopWords {
+    enum Status: Equatable {
+        case ready
+        case working(String, Double)
+        case canStart
+        case none
+    }
+
+    enum Download: Equatable {
+        case none
+        case downloading(Double)
+        case done
+    }
+
     var showing: Bool = false
     var line: TranscriptLayout.Line? = nil
+    /// The lines are loaded.
     var ready: Bool = false
+    var status: Status = .none
+    var download: Download = .none
 }
 
 // MARK: - Shared pieces

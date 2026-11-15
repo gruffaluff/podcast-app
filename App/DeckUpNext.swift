@@ -90,7 +90,7 @@ private struct DeckUpNextHeader: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            DeckMark(size: 26)
+            DeckMark(size: 30)
             Text("Poddeck")
                 .font(Theme.outfit(26, .heavy))
                 .tracking(-0.6)
@@ -134,52 +134,33 @@ private struct DeckUpNextHeader: View {
     }
 }
 
-/// Poddeck's mark: three cards, blue back left, red back right, and a
-/// white front card with an ink edge and an ink play triangle.
+/// Poddeck's mark, the app icon "E · P card" (Paul, 14 Nov 2026; this was
+/// still icon A's three cards until 15 Nov): a white P on an ink card with
+/// a coral card tilted behind it. Measured off icon_deck_ep.svg.
 struct DeckMark: View {
     var size: CGFloat = 26
 
     var body: some View {
-        let w: CGFloat = size * 0.4
-        let h: CGFloat = size * 0.53
-        let r: CGFloat = size * 0.09
+        let k: CGFloat = size / 70
         ZStack {
-            card(Color(hex: 0x4C8DFF), w: w, h: h, r: r).rotationEffect(.degrees(-14))
-            card(Color(hex: 0xFF5A45), w: w, h: h, r: r).rotationEffect(.degrees(10))
-            front(w: w, h: h, r: r)
+            RoundedRectangle(cornerRadius: 9 * k, style: .continuous)
+                .fill(Color(hex: 0xEC6550))
+                .frame(width: 48 * k, height: 64 * k)
+                .rotationEffect(.degrees(8))
+                .offset(x: 4 * k, y: 2 * k)
+            RoundedRectangle(cornerRadius: 9 * k, style: .continuous)
+                .fill(Color(hex: 0x1E1D1B))
+                .frame(width: 48 * k, height: 64 * k)
+                .overlay {
+                    Text("P")
+                        .font(Theme.outfit(46 * k, .heavy))
+                        .foregroundStyle(Color.white)
+                        .offset(x: 0.5 * k, y: 1 * k)
+                }
+                .offset(x: -6 * k, y: -3 * k)
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
-    }
-
-    private func card(_ colour: Color, w: CGFloat, h: CGFloat, r: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: r, style: .continuous)
-            .fill(colour)
-            .frame(width: w, height: h)
-    }
-
-    private func front(w: CGFloat, h: CGFloat, r: CGFloat) -> some View {
-        let shape = RoundedRectangle(cornerRadius: r, style: .continuous)
-        return shape.fill(Color.white)
-            .overlay(shape.strokeBorder(Color(hex: 0x1C1B1A), lineWidth: max(1, size * 0.03)))
-            .overlay {
-                DeckPlayTriangle()
-                    .fill(Color(hex: 0x1C1B1A))
-                    .frame(width: w * 0.4, height: h * 0.38)
-                    .offset(x: w * 0.04)
-            }
-            .frame(width: w, height: h)
-    }
-}
-
-private struct DeckPlayTriangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.closeSubpath()
-        return path
     }
 }
 
@@ -205,6 +186,23 @@ private struct DeckStack: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        // Paul, 15 Nov 2026: swipe up on the deck to fan out the whole of
+        // Up next (tapping the cards under the top one still does too).
+        // The top card's own sideways swipes only start when moving
+        // sideways, so they don't clash.
+        .contentShape(Rectangle())
+        .simultaneousGesture(swipeUp)
+    }
+
+    private var swipeUp: some Gesture {
+        DragGesture(minimumDistance: 16, coordinateSpace: .global)
+            .onEnded { (value: DragGesture.Value) in
+                let up: CGFloat = -value.translation.height
+                let sideways: CGFloat = abs(value.translation.width)
+                let flick: Bool = -value.predictedEndTranslation.height > 120
+                guard up > sideways, up > 40 || flick else { return }
+                fan()
+            }
     }
 
     /// 448 points on a big iPhone, shorter on small ones (at least 340).
@@ -234,13 +232,15 @@ private struct DeckEdgeCard: View {
     let episode: PodcastEpisode
     let label: String
     let start: Date?
-    /// The bottom card shows whole, so it's only as tall as its row (Paul,
-    /// 14 Nov 2026: it was a big empty white card).
+    /// The bottom card shows whole, so it's shorter than the others (Paul,
+    /// 14 Nov 2026: it was a big empty white card), but still a little
+    /// taller than the 72 pt of the card above that shows below the step,
+    /// so that card's foot never pokes out under it (build 156 screenshot).
     var last: Bool = false
     let action: () -> Void
 
     var body: some View {
-        let height: CGFloat = last ? 62 : 120
+        let height: CGFloat = last ? 84 : 120
         return Button(action: action) {
             HStack(alignment: .top, spacing: 12) {
                 DeckUpNextArtwork(episode: episode, size: 34, radius: 9)

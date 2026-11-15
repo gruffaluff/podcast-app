@@ -2,98 +2,67 @@ import SwiftUI
 import UIKit
 import PodcastCore
 
-// Deck (Paul, 14 Nov 2026): the show deck on the Shows tab (prototype
-// renderShows). One big card for the show on top, two more fanned behind
-// it; swipe sideways (or ‹ ›) to go through the shows with new episodes.
+// Deck (Paul, 14 Nov 2026): the show cards on the Shows tab (prototype
+// renderShows). Paul, 15 Nov 2026: as a stacked deck the swipe "feels like
+// it does nothing", so it's a row you swipe along: cards side by side, the
+// next one peeking in from the right, following the finger and settling on
+// each card; ‹ dots › under it.
 
-/// The deck of show cards with the ‹ dots › under it.
+/// The row of show cards with the ‹ dots › under it.
 struct DeckShowStack: View {
     let entries: [DeckShowEntry]
     @Binding var index: Int
-    @State private var drag: CGFloat = 0
+    @State private var shown: String?
 
     static let cardHeight: CGFloat = 376
 
     var body: some View {
         let current: Int = min(max(0, index), entries.count - 1)
         VStack(spacing: 12) {
-            ZStack(alignment: .top) {
-                behind(current, k: 2)
-                behind(current, k: 1)
-                top(entries[current])
-            }
-            .frame(height: 384, alignment: .top)
+            row
             DeckShowDots(count: entries.count, current: current) { step($0) }
         }
-    }
-
-    private func top(_ entry: DeckShowEntry) -> some View {
-        DeckShowCard(entry: entry)
-            .id(entry.id)
-            .offset(x: drag)
-            .rotationEffect(.degrees(Double(drag / 40)))
-            .gesture(DeckShowPan(isEnabled: entries.count > 1, changed: { drag = $0 }, ended: released))
-            .padding(.leading, 28)
-            .padding(.trailing, 40)
-            .accessibilityAction(named: Text("Next show")) { step(1) }
-            .accessibilityAction(named: Text("Previous show")) { step(-1) }
-    }
-
-    /// The next shows' cards fanned behind, each a little turned, showing
-    /// just a faded block of its colour.
-    @ViewBuilder private func behind(_ current: Int, k: Int) -> some View {
-        if entries.count > k {
-            let entry: DeckShowEntry = entries[(current + k) % entries.count]
-            DeckShowBackCard(show: entry.show)
-                .padding(.leading, CGFloat(28 + k * 12))
-                .padding(.trailing, CGFloat(40 - k * 10))
-                .offset(y: CGFloat(k * 4))
-                .rotationEffect(.degrees(Double(k) * 2.2))
-                .accessibilityHidden(true)
+        .onAppear { shown = entries[current].id }
+        .onChange(of: shown) { _, id in
+            guard let id, let found = entries.firstIndex(where: { $0.id == id }), found != index else { return }
+            index = found
+            UISelectionFeedbackGenerator().selectionChanged()
         }
     }
 
-    private func released(_ velocity: CGFloat) {
-        let flick: Bool = abs(drag) > 30 && abs(velocity) > 600
-        guard abs(drag) > 80 || flick else {
-            withAnimation(.spring(duration: 0.3)) { drag = 0 }
-            return
+    private var row: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 12) {
+                ForEach(entries) { entry in
+                    DeckShowCard(entry: entry)
+                        .containerRelativeFrame(.horizontal) { width, _ in max(240, width - 56) }
+                        .id(entry.id)
+                }
+            }
+            .scrollTargetLayout()
+            .padding(.vertical, 14)
         }
-        let forward: Bool = drag < 0
-        withAnimation(.snappy(duration: 0.3)) {
-            step(forward ? 1 : -1)
-            drag = 0
-        }
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $shown)
+        .contentMargins(.horizontal, 22, for: .scrollContent)
+        .scrollIndicators(.hidden)
+        .scrollClipDisabled()
+        .frame(height: Self.cardHeight + 28)
+        .accessibilityAction(named: Text("Next show")) { step(1) }
+        .accessibilityAction(named: Text("Previous show")) { step(-1) }
     }
 
+    /// The ‹ › keys: wrap round at the ends, as before.
     private func step(_ by: Int) {
         let count: Int = entries.count
         guard count > 1 else { return }
         let from: Int = min(max(0, index), count - 1)
+        let to: Int = ((from + by) % count + count) % count
         withAnimation(.snappy(duration: 0.3)) {
-            index = ((from + by) % count + count) % count
+            index = to
+            shown = entries[to].id
         }
         UISelectionFeedbackGenerator().selectionChanged()
-    }
-}
-
-/// A card behind the top one: the colour block at half strength.
-private struct DeckShowBackCard: View {
-    let show: Podcast
-
-    var body: some View {
-        let colour: Color = DeckShowColour.of(show)
-        VStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(LinearGradient(colors: [colour, DeckShowColour.dark(colour)],
-                                     startPoint: .topLeading, endPoint: .bottomTrailing))
-                .opacity(0.5)
-                .frame(height: 150)
-            Spacer(minLength: 0)
-        }
-        .padding(16)
-        .frame(height: 370)
-        .deckPlainCard(radius: 28)
     }
 }
 
@@ -316,20 +285,86 @@ private struct DeckShowDots: View {
 /// with text on top"). Tap one for its page.
 struct DeckAllShowsRow: View {
     let entries: [DeckShowEntry]
+    /// Paul, 15 Nov 2026: "add the sort button". Kept on this iPhone.
+    @AppStorage("deckShowsSort") private var sortRaw: String = DeckShowsSort.newFirst.rawValue
     private let columns: [GridItem] = [GridItem(.flexible(), spacing: 12),
                                        GridItem(.flexible(), spacing: 12)]
 
+    private var sort: DeckShowsSort { DeckShowsSort(rawValue: sortRaw) ?? .newFirst }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DeckShowLabel(text: "All your shows")
-                .padding(.horizontal, 22)
+            HStack(alignment: .firstTextBaseline) {
+                DeckShowLabel(text: "All your shows")
+                Spacer(minLength: 8)
+                sortMenu
+            }
+            .padding(.leading, 22)
+            .padding(.trailing, 16)
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(entries) { entry in
+                ForEach(sort.sorted(entries)) { entry in
                     NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
                         .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16)
+        }
+    }
+
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort", selection: $sortRaw) {
+                ForEach(DeckShowsSort.allCases, id: \.rawValue) { option in
+                    Text(option.title).tag(option.rawValue)
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(.system(size: 11, weight: .bold))
+                Text(sort.title)
+                    .font(Theme.outfit(12, .semibold))
+            }
+            .foregroundStyle(Theme.muted)
+            .frame(minHeight: 32)
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Sort your shows: " + sort.title)
+    }
+}
+
+/// The orders for All your shows.
+enum DeckShowsSort: String, CaseIterable {
+    case newFirst, name, latestEpisode, topRank
+
+    var title: String {
+        switch self {
+        case .newFirst: return "New first"
+        case .name: return "Name A–Z"
+        case .latestEpisode: return "Latest episode"
+        case .topRank: return "Top ranking"
+        }
+    }
+
+    /// The entries come in "new first" order (new, Top rank, A–Z).
+    func sorted(_ entries: [DeckShowEntry]) -> [DeckShowEntry] {
+        switch self {
+        case .newFirst:
+            return entries
+        case .name:
+            return entries.sorted { $0.show.title.localizedStandardCompare($1.show.title) == .orderedAscending }
+        case .latestEpisode:
+            let latest: [String: Date] = Dictionary(entries.map {
+                ($0.id, $0.show.episodes.map(\.published).max() ?? .distantPast)
+            }, uniquingKeysWith: { first, _ in first })
+            return entries.sorted { (latest[$0.id] ?? .distantPast) > (latest[$1.id] ?? .distantPast) }
+        case .topRank:
+            return entries.sorted { a, b in
+                let first: Int = a.rank ?? 999
+                let second: Int = b.rank ?? 999
+                if first != second { return first < second }
+                return a.show.title.localizedStandardCompare(b.show.title) == .orderedAscending
+            }
         }
     }
 }

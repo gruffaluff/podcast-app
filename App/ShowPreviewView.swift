@@ -28,6 +28,24 @@ struct ShowPreviewView: View {
     @State private var overscroll: CGFloat = 0
 
     var body: some View {
+        if Theme.isDeck {
+            deckBody
+        } else {
+            classicBody
+        }
+    }
+
+    /// Deck: the same look as a followed show's page (`DeckShowPreview`).
+    private var deckBody: some View {
+        DeckShowPreview(item: item, feed: feed, failed: failed, followedShow: followedShow,
+                        busy: followBusy, followFailed: followFailed,
+                        colour: pageColour ?? Theme.ink, follow: followTapped)
+            .task { await load() }
+            .refreshable { await load() }
+            .sheet(item: $deckFollower.sheetShow) { DeckFollowSheet(show: $0) }
+    }
+
+    private var classicBody: some View {
         List {
             header
                 .listRowBackground(Theme.rowBackground)

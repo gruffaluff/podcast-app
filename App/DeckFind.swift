@@ -53,7 +53,10 @@ struct DeckFindView: View {
             LazyVStack(alignment: .leading, spacing: 0) {
                 title
                 searchField
-                if term.count >= 2 {
+                if let link = DeckFindLink.parse(query) {
+                    DeckFeedLinkCard(url: link)
+                        .id(link)
+                } else if term.count >= 2 {
                     DeckFindResults(term: term, followed: followed, transcriptResults: transcriptResults,
                                     directory: directory, searching: searchingDirectory)
                 } else {
@@ -176,7 +179,7 @@ struct DeckFindView: View {
 
     private func search() async {
         let text = term
-        guard text.count >= 2 else {
+        guard text.count >= 2, DeckFindLink.parse(text) == nil else {
             directory = []
             transcriptResults = []
             return
@@ -778,6 +781,91 @@ final class DeckFollower {
         store.save()
         followed = show
         if isNew { sheetShow = show }
+    }
+
+    /// A pasted link: a feed (private / Patreon feeds have the key in the
+    /// link) or an Apple Podcasts page, whose feed is looked up first.
+    func follow(link: URL, store: LibraryStore) async {
+        guard !busy else { return }
+        busy = true
+        failed = false
+        defer { busy = false }
+        var feedURL: URL? = link
+        if let appleID = Directory.appleID(fromLink: link) {
+            feedURL = (try? await FeedClient.lookup(appleID: appleID))?.feedURL
+        }
+        guard let feedURL else { failed = true; return }
+        let isNew: Bool = store.podcast(feedURL: feedURL.absoluteString) == nil
+        guard let show = try? await store.follow(feedURL: feedURL, downloadLatest: false) else {
+            failed = true
+            return
+        }
+        followed = show
+        if isNew { sheetShow = show }
+    }
+}
+
+/// A web link typed or pasted into Find's box ("feed://" counts too).
+enum DeckFindLink {
+    static func parse(_ typed: String) -> URL? {
+        var text: String = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.hasPrefix("feed://") { text = "https://" + text.dropFirst("feed://".count) }
+        guard let url = URL(string: text), let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https", url.host != nil else { return nil }
+        return url
+    }
+}
+
+/// Paul, 15 Nov 2026: paste a show's link into Find (its RSS feed, a
+/// private feed from Patreon / Supercast etc., or an Apple Podcasts link)
+/// and follow it from here.
+private struct DeckFeedLinkCard: View {
+    @Environment(LibraryStore.self) private var store
+    let url: URL
+    @State private var follower = DeckFollower()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(isApple ? "An Apple Podcasts link" : "A show's feed link")
+                .font(Theme.outfit(17, .heavy))
+                .foregroundStyle(Theme.ink)
+            Text(url.host ?? url.absoluteString)
+                .font(Theme.outfit(13, .medium))
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+            Text("Private feeds (Patreon, Supercast, Substack…) work too: the key is in the link.")
+                .font(Theme.outfit(13, .medium))
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+            key
+                .padding(.top, 4)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .deckPlainCard(radius: 22)
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .sheet(item: $follower.sheetShow) { DeckFollowSheet(show: $0) }
+    }
+
+    private var isApple: Bool { Directory.appleID(fromLink: url) != nil }
+
+    @ViewBuilder private var key: some View {
+        if let show = follower.followed {
+            NavigationLink(value: show) {
+                DeckShowPill(title: "Following · Open show", icon: "checkmark", on: true, wide: true, height: 44)
+            }
+            .buttonStyle(.plain)
+        } else if follower.busy {
+            ProgressView()
+                .frame(maxWidth: .infinity, minHeight: 44)
+        } else {
+            Button { Task { await follower.follow(link: url, store: store) } } label: {
+                DeckShowPill(title: follower.failed ? "Couldn't read that feed · Try again" : "Follow this show",
+                             icon: "plus", on: true, wide: true, height: 44)
+            }
+            .buttonStyle(.plain)
+        }
     }
 }
 

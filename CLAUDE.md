@@ -2276,8 +2276,142 @@ Paul's notes after build 155, all in Deck:
   there's none). Remembered as "deckTopWords" (this iPhone).
 - **No internet bar**: cloud-with-a-line icon, rounder, lined up with
   the cards (16 pt) in Deck.
-- Still to decide: a "new since you last looked" triage screen (swipe
-  right play next, left skip, + by your rules).
+- "New since you last looked" triage: Paul said go (15 Nov 2026); see
+  the queue.
+
+## Done in build 157 (15 Nov 2026, PR #75; Paul: "Build")
+
+- **Last stacked card, again** (Paul, 14 Nov 2026, build 156 screenshot:
+  "some rendering issues with the cards"): the 62 pt last card was
+  shorter than the bit of the card above showing below the 48 pt step
+  (72 pt), so that card's foot poked out under it as a second edge. Last
+  card now 84 pt (`DeckEdgeCard`).
+- **Swipe left / right on the tab pill** (Paul, 14 Nov 2026, FNB: "add
+  swipe left and right on the menu bar"): swiping along the Up next ·
+  Shows · Find pill moves to the next / previous tab (`DeckTabPill`).
+- **Alignment pass** (Paul, 14 Nov 2026, FNB, screenshot of the Deck
+  player's chapter row "‹ 4/14 · Best Among Imperfect Options ›": "not
+  center aligned. Can we make sure alignment throughout is right"): the
+  ‹ pill › row sits left of centre (the pill grows with its title, so the
+  arrows aren't evenly placed round the middle). Plan: arrows in fixed
+  slots at each side, pill centred between them and shrinking long titles
+  (`DeckPlayer*` chapter row); then check every Deck screen for things
+  that should be centred or lined up (player rows, top card, sheets, the
+  pill, headers) and fix them in the same build.
+- **Undo bar lost on the page** (Paul, 15 Nov 2026, FNB: "the undo pop
+  up is the same colour as the background so gets lost a bit. Make it
+  clearer"): in Deck the Undo bar uses the page colour. Plan: a dark ink
+  bar with white text and a bold UNDO, a soft shadow, the same 16 pt
+  edges as the cards (`UndoBar` in Deck).
+- **Pull down to close the player: janky and hit and miss** (Paul, 15 Nov
+  2026, screen recording). The drag was measured in the player's own
+  space while the player moved with the finger, so every movement counted
+  twice and it juddered (the same fault the show page swipes had in build
+  140); on letting go iOS's own close animation started from wherever the
+  player was, so it jumped. Now measured against the screen, follows the
+  finger once it's clearly going down, and on release past 60 pt or a
+  light flick the player slides away itself and then closes with no
+  second animation (`DeckPlayerView.closeSwipe`, `slideAwayAndClose`).
+ 
+- **Up next top card: Transcribe now, download key, no flash** (Paul, 15
+  Nov 2026: loves the transcript key; "yes" to Transcribe now in the
+  empty space; "couldn't we also get a DL button on the other side";
+  recording: the "no words yet" note flashed up before the transcript).
+  With the words on and none yet: "No words for this episode yet." and a
+  white Transcribe now key; while on its way "Downloading first 40%" /
+  "Transcribing 62%" with a bar and Stop; the words appear by themselves
+  when ready. The lines now load the moment the key is tapped (they
+  loaded a beat later, so the note flashed first) and nothing shows while
+  a ready transcript loads. A round download key in the picture's bottom
+  left: arrow to download, a filling ring while it downloads (tap stops
+  it), filled when on the phone (tap to remove, with a check)
+  (`DeckTopDownloadKey`, `DeckTopWords.Status / Download`). 
+- **Undo just above the tab pill** (Paul, 15 Nov 2026, screenshot: the
+  Undo bar floated over the stacked cards): in Deck it sits 10 pt above
+  the pill, and above the mini player on Shows / Find while something is
+  on (`RootView.deckToastLift`).
+- **Swipe up to open Up next** (Paul, 15 Nov 2026: "can swipe up on the
+  up next queue open it"): swiping up on the deck (top card or the cards
+  under it) fans out the whole list, like tapping the cards under it
+  (`DeckStack.swipeUp`).
+- **Up next list: time and DL / TX lined up** (Paul, 15 Nov 2026,
+  screenshot): the start time now sits on the show line (same baseline)
+  and DL / TX beside the title's first line, instead of a separate column
+  floating between them (`DeckUpNextFan` row `titles`).
+- **Header mark updated** (Paul, 15 Nov 2026, screenshot of the Up next
+  header: "icon update"): the little mark beside "Poddeck" was still icon
+  A's three cards; now the E · P card (white P on ink, coral card tilted
+  behind), 30 pt (`DeckMark`).
+- **Show page pills lined up** (Paul, 15 Nov 2026, screenshot:
+  "alignment and spacing"): Following / Alerts / Settings are three equal
+  pills filling the row, the same widths and gaps as Top / Bottom /
+  Nowhere below (`DeckShowPagePills`).
+- **Show deck swipe feels like nothing happens** (Paul, 15 Nov 2026:
+  "maybe it just needs to be a row you swipe along"). Suggested a
+  sideways row of show cards with the next one peeking in from the right,
+  following the finger and snapping to each card. **Paul: "build it that
+  way"** (15 Nov 2026): done built: `DeckShowStack` is a
+  sideways `ScrollView` of `DeckShowCard`s (screen width less 56 pt, 12 pt
+  apart, settling on each card with `.viewAligned`), the ‹ › keys and dots
+  still under it; the fanned back cards are gone.
+- **Sort for All your shows?** (Paul, 15 Nov 2026: "what order … do we
+  have the sort order button"): today the same order as the cards (new
+  first, Top rank, A–Z); no sort key in Deck. Offered a ⇅ key beside the
+  label (New first / Name A–Z / Latest episode / Top ranking). **Paul:
+  "add the sort button"** (15 Nov 2026): built: a small
+  ⇅ menu on the right of the ALL YOUR SHOWS label showing the chosen order
+  (New first, the default / Name A–Z / Latest episode / Top ranking, then
+  A–Z), kept on this iPhone as "deckShowsSort" (`DeckShowsSort`).
+- **Missing from the Deck look** (Paul asked 15 Nov 2026 "what else are we
+  missing"; checked the code): Carry on (started, unfinished episodes) has
+  no home; Saved clips can't be reached; Add a show by pasting a link (RSS,
+  private / Patreon feeds, Apple Podcasts links) isn't in Find; the show's
+  own settings (speed, skip intro / outro, keep downloads) open the older
+  look's sheet. Asked Paul which to do. **Paul: "add all 4"** (15 Nov
+  2026), built:
+  - Carry on on the Shows tab above the show cards: up to three started
+    episodes (not the one playing) as slim white cards, the artwork in a
+    ring that fills as far as you've got, title, "show · 34m left", a
+    play key; tap the card for the episode page (`DeckCarryOnSection`).
+  - Saved clips: a row in Settings → Your listening, under Downloads
+    (opens `HaarSavedClipsView`).
+  - Paste a link into Find (a feed, a private Patreon / Supercast feed,
+    or an Apple Podcasts link; "feed://" too): a card "A show's feed
+    link" with Follow this show, then the Deck follow sheet; Following ·
+    Open show after (`DeckFindLink`, `DeckFeedLinkCard`,
+    `DeckFollower.follow(link:)`). The search waits while it's a link.
+  - The show page's Settings pill opens `DeckShowSettingsSheet`: grouped
+    white cards like Settings: Download new episodes, Alert me, Keep
+    downloads; Speed / Skip intro / Skip outro for this show; Older
+    episodes (Add all to Up next, Mark older played with Undo).
+- **Go for all** (Paul, 15 Nov 2026: "yes that's good. Go for all"):
+  - Undo bar in Deck: near-black (#1C1B1A) with white words and a white
+    Undo pill, 52 pt, soft shadow (`UndoBar.deckBar`).
+  - Swipe along the tab pill: right for the next tab, left for the one
+    before, instantly, with a tick (`DeckTabPill.swipe`).
+  - Alignment: the player's chapter row has its ‹ › in fixed 44 pt slots
+    at each edge and the pill centred between them (long titles shrink a
+    little, then cut off); during an ad Skip ad / Play ad takes the
+    pill's place (`DeckChapterRow`). Other Deck rows checked in the code.
+  - "New since you last looked": the Shows tab's New · n opens a catch-up,
+    one big card at a time, oldest first: swipe right Play next, left Skip
+    (marked played), or keys Skip / + Up next (Keep when already queued) /
+    Play next; "Already 3rd in Up next" on the card; Keep the rest / Skip
+    the rest; "All caught up". Each one dealt with is remembered on this
+    iPhone ("deckTriaged", newest 400), and the pill counts only those not
+    looked at yet. "List" switches to the week's list as before with Add
+    all / Mark all played (`DeckTriage`, `DeckTriageCard`,
+    `DeckShowsNewSheet`).
+- **Show preview in the Deck look** (Paul, 15 Nov 2026, screenshot of
+  The News Agents from Find: "the show screen via Find is still the old
+  one"): shows you don't follow yet now open like a followed show's page:
+  white header card (104 pt artwork, name, "publisher · genre · n
+  episodes"), one wide ink Follow pill (Try again if it failed; once
+  followed "Following · Open show" in the show's colour, opening the Deck
+  show page), the description, then LATEST EPISODES · n in all as white
+  cards (date · length, title with two lines' room, two lines of notes,
+  tap for all of them). The printed poster header stays for the other
+  looks (`DeckShowPreview`, `ShowPreviewView.deckBody`).
 
 ## Queued for the next app build
 
