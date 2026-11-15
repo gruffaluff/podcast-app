@@ -196,24 +196,25 @@ private struct DeckShowPagePills: View {
     let unfollow: () -> Void
     let settings: () -> Void
 
+    /// Paul, 15 Nov 2026 ("alignment and spacing"): three equal pills
+    /// filling the row, lined up with Top / Bottom / Nowhere below.
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Button(action: unfollow) {
-                DeckShowPill(title: "Following", icon: "checkmark", fill: colour)
+                DeckShowPill(title: "Following", icon: "checkmark", fill: colour, wide: true)
             }
             .buttonStyle(.plain)
             .accessibilityHint("Unfollows this show, after asking")
             Button(action: toggleAlerts) {
                 DeckShowPill(title: show.notify ? "Alerts on" : "Alerts off",
-                             icon: show.notify ? "bell.fill" : "bell", on: show.notify)
+                             icon: show.notify ? "bell.fill" : "bell", on: show.notify, wide: true)
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(show.notify ? [.isSelected] : [])
             Button(action: settings) {
-                DeckShowPill(title: settingsTitle, icon: "slider.horizontal.3")
+                DeckShowPill(title: settingsTitle, icon: "slider.horizontal.3", wide: true)
             }
             .buttonStyle(.plain)
-            Spacer(minLength: 0)
         }
     }
 

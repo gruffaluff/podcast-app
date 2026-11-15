@@ -2344,6 +2344,14 @@ Paul's notes after build 155, all in Deck:
   header: "icon update"): the little mark beside "Poddeck" was still icon
   A's three cards; now the E · P card (white P on ink, coral card tilted
   behind), 30 pt (`DeckMark`). On the branch, not built.
+- **Show page pills lined up** (Paul, 15 Nov 2026, screenshot:
+  "alignment and spacing"): Following / Alerts / Settings are three equal
+  pills filling the row, the same widths and gaps as Top / Bottom /
+  Nowhere below (`DeckShowPagePills`). On the branch, not built.
+- **Show deck swipe feels like nothing happens** (Paul, 15 Nov 2026:
+  "maybe it just needs to be a row you swipe along"). Suggested a
+  sideways row of show cards with the next one peeking in from the right,
+  following the finger and snapping to each card. Waiting on Paul.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
