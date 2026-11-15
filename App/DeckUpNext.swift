@@ -339,7 +339,9 @@ private struct DeckEdgeCard: View {
         let height: CGFloat = last ? 84 : 120
         return Button(action: action) {
             HStack(alignment: .top, spacing: 12) {
-                DeckUpNextArtwork(episode: episode, size: 34, radius: 9)
+                // Round, with a faint ring that fills once started (Paul,
+                // 15 Nov 2026: rings).
+                DeckListRingArtwork(episode: episode, size: 38, lineWidth: 2.5, gap: 2)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(episode.title)
                         .font(Theme.outfit(15, .bold))

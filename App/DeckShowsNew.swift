@@ -262,8 +262,10 @@ private struct DeckShowsNewRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Round with a coral ring: new, not started (Paul, 15 Nov 2026:
+            // rings, "like an unread story").
             Button { player.play(episode) } label: {
-                ArtworkView(url: episode.artwork, title: episode.showTitle, size: 44, radius: 11)
+                DeckNewRingArtwork(episode: episode, size: 48, lineWidth: 2.5, gap: 2.5)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Play \(episode.title)")
@@ -351,7 +353,8 @@ private struct DeckTriageCard: View {
 
     private var card: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ArtworkView(url: episode.artwork, title: episode.showTitle, size: 120, radius: 20)
+            // Round with a coral ring: new, not started (Paul, 15 Nov 2026: rings).
+            DeckNewRingArtwork(episode: episode, size: 128, lineWidth: 4, gap: 4)
             Button(action: open) { words }
                 .buttonStyle(.plain)
         }

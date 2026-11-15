@@ -76,16 +76,11 @@ private struct DeckCarryOnCard: View {
         .accessibilityHint("Opens the episode page")
     }
 
-    /// The artwork inside a thin ring that fills as far as you've got.
+    /// The artwork inside a thin ring of the show's colour that fills as
+    /// far as you've got: the same shape as everywhere else (Paul, 15 Nov
+    /// 2026: rings).
     private var ring: some View {
-        ZStack {
-            Circle().stroke(Theme.cardEdge, lineWidth: 3)
-            Circle().trim(from: 0, to: fraction)
-                .stroke(Theme.ink, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            ArtworkView(url: episode.artwork, title: episode.showTitle, size: 36, radius: 18)
-        }
-        .frame(width: 46, height: 46)
+        DeckShowRingArtwork(episode: episode, size: 46)
     }
 
     private var playKey: some View {
@@ -98,11 +93,6 @@ private struct DeckCarryOnCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Play " + episode.title)
-    }
-
-    private var fraction: Double {
-        guard let duration = episode.duration, duration > 0 else { return 0 }
-        return min(1, max(0.03, episode.position / duration))
     }
 
     private var detail: String {
