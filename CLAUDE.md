@@ -2303,6 +2303,16 @@ Paul's notes after build 155, all in Deck:
   clearer"): in Deck the Undo bar uses the page colour. Plan: a dark ink
   bar with white text and a bold UNDO, a soft shadow, the same 16 pt
   edges as the cards (`UndoBar` in Deck).
+- **Pull down to close the player: janky and hit and miss** (Paul, 15 Nov
+  2026, screen recording). The drag was measured in the player's own
+  space while the player moved with the finger, so every movement counted
+  twice and it juddered (the same fault the show page swipes had in build
+  140); on letting go iOS's own close animation started from wherever the
+  player was, so it jumped. Now measured against the screen, follows the
+  finger once it's clearly going down, and on release past 60 pt or a
+  light flick the player slides away itself and then closes with no
+  second animation (`DeckPlayerView.closeSwipe`, `slideAwayAndClose`).
+  On the branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
