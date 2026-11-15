@@ -450,7 +450,9 @@ struct DeckQueueMoves {
     func played(_ episode: PodcastEpisode) {
         let label: String = "Played: " + episode.title
         if player.nowPlaying?.episodeID == episode.episodeID {
+            let wasPlaying: Bool = player.isPlaying
             store.undoable(label, episodes: [episode]) { player.finishEarly() }
+            comesBackOnTop(episode, playing: wasPlaying)
         } else {
             store.undoable(label, episodes: [episode]) { store.markPlayed(episode.episodeID) }
         }
@@ -476,8 +478,24 @@ struct DeckQueueMoves {
             store.commit(queue)
         }
         guard wasCurrent, let first = store.queue.first, let next = store.episode(first.episode.id) else { return }
-        player.play(next)
-        if !wasPlaying { player.pause() }
+        player.play(next, autoplay: wasPlaying)
+        comesBackOnTop(episode, playing: wasPlaying)
+    }
+
+    /// Undo puts the swiped card back on top: Up next goes back as it was
+    /// and the player loads that episode again where it was, playing if it
+    /// was (Paul, 15 Nov 2026: after Undo it only rejoined the queue and
+    /// the next episode stayed on top).
+    private func comesBackOnTop(_ episode: PodcastEpisode, playing: Bool) {
+        guard let undo = store.undoAction else { return }
+        let id: String = episode.episodeID
+        let store: LibraryStore = store
+        let player: PlayerModel = player
+        store.undoAction = UndoAction(label: undo.label) {
+            undo.restore()
+            guard let back = store.episode(id) else { return }
+            player.play(back, autoplay: playing)
+        }
     }
 
     /// Plays next, straight after the episode playing.

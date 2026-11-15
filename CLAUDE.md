@@ -2423,6 +2423,13 @@ Paul's notes after build 155, all in Deck:
   (`DeckEdgeCard.detail`). The cards above it keep two lines (only their
   top shows). On the branch, not built.
 
+- **Undo puts the card back on top** (Paul, 15 Nov 2026: undoing a swipe
+  on Up next's top card put the episode back in the queue, but the next
+  one stayed on top). Played (left swipe) and Next in line / To the
+  bottom (right swipes) on the episode that's on now: Undo also loads it
+  back in the player where it was, playing if it was
+  (`DeckQueueMoves.comesBackOnTop`). On the branch, not built.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
