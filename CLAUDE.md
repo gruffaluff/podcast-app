@@ -2586,6 +2586,15 @@ Paul's notes after build 155, all in Deck:
     along it for the next / previous tab. Card deck mode is unchanged.
     The full Up next list's last row ("Keep playing") now scrolls clear
     of the pill (the FNB queued above).
+  - Playable mock-up of the whole new look (tabs, Safari gestures, the
+    dial): https://claude.ai/artifact/6BdEF6Us4AZoB7smk6zSe7. **Switching
+    between pinned pages** (Paul, 15 Nov 2026: "I need a better way to
+    switch between find, your shows and discover"): suggested Discover
+    folded into Find (empty search = New to you + charts), a "Tabs · Your
+    shows · Find" switcher of words at the top of each pinned page, and
+    swiping along the bottom bar moves between those pages (swipe up still
+    = tabs). In the mock-up now; not in the app yet (the app has three
+    pinned tabs and no switcher). Waiting on Paul's verdict.
 
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
