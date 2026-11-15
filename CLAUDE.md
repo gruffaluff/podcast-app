@@ -2430,6 +2430,60 @@ Paul's notes after build 155, all in Deck:
   back in the player where it was, playing if it was
   (`DeckQueueMoves.comesBackOnTop`). On the branch, not built.
 
+- **After build 157, Paul's list** (15 Nov 2026: "get working on 1-7"
+  from the ideas list, plus three notes). On the branch, not built; four
+  helpers in parallel, merged here:
+  - **No swipe on the tab pill** (Paul: "unneeded"): removed; taps only.
+  - **Pull down to close the player, lighter** (Paul: "you have to put a
+    real motion in"): starts after 4 pt, closes past 36 pt, on a flick
+    (300 pt/s) or a predicted 90 pt (`DeckPlayerView.closeSwipe`).
+  - **Artwork shrink / grow smooth** (Paul: "a little unsmooth"): one
+    picture drawn over the player that slides and resizes between the big
+    spot and Read along's corner (`DeckArtworkSpot` preference,
+    `movingArtwork`); before, two copies cross-faded with the corners and
+    shadow jumping.
+  - **Smoother scrolling**: Up next (kept alive behind the other tabs)
+    read the player's clock and refetched every episode twice a second,
+    redrawing the whole page even while Shows / Find scrolled; now a
+    10-second playhead snapshot (`DeckPlayheadWatch`, `plan.playhead`) and
+    the top card follows the clock only while on screen
+    (`deckPageShown`); fan list no longer reports every scroll frame;
+    card shadows cast from the plain shape (`deckPlainCard`, fan card,
+    show tiles); Find's chart and results lazy; `TimeFormat.ago` reuses
+    its date formatters.
+  - **1 Sleep timer: End of chapter** in the Options sheet's sleep list
+    (episodes with chapters; uses `setStopAtChapterEnd`, fades and pauses).
+  - **2 Up next suggestions**: when one or no episode is left after the
+    one playing, up to three suggestions under the deck (and at the foot
+    of the full list): started ones, then the last two weeks from Top
+    shows by rank, then other shows; + adds (Undo), tap for the episode
+    page (`DeckUpNextSuggestions.swift`, `store.deckSuggestions`). The
+    top card gives up height (to 340 pt) so they fit.
+  - **3 Skip ads per show**: Default / Always / Never in the show's
+    settings sheet (Deck and older looks), synced as "showAdSkip"
+    (`ShowAdSkip`, `PlayerModel.skipsAdsForCurrentShow`).
+  - **4 Weekly recap** at the top of Stats ("Your week": listened,
+    finished, saved since Monday, top show) (`weeklyRecap()`).
+  - **5 Save for later**: bookmark key on the Deck episode page and in a
+    show page episode's hold menu; list on the Shows tab under Carry on
+    and in Settings → Your listening (`DeckSavedForLater.swift`); synced
+    as "savedForLater" (episode IDs, one per line, newest first, 300 at
+    most); played episodes drop off.
+  - **6 Apple Watch**: no build needed: the watch's own Now Playing shows
+    play / pause / skip and volume for Poddeck (Watch app → General →
+    Wake Screen → Auto-launch audio apps). A real watch app later if
+    wanted.
+  - **7 Going live prep**: instant alerts only for the owner's phone
+    (`RealtimeAlerts`: the phone that created the public "follows"
+    record; others don't publish follows, don't subscribe and remove old
+    alert subscriptions; "alertsOwner" re-checked daily; their status
+    line says alerts come from the background check). Privacy and
+    support pages `docs/privacy.html`, `docs/support.html` (linked from
+    the site footer; App Store Connect URLs
+    https://poddeck.uk/privacy.html and /support.html; App Privacy
+    "Data Not Collected"). Support page still needs a real contact
+    address before submitting.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
