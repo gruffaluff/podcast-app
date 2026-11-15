@@ -2335,6 +2335,11 @@ Paul's notes after build 155, all in Deck:
   up next queue open it"): swiping up on the deck (top card or the cards
   under it) fans out the whole list, like tapping the cards under it
   (`DeckStack.swipeUp`). On the branch, not built.
+- **Up next list: time and DL / TX lined up** (Paul, 15 Nov 2026,
+  screenshot): the start time now sits on the show line (same baseline)
+  and DL / TX beside the title's first line, instead of a separate column
+  floating between them (`DeckUpNextFan` row `titles`). On the branch,
+  not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

@@ -193,7 +193,6 @@ private struct DeckFanRow: View {
             artButton
             Button { store.notesEpisode = episode } label: { titles }
                 .buttonStyle(.plain)
-            times
             grip
         }
         .padding(.leading, 14)
@@ -242,35 +241,39 @@ private struct DeckFanRow: View {
         .accessibilityLabel(isOn ? (player.isPlaying ? "Pause" : "Play") : "Play " + episode.title)
     }
 
+    /// Paul, 15 Nov 2026 (screenshot: "alignment of time and DL TX"): the
+    /// time sits on the show line's baseline and DL / TX on the title's
+    /// first line, instead of a separate column that floated between them.
     private var titles: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(plan.label(for: episode).uppercased())
-                .font(Theme.outfit(11, .bold))
-                .tracking(0.4)
-                .foregroundStyle(sub)
-                .lineLimit(1)
-            Text(episode.title)
-                .font(Theme.outfit(15, .bold))
-                .foregroundStyle(text)
-                .lineLimit(2, reservesSpace: true)
-                .multilineTextAlignment(.leading)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(plan.label(for: episode).uppercased())
+                    .font(Theme.outfit(11, .bold))
+                    .tracking(0.4)
+                    .foregroundStyle(sub)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Text(timeWords)
+                    .font(Theme.outfit(12, .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(sub)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(episode.title)
+                    .font(Theme.outfit(15, .bold))
+                    .foregroundStyle(text)
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                EpisodeLights(episode: episode, onDark: isOn)
+                    .fixedSize()
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityHint("Opens the episode page")
-    }
-
-    private var times: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text(timeWords)
-                .font(Theme.outfit(12, .medium))
-                .monospacedDigit()
-                .foregroundStyle(sub)
-                .lineLimit(1)
-            EpisodeLights(episode: episode, onDark: isOn)
-        }
-        .fixedSize()
-        .padding(.top, 1)
     }
 
     /// "Playing · 34m" for the one on, "16:20 · 26m" for the others.
