@@ -109,7 +109,7 @@ struct StatsView: View {
             HStack(alignment: .top, spacing: 12) {
                 recapFigure(Self.recapHours(recap.listened), "Listened")
                 recapFigure("\(recap.finished)", recap.finished == 1 ? "Episode finished" : "Episodes finished")
-                recapFigure(Self.recapHours(week.saved), "Saved by speed and trims")
+                recapFigure(Self.recapHours(week.saved), "Saved since Monday")
             }
             Divider().overlay(Theme.faint.opacity(0.3))
             recapTopShow
