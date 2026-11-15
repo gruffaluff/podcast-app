@@ -2535,14 +2535,58 @@ Paul's notes after build 155, all in Deck:
   it for the next tab, count opens the overview), a pinned Your shows
   tab. Note on the page: the two fit together (ring as each tab's
   progress, the dial player inside a tab). **Paul: "Dials and tabs!",
-  build all of it into the next build** (15 Nov 2026). In progress on
-  the branch: shared `DeckRing` / `DeckRingArtwork` (App/DeckRing.swift);
-  three helpers: the player dial, episodes as tabs (setting "Up next as"
-  Tabs (default) / Card deck, "deckHome"), rings across the app. Paul:
+  build all of it into the next build** (15 Nov 2026). Built on the
+  branch by three helpers, merged, not built yet: Paul:
   "do the same gestures like Safari too. Swipe up to get to tabs etc":
   swipe up on the bottom bar for the tab overview, swipe along the bar
   for the next / previous tab, swipe a tab card sideways to close it
   (played, Undo), pull an open tab down to go back to the overview.
+  - **Rings across the app** (`App/DeckRings.swift` on top of the shared
+    `DeckRing` / `DeckRingArtwork` in `App/DeckRing.swift`): Up next's top
+    card (Standard / Calm) is a centred circle (round artwork in a 6 pt
+    ring in the show's colour, live for the one playing); the words key
+    flips it over to the words (dark circle in the show's colour; "No
+    words yet" + Transcribe now / progress + Stop); download key bottom
+    left, words key bottom right; tap the circle for the player. Big
+    buttons / Read along: 56 pt ring artwork. Stacked cards, the full
+    list, suggestions, Saved for later: round artwork, faint track, fill
+    once started. Carry on: ring in the show's colour. New list rows and
+    the catch-up card: coral "new" ring. Mini player: live ring in the
+    show's colour (`DeckMiniRingArtwork`).
+  - **The player dial** (`App/DeckPlayerDial.swift`): round artwork in a
+    white ring with chapter cuts, amber ads, white clip dots and a knob;
+    drag round to scrub (one turn = the whole episode; half / quarter
+    speed towards the middle; seeks on release; Undo for 2 min+ jumps,
+    shared `DeckScrubJump`; tick at chapters); while dragging the middle
+    shows the time, the line said there and the speed; tap turns it over
+    to the line being said now ("deckDialWords"), Transcribe key when
+    there are no words. Read along opens from its button only; the
+    picture shrinks into the corner with its ring. The straight scrub line
+    is gone under the dial but stays in Read along. Swiping down on the
+    dial scrubs, so close the player from the top row / title / round it.
+    VoiceOver: one adjustable Position control. Not done: search hits on
+    the ring.
+  - **Episodes as tabs** (`App/DeckTabs.swift`, `DeckTabsGrid.swift`,
+    `DeckTabsPager.swift`, `DeckTabsBar.swift`): Settings → Look → "Up
+    next as" Tabs (default) / Card deck ("deckHome", this iPhone). Tabs
+    home: header with "n · done by" and the gear; pinned Find (focuses
+    the search box), Your shows, Discover (opens Find); groups Up next /
+    New / Saved ("deckTabGroup"); two-across tab cards (show strip with
+    ×, artwork, title, small coral ring + time; playing tab has an ink
+    edge); × or swipe a card left closes it (Up next / New: played with
+    Undo; Saved: off the list with Undo); hold for Play now, Play next,
+    Remove from Up next, Episode notes, Save for later; drag to reorder
+    in Up next (shares the long press with the menu: check). Tap a tab:
+    full-screen pager (swipe sideways through tabs, big ring artwork,
+    Play / Pause, Open player for the one playing, Play next / Notes /
+    Played) with its own Safari bar; pull down to go back. Bottom bar in
+    tabs mode replaces the pill and mini player: what's playing (ring,
+    title, play / pause; tap for the player), count square on Shows /
+    Find back to the overview; swipe up on it for the overview, swipe
+    along it for the next / previous tab. Card deck mode is unchanged.
+    The full Up next list's last row ("Keep playing") now scrolls clear
+    of the pill (the FNB queued above).
+
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
