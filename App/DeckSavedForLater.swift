@@ -245,7 +245,8 @@ private struct DeckSavedRow: View {
 
     private var words: some View {
         HStack(spacing: 12) {
-            ArtworkView(url: episode.artwork, title: episode.showTitle, size: 44, radius: 12)
+            // Round, ring once started (Paul, 15 Nov 2026: rings).
+            DeckListRingArtwork(episode: episode, size: 46, lineWidth: 2.5, gap: 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(episode.title)
                     .font(Theme.outfit(15, .bold))

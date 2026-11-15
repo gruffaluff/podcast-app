@@ -121,7 +121,8 @@ private struct DeckSuggestionCard: View {
 
     private var words: some View {
         HStack(spacing: 12) {
-            DeckUpNextArtwork(episode: episode, size: 40, radius: 10)
+            // Round, ring once started (Paul, 15 Nov 2026: rings).
+            DeckListRingArtwork(episode: episode, size: 42, lineWidth: 2.5, gap: 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(episode.title)
                     .font(Theme.outfit(15, .bold))

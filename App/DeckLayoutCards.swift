@@ -34,38 +34,18 @@ struct DeckStandardTop: View {
         }
     }
 
-    /// The artwork on a wash of the show's colour; tap for the player.
+    /// The artwork, round inside a ring showing how far through (Paul, 15
+    /// Nov 2026: rings). The words key turns the circle over to the line
+    /// being said. Tapping the circle opens the player (the card's own tap).
     private var artworkBlock: some View {
-        Button(action: actions.open) {
-            GeometryReader { geometry in
-                let side: CGFloat = max(40, min(geometry.size.height - 28, geometry.size.width - 28))
-                ZStack {
-                    LinearGradient(colors: [info.colour, info.dark], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    if words.showing {
-                        DeckTopWordsView(words: words, transcribe: actions.transcribe,
-                                         stop: actions.stopTranscribing)
-                    } else {
-                        DeckUpNextArtwork(episode: info.episode, size: side, radius: 16)
-                            .shadow(color: Color.black.opacity(0.25), radius: 10, y: 6)
-                    }
-                }
-            }
-            .frame(minHeight: 110, maxHeight: 214)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .saturation(calm ? 0.45 : 1)
-            .brightness(calm ? -0.06 : 0)
-            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        GeometryReader { geometry in
+            let side: CGFloat = max(80, min(geometry.size.height, geometry.size.width))
+            DeckTopRing(info: info, words: words, actions: actions, side: side)
+                .frame(width: geometry.size.width, height: geometry.size.height)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Open the player")
-        .overlay(alignment: .bottomTrailing) {
-            DeckTopWordsSwitch(showing: words.showing, action: actions.toggleWords)
-                .padding(10)
-        }
-        .overlay(alignment: .bottomLeading) {
-            DeckTopDownloadKey(state: words.download, action: actions.downloadTapped)
-                .padding(10)
-        }
+        .frame(minHeight: 110, maxHeight: 214)
+        .saturation(calm ? 0.45 : 1)
+        .brightness(calm ? -0.06 : 0)
     }
 
     private var titles: some View {
@@ -138,8 +118,11 @@ private struct DeckTopHeaderRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Round, in a ring of the show's colour (Paul, 15 Nov 2026: rings).
             Button(action: open) {
-                DeckUpNextArtwork(episode: info.episode, size: 52, radius: 13)
+                DeckRingArtwork(url: info.episode.artwork, showTitle: info.episode.showTitle,
+                                size: 56, progress: info.fraction, lineWidth: 3, gap: 3,
+                                colour: info.colour, track: Theme.cardLine)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Open the player")
@@ -274,12 +257,21 @@ struct DeckTopWordsView: View {
     let words: DeckTopWords
     var transcribe: () -> Void = {}
     var stop: () -> Void = {}
+    /// Inside the top card's circle (Paul, 15 Nov 2026: rings): its
+    /// diameter. The words sit centred in the square that fits inside it.
+    var circle: CGFloat? = nil
 
     var body: some View {
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .padding(.horizontal, 56)
-            .padding(.vertical, 16)
+        if let circle {
+            content
+                .multilineTextAlignment(.center)
+                .frame(width: circle * 0.74, height: circle * 0.74)
+        } else {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .padding(.horizontal, 56)
+                .padding(.vertical, 16)
+        }
     }
 
     @ViewBuilder private var content: some View {
@@ -297,7 +289,8 @@ struct DeckTopWordsView: View {
     }
 
     private var line: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let alignment: HorizontalAlignment = circle == nil ? .leading : .center
+        return VStack(alignment: alignment, spacing: 4) {
             if let speaker = words.line?.speaker, !speaker.isEmpty {
                 Text(speaker)
                     .font(Theme.outfit(12, .bold))
@@ -305,9 +298,9 @@ struct DeckTopWordsView: View {
                     .lineLimit(1)
             }
             Text(words.line?.text ?? "")
-                .font(Theme.outfit(21, .bold))
+                .font(Theme.outfit(circle == nil ? 21 : 17, .bold))
                 .foregroundStyle(Color.white)
-                .lineLimit(5)
+                .lineLimit(circle == nil ? 5 : 4)
                 .minimumScaleFactor(0.6)
                 .contentTransition(.opacity)
                 .animation(.easeInOut(duration: 0.3), value: words.line?.start)
@@ -343,7 +336,7 @@ struct DeckTopWordsView: View {
                         .frame(width: geometry.size.width * min(1, max(0, fraction)))
                 }
             }
-            .frame(width: 150, height: 5)
+            .frame(width: min(150, (circle ?? 300) * 0.55), height: 5)
             Button(action: stop) {
                 Text("Stop")
                     .font(Theme.outfit(14, .semibold))
@@ -375,8 +368,8 @@ struct DeckTopDownloadKey: View {
         Button(action: action) {
             icon
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.black.opacity(0.35)))
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                .background(Circle().fill(Color(hex: 0x1C1B1A)))
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5))
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
@@ -426,8 +419,8 @@ struct DeckTopWordsSwitch: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color.white)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.black.opacity(0.35)))
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                .background(Circle().fill(Color(hex: 0x1C1B1A)))
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5))
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)

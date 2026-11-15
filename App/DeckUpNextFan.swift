@@ -244,7 +244,11 @@ private struct DeckFanRow: View {
 
     private var artButton: some View {
         Button { moves.playNow(episode) } label: {
-            DeckUpNextArtwork(episode: episode, size: 60, radius: 14)
+            // Round, with a faint ring that fills once started (Paul, 15
+            // Nov 2026: rings). White on the dark card of the one playing.
+            DeckListRingArtwork(episode: episode, size: 64, lineWidth: 3, gap: 3,
+                                colour: isOn ? Color.white : Theme.ink,
+                                track: isOn ? Color.white.opacity(0.22) : Theme.cardLine)
                 .overlay {
                     if !isOn {
                         Image(systemName: "play.fill")

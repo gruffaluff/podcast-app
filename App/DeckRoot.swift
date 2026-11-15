@@ -161,7 +161,7 @@ struct DeckMiniPlayer: View {
             HStack(spacing: 10) {
                 Button(action: open) {
                     HStack(spacing: 10) {
-                        artwork(item)
+                        DeckMiniRingArtwork(item: item)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(item.title)
                                 .font(Theme.outfit(14, .bold))
