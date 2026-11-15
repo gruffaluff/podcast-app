@@ -2484,6 +2484,12 @@ Paul's notes after build 155, all in Deck:
     "Data Not Collected"). Support page still needs a real contact
     address before submitting.
 
+- **Up next list rows reworked** (Paul, 15 Nov 2026, screenshot: "a
+  little out of place and not well proportioned"): everything centred in
+  a 96 pt card: 60 pt artwork, then show (caps), title (two lines' room)
+  and one info line "17:08 · 1h 1m  DL TX"; the ≡ handle level with it
+  (`DeckUpNextFan` row). On the branch, not built.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public

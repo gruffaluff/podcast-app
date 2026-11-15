@@ -200,7 +200,10 @@ private struct DeckFanRow: View {
     private var sub: Color { isOn ? Color(hex: 0xB7B2A8) : Theme.muted }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        // Paul, 15 Nov 2026 (screenshot: "a little out of place and not
+        // well proportioned"): everything centred in the card: bigger
+        // artwork, then show / title / one info line, the handle level.
+        HStack(alignment: .center, spacing: 12) {
             artButton
             Button { store.notesEpisode = episode } label: { titles }
                 .buttonStyle(.plain)
@@ -208,8 +211,8 @@ private struct DeckFanRow: View {
         }
         .padding(.leading, 14)
         .padding(.trailing, 6)
-        .padding(.top, 14)
-        .frame(maxWidth: .infinity, minHeight: 86, maxHeight: 86, alignment: .topLeading)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, minHeight: 96, maxHeight: 96, alignment: .leading)
         .background { card }
         .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 22, style: .continuous))
         .modifier(DeckRowSwipe(left: { moves.played(episode) },
@@ -241,7 +244,7 @@ private struct DeckFanRow: View {
 
     private var artButton: some View {
         Button { moves.playNow(episode) } label: {
-            DeckUpNextArtwork(episode: episode, size: 46, radius: 12)
+            DeckUpNextArtwork(episode: episode, size: 60, radius: 14)
                 .overlay {
                     if !isOn {
                         Image(systemName: "play.fill")
@@ -255,32 +258,26 @@ private struct DeckFanRow: View {
         .accessibilityLabel(isOn ? (player.isPlaying ? "Pause" : "Play") : "Play " + episode.title)
     }
 
-    /// Paul, 15 Nov 2026 (screenshot: "alignment of time and DL TX"): the
-    /// time sits on the show line's baseline and DL / TX on the title's
-    /// first line, instead of a separate column that floated between them.
+    /// Show, title (always two lines' room, so rows match) and one info
+    /// line: when it starts · how long, then DL / TX.
     private var titles: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(plan.label(for: episode).uppercased())
-                    .font(Theme.outfit(11, .bold))
-                    .tracking(0.4)
-                    .foregroundStyle(sub)
-                    .lineLimit(1)
-                Spacer(minLength: 4)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(plan.label(for: episode).uppercased())
+                .font(Theme.outfit(11, .bold))
+                .tracking(0.4)
+                .foregroundStyle(sub)
+                .lineLimit(1)
+            Text(episode.title)
+                .font(Theme.outfit(15, .bold))
+                .foregroundStyle(text)
+                .lineLimit(2, reservesSpace: true)
+                .multilineTextAlignment(.leading)
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(timeWords)
                     .font(Theme.outfit(12, .medium))
                     .monospacedDigit()
                     .foregroundStyle(sub)
                     .lineLimit(1)
-                    .fixedSize()
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(episode.title)
-                    .font(Theme.outfit(15, .bold))
-                    .foregroundStyle(text)
-                    .lineLimit(2, reservesSpace: true)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 EpisodeLights(episode: episode, onDark: isOn)
                     .fixedSize()
             }
@@ -304,14 +301,13 @@ private struct DeckFanRow: View {
 
     @ViewBuilder private var grip: some View {
         if isOn {
-            Color.clear.frame(width: 30, height: 58)
+            Color.clear.frame(width: 30, height: 60)
         } else {
-            // Paul, 14 Nov 2026: the handle sits in the middle of the card
-            // (86 pt row less 14 pt top padding = 58 pt either side of centre 43).
+            // Paul, 14 Nov 2026: the handle sits in the middle of the card.
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Theme.faint)
-                .frame(width: 30, height: 58)
+                .frame(width: 30, height: 60)
                 .accessibilityHidden(true)
         }
     }
