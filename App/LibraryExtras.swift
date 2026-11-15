@@ -118,6 +118,48 @@ extension LibraryStore {
             .count
         return stats
     }
+
+    // Weekly listening recap for Stats (Paul, 15 Nov 2026).
+    struct WeeklyRecap {
+        /// Time listened in the last 7 days (today and the 6 before).
+        var listened: TimeInterval = 0
+        /// Episodes finished in the last 7 days (actually listened to, not
+        /// bulk-marked played).
+        var finished = 0
+        /// The show listened to most in the last 7 days.
+        var topShow: String?
+        var topShowSeconds: TimeInterval = 0
+        var topShowFinished = 0
+    }
+
+    func weeklyRecap() -> WeeklyRecap {
+        let calendar = Calendar.current
+        let today: Date = calendar.startOfDay(for: Date())
+        let weekStart: Date = calendar.date(byAdding: .day, value: -6, to: today) ?? today
+        var recap = WeeklyRecap()
+        let logDescriptor = FetchDescriptor<ListeningLog>(predicate: #Predicate { $0.day >= weekStart })
+        let logs: [ListeningLog] = (try? context.fetch(logDescriptor)) ?? []
+        var byShow: [String: (title: String, seconds: TimeInterval)] = [:]
+        for log in logs {
+            recap.listened += log.seconds
+            let entry = byShow[log.feedURL] ?? (title: log.showTitle, seconds: 0)
+            let title: String = log.showTitle.isEmpty ? entry.title : log.showTitle
+            byShow[log.feedURL] = (title: title, seconds: entry.seconds + log.seconds)
+        }
+        let top = byShow.max { $0.value.seconds < $1.value.seconds }
+        if let top, top.value.seconds > 0 {
+            recap.topShow = top.value.title
+            recap.topShowSeconds = top.value.seconds
+        }
+        let finishedDescriptor = FetchDescriptor<PodcastEpisode>(predicate: #Predicate { $0.played == true && $0.playedAt != nil })
+        let finished: [PodcastEpisode] = ((try? context.fetch(finishedDescriptor)) ?? [])
+            .filter { ($0.playedAt ?? .distantPast) >= weekStart && $0.lastPlayedAt != nil }
+        recap.finished = finished.count
+        if let topFeed = top?.key {
+            recap.topShowFinished = finished.filter { $0.podcast?.feedURL == topFeed }.count
+        }
+        return recap
+    }
 }
 
 // MARK: - Shows
