@@ -308,7 +308,14 @@ private struct DeckSettingsLook: View {
     @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.auto
     @AppStorage(FogBackdrop.densityKey) private var fogDensity = 1.0
     @AppStorage(FogBackdrop.tintKey) private var fogTint = true
+    /// "Up next as" Tabs / Card deck (Paul, 15 Nov 2026: tabs).
+    @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
     @State private var refreshed = false
+
+    private static let homes: [(label: String, value: String)] = [
+        (label: "Tabs", value: DeckHome.tabs),
+        (label: "Card deck", value: DeckHome.deck),
+    ]
 
     /// Auto, then every scheme by name (Deck, Deck night, Haar, Sand,
     /// Slate, Clay, Night).
@@ -322,6 +329,8 @@ private struct DeckSettingsLook: View {
                 DeckSetRowLabel(icon: "slider.horizontal.3", title: "Layout")
             }
             .buttonStyle(.plain)
+            DeckSetLine()
+            DeckSetChoice(icon: "square.on.square", title: "Up next as", options: Self.homes, selection: $home)
             DeckSetLine()
             DeckSetChoice(icon: "paintpalette", title: "Colours", options: schemes, selection: $colourScheme)
             if Theme.isHaar { haarFog }

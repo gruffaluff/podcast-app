@@ -109,6 +109,8 @@ struct RootView: View {
     /// 2026: it floated up over the stacked cards), and above the mini
     /// player on Shows and Find while something is on.
     private var deckToastLift: CGFloat {
+        // Tabs (Paul, 15 Nov 2026): just above Safari's bar, on every page.
+        if deckHome != DeckHome.deck { return DeckTabsBar.height + 8 + 10 }
         let pill: CGFloat = 52 + 8 + 10
         let mini: CGFloat = tab != 0 && player.nowPlaying != nil ? DeckRoot.miniRoom : 0
         return pill + mini
@@ -118,6 +120,7 @@ struct RootView: View {
     @Binding var showingPlayer: Bool
     @Binding var tab: Int
     @State private var quickActions = QuickActions.shared
+    @AppStorage(DeckHome.key) private var deckHome: String = DeckHome.tabs
     @State private var showingWelcome = false
 
     /// Haar (phase 3): the player as home with Library and Find as layers

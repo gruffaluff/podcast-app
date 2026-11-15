@@ -2490,6 +2490,122 @@ Paul's notes after build 155, all in Deck:
   and one info line "17:08 · 1h 1m  DL TX"; the ≡ handle level with it
   (`DeckUpNextFan` row).
 
+## Done in build 159 (15 Nov 2026, PR #77; Paul: "add it all and build")
+
+- **Last row of the full Up next list under the tab pill** (Paul, 15 Nov
+  2026, FNB, build 158 screenshot): the "Keep playing new episodes" row
+  at the foot of the fanned list can't scroll clear: the pill and the
+  page-colour fade behind it cut through its title and switch. Plan: give
+  the fan list (and any Deck list ending in a row like this) bottom room
+  of the pill's height + fade + 16 pt, so the last row always scrolls
+  fully above the pill.
+
+- **Ring / dial on the player?** (Paul, 15 Nov 2026: "ideas about somehow
+  incorporating a ring or dial display into the now playing screen … not
+  sure what I mean yet"). Ideas given in chat (progress ring round the
+  artwork with chapter ticks, scrub by dragging round it, play key ring,
+  sleep / chapter rings, ring that shrinks into Read along). Mock-ups of
+  all seven on the Deck player: https://claude.ai/artifact/NAcNA5PK5DvzThGXqF2v2R
+  (1 progress ring round the artwork with chapter ticks, 2 dial: round
+  artwork, drag round the ring to scrub, finer towards the middle,
+  3 chapter ring, 4 ring round the play key, 5 sleep timer ring, 6 ring
+  follows into Read along, 7 the same ring on Carry on / mini player).
+  Suggested 1 + 2 + 7. Paul (15 Nov 2026): "could be the next thing to
+  help stand out … just unsure how transcripts fit in". Transcript ideas
+  given: scrub by words (the dial's bubble shows the line said at that
+  point), words inside the circle (tap the artwork, it turns over to the
+  line being said, the ring keeps going), search / clip marks as dots on
+  the ring, chapter segments named from the transcript, the line curved
+  along the ring. Suggested scrub by words + words inside the circle +
+  marks on the ring. Paul asked if it works on the Up next top card too:
+  yes, as a display ring round the round artwork (the card's left / right
+  swipes would fight a drag-round dial, so scrubbing there would need a
+  touch and hold first, or stay in the player); its words key turns the
+  circle over to the line being said. Then (Paul: mock the app with the
+  dials, and a Safari-style app where each episode is a tab you close /
+  mark played, Discover and Your shows as pinned tabs):
+  https://claude.ai/artifact/26rUAiLq5wFzQRJzqUcEL7. 1 The dial: Up next
+  top card with a ring round round artwork + words key, the player dial
+  (tap to turn over to the words, drag round to scrub with the line at
+  that point in the middle, clip / search dots on the ring), Shows with
+  rings on Carry on / new / mini player. 2 Episodes as tabs: tab overview
+  (Up next as tabs in queue order, × closes = played with Undo, tab
+  groups Up next / New / Saved, pinned Find / Your shows / Discover), an
+  open tab (player as a page, Safari-style bar at the bottom: swipe along
+  it for the next tab, count opens the overview), a pinned Your shows
+  tab. Note on the page: the two fit together (ring as each tab's
+  progress, the dial player inside a tab). **Paul: "Dials and tabs!",
+  build all of it into the next build** (15 Nov 2026). Built on the
+  branch by three helpers, merged, not built yet: Paul:
+  "do the same gestures like Safari too. Swipe up to get to tabs etc":
+  swipe up on the bottom bar for the tab overview, swipe along the bar
+  for the next / previous tab, swipe a tab card sideways to close it
+  (played, Undo), pull an open tab down to go back to the overview.
+  - **Rings across the app** (`App/DeckRings.swift` on top of the shared
+    `DeckRing` / `DeckRingArtwork` in `App/DeckRing.swift`): Up next's top
+    card (Standard / Calm) is a centred circle (round artwork in a 6 pt
+    ring in the show's colour, live for the one playing); the words key
+    flips it over to the words (dark circle in the show's colour; "No
+    words yet" + Transcribe now / progress + Stop); download key bottom
+    left, words key bottom right; tap the circle for the player. Big
+    buttons / Read along: 56 pt ring artwork. Stacked cards, the full
+    list, suggestions, Saved for later: round artwork, faint track, fill
+    once started. Carry on: ring in the show's colour. New list rows and
+    the catch-up card: coral "new" ring. Mini player: live ring in the
+    show's colour (`DeckMiniRingArtwork`).
+  - **The player dial** (`App/DeckPlayerDial.swift`): round artwork in a
+    white ring with chapter cuts, amber ads, white clip dots and a knob;
+    drag round to scrub (one turn = the whole episode; half / quarter
+    speed towards the middle; seeks on release; Undo for 2 min+ jumps,
+    shared `DeckScrubJump`; tick at chapters); while dragging the middle
+    shows the time, the line said there and the speed; tap turns it over
+    to the line being said now ("deckDialWords"), Transcribe key when
+    there are no words. Read along opens from its button only; the
+    picture shrinks into the corner with its ring. The straight scrub line
+    is gone under the dial but stays in Read along. Swiping down on the
+    dial scrubs, so close the player from the top row / title / round it.
+    VoiceOver: one adjustable Position control. Not done: search hits on
+    the ring.
+  - **Episodes as tabs** (`App/DeckTabs.swift`, `DeckTabsGrid.swift`,
+    `DeckTabsPager.swift`, `DeckTabsBar.swift`): Settings → Look → "Up
+    next as" Tabs (default) / Card deck ("deckHome", this iPhone). Tabs
+    home: header with "n · done by" and the gear; pinned Find (focuses
+    the search box), Your shows, Discover (opens Find); groups Up next /
+    New / Saved ("deckTabGroup"); two-across tab cards (show strip with
+    ×, artwork, title, small coral ring + time; playing tab has an ink
+    edge); × or swipe a card left closes it (Up next / New: played with
+    Undo; Saved: off the list with Undo); hold for Play now, Play next,
+    Remove from Up next, Episode notes, Save for later; drag to reorder
+    in Up next (shares the long press with the menu: check). Tap a tab:
+    full-screen pager (swipe sideways through tabs, big ring artwork,
+    Play / Pause, Open player for the one playing, Play next / Notes /
+    Played) with its own Safari bar; pull down to go back. Bottom bar in
+    tabs mode replaces the pill and mini player: what's playing (ring,
+    title, play / pause; tap for the player), count square on Shows /
+    Find back to the overview; swipe up on it for the overview, swipe
+    along it for the next / previous tab. Card deck mode is unchanged.
+    The full Up next list's last row ("Keep playing") now scrolls clear
+    of the pill (the FNB queued above).
+  - Playable mock-up of the whole new look (tabs, Safari gestures, the
+    dial): https://claude.ai/artifact/6BdEF6Us4AZoB7smk6zSe7. **Switching
+    between pinned pages** (Paul, 15 Nov 2026: "I need a better way to
+    switch between find, your shows and discover"): suggested Discover
+    folded into Find (empty search = New to you + charts), a "Tabs · Your
+    shows · Find" switcher of words at the top of each pinned page, and
+    swiping along the bottom bar moves between those pages (swipe up still
+    = tabs); then edge swipes instead of the bar. **Paul: "add it all and build"** (15 Nov 2026): built
+    (`App/DeckSections.swift`, `.deckSections(current:)` on the tab grid,
+    Your shows and Find's first pages): the row of words "Tabs · n · Your
+    shows · Find" at the top of each (the pinned tab pills are gone; Find
+    with an empty box is Discover), and a swipe that starts at the left /
+    right screen edge moves to the section before / after (only on each
+    section's first page, so iOS's own swipe back still works on pushed
+    pages). Swiping along the bottom bar still moves between episodes;
+    swiping up still shows the tabs. Reorder Up next: touch and hold a
+    tab, then drag it onto another tab's place (shares the hold with the
+    menu: check on the phone).
+
+
 ## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done

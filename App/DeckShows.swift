@@ -112,6 +112,7 @@ struct DeckShowsView: View {
         }
         .scrollIndicators(.hidden)
         .deckPage()
+        .deckSections(current: 1)
         .refreshable { await store.refreshAll() }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingNew) { DeckShowsNewSheet() }
