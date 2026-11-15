@@ -2369,7 +2369,23 @@ Paul's notes after build 155, all in Deck:
   no home; Saved clips can't be reached; Add a show by pasting a link (RSS,
   private / Patreon feeds, Apple Podcasts links) isn't in Find; the show's
   own settings (speed, skip intro / outro, keep downloads) open the older
-  look's sheet. Asked Paul which to do.
+  look's sheet. Asked Paul which to do. **Paul: "add all 4"** (15 Nov
+  2026), on the branch, not built:
+  - Carry on on the Shows tab above the show cards: up to three started
+    episodes (not the one playing) as slim white cards, the artwork in a
+    ring that fills as far as you've got, title, "show · 34m left", a
+    play key; tap the card for the episode page (`DeckCarryOnSection`).
+  - Saved clips: a row in Settings → Your listening, under Downloads
+    (opens `HaarSavedClipsView`).
+  - Paste a link into Find (a feed, a private Patreon / Supercast feed,
+    or an Apple Podcasts link; "feed://" too): a card "A show's feed
+    link" with Follow this show, then the Deck follow sheet; Following ·
+    Open show after (`DeckFindLink`, `DeckFeedLinkCard`,
+    `DeckFollower.follow(link:)`). The search waits while it's a link.
+  - The show page's Settings pill opens `DeckShowSettingsSheet`: grouped
+    white cards like Settings: Download new episodes, Alert me, Keep
+    downloads; Speed / Skip intro / Skip outro for this show; Older
+    episodes (Add all to Up next, Mark older played with Undo).
 - **Show preview in the Deck look** (Paul, 15 Nov 2026, screenshot of
   The News Agents from Find: "the show screen via Find is still the old
   one"): shows you don't follow yet now open like a followed show's page:

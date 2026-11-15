@@ -45,7 +45,7 @@ struct DeckShowPage: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { moreMenu } }
         .environment(\.showColour, colour)
-        .sheet(isPresented: $showingSettings) { ShowSettingsView(show: show) }
+        .sheet(isPresented: $showingSettings) { DeckShowSettingsSheet(show: show) }
         .modifier(DeckShowPageAlerts(show: show, unfollowing: $confirmingUnfollow, addingAll: $confirmingAddAll,
                                      markingAll: $confirmingMarkAll, addAllTitle: addAllTitle, unfollow: unfollow))
         .task(id: show.artworkURL) { await ArtworkColors.shared.load(show.artworkURL) }

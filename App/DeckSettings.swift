@@ -236,6 +236,11 @@ private struct DeckSettingsListening: View {
             NavigationLink { StorageView() } label: {
                 DeckSetRowLabel(icon: "internaldrive", title: "Downloads", value: downloadsSize)
             }
+            DeckSetLine()
+            // Paul, 15 Nov 2026: saved clips had no way in from Deck.
+            NavigationLink { HaarSavedClipsView() } label: {
+                DeckSetRowLabel(icon: "bookmark", title: "Saved clips")
+            }
         }
         .buttonStyle(.plain)
         .task { measure() }

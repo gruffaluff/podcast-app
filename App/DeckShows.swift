@@ -126,6 +126,8 @@ struct DeckShowsView: View {
                 DeckShowsEmpty { selectTab(2) }
                     .padding(.top, 24)
             } else {
+                DeckCarryOnSection()
+                    .padding(.top, 18)
                 newDeck(entries.filter { !$0.fresh.isEmpty })
                     .padding(.top, 18)
                 DeckAllShowsRow(entries: entries)
