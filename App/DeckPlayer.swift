@@ -30,7 +30,6 @@ struct DeckPlayerView: View {
     /// How far a swipe down has pulled the player (it closes past 60, or a
     /// light flick: Paul, 14 Nov 2026, "too much effort to drag down").
     @State private var pull: CGFloat = 0
-    @Namespace private var art
 
     static let neutral = Color(hex: 0x3A3833)
     static let bottomColour = Color(hex: 0x17161A)
@@ -102,6 +101,13 @@ struct DeckPlayerView: View {
         }
         .padding(.bottom, 8)
         .frame(width: size.width, height: size.height)
+        .overlayPreferenceValue(DeckArtworkSpot.self) { (spot: Anchor<CGRect>?) in
+            GeometryReader { (proxy: GeometryProxy) in
+                if let spot {
+                    movingArtwork(item, in: proxy[spot])
+                }
+            }
+        }
     }
 
     @ViewBuilder private func middle(_ item: PlayerModel.NowPlaying, size: CGSize, volume: Bool) -> some View {
@@ -167,8 +173,11 @@ struct DeckPlayerView: View {
     /// it's clearly going down it follows the finger; letting go past
     /// 60 pt or on a light flick slides the player away first and then
     /// closes it without iOS's own animation on top (which made it jump).
+    /// Paul, 15 Nov 2026 (after build 157): still needed "a real motion".
+    /// It now starts after 4 pt and closes past 36 pt, on any downward
+    /// flick (300 pt/s) or a predicted 90 pt, so a light brush down will do.
     private var closeSwipe: some Gesture {
-        DragGesture(minimumDistance: 8, coordinateSpace: .global)
+        DragGesture(minimumDistance: 4, coordinateSpace: .global)
             .onChanged { (value: DragGesture.Value) in
                 let down: CGFloat = value.translation.height
                 let sideways: CGFloat = abs(value.translation.width)
@@ -179,7 +188,9 @@ struct DeckPlayerView: View {
             }
             .onEnded { (value: DragGesture.Value) in
                 guard pull > 0 else { return }
-                if value.translation.height > 60 || value.predictedEndTranslation.height > 140 {
+                let far: Bool = value.translation.height > 36
+                let flick: Bool = value.velocity.height > 300 || value.predictedEndTranslation.height > 90
+                if far || flick {
                     slideAwayAndClose()
                 } else {
                     withAnimation(.spring(duration: 0.3, bounce: 0.1)) { pull = 0 }
@@ -188,8 +199,8 @@ struct DeckPlayerView: View {
     }
 
     private func slideAwayAndClose() {
-        withAnimation(.easeOut(duration: 0.2)) { pull = 1200 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        withAnimation(.easeOut(duration: 0.18)) { pull = 1200 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
             var quiet = Transaction(animation: nil)
             quiet.disablesAnimations = true
             withTransaction(quiet) { dismiss() }
@@ -198,13 +209,37 @@ struct DeckPlayerView: View {
 
     // MARK: Artwork and title
 
-    private func artworkImage(_ item: PlayerModel.NowPlaying, radius: CGFloat) -> some View {
+    /// Where the artwork sits in this mode: an empty spot that reports its
+    /// place. One picture is drawn over it (`movingArtwork`).
+    private func artworkSpot() -> some View {
         Color.clear
+            .contentShape(Rectangle())
+            .anchorPreference(key: DeckArtworkSpot.self, value: .bounds) { $0 }
+    }
+
+    /// The one artwork picture, slid and resized between the listening spot
+    /// and the corner square for Read along (Paul, 15 Nov 2026: shrinking
+    /// and growing was "a little unsmooth": it was two copies cross-fading,
+    /// with the corners and shadow jumping). Its corners and shadow follow
+    /// its size, so they change smoothly with it.
+    private func movingArtwork(_ item: PlayerModel.NowPlaying, in rect: CGRect) -> some View {
+        let big: Bool = rect.width > 90
+        let radius: CGFloat = big ? 28 : 13
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        return Color.clear
             .overlay {
                 CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
             }
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .matchedGeometryEffect(id: "artwork", in: art)
+            .clipShape(shape)
+            .background {
+                shape
+                    .fill(Color.black)
+                    .shadow(color: Color.black.opacity(big ? 0.35 : 0), radius: 30, y: 24)
+                    .opacity(big ? 1 : 0)
+            }
+            .frame(width: rect.width, height: rect.height)
+            .position(x: rect.midX, y: rect.midY)
+            .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
 
@@ -216,9 +251,8 @@ struct DeckPlayerView: View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 8)
             Button { setReading(true) } label: {
-                artworkImage(item, radius: 28)
+                artworkSpot()
                     .frame(width: side, height: side)
-                    .shadow(color: Color.black.opacity(0.35), radius: 30, y: 24)
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
@@ -284,7 +318,7 @@ struct DeckPlayerView: View {
     private func readingHeader(_ item: PlayerModel.NowPlaying) -> some View {
         HStack(spacing: 12) {
             Button { setReading(false) } label: {
-                artworkImage(item, radius: 13)
+                artworkSpot()
                     .frame(width: 56, height: 56)
             }
             .buttonStyle(.plain)
@@ -364,5 +398,13 @@ struct DeckPlayerBackground: View {
                                .init(color: DeckPlayerView.bottomColour, location: 1)],
                        startPoint: .top, endPoint: .bottom)
             .accessibilityHidden(true)
+    }
+}
+
+/// Where the player's artwork should be drawn (see `movingArtwork`).
+private struct DeckArtworkSpot: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? { nil }
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = nextValue() ?? value
     }
 }

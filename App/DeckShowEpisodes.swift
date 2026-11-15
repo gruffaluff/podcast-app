@@ -219,7 +219,11 @@ struct DeckShowEpisodeCard: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(cardShape(playing))
-        .contextMenu { EpisodeMenuItems(episode: episode) }
+        .contextMenu {
+            EpisodeMenuItems(episode: episode)
+            // Save for later (Paul, 15 Nov 2026).
+            DeckSaveForLaterMenuItem(episode: episode)
+        }
         .deckShowSwipe(leading: playNext, leadingFar: playLast, trailing: played)
     }
 

@@ -18,12 +18,15 @@ struct ShowSettingsView: View {
     /// This show's colour for the "on" keys and toggles here, fixed when
     /// the sheet opens (nothing changes colour while it's open).
     @State private var colour: Color?
+    /// This show's ad skipping (per-show ad skipping, Paul, 15 Nov 2026).
+    @State private var adSkip: ShowAdSkip.Mode
 
     init(show: Podcast, justFollowed: Bool = false, embedded: Bool = false) {
         self.show = show
         self.justFollowed = justFollowed
         self.embedded = embedded
         _colour = State(initialValue: ArtworkColors.shared.background(for: show.artworkURL))
+        _adSkip = State(initialValue: ShowAdSkip.mode(for: show.feedURL))
     }
 
     var body: some View {
@@ -81,10 +84,11 @@ struct ShowSettingsView: View {
                     }))
                     DeckPicker(title: "Skip intro", options: Self.skipOptions, selection: secondsBinding(\.skipIntro))
                     DeckPicker(title: "Skip outro", options: Self.skipOptions, selection: secondsBinding(\.skipOutro))
+                    DeckPicker(title: "Skip ads", options: ShowAdSkip.options, selection: adSkipBinding)
                 } header: {
                     DeckHeader(title: "Playback for this show")
                 } footer: {
-                    Text("Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end.")
+                    Text("Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end. Skip ads on Default follows Skip ads automatically in settings; Always or Never is for this show only.")
                 }
                 .listRowBackground(Theme.surface)
 
@@ -181,6 +185,13 @@ struct ShowSettingsView: View {
                 .foregroundStyle(Theme.showAccentText(colour))
         }
         .contentShape(Rectangle())
+    }
+
+    private var adSkipBinding: Binding<ShowAdSkip.Mode> {
+        Binding(get: { adSkip }, set: { mode in
+            adSkip = mode
+            ShowAdSkip.set(mode, for: show.feedURL)
+        })
     }
 
     private func secondsBinding(_ keyPath: ReferenceWritableKeyPath<Podcast, Double>) -> Binding<Double> {
@@ -551,7 +562,11 @@ struct ICloudStatusRows: View {
         Group {
             line("ACCOUNT", account, bad: account != "available")
             line("SYNC", status["Sync"] ?? "nothing yet", bad: status["Sync"]?.hasPrefix("PROBLEM") ?? false)
-            line("ALERTS", status["Alerts"] ?? "nothing yet (pull down on Up Next)", bad: status["Alerts"]?.hasPrefix("PROBLEM") ?? false)
+            if RealtimeAlerts.isKnownNonOwner {
+                line("ALERTS", RealtimeAlerts.nonOwnerNote, bad: false)
+            } else {
+                line("ALERTS", status["Alerts"] ?? "nothing yet (pull down on Up Next)", bad: status["Alerts"]?.hasPrefix("PROBLEM") ?? false)
+            }
         }
         .task {
             account = await CloudSync.accountDescription()

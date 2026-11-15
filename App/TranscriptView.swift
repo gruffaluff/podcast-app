@@ -233,7 +233,7 @@ struct TranscriptView: View {
         let shown = shownAds.contains(adBreak.start)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                Text("AD \(TimeFormat.clock(adBreak.start))–\(TimeFormat.clock(adBreak.end))" + (player.skipAds ? " · SKIPPED" : ""))
+                Text("AD \(TimeFormat.clock(adBreak.start))–\(TimeFormat.clock(adBreak.end))" + (ShowAdSkip.skips(feed: episode.podcast?.feedURL, global: player.skipAds) ? " · SKIPPED" : ""))
                     .font(Theme.mono(11, .bold))
                     .foregroundStyle(Theme.muted)
                 Spacer()

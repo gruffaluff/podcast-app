@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poddeck Support</title>
+<meta name="description" content="Help with Poddeck: how Up next is ordered, transcripts on your iPhone, private feeds, importing shows and iCloud sync.">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="canonical" href="https://poddeck.uk/support.html">
+<meta name="theme-color" content="#E9E3D5">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root {
+  --page: #E9E3D5; --paper: #F6F2E9; --ink: #1F1D19; --ink-soft: #57524A; --line: #D6CDB9; --olive: #45543A;
+  --shadow: 0 1px 0 rgba(31,29,25,.06), 0 10px 30px -12px rgba(47,58,39,.28);
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Figtree", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --page: #191B15; --paper: #23261E; --ink: #ECE6D8; --ink-soft: #ADA796; --line: #3A3E32; --olive: #A8B98A;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 14px 34px -14px rgba(0,0,0,.7); color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { padding-block: 18px; }
+header .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand img { width: 36px; height: 36px; border-radius: 9px; box-shadow: var(--shadow); }
+.brand span { font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: .02em; }
+nav { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+nav a { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); text-decoration: none; }
+nav a[aria-current="page"], nav a:hover { color: var(--olive); }
+main { padding-block: 20px 40px; }
+h1, h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; line-height: .95; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(44px, 10vw, 72px); margin: 8px 0 14px; }
+h2 { font-size: clamp(26px, 5vw, 34px); margin-bottom: 10px; }
+p, ul { margin: 0 0 12px; }
+ul { padding-left: 1.2em; }
+li { margin-bottom: 6px; }
+a { color: var(--olive); }
+.label { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--olive); }
+.lede { font-size: 19px; color: var(--ink-soft); }
+.card { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 20px; margin-top: 18px; }
+.card > :last-child { margin-bottom: 0; }
+.muted { color: var(--ink-soft); }
+details { border-top: 1px solid var(--line); padding-block: 12px; }
+details:first-of-type { border-top: 0; padding-top: 4px; }
+summary { cursor: pointer; font-weight: 600; }
+details p { margin: 8px 0 0; color: var(--ink-soft); }
+footer { padding-block: 24px 40px; font-size: 13px; color: var(--ink-soft); }
+footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; }
+footer a { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="icon.png" alt="" width="36" height="36"><span>Poddeck</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html" aria-current="page">Support</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <span class="label">Support</span>
+    <h1>Help with Poddeck</h1>
+    <p class="lede">Poddeck is a podcast app for iPhone that keeps every show in order, makes transcripts on your phone and asks for no account or subscription. Here are answers to the questions that come up most.</p>
+
+    <section class="card">
+      <h2>Common questions</h2>
+      <details>
+        <summary>How does Up next decide the order?</summary>
+        <p>Each show you follow is set to Top, Bottom or Off. New episodes from Top shows go near the top of Up next, in the order you rank those shows (Settings → Top show priority); Bottom shows add to the end; Off adds nothing. Whatever the setting, each show always plays oldest first: a new episode never jumps ahead of an older one from the same show that's already queued. Play next and Play last follow the same rule while "Keep each show in order" is on, and episodes you place by hand stay where you put them.</p>
+      </details>
+      <details>
+        <summary>Are transcripts made on my iPhone?</summary>
+        <p>Yes. If a show publishes its own transcript, Poddeck uses that. Otherwise it can transcribe a downloaded episode on the iPhone itself, with Apple's built-in speech recognition; no audio is sent anywhere. By default it only transcribes when you ask (Transcribe now). You can also choose to transcribe while charging or as soon as an episode downloads.</p>
+      </details>
+      <details>
+        <summary>Can I add a private or paid feed (Patreon, Supercast, Substack)?</summary>
+        <p>Yes. Copy the private RSS link from the service and paste it into Find (or Add a show). The key is in the link, so it just works. Feeds that need a separate username and password aren't supported yet. Apple Podcasts links can be pasted too.</p>
+      </details>
+      <details>
+        <summary>How do I move my shows from another app?</summary>
+        <p>Export an OPML file from your old app (Pocket Casts, Overcast, Castro and most others can), then import it from Poddeck's settings. Imported shows start on Bottom, nothing downloads straight away, and shows you already follow are skipped. You can export your own shows as OPML from the same place. Apple Podcasts can't export a list, so add those shows by searching or pasting their links.</p>
+      </details>
+      <details>
+        <summary>Does it sync with iCloud?</summary>
+        <p>Yes, if you're signed in to iCloud. Your shows and their settings, Up next, progress, bookmarks and settings sync to your own private iCloud, so a new iPhone or a reinstall gets them back. Downloads and transcripts stay on the phone, and unplayed downloads come back by themselves. It's made for one iPhone at a time. You can see the sync status in Settings under iCloud.</p>
+      </details>
+      <details>
+        <summary>How do new-episode alerts work?</summary>
+        <p>Turn on the bell for a show and Poddeck tells you when a new episode arrives and where it went in Up next. The app checks in the background (every 1, 3 or 6 hours, your choice); iOS decides the exact moment, so an alert can come a little after the episode is published.</p>
+      </details>
+      <details>
+        <summary>Does it cost anything or show ads?</summary>
+        <p>No. There's no subscription and the app shows no adverts. Everything runs on your iPhone, so there are no running costs to pass on.</p>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Contact</h2>
+      <p>Contact details coming soon.</p>
+      <p class="muted">For how your data is handled, see the <a href="privacy.html">privacy policy</a>.</p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Poddeck · a podcast app for iPhone</span>
+    <a href="index.html">Home</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="support.html">Support</a>
+  </div>
+</footer>
+</body>
+</html>

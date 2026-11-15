@@ -23,6 +23,19 @@ extension EnvironmentValues {
     }
 }
 
+/// Whether this Deck page (Up next, Shows, Find) is the one on screen.
+/// The others are kept alive but hidden.
+private struct DeckPageShownKey: EnvironmentKey {
+    static let defaultValue: Bool = true
+}
+
+extension EnvironmentValues {
+    var deckPageShown: Bool {
+        get { self[DeckPageShownKey.self] }
+        set { self[DeckPageShownKey.self] = newValue }
+    }
+}
+
 struct DeckRoot: View {
     @Environment(PlayerModel.self) private var player
     /// 0 Up next, 1 Shows, 2 Find (kept by `SchemedRoot`).
@@ -53,6 +66,10 @@ struct DeckRoot: View {
     @ViewBuilder private func page<Content: View>(_ index: Int, @ViewBuilder content: () -> Content) -> some View {
         if made.contains(index) {
             content()
+                // Smoother scrolling (Paul, 15 Nov 2026): hidden pages are
+                // told so, and stop following the player's clock (Up next's
+                // top card redrew twice a second behind Shows and Find).
+                .environment(\.deckPageShown, tab == index)
                 .contentMargins(.bottom, room(for: index), for: .scrollContent)
                 .opacity(tab == index ? 1 : 0)
                 .allowsHitTesting(tab == index)
@@ -106,24 +123,6 @@ struct DeckTabPill: View {
         .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.14), lineWidth: 1))
         .shadow(color: Color.black.opacity(0.22), radius: 18, y: 10)
         .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
-        // Paul, 15 Nov 2026: swipe along the pill to change tab.
-        .simultaneousGesture(swipe)
-    }
-
-    private var swipe: some Gesture {
-        DragGesture(minimumDistance: 14)
-            .onEnded { (value: DragGesture.Value) in
-                let across: CGFloat = value.translation.width
-                let flick: CGFloat = value.predictedEndTranslation.width
-                guard abs(across) > abs(value.translation.height) else { return }
-                guard abs(across) > 30 || abs(flick) > 90 else { return }
-                let next: Int = min(2, max(0, tab + (across < 0 ? -1 : 1)))
-                guard next != tab else { return }
-                var instant = Transaction(animation: nil)
-                instant.disablesAnimations = true
-                withTransaction(instant) { tab = next }
-                UISelectionFeedbackGenerator().selectionChanged()
-            }
     }
 
     private func item(_ index: Int) -> some View {
@@ -227,10 +226,14 @@ extension View {
     func deckPlainCard(radius: CGFloat = 22, lifted: Bool = false) -> some View {
         background {
             let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+            // Smoother scrolling (Paul, 15 Nov 2026): the shadow comes from
+            // the plain shape and the edge is drawn on top, so the shadow
+            // isn't worked out from the shape and edge together on every
+            // card in a scrolling list. Looks the same.
             shape.fill(Theme.surface)
-                .overlay(shape.strokeBorder(Theme.cardEdge, lineWidth: 1))
                 .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(lifted ? 0.16 : 0.07),
                         radius: lifted ? 20 : 8, y: lifted ? 18 : 4)
+                .overlay(shape.strokeBorder(Theme.cardEdge, lineWidth: 1))
         }
     }
 

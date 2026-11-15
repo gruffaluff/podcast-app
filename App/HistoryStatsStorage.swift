@@ -89,6 +89,103 @@ struct StatsView: View {
     @State private var stats = LibraryStore.ListeningStats()
     @State private var runs: [TranscriptionLog.Run] = TranscriptionLog.all
     @State private var week = WeekStats.current
+    @State private var recap = LibraryStore.WeeklyRecap()
+
+    // MARK: Weekly recap (Paul, 15 Nov 2026)
+
+    /// The last 7 days at a glance, at the top of Stats.
+    private var recapCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Your week")
+                    .font(recapFont(20, .bold))
+                    .foregroundStyle(Theme.ink)
+                Spacer(minLength: 8)
+                Text(recapDates)
+                    .font(recapFont(12, .medium))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+            HStack(alignment: .top, spacing: 12) {
+                recapFigure(Self.recapHours(recap.listened), "Listened")
+                recapFigure("\(recap.finished)", recap.finished == 1 ? "Episode finished" : "Episodes finished")
+                recapFigure(Self.recapHours(week.saved), "Saved since Monday")
+            }
+            Divider().overlay(Theme.faint.opacity(0.3))
+            recapTopShow
+        }
+        .padding(18)
+        .modifier(RecapCardBackground())
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder private var recapTopShow: some View {
+        if let top = recap.topShow {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("TOP SHOW")
+                    .font(recapFont(11, .bold))
+                    .tracking(0.6)
+                    .foregroundStyle(Theme.muted)
+                Text(top)
+                    .font(recapFont(17, .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(2)
+                Text(topShowDetail)
+                    .font(recapFont(13, .medium))
+                    .foregroundStyle(Theme.muted)
+            }
+        } else {
+            Text("Nothing played in the last 7 days yet. Your week shows up here as you listen.")
+                .font(recapFont(14, .medium))
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var topShowDetail: String {
+        let time: String = Self.recapHours(recap.topShowSeconds)
+        switch recap.topShowFinished {
+        case 0: return time + " listened"
+        case 1: return time + " listened · 1 episode finished"
+        default: return time + " listened · \(recap.topShowFinished) episodes finished"
+        }
+    }
+
+    /// "9–15 Nov": the last 7 days, today included.
+    private var recapDates: String {
+        let today: Date = Date()
+        let start: Date = Calendar.current.date(byAdding: .day, value: -6, to: today) ?? today
+        let from: String = start.formatted(.dateTime.day().month(.abbreviated))
+        let to: String = today.formatted(.dateTime.day().month(.abbreviated))
+        return from + " – " + to
+    }
+
+    private func recapFigure(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(recapFont(24, .bold))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(label)
+                .font(recapFont(12, .medium))
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Outfit in the Deck look, the app's usual type otherwise (Theme.text
+    /// picks).
+    private func recapFont(_ size: CGFloat, _ weight: Font.Weight) -> Font {
+        Theme.text(size, weight)
+    }
+
+    /// "4h 20m", "35m".
+    static func recapHours(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        return minutes < 60 ? "\(minutes)m" : "\(minutes / 60)h \(minutes % 60)m"
+    }
 
     /// This week at a glance: listened, saved by speed and trims, ads skipped.
     private var weekSummary: some View {
@@ -163,6 +260,7 @@ struct StatsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                recapCard
                 DeckHeader(title: "This week", detail: nil)
                 weekSummary
                 DeckDisplay {
@@ -203,7 +301,11 @@ struct StatsView: View {
         .haarPage()
         .navigationTitle("Stats")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { stats = store.listeningStats() }
+        .onAppear {
+            stats = store.listeningStats()
+            recap = store.weeklyRecap()
+            week = WeekStats.current
+        }
     }
 
     private func figure(_ seconds: TimeInterval, _ label: String) -> some View {
@@ -237,6 +339,18 @@ struct StatsView: View {
     static func hours(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds / 60)
         return minutes < 60 ? "\(minutes)M" : "\(minutes / 60)H \(minutes % 60)M"
+    }
+}
+
+/// The weekly recap's card: the Deck's plain white card in the Deck look,
+/// the usual paper card otherwise.
+private struct RecapCardBackground: ViewModifier {
+    @ViewBuilder func body(content: Content) -> some View {
+        if Theme.isDeck {
+            content.deckPlainCard()
+        } else {
+            content.deckCard()
+        }
     }
 }
 
