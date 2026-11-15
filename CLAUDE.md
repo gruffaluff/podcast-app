@@ -2279,13 +2279,13 @@ Paul's notes after build 155, all in Deck:
 - "New since you last looked" triage: Paul said go (15 Nov 2026); see
   the queue.
 
-## Queued for the next app build
+## Done in build 157 (15 Nov 2026, PR #75; Paul: "Build")
 
 - **Last stacked card, again** (Paul, 14 Nov 2026, build 156 screenshot:
   "some rendering issues with the cards"): the 62 pt last card was
   shorter than the bit of the card above showing below the 48 pt step
   (72 pt), so that card's foot poked out under it as a second edge. Last
-  card now 84 pt (`DeckEdgeCard`). On the branch, not built.
+  card now 84 pt (`DeckEdgeCard`).
 - **Swipe left / right on the tab pill** (Paul, 14 Nov 2026, FNB: "add
   swipe left and right on the menu bar"): swiping along the Up next ·
   Shows · Find pill moves to the next / previous tab (`DeckTabPill`).
@@ -2312,7 +2312,7 @@ Paul's notes after build 155, all in Deck:
   finger once it's clearly going down, and on release past 60 pt or a
   light flick the player slides away itself and then closes with no
   second animation (`DeckPlayerView.closeSwipe`, `slideAwayAndClose`).
-  On the branch, not built.
+ 
 - **Up next top card: Transcribe now, download key, no flash** (Paul, 15
   Nov 2026: loves the transcript key; "yes" to Transcribe now in the
   empty space; "couldn't we also get a DL button on the other side";
@@ -2325,16 +2325,15 @@ Paul's notes after build 155, all in Deck:
   a ready transcript loads. A round download key in the picture's bottom
   left: arrow to download, a filling ring while it downloads (tap stops
   it), filled when on the phone (tap to remove, with a check)
-  (`DeckTopDownloadKey`, `DeckTopWords.Status / Download`). On the
-  branch, not built.
+  (`DeckTopDownloadKey`, `DeckTopWords.Status / Download`). 
 - **Undo just above the tab pill** (Paul, 15 Nov 2026, screenshot: the
   Undo bar floated over the stacked cards): in Deck it sits 10 pt above
   the pill, and above the mini player on Shows / Find while something is
-  on (`RootView.deckToastLift`). On the branch, not built.
+  on (`RootView.deckToastLift`).
 - **Swipe up to open Up next** (Paul, 15 Nov 2026: "can swipe up on the
   up next queue open it"): swiping up on the deck (top card or the cards
   under it) fans out the whole list, like tapping the cards under it
-  (`DeckStack.swipeUp`). On the branch, not built.
+  (`DeckStack.swipeUp`).
 - **Up next list: time and DL / TX lined up** (Paul, 15 Nov 2026,
   screenshot): the start time now sits on the show line (same baseline)
   and DL / TX beside the title's first line, instead of a separate column
@@ -2343,16 +2342,16 @@ Paul's notes after build 155, all in Deck:
 - **Header mark updated** (Paul, 15 Nov 2026, screenshot of the Up next
   header: "icon update"): the little mark beside "Poddeck" was still icon
   A's three cards; now the E · P card (white P on ink, coral card tilted
-  behind), 30 pt (`DeckMark`). On the branch, not built.
+  behind), 30 pt (`DeckMark`).
 - **Show page pills lined up** (Paul, 15 Nov 2026, screenshot:
   "alignment and spacing"): Following / Alerts / Settings are three equal
   pills filling the row, the same widths and gaps as Top / Bottom /
-  Nowhere below (`DeckShowPagePills`). On the branch, not built.
+  Nowhere below (`DeckShowPagePills`).
 - **Show deck swipe feels like nothing happens** (Paul, 15 Nov 2026:
   "maybe it just needs to be a row you swipe along"). Suggested a
   sideways row of show cards with the next one peeking in from the right,
   following the finger and snapping to each card. **Paul: "build it that
-  way"** (15 Nov 2026): done on the branch, not built: `DeckShowStack` is a
+  way"** (15 Nov 2026): done built: `DeckShowStack` is a
   sideways `ScrollView` of `DeckShowCard`s (screen width less 56 pt, 12 pt
   apart, settling on each card with `.viewAligned`), the ‹ › keys and dots
   still under it; the fanned back cards are gone.
@@ -2360,7 +2359,7 @@ Paul's notes after build 155, all in Deck:
   have the sort order button"): today the same order as the cards (new
   first, Top rank, A–Z); no sort key in Deck. Offered a ⇅ key beside the
   label (New first / Name A–Z / Latest episode / Top ranking). **Paul:
-  "add the sort button"** (15 Nov 2026): on the branch, not built: a small
+  "add the sort button"** (15 Nov 2026): built: a small
   ⇅ menu on the right of the ALL YOUR SHOWS label showing the chosen order
   (New first, the default / Name A–Z / Latest episode / Top ranking, then
   A–Z), kept on this iPhone as "deckShowsSort" (`DeckShowsSort`).
@@ -2370,7 +2369,7 @@ Paul's notes after build 155, all in Deck:
   private / Patreon feeds, Apple Podcasts links) isn't in Find; the show's
   own settings (speed, skip intro / outro, keep downloads) open the older
   look's sheet. Asked Paul which to do. **Paul: "add all 4"** (15 Nov
-  2026), on the branch, not built:
+  2026), built:
   - Carry on on the Shows tab above the show cards: up to three started
     episodes (not the one playing) as slim white cards, the artwork in a
     ring that fills as far as you've got, title, "show · 34m left", a
@@ -2416,6 +2415,8 @@ Paul's notes after build 155, all in Deck:
   tap for all of them). The printed poster header stays for the other
   looks (`DeckShowPreview`, `ShowPreviewView.deckBody`). On the branch,
   not built.
+
+## Queued for the next app build
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
