@@ -2538,7 +2538,11 @@ Paul's notes after build 155, all in Deck:
   build all of it into the next build** (15 Nov 2026). In progress on
   the branch: shared `DeckRing` / `DeckRingArtwork` (App/DeckRing.swift);
   three helpers: the player dial, episodes as tabs (setting "Up next as"
-  Tabs (default) / Card deck, "deckHome"), rings across the app.
+  Tabs (default) / Card deck, "deckHome"), rings across the app. Paul:
+  "do the same gestures like Safari too. Swipe up to get to tabs etc":
+  swipe up on the bottom bar for the tab overview, swipe along the bar
+  for the next / previous tab, swipe a tab card sideways to close it
+  (played, Undo), pull an open tab down to go back to the overview.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
