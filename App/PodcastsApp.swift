@@ -104,6 +104,15 @@ struct RootView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
+
+    /// Deck: Undo / No internet sit just above the tab pill (Paul, 15 Nov
+    /// 2026: it floated up over the stacked cards), and above the mini
+    /// player on Shows and Find while something is on.
+    private var deckToastLift: CGFloat {
+        let pill: CGFloat = 52 + 8 + 10
+        let mini: CGFloat = tab != 0 && player.nowPlaying != nil ? DeckRoot.miniRoom : 0
+        return pill + mini
+    }
     /// Kept by `SchemedRoot`, so a redraw for a colour change doesn't
     /// close the player or change tab.
     @Binding var showingPlayer: Bool
@@ -160,7 +169,7 @@ struct RootView: View {
             // Deck: the same 16 pt edges as the cards above (Paul: line it up).
             .padding(.horizontal, Theme.isHaar ? 20 : (Theme.isDeck ? 16 : 12))
             .padding(.top, Theme.isHaar ? 64 : 0)
-            .padding(.bottom, Theme.isHaar ? 0 : (Theme.isDeck ? 156 : 128))
+            .padding(.bottom, Theme.isHaar ? 0 : (Theme.isDeck ? deckToastLift : 128))
         }
         .haarPage()
         .onChange(of: quickActions.pending, initial: true) { _, action in

@@ -2327,6 +2327,10 @@ Paul's notes after build 155, all in Deck:
   it), filled when on the phone (tap to remove, with a check)
   (`DeckTopDownloadKey`, `DeckTopWords.Status / Download`). On the
   branch, not built.
+- **Undo just above the tab pill** (Paul, 15 Nov 2026, screenshot: the
+  Undo bar floated over the stacked cards): in Deck it sits 10 pt above
+  the pill, and above the mini player on Shows / Find while something is
+  on (`RootView.deckToastLift`). On the branch, not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
