@@ -2534,7 +2534,11 @@ Paul's notes after build 155, all in Deck:
   open tab (player as a page, Safari-style bar at the bottom: swipe along
   it for the next tab, count opens the overview), a pinned Your shows
   tab. Note on the page: the two fit together (ring as each tab's
-  progress, the dial player inside a tab). Waiting on Paul. Not built.
+  progress, the dial player inside a tab). **Paul: "Dials and tabs!",
+  build all of it into the next build** (15 Nov 2026). In progress on
+  the branch: shared `DeckRing` / `DeckRingArtwork` (App/DeckRing.swift);
+  three helpers: the player dial, episodes as tabs (setting "Up next as"
+  Tabs (default) / Card deck, "deckHome"), rings across the app.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
