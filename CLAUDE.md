@@ -2970,7 +2970,7 @@ Paul's notes after build 164:
   show · time left, ▶; tap for the episode page). Mock-up:
   https://claude.ai/artifact/UiDf53LQZssTvUkaWjMjs9. Card deck mode unchanged.
 
-## On the branch for build 166 (16 Nov 2026; not built yet)
+## Done in build 166 (16 Nov 2026, PR #84; Paul: "Build")
 
 - **Ad detection switched off** (Paul, 16 Nov 2026: "remove ad detection.
   It doesn't work as I want so let's just drop it for now"). One switch,
