@@ -644,7 +644,9 @@ private struct DeckSettingsAbout: View {
 /// alert bell (the old Shows screen's "All shows").
 struct DeckPriorityView: View {
     @Environment(LibraryStore.self) private var store
-    @Query(sort: \Podcast.title) private var allShows: [Podcast]
+    @Query(sort: \Podcast.title) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var allShows: [Podcast] { savedShows.followedOnly }
     @State private var shows: [Podcast] = []
 
     var body: some View {

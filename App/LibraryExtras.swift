@@ -167,7 +167,7 @@ extension LibraryStore {
 extension LibraryStore {
     /// Every followed show, A–Z.
     var allShows: [Podcast] {
-        ((try? context.fetch(FetchDescriptor<Podcast>())) ?? [])
+        ((try? context.fetch(FetchDescriptor<Podcast>())) ?? []).followedOnly
             .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 }

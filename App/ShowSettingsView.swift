@@ -226,7 +226,9 @@ struct TopPriorityView: View {
     @Environment(DownloadManager.self) private var downloads
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
-    @Query(sort: \Podcast.title) private var allShows: [Podcast]
+    @Query(sort: \Podcast.title) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var allShows: [Podcast] { savedShows.followedOnly }
     @AppStorage("afterEpisode") private var afterEpisode = "top"  // PlayerModel.afterEpisodeKey
     @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.auto
     @AppStorage("downloadCapGB") private var downloadCapGB = 0  // LibraryStore.downloadCapKey

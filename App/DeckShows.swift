@@ -83,7 +83,9 @@ enum DeckShowColour {
 struct DeckShowsView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(\.deckSelectTab) private var selectTab
-    @Query(sort: \Podcast.title) private var shows: [Podcast]
+    @Query(sort: \Podcast.title) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var shows: [Podcast] { savedShows.followedOnly }
     @State private var path = NavigationPath()
     /// Which show is on top of the deck.
     @State private var index = 0

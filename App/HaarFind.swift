@@ -12,7 +12,9 @@ import PodcastCore
 struct HaarFindView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
-    @Query(sort: \Podcast.followedAt, order: .reverse) private var followed: [Podcast]
+    @Query(sort: \Podcast.followedAt, order: .reverse) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var followed: [Podcast] { savedShows.followedOnly }
     /// Back to the player (the handle at the top, swiped up).
     let close: () -> Void
 
@@ -503,7 +505,7 @@ struct HaarFollowButton: View {
     let follower: Follower
 
     private var isFollowing: Bool {
-        if let url = item.feedURL, store.podcast(feedURL: url.absoluteString) != nil { return true }
+        if let url = item.feedURL, store.followedPodcast(feedURL: url.absoluteString) != nil { return true }
         return follower.followed != nil
     }
 

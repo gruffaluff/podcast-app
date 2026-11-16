@@ -23,8 +23,9 @@ import PodcastCore
 
 struct DeckFindView: View {
     @Environment(LibraryStore.self) private var store
-    @Query(sort: \Podcast.followedAt, order: .reverse) private var followed: [Podcast]
-
+    @Query(sort: \Podcast.followedAt, order: .reverse) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var followed: [Podcast] { savedShows.followedOnly }
     @State private var path = NavigationPath()
     @State private var query = ""
     @FocusState private var fieldFocused: Bool
@@ -783,7 +784,7 @@ final class DeckFollower {
             feedURL = (try? await FeedClient.lookup(appleID: item.appleID))?.feedURL
         }
         guard let feedURL else { failed = true; return }
-        let isNew: Bool = store.podcast(feedURL: feedURL.absoluteString) == nil
+        let isNew: Bool = store.followedPodcast(feedURL: feedURL.absoluteString) == nil
         guard let show = try? await store.follow(feedURL: feedURL, downloadLatest: false) else {
             failed = true
             return
@@ -806,7 +807,7 @@ final class DeckFollower {
             feedURL = (try? await FeedClient.lookup(appleID: appleID))?.feedURL
         }
         guard let feedURL else { failed = true; return }
-        let isNew: Bool = store.podcast(feedURL: feedURL.absoluteString) == nil
+        let isNew: Bool = store.followedPodcast(feedURL: feedURL.absoluteString) == nil
         guard let show = try? await store.follow(feedURL: feedURL, downloadLatest: false) else {
             failed = true
             return
@@ -891,7 +892,7 @@ private struct DeckFollowControl: View {
     private var show: Podcast? {
         if let followed = follower.followed { return followed }
         guard let url = item.feedURL else { return nil }
-        return store.podcast(feedURL: url.absoluteString)
+        return store.followedPodcast(feedURL: url.absoluteString)
     }
 
     var body: some View {

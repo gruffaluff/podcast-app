@@ -195,16 +195,41 @@ private struct DeckShowPagePills: View {
     let colour: Color
     let unfollow: () -> Void
     let settings: () -> Void
+    @State private var tried: Bool
+
+    init(show: Podcast, colour: Color, unfollow: @escaping () -> Void, settings: @escaping () -> Void) {
+        self.show = show
+        self.colour = colour
+        self.unfollow = unfollow
+        self.settings = settings
+        _tried = State(initialValue: show.isTried)
+    }
+
+    /// Follows a show that was only being tried: it becomes an ordinary
+    /// followed show (Bottom, downloads on).
+    private func follow() {
+        store.promoteTried(show)
+        tried = false
+        Task { await RealtimeAlerts.publishFollows(store: store) }
+    }
 
     /// Paul, 15 Nov 2026 ("alignment and spacing"): three equal pills
     /// filling the row, lined up with Top / Bottom / Nowhere below.
     var body: some View {
         HStack(spacing: 6) {
-            Button(action: unfollow) {
-                DeckShowPill(title: "Following", icon: "checkmark", fill: colour, wide: true)
+            if tried {
+                // Only being tried (an episode added without following).
+                Button(action: follow) {
+                    DeckShowPill(title: "Follow", icon: "plus", on: true, wide: true)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button(action: unfollow) {
+                    DeckShowPill(title: "Following", icon: "checkmark", fill: colour, wide: true)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Unfollows this show, after asking")
             }
-            .buttonStyle(.plain)
-            .accessibilityHint("Unfollows this show, after asking")
             Button(action: toggleAlerts) {
                 DeckShowPill(title: show.notify ? "Alerts on" : "Alerts off",
                              icon: show.notify ? "bell.fill" : "bell", on: show.notify, wide: true)

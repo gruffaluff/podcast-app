@@ -2647,6 +2647,22 @@ Paul's notes after build 155, all in Deck:
   "Paused" in the show's colour on the meta line; its opened keys are the
   normal ones (`DeckShowEpisodeCard` / `DeckShowEpisodeText`).
 
+- **Add an episode without following the show** (Paul, 16 Nov 2026: "in
+  discover, if I click into a podcast, I want to be able to add an
+  episode to my queue without following the show … try out a show
+  without subscribing if they have a particular guest or topic"). Done
+  on the branch (`App/TriedShows.swift`): every episode card on a show
+  you don't follow (Deck show preview from Find / charts) has "+ Up
+  next" and "Play next" ("In Up next" once there; Undo). The show is
+  saved as a "tried" show (Nowhere, no downloads, no alerts, its feed
+  not checked), listed in the synced setting "triedShows", and left out
+  of Your shows, Find, Search, settings lists, CarPlay, the alerts job
+  and OPML export (`followedOnly`, `store.followedPodcast`). It's tidied
+  away at the next feed check once none of its episodes are in Up next,
+  playing or part-played. Follow (preview, or the Follow pill on its
+  show page in place of Following) turns it into a normal followed show
+  (Bottom, downloads on). Older looks' preview page not changed.
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul

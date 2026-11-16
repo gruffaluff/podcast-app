@@ -1,5 +1,6 @@
 import SwiftUI
 import PodcastCore
+import UIKit
 
 // Deck (Paul, 15 Nov 2026: "the show screen via Find is still the old
 // one"): a show you don't follow yet, opened from Find or the charts, in
@@ -8,10 +9,15 @@ import PodcastCore
 // wide Follow pill (or "Following · Open show" in the show's colour), the
 // description; then LATEST EPISODES as white cards (tap one for more of
 // its notes). ShowPreviewView keeps the following itself.
+//
+// Each episode can go into Up next without following the show (Paul, 16
+// Nov 2026: try a show for one guest or topic): "+ Up next" / "Play next"
+// on its card, "In Up next" once it's there (TriedShows.swift).
 
 struct DeckShowPreview: View {
     let item: DirectoryItem
     let feed: ParsedFeed?
+    let feedURL: URL?
     let failed: Bool
     let followedShow: Podcast?
     let busy: Bool
@@ -138,7 +144,8 @@ struct DeckShowPreview: View {
         if let feed {
             LazyVStack(spacing: 8) {
                 ForEach(Array(feed.episodes.prefix(30)), id: \.guid) { episode in
-                    DeckPreviewEpisodeCard(episode: episode, open: expanded == episode.guid) {
+                    DeckPreviewEpisodeCard(episode: episode, feed: feed, feedURL: feedURL,
+                                           open: expanded == episode.guid) {
                         expanded = expanded == episode.guid ? nil : episode.guid
                     }
                 }
@@ -160,7 +167,10 @@ struct DeckShowPreview: View {
 /// One episode of a show not yet followed: date · length, the title (two
 /// lines' room), two lines of notes; tap for all of them.
 private struct DeckPreviewEpisodeCard: View {
+    @Environment(LibraryStore.self) private var store
     let episode: ParsedEpisode
+    let feed: ParsedFeed
+    let feedURL: URL?
     let open: Bool
     let toggle: () -> Void
 
@@ -182,6 +192,10 @@ private struct DeckPreviewEpisodeCard: View {
                     .lineLimit(open ? nil : 2)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if let feedURL {
+                queueKeys(feedURL)
+                    .padding(.top, 6)
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -200,4 +214,31 @@ private struct DeckPreviewEpisodeCard: View {
     }
 
     private var summary: String { PlainText.notesFromHTML(episode.summary ?? "") }
+
+    /// "+ Up next" and "Play next", or "In Up next" once it's there. No
+    /// need to follow the show first.
+    @ViewBuilder private func queueKeys(_ feedURL: URL) -> some View {
+        if store.isQueued(feedURL: feedURL, guid: episode.guid) {
+            DeckShowPill(title: "In Up next", icon: "checkmark", height: 32)
+                .opacity(0.6)
+                .accessibilityLabel("In Up next")
+        } else {
+            HStack(spacing: 8) {
+                Button { add(feedURL, next: false) } label: {
+                    DeckShowPill(title: "Up next", icon: "plus", on: true, height: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add to the end of Up next")
+                Button { add(feedURL, next: true) } label: {
+                    DeckShowPill(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", height: 32)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func add(_ feedURL: URL, next: Bool) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        store.addWithoutFollowing(feedURL: feedURL, feed: feed, guid: episode.guid, next: next)
+    }
 }

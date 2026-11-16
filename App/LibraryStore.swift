@@ -108,9 +108,16 @@ final class LibraryStore {
     @discardableResult
     func follow(feedURL: URL, downloadLatest: Bool = true) async throws -> Podcast {
         let key = feedURL.absoluteString
-        if let existing = podcast(feedURL: key) { return existing }
+        if let existing = podcast(feedURL: key) {
+            // Only being tried (an episode added without following): now followed.
+            promoteTried(existing)
+            return existing
+        }
         let feed = try await FeedClient.fetchFeed(feedURL)
-        if let existing = podcast(feedURL: key) { return existing }
+        if let existing = podcast(feedURL: key) {
+            promoteTried(existing)
+            return existing
+        }
 
         let show = Podcast(
             feedURL: key,
@@ -164,7 +171,7 @@ final class LibraryStore {
 
     /// Every followed show, for exporting to another app.
     var showListOPML: String {
-        let shows = allPodcasts.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        let shows = allPodcasts.followedOnly.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         return OPML.make(shows.compactMap { show in
             URL(string: show.feedURL).map { OPML.Show(title: show.title, feedURL: $0) }
         })
@@ -181,6 +188,7 @@ final class LibraryStore {
             if let name = episode.transcriptFile { TranscriptFiles.delete(name) }
         }
         commit(queue.filter { $0.episode.showID != feedURL })
+        TriedShows.remove(feedURL)
         context.delete(show)
         save()
     }
@@ -243,7 +251,10 @@ final class LibraryStore {
             Task { await preloadShowColours() }
         }
 
-        let urls = allPodcasts.map(\.feedURL)
+        // Shows only being tried aren't checked, and are tidied away once
+        // none of their episodes are in use (TriedShows.swift).
+        pruneTriedShows()
+        let urls = allPodcasts.followedOnly.map(\.feedURL)
         // A feed that hasn't changed since the last check is skipped: no
         // parsing and no re-tidying every episode's notes (review, 9 Nov
         // 2026). URLSession's cache also asks the server "changed since?"
