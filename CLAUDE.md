@@ -2972,6 +2972,13 @@ Paul's notes after build 164:
 
 ## Queued for the next app build
 
+- **Tap "Your shows" again to go back** (Paul, 16 Nov 2026, FNB: "If I
+  tap into a show I'd like to tap your shows at the bottom go to back"):
+  in tabs mode, with a show page (or anything else) open on the Your
+  shows page, tapping "Your shows" in the bottom bar goes back to the
+  shows list, like tapping an iPhone tab twice. Same for Find (back to
+  its first page). Not started.
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul
