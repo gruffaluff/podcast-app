@@ -2703,7 +2703,11 @@ Paul's notes after build 155, all in Deck:
   on https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn: A dark pill (on
   the branch now), B plain white number, no pill (suggested), C in the
   show line ("2 · SHOW"), D frosted dot, E big outline numeral, F in the
-  time row ("3rd · 52m"). Waiting on Paul's pick.
+  time row ("3rd · 52m"). Paul likes B but worried it gets lost on the
+  artwork; same link, section "B, made readable" on pale artwork: B1
+  soft glow round the figures, B2 corner shade (a faint dark fade from
+  the top-left corner, like the card's foot; suggested), B3 lighter
+  shade + glow. Waiting on Paul's pick.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
