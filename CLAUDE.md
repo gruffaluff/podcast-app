@@ -2640,6 +2640,13 @@ Paul's notes after build 155, all in Deck:
   overview, as now. Mock-up:
   https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS.
 
+- **Show page: playing episode readable** (Paul, 16 Nov 2026, build 159
+  screenshot of 606: the played / paused episode was a black card, hard
+  to read). Done on the branch: it's a white card like the others with a
+  2 pt ink edge, ink title, the show's colour dot, and "Playing" /
+  "Paused" in the show's colour on the meta line; its opened keys are the
+  normal ones (`DeckShowEpisodeCard` / `DeckShowEpisodeText`).
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul
