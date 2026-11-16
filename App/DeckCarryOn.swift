@@ -11,6 +11,10 @@ struct DeckCarryOnSection: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @State private var episodes: [PodcastEpisode] = []
+    /// Only episodes not in Up next (the Tabs page, under the tabs: Paul,
+    /// 16 Nov 2026, "anything started but not in up next … could have a
+    /// carry on card below the up next").
+    var outsideUpNext = false
 
     var body: some View {
         Group {
@@ -25,15 +29,24 @@ struct DeckCarryOnSection: View {
                     }
                     .padding(.horizontal, 16)
                 }
+                .padding(.top, outsideUpNext ? 22 : 0)
             }
         }
         .onAppear(perform: reload)
         .onChange(of: player.nowPlaying?.episodeID) { _, _ in reload() }
         .onChange(of: player.isPlaying) { _, _ in reload() }
+        .onChange(of: queuedIDs) { _, _ in reload() }
+    }
+
+    private var queuedIDs: [String] {
+        outsideUpNext ? store.queue.map(\.episode.id) : []
     }
 
     private func reload() {
-        episodes = store.continueListening(excluding: player.nowPlaying?.episodeID, limit: 3)
+        let queued: Set<String> = Set(queuedIDs)
+        let found: [PodcastEpisode] = store.continueListening(excluding: player.nowPlaying?.episodeID,
+                                                              limit: outsideUpNext ? 20 : 3)
+        episodes = Array(found.filter { !queued.contains($0.episodeID) }.prefix(3))
     }
 }
 

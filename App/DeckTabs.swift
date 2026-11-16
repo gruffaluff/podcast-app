@@ -307,6 +307,9 @@ struct DeckTabsView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
                 }
+                // Started but not in Up next (picked from Find, or a show
+                // on Nowhere): slim Carry on cards under the tabs.
+                DeckCarryOnSection(outsideUpNext: true)
             }
             .padding(.bottom, 16)
         }

@@ -2962,8 +2962,12 @@ Paul's notes after build 164:
   episode came out in the last 48 hours and isn't started or playing has a
   small coral NEW pill before the show's name (`DeckTabSource.isFresh`,
   `DeckTabCard.newFlag`). Started went with the pill: started episodes in
-  Up next show their progress ring; ones not in Up next are on their show
-  page (could come back as a row if missed). Card deck mode unchanged.
+  Up next show their progress ring; ones started but not in Up next
+  (picked from Find, a show on Nowhere) sit under the tabs as Carry on
+  cards, up to three (Paul: "could have a carry on card below the up
+  next"; `DeckCarryOnSection(outsideUpNext: true)`: ring artwork, title,
+  show · time left, ▶; tap for the episode page). Mock-up:
+  https://claude.ai/artifact/UiDf53LQZssTvUkaWjMjs9. Card deck mode unchanged.
 
 ## Queued for the next app build
 
