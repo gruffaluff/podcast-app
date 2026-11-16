@@ -408,7 +408,7 @@ to Nowhere / Top / Bottom" on the show page.
   (5–30s); options to include audio or link to the moment. (Video cards
   removed, Paul 5 Nov 2026: no interest in video for now.)
 
-### Ad skipping
+### Ad skipping (switched off, Paul 16 Nov 2026: see build 166; `AdFeature`)
 - Detect ad breaks from the transcript (sponsor-read language, promo codes,
   "brought to you by", plus audio boundary cues). Dynamically inserted ads
   differ per download, so detection runs on Paul's own downloaded file.
@@ -2969,6 +2969,33 @@ Paul's notes after build 164:
   next"; `DeckCarryOnSection(outsideUpNext: true)`: ring artwork, title,
   show · time left, ▶; tap for the episode page). Mock-up:
   https://claude.ai/artifact/UiDf53LQZssTvUkaWjMjs9. Card deck mode unchanged.
+
+## On the branch for build 166 (16 Nov 2026; not built yet)
+
+- **Ad detection switched off** (Paul, 16 Nov 2026: "remove ad detection.
+  It doesn't work as I want so let's just drop it for now"). One switch,
+  `AdFeature.enabled = false` (Models.swift): nothing looks for ads any
+  more (on-device passes, the show's own transcript, Find ads while
+  listening; `TranscriptService.prepare` no longer re-transcribes just for
+  ads), every episode reads as having no ad breaks (`adBreaks` returns
+  none, so no Skip ad, amber ad marks on the dial / line, ad bands in the
+  transcript or Sponsor break chapters), and the ad settings are hidden
+  (Settings' Find ads / Skip ads automatically, the show's Skip ads, the
+  older looks' Ads section, Stats' ADS SKIPPED). The transcript sync
+  check stays. Breaks found before are kept in the saved data, unseen;
+  set the switch to true to bring it all back. The website still has its
+  small "Ad breaks · optional, off by default" card: take it out next time
+  the site is touched.
+- **Words key on the dial** (Paul, 16 Nov 2026: "a little switch to show
+  the transcript in the dial like you see with scrolling the dial"): a
+  38 pt round key in the dial's bottom-right corner, outside the ring
+  (`DeckPlayerDial.wordsKey`): speech bubble on see-through white when the
+  artwork shows; tap and the middle turns over to the line being said
+  (the same face as while scrolling the dial, following playback; "No
+  words yet" + Transcribe when there are none), the key goes white with a
+  photo icon to turn back. Tapping the artwork still toggles too; the
+  choice is remembered ("deckDialWords"). Both players (tab page and card
+  deck).
 
 ## Queued for the next app build
 

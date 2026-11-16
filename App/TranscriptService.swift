@@ -255,7 +255,7 @@ final class TranscriptService {
         let downloaded = store.localAudioURL(for: episode) != nil
         // Done, unless the show's own transcript is in hand but ads haven't
         // been looked for in Paul's download yet (ads differ per download).
-        if hasTranscript && (episode.adsChecked || !downloaded) { return }
+        if hasTranscript && (episode.adsChecked || !downloaded || !AdFeature.enabled) { return }
 
         if !hasTranscript, let url = episode.transcriptURL, episode.transcriptState != .failed {
             Task { await fetchPublisherTranscript(id: id, url: url) }
@@ -404,7 +404,9 @@ final class TranscriptService {
     private func analyse(_ episode: PodcastEpisode, timing transcript: Transcript) {
         let id = episode.episodeID
         let lines = TranscriptLayout.lines(from: transcript.segments)
-        if transcript.source == .onDevice {
+        if !AdFeature.enabled {
+            // Ad detection is off (`AdFeature`).
+        } else if transcript.source == .onDevice {
             let dismissed = episode.dismissedAds
             episode.adBreaks = AdDetection.breaks(in: lines, music: transcript.music)
                 .filter { ad in !dismissed.contains { abs($0 - ad.start) < 5 } }
@@ -434,7 +436,7 @@ final class TranscriptService {
     /// Find ads while listening) hears those, and its result replaces these.
     /// Times follow Paul's audio as far as the sync anchors allow.
     func findAdsInText(_ episode: PodcastEpisode, transcript: Transcript? = nil) {
-        guard !episode.adsChecked, let transcript = transcript ?? self.transcript(for: episode),
+        guard AdFeature.enabled, !episode.adsChecked, let transcript = transcript ?? self.transcript(for: episode),
               transcript.source == .publisher else { return }
         let aligned = TranscriptAlign.aligned(transcript, anchors: episode.syncAnchors)
         let lines = TranscriptLayout.lines(from: aligned.segments)

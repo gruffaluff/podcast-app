@@ -418,7 +418,7 @@ private struct DeckSettingsDownloads: View {
             DeckSetChoice(icon: "externaldrive", title: "Keep downloads under", options: capOptions, selection: $downloadCapGB)
                 .onChange(of: downloadCapGB) { store.applyStorageCap() }
             DeckSettingsTranscriptRows()
-            DeckSettingsAdRows()
+            if AdFeature.enabled { DeckSettingsAdRows() }
         }
     }
 }
