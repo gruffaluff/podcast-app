@@ -2608,6 +2608,21 @@ Paul's notes after build 155, all in Deck:
 
 ## Queued for the next app build
 
+- **Tabs: drag to reorder feels wrong** (Paul, 16 Nov 2026, FNB, build
+  159 screen recording): the lifted tab drops down a bit on its own and
+  it isn't clear which tab you're replacing. Wants the other cards to
+  shift out of the way as you drag (like Safari / the home screen). Plan:
+  a hand-made reorder in the tab grid (`DeckTabsGrid`): touch and hold
+  lifts the card under the finger (no jump), the other cards slide into
+  their new places live as it moves, drop puts it in the gap; holding
+  without moving still gives the menu.
+- **Tabs: full-colour cards** (Paul, 16 Nov 2026, FNB): redesign the tab
+  cards to be full colour with the artwork, keeping all the important
+  text (show, title, time left / date, progress, ×, playing edge). Plan:
+  the artwork fills the card, fading into the show's colour at the foot
+  where the show / title / time sit in white; × and the small ring on
+  top. Mock up first if unsure.
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul
