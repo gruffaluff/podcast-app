@@ -2758,7 +2758,7 @@ Paul's notes after build 155, all in Deck:
     tab closes, then Shows opens the show), smaller iPhones (the dial
     shrinks to fit).
 
-## Done in build 163 (16 Nov 2026; Paul: "great. build.")
+## Done in build 163 (16 Nov 2026, PR #81; Paul: "great. build.")
 
 - **Tabs: hold and drag fixed, swipes back** (Paul, 16 Nov 2026, build
   162: "Hold and drag isn't working at all … Swipe left marks as played
