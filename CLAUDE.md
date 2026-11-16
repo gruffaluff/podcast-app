@@ -2997,6 +2997,18 @@ Paul's notes after build 164:
   choice is remembered ("deckDialWords"). Both players (tab page and card
   deck).
 
+- **Read along: the times shrink smoothly** (Paul, 16 Nov 2026: "when
+  tapping read along, can we make the animation on the numbers getting
+  smaller and moving smoother like the chapter pill moving"). Before, the
+  big times row under the dial and the small one under Read along's
+  straight line were two different rows swapped with a fade, so the
+  numbers popped. Now there's one row (`DeckDialTimes(compact:)`): in Read
+  along the line fades in above it and the numbers shrink in place (a
+  scale from 18 to 12 pt anchored at each edge, the row's height 26 to
+  16), on the same 0.4 s move as the chapter pill. Dragging the line still
+  shows the time and "Half speed" etc. in the row (`DeckPlayerScrub(shared:)`
+  writes into `DeckDialScrub.time / hint`). Both players.
+
 ## Queued for the next app build
 
 - **Pull down to close the player keeps you where you were** (Paul, 16

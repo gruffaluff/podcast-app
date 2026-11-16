@@ -354,11 +354,15 @@ struct DeckPlayerView: View {
         VStack(spacing: 0) {
             DeckChapterRow(openChapters: { showingChapters = true })
                 .padding(.bottom, 6)
-            if reading {
-                DeckPlayerScrub()
-            } else {
-                // The dial replaces the straight line (Paul, 15 Nov 2026: dial).
-                DeckDialTimes(scrub: dialScrub)
+            // The dial replaces the straight line (Paul, 15 Nov 2026: dial);
+            // in Read along the line comes back above the same times row,
+            // which shrinks smoothly rather than swapping.
+            VStack(spacing: 2) {
+                if reading {
+                    DeckPlayerScrub(shared: dialScrub)
+                        .transition(.opacity)
+                }
+                DeckDialTimes(scrub: dialScrub, compact: reading)
             }
             DeckPlayerTransport()
                 .padding(.top, 10)

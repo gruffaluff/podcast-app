@@ -325,11 +325,17 @@ private struct DeckTabPlayerSection: View {
     @ViewBuilder private func times(_ now: PlayerModel.NowPlaying?) -> some View {
         if now == nil {
             DeckTabRestingTimes(episode: episode)
-        } else if reading {
-            DeckPlayerScrub()
-                .keepingOut("scrub", in: $keepOut)
         } else {
-            DeckDialTimes(scrub: dialScrub)
+            // One times row that shrinks under the line in Read along
+            // (smooth, like the chapter pill) rather than two rows swapped.
+            VStack(spacing: 2) {
+                if reading {
+                    DeckPlayerScrub(shared: dialScrub)
+                        .keepingOut("scrub", in: $keepOut)
+                        .transition(.opacity)
+                }
+                DeckDialTimes(scrub: dialScrub, compact: reading)
+            }
         }
     }
 
