@@ -2972,6 +2972,15 @@ Paul's notes after build 164:
 
 ## Queued for the next app build
 
+- **Pull down to close the player keeps you where you were** (Paul, 16
+  Nov 2026, FNB, screen recording of build 165: "if I swipe down to
+  minimise the player on the your shows or find screens it snaps me back
+  to tabs"): opening what's playing from the bottom bar on Your shows or
+  Find, then pulling the tab page down, should land back on Your shows /
+  Find, not the Tabs overview. Plan: remember the page the player was
+  opened from and return to it on close (`DeckTabsPager` / `DeckRoot`).
+  Not started.
+
 - **Tap "Your shows" again to go back** (Paul, 16 Nov 2026, FNB: "If I
   tap into a show I'd like to tap your shows at the bottom go to back"):
   in tabs mode, with a show page (or anything else) open on the Your
