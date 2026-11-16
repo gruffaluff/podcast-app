@@ -4,11 +4,13 @@ import PodcastCore
 
 // Episodes as tabs (Paul, 15 Nov 2026: tabs): an open tab, full screen,
 // like a web page in Safari. Swipe sideways between the group's tabs. Each
-// is one page for its episode: the player, the episode and the show's
-// settings (DeckTabEpisodePage, Paul, 16 Nov 2026: "they're all the same
-// tab"). Safari's bar at the bottom: ‹ title › and the tab count; swipe
-// along it for the next tab, up (or tap the count) for the overview. Pull
-// a page down from its top to close it too.
+// is one page for its episode: the player and the episode
+// (DeckTabEpisodePage, Paul, 16 Nov 2026: "they're all the same tab").
+// Pull a page down from its top to go back to the overview: the whole page
+// follows the finger and slides away (the cover is see-through, so the
+// overview shows behind it). Safari's bar at the bottom is gone (Paul,
+// 16 Nov 2026, after build 163: "people swipe out of the player and pick a
+// new tab, so get rid of that bar completely").
 
 struct DeckTabsPager: View {
     @Environment(LibraryStore.self) private var store
@@ -19,25 +21,26 @@ struct DeckTabsPager: View {
     @AppStorage(SaveForLater.key) private var savedRaw: String = ""
 
     @State private var current: String?
+    /// How far a pull down has moved the page.
+    @State private var pull: CGFloat = 0
 
     var body: some View {
         let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
                                                         unplayed: unplayed, triaged: triaged, saved: savedRaw)
         let ids: [String] = tabs.map(\.episodeID)
-        ZStack(alignment: .bottom) {
-            backdrop(tabs)
-            pages(tabs)
-            VStack(spacing: 10) {
+        GeometryReader { (geometry: GeometryProxy) in
+            ZStack(alignment: .bottom) {
+                backdrop(tabs)
+                pages(tabs, insets: geometry.safeAreaInsets)
                 UndoBar()
-                    .padding(.horizontal, 4)
-                DeckTabsPagerBar(tabs: tabs, current: current, step: { step(by: $0, ids: ids) }, close: close)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, geometry.safeAreaInsets.bottom + 8)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .ignoresSafeArea(.container, edges: .vertical)
         }
-        // Pull down from the top of a page closes it (DeckTabEpisodePage
-        // watches its own scroll, so the dial and scrolling up never do).
+        .offset(y: pull)
         .onAppear {
+            pull = 0
             current = model.start ?? ids.first
             if let id = current { prepareColour(tabs.first { $0.episodeID == id }) }
         }
@@ -48,11 +51,12 @@ struct DeckTabsPager: View {
         .transcribeExplainer()
     }
 
-    private func pages(_ tabs: [PodcastEpisode]) -> some View {
+    private func pages(_ tabs: [PodcastEpisode], insets: EdgeInsets) -> some View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(Array(tabs.enumerated()), id: \.element.episodeID) { index, episode in
-                    DeckTabEpisodePage(episode: episode, index: index, count: tabs.count, close: close)
+                    DeckTabEpisodePage(episode: episode, index: index, count: tabs.count,
+                                       insets: insets, close: close, pulled: pulled)
                         .containerRelativeFrame([.horizontal, .vertical])
                         .id(episode.episodeID)
                 }
@@ -79,14 +83,6 @@ struct DeckTabsPager: View {
 
     // MARK: Moving between tabs
 
-    private func step(by delta: Int, ids: [String]) {
-        guard !ids.isEmpty else { return }
-        let at: Int = current.flatMap { ids.firstIndex(of: $0) } ?? 0
-        let next: Int = min(ids.count - 1, max(0, at + delta))
-        guard next != at else { return }
-        withAnimation(.snappy(duration: 0.3)) { current = ids[next] }
-    }
-
     /// A tab closed (marked played, removed): show the one now in its
     /// place, or go back to the overview when none are left.
     private func idsChanged(old: [String], new: [String]) {
@@ -99,77 +95,40 @@ struct DeckTabsPager: View {
         current = new[min(at, new.count - 1)]
     }
 
+    /// The ⌄ key: back to the overview with the cover's own animation.
     private func close() {
         withAnimation(.spring(duration: 0.35)) { model.pagerOpen = false }
+    }
+
+    /// A pull down from the top of a page (`DeckPullDown`): the page follows
+    /// the finger; let go far enough (or flick) and it slides away, then the
+    /// cover closes with no second animation; otherwise it springs back.
+    private func pulled(_ event: DeckPullEvent) {
+        switch event {
+        case .moved(let down):
+            var still = Transaction(animation: nil)
+            still.disablesAnimations = true
+            withTransaction(still) { pull = down }
+        case .ended(let shut):
+            if shut {
+                slideAwayAndClose()
+            } else {
+                withAnimation(.spring(duration: 0.3, bounce: 0.1)) { pull = 0 }
+            }
+        }
+    }
+
+    private func slideAwayAndClose() {
+        withAnimation(.easeOut(duration: 0.2)) { pull = 1200 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            var quiet = Transaction(animation: nil)
+            quiet.disablesAnimations = true
+            withTransaction(quiet) { model.pagerOpen = false }
+        }
     }
 
     private func prepareColour(_ episode: PodcastEpisode?) {
         guard let url = episode?.artwork else { return }
         Task { await ArtworkColors.shared.load(url) }
-    }
-}
-
-// MARK: - Safari's bar
-
-private struct DeckTabsPagerBar: View {
-    let tabs: [PodcastEpisode]
-    let current: String?
-    let step: (Int) -> Void
-    let close: () -> Void
-
-    var body: some View {
-        let at: Int = current.flatMap { id in tabs.firstIndex { $0.episodeID == id } } ?? 0
-        let episode: PodcastEpisode? = tabs.indices.contains(at) ? tabs[at] : nil
-        HStack(spacing: 4) {
-            arrow("chevron.left", label: "Previous tab", enabled: at > 0) { step(-1) }
-            VStack(spacing: 1) {
-                Text(episode?.title ?? "")
-                    .font(Theme.outfit(13, .bold))
-                    .lineLimit(1)
-                Text(episode?.showTitle ?? "")
-                    .font(Theme.outfit(11, .medium))
-                    .foregroundStyle(Color(hex: 0x6B675F))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            arrow("chevron.right", label: "Next tab", enabled: at < tabs.count - 1) { step(1) }
-            Button(action: close) {
-                DeckTabCountSquare(count: tabs.count, colour: Color(hex: 0x1C1B1A))
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Tabs, \(tabs.count) open")
-            .accessibilityHint("Back to the tab overview")
-        }
-        .foregroundStyle(Color(hex: 0x1C1B1A))
-        .padding(.horizontal, 6)
-        .frame(height: DeckTabsBar.height)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white))
-        .shadow(color: Color.black.opacity(0.25), radius: 16, y: 8)
-        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .highPriorityGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
-    }
-
-    private func swiped(_ value: DragGesture.Value) {
-        guard let swipe = DeckBarSwipe.resolve(value) else { return }
-        switch swipe {
-        case .up: close()
-        case .next: step(1)
-        case .previous: step(-1)
-        }
-    }
-
-    private func arrow(_ icon: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .bold))
-                .frame(width: 40, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.3)
-        .accessibilityLabel(label)
     }
 }

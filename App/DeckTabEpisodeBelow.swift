@@ -2,13 +2,17 @@ import SwiftUI
 import PodcastCore
 
 // Under the player on a tab's page (DeckTabEpisodePage): the episode (its
-// place in Up next, download, words, played, save for later, notes) and
-// "This show" (where new episodes go, Open show and the show's own
-// settings, shared with DeckShowSettingsSheet), on the app's own page
-// colour, rising over the player's colour like a sheet.
+// place in Up next, download, words, played, save for later, a Go to show
+// row) and its notes, on the app's own page colour, rising over the
+// player's colour like a sheet. The show's own settings stay on the show
+// page (Paul, 16 Nov 2026: "drop all the 'This show' details from the
+// episode player card and just keep it in the show settings tab … maybe
+// just add one thing … which is a shortcut to the show").
 
 struct DeckTabEpisodeBelow: View {
     let episode: PodcastEpisode
+    /// Room under the notes: the home indicator and a little more.
+    let bottomRoom: CGFloat
     let close: () -> Void
     /// Back up to the player with the words showing.
     let readAlong: () -> Void
@@ -19,12 +23,9 @@ struct DeckTabEpisodeBelow: View {
             EpisodeNotesText(episode: episode)
                 .padding(.horizontal, 16)
                 .padding(.top, 22)
-            if let show = episode.podcast {
-                DeckTabShowSection(show: show)
-            }
         }
         .padding(.top, 8)
-        .padding(.bottom, DeckTabsBar.room + 8)
+        .padding(.bottom, bottomRoom)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(alignment: .top) { sheet }
         .normalColours()
@@ -66,6 +67,10 @@ private struct DeckTabEpisodeRows: View {
             playedRow
             DeckSetLine()
             savedRow
+            if let show = episode.podcast {
+                DeckSetLine()
+                DeckTabGoToShowRow(show: show)
+            }
         }
         .alert("Remove the download?", isPresented: $confirmRemove) {
             Button("Cancel", role: .cancel) {}
@@ -167,76 +172,32 @@ private struct DeckTabEpisodeRows: View {
     }
 }
 
-// MARK: - This show
+// MARK: - Go to show
 
-private struct DeckTabShowSection: View {
+/// One row under Save for later: the show's artwork and name; opens its
+/// Deck show page (its settings are there). A show only being tried opens
+/// the same page, where Follow sits.
+private struct DeckTabGoToShowRow: View {
     @Environment(LibraryStore.self) private var store
     @Environment(DeckTabsModel.self) private var model
     let show: Podcast
-    @State private var tried: Bool
-
-    init(show: Podcast) {
-        self.show = show
-        _tried = State(initialValue: show.isTried)
-    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            DeckSetGroup("This show") {
-                openRow
-                DeckSetLine()
-                if tried {
-                    followRow
-                } else {
-                    ruleRow
-                }
-            }
-            if !tried {
-                DeckShowSettingsSections(show: show)
-            }
-        }
-    }
-
-    private var openRow: some View {
         Button {
             DeckTabNavigation.openShow(show, store: store, model: model)
         } label: {
             HStack(spacing: 12) {
-                ArtworkView(url: show.artworkURL, title: show.title, size: 40, radius: 10)
-                DeckSetRowLabel(title: show.title, detail: "Open show")
+                ArtworkView(url: show.artworkURL, title: show.title, size: 26, radius: 7)
+                    .frame(width: 26)
+                DeckSetRowLabel(title: "Go to show", value: show.title, chevron: "chevron.right")
                     .padding(.leading, -16)
             }
-            .padding(.leading, 16)
+            .padding(.leading, 15)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Open \(show.title)")
-    }
-
-    /// Where new episodes go: Top / Bottom / Nowhere (as on the show page).
-    private var ruleRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("New episodes go")
-                .font(Theme.outfit(15, .medium))
-                .foregroundStyle(Theme.ink)
-            DeckShowRulePicker(show: show)
-        }
-        .padding(16)
-    }
-
-    /// A show only being tried (an episode added without following it).
-    private var followRow: some View {
-        Button(action: follow) {
-            DeckSetRowLabel(icon: "plus.circle", title: "Follow this show",
-                            detail: "You're trying an episode without following", chevron: nil)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func follow() {
-        store.promoteTried(show)
-        withAnimation(.snappy(duration: 0.2)) { tried = false }
-        Task { await RealtimeAlerts.publishFollows(store: store) }
+        .accessibilityLabel("Go to " + show.title)
+        .accessibilityHint(show.isTried ? "Opens the show, where you can follow it" : "Opens the show and its settings")
     }
 }
 
