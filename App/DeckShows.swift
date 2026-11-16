@@ -8,6 +8,8 @@ import PodcastCore
 // ‹ › to go through them; under it every show as small tiles. The New pill
 // opens this week's new episodes; + goes to Find to add a show. Show pages
 // are pushed on this tab's own NavigationStack (also from `revealShow`).
+// In tabs mode (Paul, 16 Nov 2026: "shows alone on the your shows tab")
+// it's only the header and the tiles; the rest is for card deck mode.
 
 // `\.deckSelectTab` (switch Deck's page) is defined in DeckUpNext.swift.
 
@@ -121,6 +123,8 @@ struct DeckShowsView: View {
     @State private var path = NavigationPath()
     @State private var showingNew = false
     @AppStorage(DeckTriage.key) private var triaged: String = ""
+    /// "Up next as": Tabs shows just the shows here; Card deck the rest too.
+    @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
     @State private var cache = DeckShowsCache()
     /// Bumped to make the entries again (coming back to the page, closing
     /// the New sheet), for changes the key below can't see.
@@ -213,7 +217,36 @@ struct DeckShowsView: View {
         return count
     }
 
-    private func content(_ entries: [DeckShowEntry], generation: Int) -> some View {
+    @ViewBuilder private func content(_ entries: [DeckShowEntry], generation: Int) -> some View {
+        if home != DeckHome.deck {
+            showsAlone(entries, generation: generation)
+        } else {
+            deckContent(entries, generation: generation)
+        }
+    }
+
+    /// Tabs mode (Paul, 16 Nov 2026: "shows alone on the your shows tab"):
+    /// just the header and every show as tiles, two across, in the ⇅
+    /// order. New and Started are tab groups now, so the Carry on list, the
+    /// row of new-episode show cards and the catch-up aren't here.
+    private func showsAlone(_ entries: [DeckShowEntry], generation: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            DeckShowsAloneHeader(count: entries.count, add: { selectTab(2) })
+            if entries.isEmpty {
+                DeckShowsEmpty { selectTab(2) }
+                    .padding(.top, 24)
+            } else {
+                DeckAllShowsRow(entries: entries, generation: generation, labelled: false)
+                    .equatable()
+                    .padding(.top, 16)
+            }
+        }
+        .padding(.bottom, 16)
+    }
+
+    /// Card deck mode: Carry on, the deck of shows with something new, then
+    /// All your shows.
+    private func deckContent(_ entries: [DeckShowEntry], generation: Int) -> some View {
         // "New · n" counts what you haven't looked at in the catch-up yet.
         let seen: Set<String> = DeckTriage.seen(triaged)
         let newCount: Int = entries.reduce(0) { total, entry in
@@ -229,12 +262,9 @@ struct DeckShowsView: View {
             } else {
                 DeckCarryOnSection()
                     .padding(.top, 18)
-                // Save for later (Paul, 15 Nov 2026): only when something's saved.
-                DeckSavedForLaterLink()
-                    .padding(.top, 10)
                 newDeck(entries.filter { !$0.fresh.isEmpty }, generation: generation)
                     .padding(.top, 18)
-                DeckAllShowsRow(entries: entries, generation: generation)
+                DeckAllShowsRow(entries: entries, generation: generation, labelled: true)
                     .equatable()
                     .padding(.top, 22)
             }
@@ -289,6 +319,48 @@ struct DeckShowsHeader: View {
             .buttonStyle(.plain)
             .padding(.top, 6)
             .accessibilityHint("This week's new episodes")
+            Button(action: add) {
+                Image(systemName: "plus")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 1)
+            .accessibilityLabel("Add a show")
+        }
+        .padding(.leading, 22)
+        .padding(.trailing, 14)
+        .padding(.top, 8)
+    }
+}
+
+/// Tabs mode's Your shows header: "Your shows", "n followed", the ⇅ sort
+/// key and + to add a show (goes to Find).
+private struct DeckShowsAloneHeader: View {
+    let count: Int
+    let add: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Your shows")
+                    .font(Theme.outfit(34, .heavy))
+                    .tracking(-1)
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .accessibilityAddTraits(.isHeader)
+                Text(count == 1 ? "1 followed" : "\(count) followed")
+                    .font(Theme.outfit(13, .medium))
+                    .foregroundStyle(Theme.muted)
+            }
+            Spacer(minLength: 8)
+            if count > 0 {
+                DeckShowsSortMenu()
+                    .padding(.top, 8)
+            }
             Button(action: add) {
                 Image(systemName: "plus")
                     .font(.system(size: 20, weight: .semibold))

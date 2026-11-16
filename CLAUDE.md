@@ -2894,12 +2894,58 @@ Paul's notes after build 164:
   it white with a shaded corner like in tabs"): `DeckCornerShadeLabel`
   (shared with the tab cards' order number) in the top-right corner of
   `DeckShowTile`.
-- **Asked, waiting on Paul**: tab groups at the bottom
-  (https://claude.ai/artifact/Prxs3K7HJdhYCLH6UsHkpF: A chips above the
-  bar, B bar grows a row (suggested), C tap "Tabs ▾" for a groups menu)
-  and Shows as just the shows (suggested; Carry on becomes a "Started"
-  tab group). The jerky card swipe-away: Paul is sending a video. No
-  chapters pill: Paul was likely still on 163; on 164 it shows on the
+- **Tab groups: Up next · New · Started, as chips above the bar** (Paul,
+  16 Nov 2026, option A of the mock-up: "let's get rid of saved and have up
+  next, new and started as chips above the bar, and shows alone on the
+  your shows tab. Started should be anything started"). Tabs mode only;
+  card deck mode is unchanged.
+  - The chips that sat at the top of the Tabs page are gone. On the Tabs
+    page only, a small white pill floats just above the bottom bar,
+    centred: the chosen group in ink with its count ("Up next · 6"), the
+    others as muted words; tap one, or swipe along the pill for the group
+    before / after, instantly (`DeckTabGroupPill` in DeckTabsBar.swift).
+    It hides while a tab is open and on Your shows / Find. The Tabs page
+    has that much more room under its last row (`DeckTabsBar.pillRoom`),
+    and its Undo bar sits above the pill (`RootView.deckToastLift`).
+  - **Started** (`DeckTabGroup.started`, `DeckTabSource.startedQuery` /
+    `started`): every episode started and not finished (more than 30 s
+    in, not played), Up next ones included, the one playing first, then
+    most recently played. Tabs show their progress ring as usual; swipe
+    left / × = Played, swipe right = Play next / Add to end, the hold menu
+    as New's; no order numbers (only Up next has them). Empty: "Nothing
+    started".
+  - **Saved for later is gone** from the Deck look: the Saved group, the
+    Save for later row on a tab's page, the hold menu items, the bookmark
+    key on the card-deck episode page, the show page's hold menu item,
+    Settings → Your listening → Saved for later and the Shows tab's Saved
+    list. `App/DeckSavedForLater.swift` (`SaveForLater` and its views) is
+    deleted and "savedForLater" no longer syncs (an old saved choice of
+    the Saved group opens Up next). Played no longer touches it.
+- **Your shows = the shows alone** (tabs mode; Paul's pick "Shows
+  alone"): the page is just "Your shows", "n followed", the ⇅ sort key
+  and +, then every show as the two-across tiles in the chosen order
+  (`DeckShowsAloneHeader`, `DeckAllShowsRow(labelled: false)`, the sort
+  key is now its own `DeckShowsSortMenu`). Carry on, the sideways row of
+  new-episode show cards, its catch-up and the New sheet aren't on it any
+  more (New and Started are tab groups now). Card deck mode still shows
+  them, so that code stays.
+- Check on the phone: the pill's place over the bar on a small iPhone,
+  the last row of tabs scrolling clear of pill and bar, Undo above the
+  pill, swiping along the pill vs. the bar's own swipes, Started's order
+  while something plays (the one playing stays first), an episode only
+  just started (30 s) appearing in Started.
+- **Tab swipe-away smooth** (Paul's recording of build 164: "the
+  disappearing card animation when swiped away is very jerky"; frame by
+  frame the card snapped back, sat with a ✓ PLAYED pill, then just
+  vanished, and Undo popped it back): an armed left swipe now carries the
+  card on off its slot, fading, while the ✓ on the red block grows; ×
+  shrinks and fades it; then the tabs close up in one animation, the
+  corner numbers rolling (`DeckTabCell.flyOff` / `closeTapped` /
+  `settle`, `DeckTabsGrid` keeps its own `mirror` of the tabs and a
+  `gone` set so the gap closes at once; `DeckCornerShadeLabel` numeric
+  roll). Undo fades / grows the tab back; `undoable`'s restore now runs
+  in one animation everywhere. Not far enough: a real spring back.
+- No chapters pill: Paul was likely still on 163; on 164 it shows on the
   playing tab (a tab not playing has no chapter row).
 
 ## Queued for the next app build

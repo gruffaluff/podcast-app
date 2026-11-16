@@ -109,8 +109,12 @@ struct RootView: View {
     /// 2026: it floated up over the stacked cards), and above the mini
     /// player on Shows and Find while something is on.
     private var deckToastLift: CGFloat {
-        // Tabs (Paul, 15 Nov 2026): just above Safari's bar, on every page.
-        if deckHome != DeckHome.deck { return DeckTabsBar.height + 8 + 10 }
+        // Tabs (Paul, 15 Nov 2026): just above Safari's bar, on every page;
+        // on the Tabs page above the Up next · New · Started pill too.
+        if deckHome != DeckHome.deck {
+            let groups: CGFloat = tab == 0 ? DeckTabsBar.pillRoom : 0
+            return DeckTabsBar.height + 8 + 10 + groups
+        }
         let pill: CGFloat = 52 + 8 + 10
         let mini: CGFloat = tab != 0 && player.nowPlaying != nil ? DeckRoot.miniRoom : 0
         return pill + mini

@@ -6,8 +6,9 @@ import PodcastCore
 // https://claude.ai/artifact/26rUAiLq5wFzQRJzqUcEL7, "2 · Episodes as
 // tabs"). Up next is a grid of open tabs in queue order (the episode
 // playing first). Close one with × or a swipe left and it's marked played,
-// with Undo. Pinned tabs at the top go to Find and Your shows; tab groups
-// switch between Up next, New and Saved for later. Tapping a tab opens it
+// with Undo. Tab groups switch between Up next, New and Started (Paul,
+// 16 Nov 2026: "get rid of saved and have up next, new and started as
+// chips above the bar"; `DeckTabGroupPill`). Tapping a tab opens it
 // full screen, and you swipe between tabs there (`DeckTabsPager`). The
 // bottom bar is Safari's: what's on, swipe along it for the next tab, swipe
 // up (or tap the count) for the overview (`DeckTabsBar`). Settings → Look →
@@ -24,15 +25,16 @@ enum DeckHome {
     }
 }
 
-/// The tab groups: Up next, New, Saved for later.
+/// The tab groups: Up next, New, Started (Saved for later is gone; an old
+/// saved choice of it falls back to Up next).
 enum DeckTabGroup: String, CaseIterable {
-    case upNext, new, saved
+    case upNext, new, started
 
     var name: String {
         switch self {
         case .upNext: return "Up next"
         case .new: return "New"
-        case .saved: return "Saved"
+        case .started: return "Started"
         }
     }
 }
@@ -110,19 +112,49 @@ enum DeckTabSource {
             .sorted { $0.published < $1.published }
     }
 
-    /// Saved for later, newest saved first, played ones left out.
-    static func saved(store: LibraryStore, raw: String) -> [PodcastEpisode] {
-        let ids: [String] = SaveForLater.ids(raw)
-        let found: [String: PodcastEpisode] = store.episodes(ids)
-        return ids.compactMap { found[$0] }.filter { !$0.played }
+    /// Every unfinished episode with some listening (Paul, 16 Nov 2026:
+    /// "Started should be anything started"), Up next ones included. Fed
+    /// to `started(_:store:player:)` through a `@Query`.
+    static var startedQuery: FetchDescriptor<PodcastEpisode> {
+        let least: TimeInterval = 30
+        var descriptor = FetchDescriptor<PodcastEpisode>(
+            predicate: #Predicate { $0.played == false && $0.position > least },
+            sortBy: [SortDescriptor(\.lastPlayedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 200
+        return descriptor
+    }
+
+    /// Started: the episode playing first, then most recently played
+    /// (episodes with no play date go last, furthest through first).
+    static func started(_ found: [PodcastEpisode], store: LibraryStore, player: PlayerModel) -> [PodcastEpisode] {
+        var list: [PodcastEpisode] = found.sorted(by: startedOrder)
+        if let playing = player.nowPlaying?.episodeID {
+            if let at = list.firstIndex(where: { $0.episodeID == playing }) {
+                let on: PodcastEpisode = list.remove(at: at)
+                list.insert(on, at: 0)
+            } else if let on = store.episode(playing), !on.played {
+                list.insert(on, at: 0)
+            }
+        }
+        return list
+    }
+
+    private static func startedOrder(_ a: PodcastEpisode, _ b: PodcastEpisode) -> Bool {
+        switch (a.lastPlayedAt, b.lastPlayedAt) {
+        case let (x?, y?): return x > y
+        case (.some, .none): return true
+        case (.none, .some): return false
+        case (.none, .none): return a.position > b.position
+        }
     }
 
     static func tabs(_ group: DeckTabGroup, store: LibraryStore, player: PlayerModel,
-                     unplayed: [PodcastEpisode], triaged: String, saved raw: String) -> [PodcastEpisode] {
+                     unplayed: [PodcastEpisode], triaged: String, started: [PodcastEpisode]) -> [PodcastEpisode] {
         switch group {
         case .upNext: return upNext(store: store, player: player)
         case .new: return new(unplayed, triaged: triaged)
-        case .saved: return saved(store: store, raw: raw)
+        case .started: return Self.started(started, store: store, player: player)
         }
     }
 }
@@ -136,21 +168,9 @@ struct DeckTabActions {
 
     private var moves: DeckQueueMoves { DeckQueueMoves(store: store, player: player) }
 
-    /// × or a swipe left: Up next and New mark it played; Saved takes it
-    /// off the Saved list.
+    /// × or a swipe left: marks it played (every group), with Undo.
     func close(_ episode: PodcastEpisode) {
-        switch group {
-        case .upNext, .new:
-            moves.played(episode)
-        case .saved:
-            let before: String = UserDefaults.standard.string(forKey: SaveForLater.key) ?? ""
-            withAnimation(LibraryStore.listChange) { SaveForLater.remove(episode.episodeID) }
-            store.undoAction = UndoAction(label: "Removed from Saved") {
-                withAnimation(LibraryStore.listChange) {
-                    UserDefaults.standard.set(before, forKey: SaveForLater.key)
-                }
-            }
-        }
+        moves.played(episode)
     }
 
     func playNow(_ episode: PodcastEpisode) { moves.playNow(episode) }
@@ -269,21 +289,17 @@ struct DeckTabsView: View {
     @Environment(\.deckSelectTab) private var selectTab
     @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
-    @AppStorage(SaveForLater.key) private var savedRaw: String = ""
+    @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @State private var showingSettings = false
     @State private var suggestions: [PodcastEpisode] = []
 
     var body: some View {
-        let upNext: [PodcastEpisode] = DeckTabSource.upNext(store: store, player: player)
-        let fresh: [PodcastEpisode] = DeckTabSource.new(unplayed, triaged: triaged)
-        let saved: [PodcastEpisode] = DeckTabSource.saved(store: store, raw: savedRaw)
-        let shown: [PodcastEpisode] = list(model.group, upNext: upNext, fresh: fresh, saved: saved)
+        // The groups are chips above the bottom bar now (`DeckTabGroupPill`).
+        let shown: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
+                                                         unplayed: unplayed, triaged: triaged, started: started)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 DeckTabsHeader(settings: { showingSettings = true })
-                DeckTabsGroups(counts: [upNext.count, fresh.count, saved.count])
-                    .padding(.horizontal, 16)
-                    .padding(.top, 14)
                 if shown.isEmpty {
                     empty
                 } else {
@@ -308,19 +324,10 @@ struct DeckTabsView: View {
         }
     }
 
-    private func list(_ group: DeckTabGroup, upNext: [PodcastEpisode], fresh: [PodcastEpisode],
-                      saved: [PodcastEpisode]) -> [PodcastEpisode] {
-        switch group {
-        case .upNext: return upNext
-        case .new: return fresh
-        case .saved: return saved
-        }
-    }
-
     @ViewBuilder private var empty: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(spacing: 8) {
-                Text("No open tabs")
+                Text(emptyTitle)
                     .font(Theme.outfit(20, .heavy))
                     .foregroundStyle(Theme.ink)
                 Text(emptyWords)
@@ -340,11 +347,15 @@ struct DeckTabsView: View {
         .padding(.top, 12)
     }
 
+    private var emptyTitle: String {
+        model.group == .started ? "Nothing started" : "No open tabs"
+    }
+
     private var emptyWords: String {
         switch model.group {
         case .upNext: return "New episodes open as tabs when they arrive."
         case .new: return "Nothing new since you last looked."
-        case .saved: return "Save an episode for later and it opens here as a tab."
+        case .started: return "Episodes you've started and not finished open here as tabs."
         }
     }
 
@@ -400,40 +411,5 @@ private struct DeckTabsHeader: View {
         .padding(.trailing, 10)
         .padding(.top, 8)
         .frame(height: 52)
-    }
-}
-
-/// "Up next · 6" / "New · 3" / "Saved · 4".
-private struct DeckTabsGroups: View {
-    @Environment(DeckTabsModel.self) private var model
-    /// In `DeckTabGroup.allCases` order.
-    let counts: [Int]
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(Array(DeckTabGroup.allCases.enumerated()), id: \.element) { index, group in
-                chip(group, count: index < counts.count ? counts[index] : 0)
-            }
-            Spacer(minLength: 0)
-        }
-    }
-
-    private func chip(_ group: DeckTabGroup, count: Int) -> some View {
-        let on: Bool = model.group == group
-        return Button {
-            model.choose(group)
-        } label: {
-            Text(group.name + " · \(count)")
-                .font(Theme.outfit(13, .bold))
-                .monospacedDigit()
-                .foregroundStyle(on ? Theme.background : Theme.muted)
-                .lineLimit(1)
-                .padding(.horizontal, 12)
-                .frame(height: 32)
-                .background(Capsule().fill(on ? Theme.ink : Theme.cardEdge.opacity(0.6)))
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(on ? [.isSelected] : [])
     }
 }

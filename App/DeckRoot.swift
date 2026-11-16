@@ -96,11 +96,11 @@ struct DeckRoot: View {
         }
     }
 
-    /// Up next always has the episode playing as its first tab; Saved keeps
-    /// it when it's saved, else the overview switches to Up next.
+    /// Up next and Started always have the episode playing as their first
+    /// tab; from New the overview switches to Up next.
     private func openPlayingTab() {
         guard let id = player.nowPlaying?.episodeID else { return }
-        let keep: Bool = tabsModel.group == .upNext || (tabsModel.group == .saved && SaveForLater.isSaved(id))
+        let keep: Bool = tabsModel.group == .upNext || tabsModel.group == .started
         if !keep { tabsModel.choose(.upNext) }
         tabsModel.open(id)
     }
@@ -128,7 +128,8 @@ struct DeckRoot: View {
 
     private func room(for index: Int) -> CGFloat {
         // Tabs: Safari's bar is the mini player too.
-        if tabsMode { return DeckTabsBar.room }
+        // The Tabs page also has the Up next · New · Started pill above it.
+        if tabsMode { return DeckTabsBar.room + (index == 0 ? DeckTabsBar.pillRoom : 0) }
         return Self.pillRoom + (index != 0 && player.nowPlaying != nil ? Self.miniRoom : 0)
     }
 
@@ -137,7 +138,7 @@ struct DeckRoot: View {
     private var bottomFade: some View {
         LinearGradient(colors: [Theme.background.opacity(0), Theme.background.opacity(0.92)],
                        startPoint: .top, endPoint: .bottom)
-            .frame(height: tabsMode ? 140 : 96)
+            .frame(height: tabsMode ? (tab == 0 ? 140 + DeckTabsBar.pillRoom : 140) : 96)
             .ignoresSafeArea(edges: .bottom)
             .allowsHitTesting(false)
     }

@@ -48,7 +48,6 @@ private struct DeckTabEpisodeRows: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DownloadManager.self) private var downloads
     @Environment(TranscriptService.self) private var transcripts
-    @AppStorage(SaveForLater.key) private var savedRaw: String = ""
     let episode: PodcastEpisode
     let close: () -> Void
     let readAlong: () -> Void
@@ -65,8 +64,6 @@ private struct DeckTabEpisodeRows: View {
             transcriptRow
             DeckSetLine()
             playedRow
-            DeckSetLine()
-            savedRow
             if let show = episode.podcast {
                 DeckSetLine()
                 DeckTabGoToShowRow(show: show)
@@ -138,7 +135,7 @@ private struct DeckTabEpisodeRows: View {
         return "Waiting to transcribe"
     }
 
-    // MARK: Played and saved
+    // MARK: Played
 
     private var playedRow: some View {
         let played: Bool = episode.played
@@ -154,15 +151,6 @@ private struct DeckTabEpisodeRows: View {
         }
     }
 
-    private var savedRow: some View {
-        let saved: Bool = SaveForLater.isSaved(episode.episodeID, in: savedRaw)
-        return row(icon: saved ? "bookmark.fill" : "bookmark",
-                   title: saved ? "Saved for later" : "Save for later",
-                   value: saved ? "Remove" : "Save") {
-            SaveForLater.toggle(episode.episodeID)
-        }
-    }
-
     private func row(icon: String, title: String, value: String?, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             DeckSetRowLabel(icon: icon, title: title, value: value, chevron: nil)
@@ -174,7 +162,7 @@ private struct DeckTabEpisodeRows: View {
 
 // MARK: - Go to show
 
-/// One row under Save for later: the show's artwork and name; opens its
+/// One row under Played: the show's artwork and name; opens its
 /// Deck show page (its settings are there). A show only being tried opens
 /// the same page, where Follow sits.
 private struct DeckTabGoToShowRow: View {
