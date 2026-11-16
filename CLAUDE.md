@@ -2758,6 +2758,60 @@ Paul's notes after build 155, all in Deck:
     tab closes, then Shows opens the show), smaller iPhones (the dial
     shrinks to fit).
 
+## Done in build 163 (16 Nov 2026; Paul: "great. build.")
+
+- **Tabs: hold and drag fixed, swipes back** (Paul, 16 Nov 2026, build
+  162: "Hold and drag isn't working at all … Swipe left marks as played
+  with a visual confirmation. Right gives us next or last (but keeps it
+  first in a show group if it's the oldest)"; mock-up
+  https://claude.ai/artifact/SYxmjsr1PGL9L8owLRUBCw).
+  - Why the drag did nothing: each tab card had three gestures fighting
+    for the same finger: the card was a button (tap to open), it had a
+    sideways pan (swipe to close), and the hold sat on the cell around
+    both. Because the hold was outside the button, SwiftUI made it wait
+    until the button's tap had failed, and a finger held still never
+    makes a tap fail, so the hold could never start (letting go just
+    opened the tab). The hold also made every pan, the page's scrolling
+    included, wait for it.
+  - Now one touch handler per card decides once what the touch is
+    (`DeckTabTouches` / `DeckTabTouchRecognizer` in
+    `App/DeckTabTouches.swift`): let go within 0.35 s without moving = a
+    tap (opens the tab); still for 0.35 s = a hold; moved 8 pt first,
+    clearly sideways = a swipe; moved any other way = not ours, so the
+    page scrolls at once with nothing waiting. A touch that stops the page
+    scrolling doesn't open a tab, swipes that start at the screen's very
+    edge are left for the section swipe, and × sits outside the handler so
+    a tap on it is only ever ×. iOS's own hold menu is gone from the
+    cards: a still hold on any tab gives the tab's menu (now with Play
+    next and Add to end).
+  - Hold and drag as built in 162 (lifts in place, the others slide,
+    numbers follow, dashed gap, the playing tab can't move), plus the page
+    scrolls by itself when the finger is within 90 pt of the top or bottom
+    (faster nearer the edge), with the slots worked out allowing for it.
+  - Swipe left = Played (`DeckTabCell`, `DeckTabSwipeBlock` in
+    `App/DeckTabsGrid.swift`): the card follows the finger over a red
+    block with ✓ "Played"; past 38% of the card (or a quick flick) the ✓
+    goes white with a tap; let go and the card springs back, a white
+    "✓ PLAYED" pill shows on a dark wash, then it folds away and is marked
+    played with Undo. Saved tabs say Remove (off the Saved list).
+  - Swipe right: grey to 28% of the card, then green "Play next" (to
+    62%), then ink "Add to end", a tap as each one is reached; let go and
+    the card springs back, Up next changes and the tab glides to its new
+    place with an ink ring pulse; Undo. Both keep each show in order
+    (`DeckTabActions.playNextInOrder` / `addToEnd`, through
+    `QueueEngine.playNext` / `playLast`; Add to end also moves a tab
+    already in Up next). The Undo bar says where it went ("Playing next ·
+    3rd") and, when show order moved it, why on a second line ("After
+    “Lanterns on the river…” to keep Paper Lanterns in order"; episodes
+    have no numbers, so a short title) (`UndoAction.note`, shown by the
+    Deck Undo bar). The tab playing only swipes left; New tabs swipe both
+    ways; Saved tabs only left.
+  - Check on the phone: hold then drag (and the hold timing), scrolling
+    that starts on a card, auto-scroll near the top / bottom (it uses the
+    finger's height, not the card's middle), the swipe distances on a
+    small card, the Played pill timing, the ring pulse after the tab
+    moves, a tap on × and a tap just after scrolling, VoiceOver actions.
+
 ## Queued for the next app build
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub

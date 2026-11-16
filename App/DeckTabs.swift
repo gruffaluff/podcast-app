@@ -157,6 +157,79 @@ struct DeckTabActions {
 
     func playNext(_ episode: PodcastEpisode) { moves.playNext(episode) }
 
+    // MARK: Swipe right (Paul, 16 Nov 2026: "Right gives us next or last
+    // (but keeps it first in a show group if it's the oldest)")
+
+    /// Play next, after the episode playing; with "Keep each show in
+    /// order" never ahead of an older episode of the same show.
+    func playNextInOrder(_ episode: PodcastEpisode) {
+        store.undoable("Playing next", episodes: []) { store.playNext(episode) }
+        explain(episode, toEnd: false)
+    }
+
+    /// To the end of Up next (even if it's already in it); with "Keep each
+    /// show in order" never behind a newer episode of the same show.
+    func addToEnd(_ episode: PodcastEpisode) {
+        store.undoable("Added to the end", episodes: []) { commitAtEnd(episode) }
+        explain(episode, toEnd: true)
+    }
+
+    /// `QueueEngine.playLast` with the episode playing kept where it is
+    /// (it could be a newer episode of the same show).
+    private func commitAtEnd(_ episode: PodcastEpisode) {
+        var queue: [QueueItem] = store.queue
+        var playingItem: QueueItem?
+        var playingAt: Int = 0
+        if let playing = player.nowPlaying?.episodeID, playing != episode.episodeID,
+           let at = queue.firstIndex(where: { $0.episode.id == playing }) {
+            playingItem = queue.remove(at: at)
+            playingAt = at
+        }
+        queue = QueueEngine.playLast(episode.queueEpisode, in: queue, settings: store.queueSettings)
+        if let playingItem { queue.insert(playingItem, at: min(playingAt, queue.count)) }
+        store.commit(queue)
+    }
+
+    /// The Undo bar says where it went ("Playing next · 3rd"), and why when
+    /// show order moved it ("After “Lanterns on the river…” to keep Paper
+    /// Lanterns in order"). Episodes have no numbers here, so a short title.
+    private func explain(_ episode: PodcastEpisode, toEnd: Bool) {
+        guard let undo = store.undoAction else { return }
+        let playing: String? = player.nowPlaying?.episodeID
+        let ids: [String] = store.queue.map(\.episode.id).filter { $0 != playing }
+        guard let at = ids.firstIndex(of: episode.episodeID) else { return }
+        let base: String = toEnd ? "Added to the end" : "Playing next"
+        let plain: Int = toEnd ? ids.count - 1 : 0
+        var note: String?
+        if at != plain {
+            let neighbour: Int = toEnd ? at + 1 : at - 1
+            if ids.indices.contains(neighbour), let other = store.episode(ids[neighbour]) {
+                let words: String = (toEnd ? "Before " : "After ") + "“" + Self.short(other.title) + "”"
+                note = words + " to keep " + episode.showTitle + " in order"
+            }
+        }
+        var told = UndoAction(label: base + " · " + Self.ordinal(at + 1), restore: undo.restore)
+        told.note = note
+        store.undoAction = told
+    }
+
+    static func ordinal(_ number: Int) -> String {
+        let tens: Int = number % 100
+        if (11...13).contains(tens) { return "\(number)th" }
+        switch number % 10 {
+        case 1: return "\(number)st"
+        case 2: return "\(number)nd"
+        case 3: return "\(number)rd"
+        default: return "\(number)th"
+        }
+    }
+
+    static func short(_ title: String) -> String {
+        let trimmed: String = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > 26 else { return trimmed }
+        return String(trimmed.prefix(24)).trimmingCharacters(in: .whitespaces) + "…"
+    }
+
     func isQueued(_ episode: PodcastEpisode) -> Bool {
         store.queue.contains { $0.episode.id == episode.episodeID }
     }

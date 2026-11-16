@@ -15,6 +15,13 @@ import PodcastCore
 // into the gap and Up next takes the new order. Hold and let go without
 // moving gives the tab's menu. A swipe that starts without the hold
 // scrolls as usual. The episode playing stays first and can't move.
+//
+// Build 163 (Paul, 16 Nov 2026: "Hold and drag isn't working at all …
+// Swipe left marks as played with a visual confirmation. Right gives us
+// next or last"): every card has one touch handler (`DeckTabTouches`) that
+// tells a tap, a hold and a sideways swipe apart, so nothing competes for
+// the finger; the page scrolls by itself when a lifted tab nears the top or
+// bottom. Swipe left = Played, right = Play next, further = Add to end.
 
 struct DeckTabsGrid: View {
     @Environment(LibraryStore.self) private var store
@@ -24,6 +31,8 @@ struct DeckTabsGrid: View {
 
     /// The tab being dragged, while it is.
     @State private var lift: DeckTabLift?
+    /// A hold on a tab that can't move, while the finger is down.
+    @State private var still: DeckTabStill?
     /// The tab whose menu is showing (after a still hold).
     @State private var menuFor: String?
     @State private var notes: PodcastEpisode?
@@ -62,6 +71,7 @@ struct DeckTabsGrid: View {
 
     private func dropLift() {
         if lift != nil { lift = nil }
+        if still != nil { still = nil }
         if model.reordering { model.reordering = false }
     }
 
@@ -72,34 +82,26 @@ struct DeckTabsGrid: View {
     }
 
     @ViewBuilder private func cell(_ episode: PodcastEpisode, shown: [PodcastEpisode]) -> some View {
-        let movable: Bool = canMove(episode)
-        let hidden: Bool = lift?.id == episode.episodeID
-        ZStack {
-            DeckTabCard(episode: episode, place: place(of: episode, in: shown), reorderable: movable,
-                        hooks: movable ? hooks(for: episode) : nil)
-                .opacity(hidden ? 0 : 1)
-            if hidden {
-                DeckTabGap()
+        DeckTabCell(episode: episode, place: place(of: episode, in: shown),
+                    hidden: lift?.id == episode.episodeID, height: cardHeight,
+                    hooks: hooks(for: episode),
+                    hold: { touch in held(touch, episode: episode) })
+            .confirmationDialog(episode.title, isPresented: menuBinding(episode), titleVisibility: .visible) {
+                holdMenu(episode)
             }
-        }
-        .frame(height: cardHeight)
-        .gesture(DeckTabHold(isEnabled: movable && (lift == nil || hidden),
-                             began: { began(episode.episodeID) },
-                             changed: { moved($0) },
-                             ended: { cancelled in ended(cancelled: cancelled) }))
-        .confirmationDialog(episode.title, isPresented: menuBinding(episode), titleVisibility: .visible) {
-            holdMenu(episode)
-        }
-        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            .transition(.opacity.combined(with: .scale(scale: 0.9)))
     }
 
-    /// The menu a still hold gives a tab that can move (the others keep
-    /// iOS's own hold menu).
+    /// The menu a still hold gives any tab (build 163: iOS's own hold menu
+    /// is gone from the cards, so it can't fight the hold either).
     @ViewBuilder private func holdMenu(_ episode: PodcastEpisode) -> some View {
         let on: Bool = episode.episodeID == playingID && player.isPlaying
         let saved: Bool = SaveForLater.isSaved(episode.episodeID, in: savedRaw)
         Button(on ? "Pause" : "Play now") { actions.playNow(episode) }
-        Button("Play next") { actions.playNext(episode) }
+        if episode.episodeID != playingID {
+            Button("Play next") { actions.playNextInOrder(episode) }
+            Button("Add to end") { actions.addToEnd(episode) }
+        }
         if actions.isQueued(episode) {
             Button("Remove from Up next", role: .destructive) { actions.removeFromUpNext(episode) }
         }
@@ -109,9 +111,9 @@ struct DeckTabsGrid: View {
     }
 
     private func hooks(for episode: PodcastEpisode) -> DeckTabHooks {
-        DeckTabHooks(earlier: { step(episode.episodeID, by: -1) },
-                     later: { step(episode.episodeID, by: 1) },
-                     more: { menuFor = episode.episodeID })
+        let id: String = episode.episodeID
+        guard canMove(episode) else { return DeckTabHooks(earlier: nil, later: nil, more: { menuFor = id }) }
+        return DeckTabHooks(earlier: { step(id, by: -1) }, later: { step(id, by: 1) }, more: { menuFor = id })
     }
 
     private func menuBinding(_ episode: PodcastEpisode) -> Binding<Bool> {
@@ -126,6 +128,7 @@ struct DeckTabsGrid: View {
         if let lift, let episode = shown.first(where: { $0.episodeID == lift.id }) {
             let raised: Bool = lift.phase == .raised
             DeckTabCard(episode: episode, place: place(of: episode, in: shown), lifted: true)
+                .overlay(alignment: .topTrailing) { DeckTabCloseGlyph() }
                 .frame(width: cardWidth, height: cardHeight)
                 .scaleEffect(raised ? 1.05 : 1)
                 .shadow(color: Color.black.opacity(raised ? 0.24 : 0.08), radius: raised ? 18 : 6, y: raised ? 10 : 2)
@@ -188,14 +191,14 @@ struct DeckTabsGrid: View {
             return CGSize(width: origin.x, height: origin.y)
         }
         let start: CGPoint = slotOrigin(lift.startSlot)
-        return CGSize(width: start.x + lift.translation.width, height: start.y + lift.translation.height)
+        return CGSize(width: start.x + lift.translation.width, height: start.y + lift.translation.height + lift.shift)
     }
 
     /// The place in `order` the card's middle is over.
     private func target(for lift: DeckTabLift) -> Int {
         let start: CGPoint = slotOrigin(lift.startSlot)
         let midX: CGFloat = start.x + lift.translation.width + cardWidth / 2
-        let midY: CGFloat = start.y + lift.translation.height + cardHeight / 2
+        let midY: CGFloat = start.y + lift.translation.height + lift.shift + cardHeight / 2
         let column: Int = midX < width / 2 ? 0 : 1
         let row: Int = max(0, Int((midY / (cardHeight + Self.gap)).rounded(.down)))
         let index: Int = row * 2 + column - lift.lead
@@ -204,8 +207,45 @@ struct DeckTabsGrid: View {
 
     // MARK: The hold and drag
 
+    /// A hold on a card (from its `DeckTabTouches`).
+    private func held(_ touch: DeckTabTouch, episode: PodcastEpisode) {
+        let id: String = episode.episodeID
+        switch touch {
+        case .holdBegan:
+            if canMove(episode) { began(id) } else { beganStill(id) }
+        case .holdMoved(let travel, let shift):
+            if still?.id == id {
+                if hypot(travel.width, travel.height) > 8 { still?.moved = true }
+            } else if lift?.id == id {
+                moved(travel, shift: shift)
+            }
+        case .holdEnded(let cancelled):
+            if still?.id == id {
+                endedStill(cancelled: cancelled)
+            } else if lift?.id == id {
+                ended(cancelled: cancelled)
+            }
+        default:
+            break
+        }
+    }
+
+    /// A tab that can't move (the one playing, New, Saved): a still hold
+    /// gives its menu when the finger lifts.
+    private func beganStill(_ id: String) {
+        guard lift == nil, still == nil else { return }
+        still = DeckTabStill(id: id)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func endedStill(cancelled: Bool) {
+        guard let current = still else { return }
+        still = nil
+        if !current.moved && !cancelled { menuFor = current.id }
+    }
+
     private func began(_ id: String) {
-        guard lift == nil, model.group == .upNext else { return }
+        guard lift == nil, still == nil, model.group == .upNext else { return }
         let playing: String? = playingID
         guard id != playing, let slot = tabs.firstIndex(where: { $0.episodeID == id }) else { return }
         let order: [String] = tabs.map(\.episodeID).filter { $0 != playing }
@@ -219,10 +259,11 @@ struct DeckTabsGrid: View {
         }
     }
 
-    private func moved(_ translation: CGSize) {
+    private func moved(_ translation: CGSize, shift: CGFloat) {
         guard var current = lift, current.phase != .dropping else { return }
         current.translation = translation
-        if hypot(translation.width, translation.height) > 8 { current.moved = true }
+        current.shift = shift
+        if hypot(translation.width, translation.height) > 8 || abs(shift) > 8 { current.moved = true }
         let to: Int = target(for: current)
         guard let from = current.order.firstIndex(of: current.id), from != to else {
             lift = current
@@ -238,8 +279,8 @@ struct DeckTabsGrid: View {
     private func ended(cancelled: Bool) {
         guard var current = lift else { return }
         model.reordering = false
-        let still: Bool = !current.moved
-        if cancelled || still {
+        let stayed: Bool = !current.moved
+        if cancelled || stayed {
             current.order = current.startOrder
         }
         commit(current)
@@ -248,7 +289,7 @@ struct DeckTabsGrid: View {
         let id: String = current.id
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) {
             if lift?.id == id && lift?.phase == .dropping { lift = nil }
-            if still && !cancelled { menuFor = id }
+            if stayed && !cancelled { menuFor = id }
         }
     }
 
@@ -283,8 +324,16 @@ private struct DeckTabLift {
     /// The order it's being dragged into.
     var order: [String]
     var translation: CGSize = .zero
+    /// How far the page has scrolled by itself since the lift.
+    var shift: CGFloat = 0
     var moved = false
     var phase: Phase = .lifting
+}
+
+/// A hold on a tab that can't be dragged.
+private struct DeckTabStill {
+    let id: String
+    var moved = false
 }
 
 /// The gap the lifted tab will drop into.
@@ -298,66 +347,399 @@ private struct DeckTabGap: View {
     }
 }
 
-/// VoiceOver actions for a tab that can move.
+/// VoiceOver actions: Move earlier / later for a tab that can move, and
+/// the tab's menu.
 private struct DeckTabHooks {
-    let earlier: () -> Void
-    let later: () -> Void
+    let earlier: (() -> Void)?
+    let later: (() -> Void)?
     let more: () -> Void
 }
 
-/// Touch and hold (0.35 s, the finger kept within 8 pt) to lift a tab;
-/// then it reports how far the finger has gone (against the screen, as the
-/// grid doesn't scroll while a tab is lifted). Pans (scrolling, the
-/// card's swipe to close) wait until the hold has failed, so a swipe that
-/// starts without the hold scrolls as usual and a lifted tab never
-/// scrolls the page.
-private struct DeckTabHold: UIGestureRecognizerRepresentable {
-    let isEnabled: Bool
-    let began: () -> Void
-    let changed: (CGSize) -> Void
-    /// true when iOS cancelled it (a call, the app going away).
-    let ended: (Bool) -> Void
 
-    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator { Coordinator() }
+// MARK: - A cell: the card, its swipes and the block behind it
 
-    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
-        let press = UILongPressGestureRecognizer()
-        press.minimumPressDuration = 0.35
-        press.allowableMovement = 8
-        press.delegate = context.coordinator
-        press.isEnabled = isEnabled
-        return press
+/// Where a sideways swipe has got to.
+private enum DeckTabSwipeZone: Equatable {
+    case idle
+    /// Left: Played (Remove in Saved), armed past 38% of the card.
+    case left(armed: Bool)
+    /// Right, under 28%: nothing yet.
+    case hint
+    /// Right, 28–62%: Play next.
+    case next
+    /// Right, beyond 62%: Add to end.
+    case end
+
+    var isLeft: Bool {
+        if case .left = self { return true }
+        return false
     }
 
-    func updateUIGestureRecognizer(_ recognizer: UILongPressGestureRecognizer, context: Context) {
-        if recognizer.isEnabled != isEnabled { recognizer.isEnabled = isEnabled }
+    var armed: Bool {
+        switch self {
+        case .left(let armed): return armed
+        case .next, .end: return true
+        case .idle, .hint: return false
+        }
+    }
+}
+
+/// One tab in the grid. Its `DeckTabTouches` gives taps (open) and swipes
+/// to the cell and holds to the grid.
+///
+/// Swipe left (Paul, 16 Nov 2026: "Swipe left marks as played with a
+/// visual confirmation"): the card follows the finger over a red block
+/// with ✓ and "Played"; past 38% of its width (or a quick flick) it arms,
+/// let go and the card springs back, a white "✓ PLAYED" pill shows on it,
+/// then it folds away and is marked played (Undo). Swipe right: Play next
+/// (green, 28–62%), further Add to end (ink); let go and the tab glides to
+/// its new place with a ring pulse (Undo). Both keep each show in order.
+/// The tab playing can only be swiped left; Saved tabs only left (off the
+/// Saved list).
+private struct DeckTabCell: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @Environment(DeckTabsModel.self) private var model
+    let episode: PodcastEpisode
+    let place: String?
+    /// Lifted out (its copy follows the finger): only the gap shows here.
+    let hidden: Bool
+    let height: CGFloat
+    let hooks: DeckTabHooks
+    let hold: (DeckTabTouch) -> Void
+
+    @State private var drag: CGFloat = 0
+    @State private var width: CGFloat = 170
+    @State private var zone: DeckTabSwipeZone = .idle
+    /// A swipe's action is under way: further touches wait.
+    @State private var busy = false
+    @State private var stamped = false
+    @State private var folding = false
+    @State private var ringOpacity: Double = 0
+    @State private var ringScale: CGFloat = 1
+
+    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
+    private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+    private var saved: Bool { model.group == .saved }
+    private var canGoRight: Bool { !isOn && !saved }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 16, style: .continuous) }
+
+    var body: some View {
+        content
+            .frame(height: height)
+            .contentShape(Rectangle())
+            .gesture(DeckTabTouches(handle: touched))
+            // Outside the gesture, so a tap on × is only ever ×.
+            .overlay(alignment: .topTrailing) { closeButton }
+            .onGeometryChange(for: CGFloat.self) { proxy in proxy.size.width } action: { new in width = new }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Open " + episode.title)
+            .accessibilityValue(episode.showTitle + ", " + DeckTabCard.detail(episode, isOn: isOn))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { model.open(episode.episodeID) }
+            .accessibilityActions { voiceOverActions }
     }
 
-    func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
-        let point: CGPoint = recognizer.location(in: nil)
-        switch recognizer.state {
-        case .began:
-            context.coordinator.start = point
-            began()
-        case .changed:
-            let start: CGPoint = context.coordinator.start
-            changed(CGSize(width: point.x - start.x, height: point.y - start.y))
-        case .ended:
-            ended(false)
-        case .cancelled, .failed:
-            ended(true)
-        default:
-            break
+    private var content: some View {
+        ZStack {
+            DeckTabSwipeBlock(zone: zone, saved: saved)
+                .opacity(blockOpacity)
+            DeckTabCard(episode: episode, place: place)
+                .overlay { stamp }
+                .offset(x: drag)
+                .opacity(hidden ? 0 : 1)
+            pulseRing
+            if hidden {
+                DeckTabGap()
+            }
+        }
+        .scaleEffect(folding ? 0.8 : 1)
+        .opacity(folding ? 0 : 1)
+    }
+
+    /// The block fades in over the first 30 pt.
+    private var blockOpacity: Double {
+        drag == 0 ? 0 : Double(min(1, abs(drag) / 30))
+    }
+
+    private var closeButton: some View {
+        Button(action: close) { DeckTabCloseGlyph() }
+            .buttonStyle(.plain)
+            .offset(x: drag)
+            .opacity(hidden || folding || stamped ? 0 : 1)
+            .allowsHitTesting(!hidden && !busy)
+            .accessibilityHidden(true)
+    }
+
+    /// "✓ PLAYED" over a dark wash, after a left swipe goes through.
+    private var stamp: some View {
+        ZStack {
+            Color.black.opacity(stamped ? 0.35 : 0)
+            HStack(spacing: 7) {
+                Image(systemName: saved ? "xmark" : "checkmark")
+                    .font(.system(size: 14, weight: .heavy))
+                Text(saved ? "REMOVED" : "PLAYED")
+                    .font(Theme.outfit(17, .heavy))
+                    .tracking(1)
+            }
+            .foregroundStyle(Color(hex: 0x1C1B1A))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(Capsule().fill(Color.white))
+            .shadow(color: Color.black.opacity(0.25), radius: 9, y: 6)
+            .scaleEffect(stamped ? 1 : 0.6)
+            .opacity(stamped ? 1 : 0)
+        }
+        .clipShape(shape)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    /// A brief ink ring after a right swipe moves the tab.
+    private var pulseRing: some View {
+        shape
+            .strokeBorder(Theme.ink, lineWidth: 3)
+            .scaleEffect(ringScale)
+            .opacity(ringOpacity)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var voiceOverActions: some View {
+        if let earlier = hooks.earlier { Button("Move earlier", action: earlier) }
+        if let later = hooks.later { Button("Move later", action: later) }
+        Button("More", action: hooks.more)
+        if canGoRight {
+            Button("Play next") { actions.playNextInOrder(episode) }
+            Button("Add to end") { actions.addToEnd(episode) }
+        }
+        Button(saved ? "Close tab, remove from Saved" : "Close tab, mark played", action: close)
+    }
+
+    // MARK: Touches
+
+    private func touched(_ touch: DeckTabTouch) {
+        switch touch {
+        case .tap:
+            guard !busy, !model.reordering, !hidden else { return }
+            model.open(episode.episodeID)
+        case .holdBegan, .holdMoved, .holdEnded:
+            guard !busy, drag == 0 else { return }
+            hold(touch)
+        case .swipeMoved(let x):
+            swiped(x)
+        case .swipeEnded(let x, let speed, let cancelled):
+            released(x, speed: speed, cancelled: cancelled)
         }
     }
 
-    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        var start: CGPoint = .zero
+    private func zone(for dx: CGFloat) -> DeckTabSwipeZone {
+        let w: CGFloat = max(width, 1)
+        if dx < 0 { return .left(armed: -dx > w * 0.38) }
+        guard dx > 0, canGoRight else { return .idle }
+        if dx < w * 0.28 { return .hint }
+        if dx < w * 0.62 { return .next }
+        return .end
+    }
 
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
-                               shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-            otherGestureRecognizer is UIPanGestureRecognizer
+    private func swiped(_ x: CGFloat) {
+        guard !busy, !model.reordering, !hidden else { return }
+        // Only a little give where there's nothing to do.
+        let dx: CGFloat = (x > 0 && !canGoRight) ? x * 0.15 : x
+        drag = dx
+        let next: DeckTabSwipeZone = zone(for: dx)
+        guard next != zone else { return }
+        if next.armed {
+            let style: UIImpactFeedbackGenerator.FeedbackStyle = dx < 0 ? .medium : .light
+            UIImpactFeedbackGenerator(style: style).impactOccurred()
         }
+        zone = next
+    }
+
+    private func released(_ x: CGFloat, speed: CGFloat, cancelled: Bool) {
+        guard !busy else { return }
+        var chosen: DeckTabSwipeZone = zone
+        if speed < -700 && drag < -12 { chosen = .left(armed: true) }
+        if cancelled || model.reordering || hidden || !chosen.armed {
+            withAnimation(.spring(duration: 0.3, bounce: 0.2)) { drag = 0 }
+            return
+        }
+        busy = true
+        switch chosen {
+        case .left:
+            playedOut()
+        case .next:
+            moveRight(toEnd: false)
+        case .end:
+            moveRight(toEnd: true)
+        case .hint, .idle:
+            busy = false
+        }
+    }
+
+    /// Back in place, the pill, then it folds away and is closed (Undo).
+    private func playedOut() {
+        withAnimation(.spring(duration: 0.28, bounce: 0.15)) { drag = 0 }
+        withAnimation(.spring(duration: 0.25, bounce: 0.35)) { stamped = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.52) {
+            withAnimation(.easeIn(duration: 0.22)) { folding = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                close()
+                // If it's still here (or Undo brings it back), it's whole.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    var instant = Transaction(animation: nil)
+                    instant.disablesAnimations = true
+                    withTransaction(instant) {
+                        stamped = false
+                        folding = false
+                    }
+                    busy = false
+                }
+            }
+        }
+    }
+
+    /// Back in place, then Up next changes (the grid glides it to its new
+    /// place) and a ring pulses round it.
+    private func moveRight(toEnd: Bool) {
+        withAnimation(.spring(duration: 0.28, bounce: 0.15)) { drag = 0 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            if toEnd { actions.addToEnd(episode) } else { actions.playNextInOrder(episode) }
+            busy = false
+            pulse()
+        }
+    }
+
+    private func pulse() {
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            ringScale = 1
+            ringOpacity = 0.55
+        }
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.9)) {
+                ringScale = 1.08
+                ringOpacity = 0
+            }
+        }
+    }
+
+    private func close() {
+        actions.close(episode)
+    }
+}
+
+/// What shows behind a card being swiped: red Played on the right for a
+/// left swipe; grey, then green Play next, then ink Add to end on the left
+/// for a right swipe. The icon goes white with an ink tick once it would
+/// happen on letting go.
+private struct DeckTabSwipeBlock: View {
+    let zone: DeckTabSwipeZone
+    let saved: Bool
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        row
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(shape.fill(colour))
+            .animation(.easeOut(duration: 0.12), value: zone)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var row: some View {
+        if zone.isLeft {
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                words(alignment: .trailing)
+                icon
+            }
+        } else if zone != .idle {
+            HStack(spacing: 8) {
+                icon
+                words(alignment: .leading)
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var icon: some View {
+        let armed: Bool = zone.armed
+        return ZStack {
+            Circle().fill(armed ? Color.white : Color.white.opacity(0.22))
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(armed ? Color(hex: 0x1C1B1A) : Color.white)
+        }
+        .frame(width: 34, height: 34)
+        .scaleEffect(armed ? 1.22 : 1)
+    }
+
+    private func words(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 1) {
+            Text(title)
+                .font(Theme.outfit(15, .heavy))
+            Text(hint)
+                .font(Theme.outfit(11, .semibold))
+                .opacity(0.85)
+        }
+        .foregroundStyle(Color.white)
+        .multilineTextAlignment(alignment == .trailing ? .trailing : .leading)
+        .lineLimit(2)
+        .minimumScaleFactor(0.8)
+    }
+
+    private var colour: Color {
+        switch zone {
+        case .left: return Color(hex: 0xD9503B)
+        case .hint: return Color(hex: 0x8E8984)
+        case .next: return Color(hex: 0x2F8F5B)
+        case .end: return Color(hex: 0x1C1B1A)
+        case .idle: return Color.clear
+        }
+    }
+
+    private var symbol: String {
+        switch zone {
+        case .left: return saved ? "xmark" : "checkmark"
+        case .hint, .next: return "arrow.up"
+        case .end: return "arrow.down"
+        case .idle: return "checkmark"
+        }
+    }
+
+    private var title: String {
+        switch zone {
+        case .left: return saved ? "Remove" : "Played"
+        case .hint, .next: return "Play next"
+        case .end: return "Add to end"
+        case .idle: return ""
+        }
+    }
+
+    private var hint: String {
+        switch zone {
+        case .left(let armed): return armed ? "let go" : "keep going"
+        case .hint: return "keep going"
+        case .next: return "let go, or keep going"
+        case .end: return "let go"
+        case .idle: return ""
+        }
+    }
+}
+
+/// × on a soft dark circle (the cell's close key, and on the lifted copy).
+private struct DeckTabCloseGlyph: View {
+    var body: some View {
+        Image(systemName: "xmark")
+            .font(.system(size: 10, weight: .bold))
+            .foregroundStyle(Color.white)
+            .frame(width: 24, height: 24)
+            .background(Circle().fill(Color.black.opacity(0.4)))
+            .frame(width: 40, height: 40)
+            .contentShape(Rectangle())
     }
 }
 
@@ -366,50 +748,24 @@ private struct DeckTabHold: UIGestureRecognizerRepresentable {
 /// One tab, in full colour (Paul, 16 Nov 2026): the artwork fills the
 /// card and fades at the foot into the show's colour, where the show, the
 /// title and the time left (or date) sit in white with the small ring.
-/// × top right on a soft dark circle, the order number in the top left
-/// corner, and a dark edge with a white line inside on the tab playing.
+/// The order number in the top left corner, and a dark edge with a white
+/// line inside on the tab playing. Only the look: touches, × and swipes
+/// are the cell's (`DeckTabCell`).
 private struct DeckTabCard: View {
-    @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
-    @Environment(DeckTabsModel.self) private var model
     let episode: PodcastEpisode
     /// Its place in Up next ("Now", "1", "2"…), or nil.
     var place: String? = nil
     /// The copy that follows the finger while dragging.
     var lifted = false
-    /// Can be dragged (Up next, not the one playing): no iOS hold menu.
-    var reorderable = false
-    var hooks: DeckTabHooks? = nil
 
-    /// How far the card has been swiped sideways (left only).
-    @State private var drag: CGFloat = 0
-    @State private var width: CGFloat = 170
-    @State private var closing = false
-    @State private var notes: PodcastEpisode?
-
-    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 16, style: .continuous) }
     private var colour: Color { DeckRings.showColour(episode) }
 
     var body: some View {
-        card
-            .offset(x: drag)
-            .opacity(1 - Double(min(0.6, abs(drag) / max(width, 1) * 0.6)))
-            .gesture(DeckShowPan(isEnabled: !closing && !lifted && !model.reordering, changed: moved, ended: released))
-            .onGeometryChange(for: CGFloat.self) { proxy in proxy.size.width } action: { new in width = new }
-            .sheet(item: $notes) { episode in EpisodeNotesView(episode: episode) }
-            .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
-    }
-
-    private var card: some View {
-        Button { model.open(episode.episodeID) } label: { face }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Open " + episode.title)
-            .accessibilityValue(episode.showTitle + ", " + detail)
-            .accessibilityActions { voiceOverActions }
+        face
             .overlay(alignment: .topLeading) { placeBadge }
-            .overlay(alignment: .topTrailing) { closeButton }
             .clipShape(shape)
             .overlay { edge }
             .background {
@@ -417,17 +773,7 @@ private struct DeckTabCard: View {
                     .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(lifted ? 0 : 0.12),
                             radius: 8, y: 3)
             }
-            .contentShape(.contextMenuPreview, shape)
-            .modifier(DeckTabContextMenu(enabled: !reorderable && !lifted) { menu })
-    }
-
-    @ViewBuilder private var voiceOverActions: some View {
-        if let hooks {
-            Button("Move earlier", action: hooks.earlier)
-            Button("Move later", action: hooks.later)
-            Button("More", action: hooks.more)
-        }
-        Button(model.group == .saved ? "Close tab, remove from Saved" : "Close tab, mark played", action: close)
+            .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
     }
 
     /// Artwork, the fade into the show's colour, and the words.
@@ -521,20 +867,6 @@ private struct DeckTabCard: View {
         }
     }
 
-    private var closeButton: some View {
-        Button(action: close) {
-            Image(systemName: "xmark")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(Color.white)
-                .frame(width: 24, height: 24)
-                .background(Circle().fill(Color.black.opacity(0.4)))
-                .frame(width: 40, height: 40)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityHidden(true)
-    }
-
     /// "Now", "1", "2"… as a plain white number in the artwork's corner,
     /// over a faint shade that fades in from the corner so it reads on
     /// pale artwork too (Paul, 16 Nov 2026: the ink pill was "a bit too
@@ -560,70 +892,15 @@ private struct DeckTabCard: View {
         }
     }
 
-    @ViewBuilder private var menu: some View {
-        Button(isOn && player.isPlaying ? "Pause" : "Play now", systemImage: isOn && player.isPlaying ? "pause" : "play") {
-            actions.playNow(episode)
-        }
-        Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { actions.playNext(episode) }
-        if actions.isQueued(episode) {
-            Button("Remove from Up next", systemImage: "minus.circle") { actions.removeFromUpNext(episode) }
-        }
-        Button("Episode notes", systemImage: "doc.text") { notes = episode }
-        DeckSaveForLaterMenuItem(episode: episode)
-    }
-
     /// "Playing · 34m left", "34m left" once started, else "9 Nov · 52m".
-    private var detail: String {
+    private var detail: String { Self.detail(episode, isOn: isOn) }
+
+    static func detail(_ episode: PodcastEpisode, isOn: Bool) -> String {
         let date: String = episode.published.formatted(.dateTime.day().month(.abbreviated))
         guard let duration = episode.duration, duration > 0 else { return isOn ? "Playing" : date }
         let left: TimeInterval = episode.timeLeft ?? duration
         if isOn { return "Playing · " + DeckUpNextTime.length(left) + " left" }
         if episode.position > 30 && left > 0 { return DeckUpNextTime.length(left) + " left" }
         return date + " · " + DeckUpNextTime.length(duration)
-    }
-
-    // MARK: Swipe to close (like Safari)
-
-    private func moved(_ x: CGFloat) {
-        guard !closing else { return }
-        // Left only; a little give to the right.
-        drag = x < 0 ? x : x * 0.15
-    }
-
-    private func released(_ velocity: CGFloat) {
-        guard !closing else { return }
-        let far: Bool = drag < -width * 0.35
-        let flick: Bool = velocity < -700 && drag < -12
-        if far || flick {
-            closing = true
-            withAnimation(.easeOut(duration: 0.2)) { drag = -width * 1.4 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                close()
-                // If Undo brings it back, it comes back in place.
-                drag = 0
-                closing = false
-            }
-        } else {
-            withAnimation(.spring(duration: 0.3)) { drag = 0 }
-        }
-    }
-
-    private func close() {
-        actions.close(episode)
-    }
-}
-
-/// iOS's own hold menu, only on tabs that can't be dragged (the hold
-/// lifts the others).
-private struct DeckTabContextMenu<Items: View>: ViewModifier {
-    let enabled: Bool
-    @ViewBuilder let items: () -> Items
-
-    @ViewBuilder func body(content: Content) -> some View {
-        if enabled {
-            content.contextMenu { items() }
-        } else {
-            content
-        }
     }
 }

@@ -45,15 +45,28 @@ struct UndoBar: View {
         }
     }
 
+    /// The label, and under it the note when there is one.
+    private func deckWords(_ action: UndoAction) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(action.label)
+                .font(Theme.outfit(15, .semibold))
+                .foregroundStyle(Color.white)
+                .lineLimit(1)
+            if let note = action.note {
+                Text(note)
+                    .font(Theme.outfit(12, .medium))
+                    .foregroundStyle(Color.white.opacity(0.72))
+                    .lineLimit(2)
+            }
+        }
+    }
+
     /// Deck (Paul, 15 Nov 2026: it was "the same colour as the background
     /// so gets lost"): a near-black bar with white words and a white Undo
     /// pill, a soft shadow, on the cards' 16 pt edges.
     private func deckBar(_ action: UndoAction) -> some View {
         HStack(spacing: 12) {
-            Text(action.label)
-                .font(Theme.outfit(15, .semibold))
-                .foregroundStyle(Color.white)
-                .lineLimit(1)
+            deckWords(action)
             Spacer(minLength: 8)
             Button { action.restore() } label: {
                 Text("Undo")
@@ -67,7 +80,8 @@ struct UndoBar: View {
         }
         .padding(.leading, 18)
         .padding(.trailing, 8)
-        .frame(height: 52)
+        .padding(.vertical, action.note == nil ? 0 : 8)
+        .frame(minHeight: 52)
         .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(hex: 0x1C1B1A)))
         .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
         .task(id: action.id) {
