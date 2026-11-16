@@ -2672,22 +2672,41 @@ Paul's notes after build 155, all in Deck:
   full-colour cards, renumbers live during the hand-made drag, and an
   open tab's top line says "2nd in Up next" / "Playing now".
 
+## Done in build 162 (16 Nov 2026; Paul: built now)
+
+- **Tabs: hand-made drag to reorder** (Paul, 16 Nov 2026, build 159
+  recording: the lifted tab dropped down on its own and it wasn't clear
+  which tab it was replacing). In the Up next group, touch and hold a
+  tab (0.35 s, a tick): it lifts right where it is, a little bigger with
+  a shadow, and follows the finger; the other tabs slide out of the way
+  into their new places as it moves (a tick at each), their corner
+  numbers renumbering as they go; a dashed gap shows where it will land;
+  let go and it settles into the gap and Up next takes the new order
+  (same `moveQueue` as the other reorders). Hold and let go without
+  moving gives the tab's menu (Play now, Play next, Remove from Up next,
+  Episode notes, Save for later). A swipe that starts without the hold
+  scrolls as usual; the page doesn't scroll while a tab is lifted. The
+  tab playing ("Now") stays first and can't be moved. New and Saved tabs
+  keep iOS's own hold menu. VoiceOver: Move earlier / Move later / More.
+  `DeckTabsGrid` (`DeckTabHold` long press, `DeckTabLift`, the lifted
+  copy drawn over the grid), `DeckTabsModel.reordering`. Not done: the
+  page doesn't scroll by itself when a tab is dragged to the top or
+  bottom edge, so a tab moves within what's on screen (drag, scroll,
+  drag again for long moves). Check on the phone: scrolling that starts
+  on a tab, the hold timing, the menu after a still hold.
+- **Tabs in full colour** (Paul, 16 Nov 2026): each tab card is its
+  artwork filling the card, fading at the foot into the show's colour
+  (`DeckRings.showColour`), where the show (small capitals), the title
+  (two lines' room) and the time left / date sit in white beside the
+  small progress ring (white on the colour). × top right on a soft dark
+  circle; the order number in the top left corner as before (corner
+  shade); the tab playing has a dark 3 pt edge with a thin white line
+  inside so it shows on any colour. Same two-across grid; every card is
+  now the same height (1.25 × its width) (`DeckTabCard`). Check on the
+  phone: white text on pale artwork colours.
+
 ## Queued for the next app build
 
-- **Tabs: drag to reorder feels wrong** (Paul, 16 Nov 2026, FNB, build
-  159 screen recording): the lifted tab drops down a bit on its own and
-  it isn't clear which tab you're replacing. Wants the other cards to
-  shift out of the way as you drag (like Safari / the home screen). Plan:
-  a hand-made reorder in the tab grid (`DeckTabsGrid`): touch and hold
-  lifts the card under the finger (no jump), the other cards slide into
-  their new places live as it moves, drop puts it in the gap; holding
-  without moving still gives the menu.
-- **Tabs: full-colour cards** (Paul, 16 Nov 2026, FNB): redesign the tab
-  cards to be full colour with the artwork, keeping all the important
-  text (show, title, time left / date, progress, ×, playing edge). Plan:
-  the artwork fills the card, fading into the show's colour at the foot
-  where the show / title / time sit in white; × and the small ring on
-  top. Mock up first if unsure.
 - **One tab = player + episode page + show settings** (Paul, 16 Nov 2026,
   FNB: "when you tap through on a card can it open the episode in a
   player mode with all the standard player interface and the show
