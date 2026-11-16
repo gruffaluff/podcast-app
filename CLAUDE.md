@@ -3009,6 +3009,17 @@ Paul's notes after build 164:
   shows the time and "Half speed" etc. in the row (`DeckPlayerScrub(shared:)`
   writes into `DeckDialScrub.time / hint`). Both players.
 
+- **Read along lights the words as they're said** (Paul, 16 Nov 2026:
+  "the transcript follows the sentences paragraphs but doesn't highlight
+  words as spoken"; the Haar look had it, the Deck look's `DeckReadAlong`
+  never did). On the line now: words said in full white, the word now
+  white on a soft white mark, words to come faint (`lineText`,
+  `litText`, `DeckReadAlongWords`). Transcripts time lines, not words, so
+  the word is worked out across the line by its letters, and between the
+  player's twice-a-second reports it runs on the clock 10× a second
+  (`TimelineView`), only on the line now while this episode plays. It can
+  only be as right as the line timing, so it shares the sync issue below.
+
 ## Queued for the next app build
 
 - **Pull down to close the player keeps you where you were** (Paul, 16
