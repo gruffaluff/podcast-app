@@ -920,11 +920,14 @@ private struct DeckTabCard: View {
 
     private var words: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(episode.showTitle.uppercased())
-                .font(Theme.outfit(10, .bold))
-                .tracking(0.6)
-                .foregroundStyle(Color.white.opacity(0.85))
-                .lineLimit(1)
+            HStack(spacing: 5) {
+                if fresh { newFlag }
+                Text(episode.showTitle.uppercased())
+                    .font(Theme.outfit(10, .bold))
+                    .tracking(0.6)
+                    .foregroundStyle(Color.white.opacity(0.85))
+                    .lineLimit(1)
+            }
             Text(episode.title)
                 .font(Theme.outfit(14, .bold))
                 .foregroundStyle(Color.white)
@@ -981,6 +984,23 @@ private struct DeckTabCard: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
         }
+    }
+
+    /// Out in the last 48 hours and not started (`DeckTabSource.isFresh`).
+    private var fresh: Bool { !isOn && DeckTabSource.isFresh(episode) }
+
+    /// A small coral "NEW" pill before the show's name (Paul, 16 Nov 2026:
+    /// New left the groups; new episodes sit in Up next flagged instead).
+    private var newFlag: some View {
+        Text("NEW")
+            .font(Theme.outfit(9, .heavy))
+            .tracking(0.6)
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(DeckRings.coral))
+            .fixedSize()
+            .accessibilityLabel("New")
     }
 
     /// "Playing · 34m left", "34m left" once started, else "9 Nov · 52m".

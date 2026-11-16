@@ -2894,7 +2894,8 @@ Paul's notes after build 164:
   it white with a shaded corner like in tabs"): `DeckCornerShadeLabel`
   (shared with the tab cards' order number) in the top-right corner of
   `DeckShowTile`.
-- **Tab groups: Up next · New · Started, as chips above the bar** (Paul,
+- **Tab groups: Up next · New · Started, as chips above the bar**
+  (replaced the same day: see "New and the group pill gone" below) (Paul,
   16 Nov 2026, option A of the mock-up: "let's get rid of saved and have up
   next, new and started as chips above the bar, and shows alone on the
   your shows tab. Started should be anything started"). Tabs mode only;
@@ -2947,6 +2948,22 @@ Paul's notes after build 164:
   in one animation everywhere. Not far enough: a real spring back.
 - No chapters pill: Paul was likely still on 163; on 164 it shows on the
   playing tab (a tab not playing has no chapter row).
+
+- **New and the group pill gone: Up next only, new ones flagged**
+  (Paul, 16 Nov 2026, after the New group lost its "already looked at"
+  list: "everything new adds to up next in the relevant place based on
+  its rules … new episodes have an indicator … we drop the new pill. so
+  the up next tab is simple"). Tabs mode only. The Up next · New · Started
+  pill above the bar is gone (`DeckTabsBar.pillRoom` 0; `DeckTabGroupPill`
+  kept, unused) and the Tabs page is always Up next (`DeckTabGroup` is Up
+  next / Started; the model always starts on Up next). New episodes reach
+  Up next by their show's rule as they always did (Top / Bottom; Nowhere
+  shows don't add, so theirs stay on the show page). An Up next tab whose
+  episode came out in the last 48 hours and isn't started or playing has a
+  small coral NEW pill before the show's name (`DeckTabSource.isFresh`,
+  `DeckTabCard.newFlag`). Started went with the pill: started episodes in
+  Up next show their progress ring; ones not in Up next are on their show
+  page (could come back as a row if missed). Card deck mode unchanged.
 
 ## Queued for the next app build
 

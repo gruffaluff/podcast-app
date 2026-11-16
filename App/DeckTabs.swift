@@ -25,15 +25,17 @@ enum DeckHome {
     }
 }
 
-/// The tab groups: Up next, New, Started (Saved for later is gone; an old
-/// saved choice of it falls back to Up next).
+/// The tab groups: Up next and Started. New went (Paul, 16 Nov 2026:
+/// "everything new adds to up next in the relevant place … we drop the
+/// new pill"): new episodes go into Up next by their show's rule and their
+/// tab is flagged New (`DeckTabSource.isFresh`). Saved for later went
+/// earlier; an old saved choice of either falls back to Up next.
 enum DeckTabGroup: String, CaseIterable {
-    case upNext, new, started
+    case upNext, started
 
     var name: String {
         switch self {
         case .upNext: return "Up next"
-        case .new: return "New"
         case .started: return "Started"
         }
     }
@@ -56,8 +58,8 @@ final class DeckTabsModel {
     var reordering = false
 
     init() {
-        let saved: String = UserDefaults.standard.string(forKey: Self.groupKey) ?? ""
-        group = DeckTabGroup(rawValue: saved) ?? .upNext
+        // Always Up next now: the group pill went (Paul, 16 Nov 2026).
+        group = .upNext
     }
 
     func choose(_ next: DeckTabGroup) {
@@ -102,14 +104,13 @@ enum DeckTabSource {
         return list
     }
 
-    /// The Shows tab's "New since you last looked": out this week, unplayed,
-    /// not looked at in the catch-up yet, oldest first.
-    static func new(_ unplayed: [PodcastEpisode], triaged: String) -> [PodcastEpisode] {
-        let cutoff: Date = Date().addingTimeInterval(-LibraryView.newFor)
-        let seen: Set<String> = DeckTriage.seen(triaged)
-        return unplayed
-            .filter { $0.podcast != nil && DeckShowOrder.isNew($0, cutoff: cutoff) && !seen.contains($0.episodeID) }
-            .sorted { $0.published < $1.published }
+    /// Flagged New on its Up next tab: came out in the last 48 hours, not
+    /// played and not started yet (Paul, 16 Nov 2026: "an indicator … to
+    /// let you know it's come in … in the last 48 hours").
+    static let freshFor: TimeInterval = 48 * 3600
+
+    static func isFresh(_ episode: PodcastEpisode, now: Date = Date()) -> Bool {
+        !episode.played && episode.position <= 30 && episode.published > now.addingTimeInterval(-freshFor)
     }
 
     /// Every unfinished episode with some listening (Paul, 16 Nov 2026:
@@ -153,7 +154,6 @@ enum DeckTabSource {
                      unplayed: [PodcastEpisode], triaged: String, started: [PodcastEpisode]) -> [PodcastEpisode] {
         switch group {
         case .upNext: return upNext(store: store, player: player)
-        case .new: return new(unplayed, triaged: triaged)
         case .started: return Self.started(started, store: store, player: player)
         }
     }
@@ -354,7 +354,6 @@ struct DeckTabsView: View {
     private var emptyWords: String {
         switch model.group {
         case .upNext: return "New episodes open as tabs when they arrive."
-        case .new: return "Nothing new since you last looked."
         case .started: return "Episodes you've started and not finished open here as tabs."
         }
     }

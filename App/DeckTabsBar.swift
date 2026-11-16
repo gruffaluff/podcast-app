@@ -65,22 +65,18 @@ struct DeckTabsBar: View {
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
-    /// Between the Up next · New · Started pill and the bar.
+    /// Between the Up next · Started pill and the bar.
     static let pillGap: CGFloat = 10
-    /// The Tabs page's extra room for that pill.
-    static let pillRoom: CGFloat = DeckTabGroupPill.height + pillGap
+    /// The Tabs page's extra room for that pill: none now (Paul, 16 Nov
+    /// 2026: "we drop the new pill. so the up next tab is simple"); the
+    /// Tabs page is always Up next. `DeckTabGroupPill` is kept, unused,
+    /// in case the groups come back.
+    static let pillRoom: CGFloat = 0
 
     var body: some View {
         let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
                                                         unplayed: unplayed, triaged: triaged, started: started)
-        VStack(spacing: Self.pillGap) {
-            // The tab groups as chips above the bar, on the Tabs page only
-            // (Paul, 16 Nov 2026: option A, "chips above the bar").
-            if tab == 0 && !model.pagerOpen {
-                DeckTabGroupPill(count: tabs.count)
-            }
-            bar(count: tabs.count)
-        }
+        bar(count: tabs.count)
     }
 
     private func bar(count: Int) -> some View {
