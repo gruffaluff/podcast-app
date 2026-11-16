@@ -56,32 +56,6 @@ struct DeckSectionSwitcher: View {
     }
 }
 
-/// A thin strip at one edge of the screen that turns a swipe inwards into
-/// "go to the next / previous section".
-private struct DeckSectionEdge: View {
-    let leading: Bool
-    let move: () -> Void
-
-    var body: some View {
-        Color.clear
-            .frame(width: 20)
-            .frame(maxHeight: .infinity)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 10, coordinateSpace: .global)
-                    .onEnded { (value: DragGesture.Value) in
-                        let dx: CGFloat = value.translation.width
-                        let dy: CGFloat = value.translation.height
-                        let flick: CGFloat = value.predictedEndTranslation.width
-                        guard abs(dx) > abs(dy) else { return }
-                        let inward: Bool = leading ? (dx > 40 || flick > 160) : (dx < -40 || flick < -160)
-                        if inward { move() }
-                    }
-            )
-            .accessibilityHidden(true)
-    }
-}
-
 private struct DeckSectionsModifier: ViewModifier {
     @Environment(\.deckSelectTab) private var selectTab
     @Environment(LibraryStore.self) private var store
@@ -95,16 +69,11 @@ private struct DeckSectionsModifier: ViewModifier {
                 .safeAreaInset(edge: .top, spacing: 0) {
                     DeckSectionSwitcher(current: current, tabCount: tabCount)
                 }
-                .overlay(alignment: .leading) {
-                    if current > 0 {
-                        DeckSectionEdge(leading: true) { go(current - 1) }
-                    }
-                }
-                .overlay(alignment: .trailing) {
-                    if current < 2 {
-                        DeckSectionEdge(leading: false) { go(current + 1) }
-                    }
-                }
+                // Smoother scrolling (Paul, 16 Nov 2026): the edge swipe is
+                // watched alongside the page's own scrolling instead of by
+                // strips laid over the edges, which swallowed any scroll that
+                // started there.
+                .simultaneousGesture(edgeSwipe)
         } else {
             content
         }
@@ -114,6 +83,25 @@ private struct DeckSectionsModifier: ViewModifier {
         let playing: String? = player.nowPlaying?.episodeID
         let queued: Int = store.queue.filter { $0.episode.id != playing }.count
         return queued + (playing == nil ? 0 : 1)
+    }
+
+    /// A sideways swipe that starts within 20 pt of the screen's left or
+    /// right edge moves to the section before / after.
+    private var edgeSwipe: some Gesture {
+        DragGesture(minimumDistance: 16, coordinateSpace: .global)
+            .onEnded { (value: DragGesture.Value) in
+                let width: CGFloat = UIScreen.main.bounds.width
+                let startX: CGFloat = value.startLocation.x
+                let dx: CGFloat = value.translation.width
+                let dy: CGFloat = value.translation.height
+                let flick: CGFloat = value.predictedEndTranslation.width
+                guard abs(dx) > abs(dy) * 1.5 else { return }
+                if startX < 20, current > 0, dx > 50 || flick > 180 {
+                    go(current - 1)
+                } else if startX > width - 20, current < 2, dx < -50 || flick < -180 {
+                    go(current + 1)
+                }
+            }
     }
 
     private func go(_ index: Int) {

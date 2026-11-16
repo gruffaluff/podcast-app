@@ -49,9 +49,20 @@ struct CachedImage<Placeholder: View>: View {
             }
         }
         .task(id: url) {
-            guard let url else { image = nil; return }
-            if let cached = ArtworkImageCache.shared.cached(url) { image = cached; return }
-            image = await ArtworkImageCache.shared.image(for: url)
+            guard let url else {
+                if image != nil { image = nil }
+                return
+            }
+            // Smoother scrolling (Paul, 16 Nov 2026): a picture already
+            // showing isn't set again. Lazy lists and rows run this each
+            // time a row scrolls back into view, and setting the same
+            // picture redrew the row mid-scroll.
+            if let cached = ArtworkImageCache.shared.cached(url) {
+                if image !== cached { image = cached }
+                return
+            }
+            let loaded: UIImage? = await ArtworkImageCache.shared.image(for: url)
+            if image !== loaded { image = loaded }
         }
     }
 }

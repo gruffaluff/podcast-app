@@ -119,18 +119,16 @@ private struct DeckTabsBarNow: View {
             HStack(spacing: 8) {
                 Button(action: open) {
                     HStack(spacing: 10) {
-                        DeckRingArtwork(url: item.artworkURL, showTitle: item.showTitle, size: 44,
-                                        progress: progress, lineWidth: 3, gap: 2)
+                        // Smoother scrolling (Paul, 16 Nov 2026): only the
+                        // ring and the time-left line follow the clock (twice
+                        // a second), not the whole bar over the page.
+                        DeckTabsBarRing(item: item)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(item.title)
                                 .font(Theme.outfit(14, .bold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(1)
-                            Text(subtitle(item))
-                                .font(Theme.outfit(12, .medium))
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.muted)
-                                .lineLimit(1)
+                            DeckMiniTimeLeft(item: item)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -167,16 +165,20 @@ private struct DeckTabsBarNow: View {
             .accessibilityElement(children: .combine)
         }
     }
+}
+
+/// The bar's ring artwork, following the player's clock.
+private struct DeckTabsBarRing: View {
+    @Environment(PlayerModel.self) private var player
+    let item: PlayerModel.NowPlaying
+
+    var body: some View {
+        DeckRingArtwork(url: item.artworkURL, showTitle: item.showTitle, size: 44,
+                        progress: progress, lineWidth: 3, gap: 2)
+    }
 
     private var progress: Double {
         guard player.duration > 0 else { return 0 }
         return min(1, max(0, player.currentTime / player.duration))
-    }
-
-    private func subtitle(_ item: PlayerModel.NowPlaying) -> String {
-        guard player.duration > 0 else { return item.showTitle }
-        let left: TimeInterval = max(0, player.duration - player.currentTime)
-        let minutes = Int((left / 60).rounded(.up))
-        return item.showTitle + " · \(minutes)m left"
     }
 }

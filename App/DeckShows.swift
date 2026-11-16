@@ -30,15 +30,27 @@ enum DeckShowOrder {
         !episode.played && episode.published > cutoff
     }
 
-    static func entries(_ shows: [Podcast], top: [Podcast]) -> [DeckShowEntry] {
+    /// Smoother scrolling (Paul, 16 Nov 2026): the new episodes come from
+    /// one fetch of the week's unplayed episodes, grouped by show, instead
+    /// of walking every episode of every followed show (hundreds each) and
+    /// sorting them. Same result: unplayed, out in the last week, newest
+    /// first.
+    static func entries(_ shows: [Podcast], top: [Podcast], context: ModelContext) -> [DeckShowEntry] {
         let cutoff: Date = Date().addingTimeInterval(-LibraryView.newFor)
         var ranks: [String: Int] = [:]
         for (index, show) in top.enumerated() { ranks[show.feedURL] = index + 1 }
+        let descriptor = FetchDescriptor<PodcastEpisode>(
+            predicate: #Predicate { $0.played == false && $0.published > cutoff },
+            sortBy: [SortDescriptor(\PodcastEpisode.published, order: .reverse)]
+        )
+        let recent: [PodcastEpisode] = (try? context.fetch(descriptor)) ?? []
+        var byShow: [String: [PodcastEpisode]] = [:]
+        for episode in recent {
+            guard let feed = episode.podcast?.feedURL else { continue }
+            byShow[feed, default: []].append(episode)
+        }
         let list: [DeckShowEntry] = shows.map { show in
-            let fresh: [PodcastEpisode] = show.episodes
-                .filter { isNew($0, cutoff: cutoff) }
-                .sorted { $0.published > $1.published }
-            return DeckShowEntry(show: show, fresh: fresh, rank: ranks[show.feedURL])
+            DeckShowEntry(show: show, fresh: byShow[show.feedURL] ?? [], rank: ranks[show.feedURL])
         }
         return list.sorted(by: before)
     }
@@ -80,17 +92,39 @@ enum DeckShowColour {
     }
 }
 
+/// Smoother scrolling (Paul, 16 Nov 2026: Your shows "very jerky"): the
+/// Shows tab's entries, worked out only when something they depend on
+/// changes, not on every redraw. The page redraws for many small reasons
+/// (Up next changing, iCloud and the player saving every few seconds), and
+/// each redraw went through every episode of every show. Held in @State;
+/// not observed, so filling it in during a redraw is fine.
+@MainActor
+final class DeckShowsCache {
+    var key: String = ""
+    /// `stillNew` when the entries were made.
+    var stillNew: Int = 0
+    var entries: [DeckShowEntry] = []
+    /// Goes up each time `entries` is made again, so the rows below can
+    /// tell "same list" cheaply.
+    var generation: Int = 0
+    /// The page has appeared once (the first appearance needs no refresh).
+    var appeared = false
+}
+
 struct DeckShowsView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(\.deckSelectTab) private var selectTab
+    @Environment(\.deckPageShown) private var pageShown
     @Query(sort: \Podcast.title) private var savedShows: [Podcast]
     /// Followed shows only (not ones only being tried, TriedShows.swift).
     private var shows: [Podcast] { savedShows.followedOnly }
     @State private var path = NavigationPath()
-    /// Which show is on top of the deck.
-    @State private var index = 0
     @State private var showingNew = false
     @AppStorage(DeckTriage.key) private var triaged: String = ""
+    @State private var cache = DeckShowsCache()
+    /// Bumped to make the entries again (coming back to the page, closing
+    /// the New sheet), for changes the key below can't see.
+    @State private var refreshes = 0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -105,12 +139,19 @@ struct DeckShowsView: View {
         .onChange(of: store.revealInUpNext) { _, id in
             if id != nil { showingNew = false }
         }
+        .onChange(of: pageShown) { _, shown in
+            if shown { refreshes += 1 }
+        }
+        .onChange(of: showingNew) { _, open in
+            if !open { refreshes += 1 }
+        }
     }
 
     private var root: some View {
-        let entries: [DeckShowEntry] = DeckShowOrder.entries(shows, top: store.topShows)
+        let entries: [DeckShowEntry] = currentEntries()
+        let generation: Int = cache.generation
         return ScrollView {
-            content(entries)
+            content(entries, generation: generation)
         }
         .scrollIndicators(.hidden)
         .deckPage()
@@ -118,9 +159,62 @@ struct DeckShowsView: View {
         .refreshable { await store.refreshAll() }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingNew) { DeckShowsNewSheet() }
+        // Back from a show page: played / unplayed there may have changed.
+        .onAppear {
+            if cache.appeared { refreshes += 1 } else { cache.appeared = true }
+        }
     }
 
-    private func content(_ entries: [DeckShowEntry]) -> some View {
+    /// The entries from the cache, made again only when the key changes.
+    private func currentEntries() -> [DeckShowEntry] {
+        let key: String = entriesKey()
+        // Reading `played` on the cached new episodes also means the page
+        // redraws when one of them is played anywhere, and is made again.
+        // (Only when the shows are the same: an unfollowed show's episodes
+        // are gone, so they aren't read.)
+        let stale: Bool = key != cache.key || Self.stillNew(cache.entries) != cache.stillNew
+        if stale {
+            let made: [DeckShowEntry] = DeckShowOrder.entries(shows, top: store.topShows, context: store.context)
+            cache.entries = made
+            cache.generation += 1
+            cache.key = key
+            cache.stillNew = Self.stillNew(made)
+        }
+        return cache.entries
+    }
+
+    /// What the entries depend on, cheaply: each show and its place in the
+    /// ranking (no episodes read), the last feed check, Undo coming and
+    /// going (Undo can make a played episode new again), the hour (the week's cut-off moves on) and
+    /// `refreshes`.
+    private func entriesKey() -> String {
+        var parts: [String] = []
+        parts.reserveCapacity(shows.count + 4)
+        for show in shows {
+            parts.append(show.feedURL + "|" + show.autoAddRaw + "|" + String(show.topRank))
+        }
+        parts.append(store.lastChecked.map { String($0.timeIntervalSince1970) } ?? "-")
+        parts.append(store.undoAction == nil ? "u0" : "u1")
+        parts.append(String(Int(Date().timeIntervalSince1970 / 3600)))
+        parts.append(String(refreshes))
+        return parts.joined(separator: "\n")
+    }
+
+    /// How many of the entries' new episodes are still unplayed; -1 if
+    /// any has been deleted since (e.g. iCloud merging duplicates), so the
+    /// entries are made again without reading it.
+    private static func stillNew(_ entries: [DeckShowEntry]) -> Int {
+        var count: Int = 0
+        for entry in entries {
+            for episode in entry.fresh {
+                if episode.isDeleted || episode.modelContext == nil { return -1 }
+                if !episode.played { count += 1 }
+            }
+        }
+        return count
+    }
+
+    private func content(_ entries: [DeckShowEntry], generation: Int) -> some View {
         // "New · n" counts what you haven't looked at in the catch-up yet.
         let seen: Set<String> = DeckTriage.seen(triaged)
         let newCount: Int = entries.reduce(0) { total, entry in
@@ -139,9 +233,10 @@ struct DeckShowsView: View {
                 // Save for later (Paul, 15 Nov 2026): only when something's saved.
                 DeckSavedForLaterLink()
                     .padding(.top, 10)
-                newDeck(entries.filter { !$0.fresh.isEmpty })
+                newDeck(entries.filter { !$0.fresh.isEmpty }, generation: generation)
                     .padding(.top, 18)
-                DeckAllShowsRow(entries: entries)
+                DeckAllShowsRow(entries: entries, generation: generation)
+                    .equatable()
                     .padding(.top, 22)
             }
         }
@@ -151,11 +246,11 @@ struct DeckShowsView: View {
     /// The deck holds only shows with something new (Paul, 14 Nov 2026:
     /// "let's show shows with new episodes"), so swiping through it is
     /// catching up show by show; All your shows below lists every show.
-    @ViewBuilder private func newDeck(_ withNew: [DeckShowEntry]) -> some View {
+    @ViewBuilder private func newDeck(_ withNew: [DeckShowEntry], generation: Int) -> some View {
         if withNew.isEmpty {
             DeckShowsCaughtUp()
         } else {
-            DeckShowStack(entries: withNew, index: $index)
+            DeckShowStack(entries: withNew, generation: generation)
         }
     }
 

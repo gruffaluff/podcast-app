@@ -22,6 +22,8 @@ struct DeckShowEpisodeList: View {
     /// unplayed): tap episodes to tick them, then act on them all.
     @State private var selecting = false
     @State private var selected: Set<String> = []
+    /// The show's episodes newest first, kept between redraws.
+    @State private var sortMemo = DeckShowEpisodeSortMemo()
 
     var body: some View {
         let episodes: [PodcastEpisode] = visible()
@@ -89,7 +91,7 @@ struct DeckShowEpisodeList: View {
     /// Newest first; unplayed only unless All is on or something's typed
     /// (every word typed, in the title or notes).
     private func visible() -> [PodcastEpisode] {
-        let all: [PodcastEpisode] = show.episodes.sorted { $0.published > $1.published }
+        let all: [PodcastEpisode] = newestFirst()
         let words: [String] = query.lowercased().split(separator: " ").map(String.init)
         if !words.isEmpty {
             return all.filter { episode in
@@ -98,6 +100,23 @@ struct DeckShowEpisodeList: View {
             }
         }
         return showAll ? all : all.filter { !$0.played }
+    }
+
+    /// Smoother scrolling (Paul, 16 Nov 2026): sorting hundreds of
+    /// episodes by date (each date read from the saved data) happened on
+    /// every redraw: each played tick, Up next change and letter typed. Now
+    /// it's sorted again only when the set of episodes changes (worked out
+    /// from which objects they are, without reading any of them).
+    private func newestFirst() -> [PodcastEpisode] {
+        let all: [PodcastEpisode] = show.episodes
+        var mix: Int = all.count
+        for episode in all { mix ^= ObjectIdentifier(episode).hashValue }
+        if sortMemo.mix != mix || sortMemo.count != all.count {
+            sortMemo.sorted = all.sorted { $0.published > $1.published }
+            sortMemo.mix = mix
+            sortMemo.count = all.count
+        }
+        return sortMemo.sorted
     }
 
     /// EPISODES on its own line, then the pills (never squeezed: Paul saw
@@ -164,6 +183,14 @@ struct DeckShowEpisodeList: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
     }
+}
+
+/// A show's episodes newest first, held between redraws (not observed).
+@MainActor
+final class DeckShowEpisodeSortMemo {
+    var mix: Int = 0
+    var count: Int = -1
+    var sorted: [PodcastEpisode] = []
 }
 
 /// Search this show's episodes (titles and notes).

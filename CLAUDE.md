@@ -2663,6 +2663,26 @@ Paul's notes after build 155, all in Deck:
   show page in place of Following) turns it into a normal followed show
   (Bottom, downloads on). Older looks' preview page not changed.
 
+- **Smoother scrolling and animations** (Paul, 16 Nov 2026: Your shows
+  "very jerky … scrolling and animations need smoothing throughout").
+  Done on the branch: the Shows tab worked out each show's new episodes
+  by walking every episode of every show on every redraw; now one fetch of
+  the week's unplayed episodes, kept between redraws (`DeckShowsCache`,
+  remade when shows, ranking, the last feed check, Undo, the hour or a
+  return to the page change); the sideways show row and All your shows
+  grid only rebuild when that list changes (`.equatable()`), the grid's
+  sort is kept (`DeckShowsSortMemo`), tiles drawn once (`drawingGroup`);
+  the mini player and tabs bar only redraw their ring and time-left line
+  with the clock (`DeckMiniTimeLeft`, `DeckTabsBarRing`); the tab pager's
+  pull-down no longer refetches tabs each frame; the show page keeps its
+  episode sort; `CachedImage` doesn't reset a picture already shown; the
+  section edge swipe no longer lays strips over the screen edges that
+  swallowed scrolls starting there (`DeckSections` edge swipe now runs
+  alongside scrolling). Check on the phone: Shows tab scrolling, the tile
+  names' sharpness, new counts updating after playing / marking played.
+  Mock-up of everything waiting for this build:
+  https://claude.ai/artifact/TgbPAWS9vWQQvMvaCLTYC2.
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul

@@ -20,8 +20,6 @@ struct DeckTabsPager: View {
     let openPlayer: () -> Void
 
     @State private var current: String?
-    /// How far the page is pulled down.
-    @State private var pull: CGFloat = 0
     @State private var notes: PodcastEpisode?
 
     var body: some View {
@@ -39,9 +37,10 @@ struct DeckTabsPager: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 8)
         }
-        .offset(y: pull)
-        .scaleEffect(1 - min(0.08, pull / 3000))
-        .simultaneousGesture(pullDown)
+        // Smoother pull down (Paul, 16 Nov 2026): how far it's pulled lives
+        // in its own modifier, so following the finger doesn't work out the
+        // tabs (a fetch) and redraw every page on each frame.
+        .modifier(DeckPagerPullDown(close: close))
         .onAppear {
             current = model.start ?? ids.first
             if let id = current { prepareColour(tabs.first { $0.episodeID == id }) }
@@ -120,8 +119,21 @@ struct DeckTabsPager: View {
         guard let url = episode?.artwork else { return }
         Task { await ArtworkColors.shared.load(url) }
     }
+}
 
-    // MARK: Pull down to close (like Safari's swipe down on a tab)
+/// Pull a tab down to go back to the overview (like Safari's swipe down on
+/// a tab): the page follows the finger and shrinks a little.
+private struct DeckPagerPullDown: ViewModifier {
+    let close: () -> Void
+    /// How far the page is pulled down.
+    @State private var pull: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .offset(y: pull)
+            .scaleEffect(1 - min(0.08, pull / 3000))
+            .simultaneousGesture(pullDown)
+    }
 
     private var pullDown: some Gesture {
         DragGesture(minimumDistance: 20, coordinateSpace: .global)
