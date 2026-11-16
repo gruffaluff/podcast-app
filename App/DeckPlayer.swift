@@ -10,7 +10,7 @@ import PodcastCore
 /// drag round to scrub, tap it to turn it over to the words; the show (tap
 /// for its page) and the title. At the bottom: the chapter pill
 /// "‹ 4/6 · title ›" with Skip ad beside it during an ad, elapsed / ends /
-/// left, skip · play · skip, and Options · Read along · Chapters · AirPlay.
+/// left, skip · play · skip, and Options · Read along · AirPlay (chapters from the chapter row).
 /// Read along (its button) slides the dial into the corner as a small
 /// ringed circle and the words fill the space; there the straight
 /// progress line comes back, as the dial isn't on screen.
@@ -402,8 +402,6 @@ struct DeckPlayerView: View {
         HStack(spacing: 0) {
             DeckPlayerButton(icon: "slider.horizontal.3", label: optionsLabel, on: optionsOn) { showingOptions = true }
             DeckPlayerButton(icon: "text.quote", label: "Read along", on: reading || dialWords) { readAlongTapped() }
-            DeckPlayerButton(icon: "list.bullet", label: "Chapters", on: false) { showingChapters = true }
-                .disabled(player.chapters.isEmpty)
             DeckAirPlayButton()
         }
         .padding(.horizontal, -6)

@@ -8,7 +8,7 @@ import PodcastCore
 // same tab"; mock-up https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS).
 // In tabs mode an open tab is one scrolling page for its episode:
 // - the player at the top, on the show's colour: the dial, chapter row,
-//   times, transport, Options · Read along · Chapters · AirPlay. A tab that
+//   times, transport, Options · Read along · AirPlay. A tab that
 //   isn't the one playing has the same layout at rest (its saved place on
 //   the ring) with a big Play; pressing it makes it the playing episode and
 //   the page goes live;
@@ -369,8 +369,6 @@ private struct DeckTabPlayerSection: View {
         HStack(spacing: 0) {
             DeckPlayerButton(icon: "slider.horizontal.3", label: optionsLabel, on: optionsOn) { showingOptions = true }
             DeckPlayerButton(icon: "text.quote", label: "Read along", on: reading || dialWords) { readAlongTapped() }
-            DeckPlayerButton(icon: "list.bullet", label: "Chapters", on: false) { showingChapters = true }
-                .disabled(now == nil || player.chapters.isEmpty)
             DeckAirPlayButton()
         }
         .padding(.horizontal, -6)

@@ -2998,6 +2998,17 @@ Paul's notes after build 164:
   the words show either way. Tapping the dial still swaps artwork and
   words; the choice is remembered ("deckDialWords"). Both players (tab
   page and card deck).
+- **Chapters button gone from the player's bottom row** (Paul, 16 Nov
+  2026: "drop the chapters button and space out the other 3"): Options ·
+  Read along · AirPlay, evenly spread; chapters open from the chapter row
+  under the title (the pill, or "No chapters · Make them ›"). Both players.
+- **"This is playing now" in Read along** (Paul, 16 Nov 2026, transcript
+  sync issues again, on an episode listened to across several builds; he
+  will test more): hold any line in Deck's Read along (while that episode
+  plays) for Share a clip / Copy / This is playing now; the last lines
+  the words up so the held line is at the play point from there on (a
+  sync anchor, like the older looks' transcript screen), with a tap, and
+  following resumes (`DeckReadAlong.syncHere`).
 
 - **Read along: the times shrink smoothly** (Paul, 16 Nov 2026: "when
   tapping read along, can we make the animation on the numbers getting

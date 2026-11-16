@@ -13,6 +13,7 @@ import PodcastCore
 struct DeckReadAlong: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
+    @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
 
     @State private var lines: [TranscriptLayout.Line] = []
@@ -169,8 +170,27 @@ struct DeckReadAlong: View {
         .contextMenu {
             Button("Share a clip", systemImage: "scissors") { clip = ClipRequest(line: line, quote: line.text) }
             Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = line.text }
+            // The manual fix for words out of step (Paul, 16 Nov 2026, sync
+            // issues again): hold the line you can hear and choose this; the
+            // words from here on line up with the audio (a sync anchor, as
+            // the older looks' transcript screen has).
+            if isPlayingThis {
+                Button("This is playing now", systemImage: "arrow.left.and.right.text.vertical") { syncHere(line) }
+            }
         }
         .accessibilityHint("Plays from here")
+    }
+
+    /// Moves the words so this line sits at the play point now. The lines'
+    /// times already include earlier fixes, so map back to the
+    /// transcript's own time first.
+    private func syncHere(_ line: TranscriptLayout.Line) {
+        let anchors: [SyncAnchor] = episode.syncAnchors
+        let original: TimeInterval = TranscriptAlign.transcriptTime(forAudio: line.start, anchors: anchors)
+        episode.syncAnchors = TranscriptAlign.adding(SyncAnchor(transcriptTime: original, offset: player.currentTime - original), to: anchors)
+        store.save()
+        followPaused = false
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     /// The line now has its words lit as they're said (Paul, 16 Nov 2026:
