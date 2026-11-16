@@ -7,6 +7,8 @@ import PodcastCore
 // Up next, hold and drag a tab onto another to move it there.
 
 struct DeckTabsGrid: View {
+    @Environment(PlayerModel.self) private var player
+    @Environment(DeckTabsModel.self) private var model
     let tabs: [PodcastEpisode]
 
     private static let columns: [GridItem] = [
@@ -17,10 +19,25 @@ struct DeckTabsGrid: View {
     var body: some View {
         LazyVGrid(columns: Self.columns, spacing: 10) {
             ForEach(tabs, id: \.episodeID) { episode in
-                DeckTabCard(episode: episode)
+                DeckTabCard(episode: episode, place: place(of: episode))
                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
         }
+    }
+
+    /// Up next's order on each tab (Paul, 16 Nov 2026: "add a number to
+    /// the up next tabs to make it clear the order"): "Now" on the one
+    /// playing, then 1, 2, 3… for what comes after. None in New / Saved.
+    private func place(of episode: PodcastEpisode) -> String? {
+        guard model.group == .upNext else { return nil }
+        let playing: String? = player.nowPlaying?.episodeID
+        if episode.episodeID == playing { return "Now" }
+        var number: Int = 0
+        for tab in tabs where tab.episodeID != playing {
+            number += 1
+            if tab.episodeID == episode.episodeID { return String(number) }
+        }
+        return nil
     }
 }
 
@@ -29,6 +46,8 @@ private struct DeckTabCard: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     let episode: PodcastEpisode
+    /// Its place in Up next ("Now", "1", "2"…), or nil.
+    var place: String? = nil
 
     /// How far the card has been swiped sideways (left only).
     @State private var drag: CGFloat = 0
@@ -93,6 +112,22 @@ private struct DeckTabCard: View {
         .frame(height: 30)
     }
 
+    /// "Now", "1", "2"… in a small ink pill on the artwork's corner.
+    @ViewBuilder private var placeBadge: some View {
+        if let place {
+            Text(place)
+                .font(Theme.outfit(13, .heavy))
+                .monospacedDigit()
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 8)
+                .frame(minWidth: 26, minHeight: 26)
+                .background(Capsule().fill(Color(hex: 0x1C1B1A)))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5))
+                .padding(7)
+                .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
+        }
+    }
+
     private var bodyPart: some View {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear
@@ -102,6 +137,7 @@ private struct DeckTabCard: View {
                     CachedImage(url: episode.artwork) { Theme.placeholderColor(for: episode.showTitle) }
                 }
                 .clipped()
+                .overlay(alignment: .topLeading) { placeBadge }
             Text(episode.title)
                 .font(Theme.outfit(13, .bold))
                 .foregroundStyle(Theme.ink)

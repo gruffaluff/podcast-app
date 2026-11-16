@@ -2689,6 +2689,13 @@ Paul's notes after build 155, all in Deck:
   overview, as now. Mock-up:
   https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS.
 
+- **Order numbers on Up next tabs** (Paul, 16 Nov 2026: "add a number to
+  the up next tabs to make it clear the order"). Done on the branch: in
+  the Up next group each tab card has a small ink pill on its artwork's
+  top-left corner: "Now" on the one playing, then 1, 2, 3… for what
+  comes after (`DeckTabsGrid.place`, `DeckTabCard.placeBadge`). New and
+  Saved tabs have none.
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul
