@@ -2875,7 +2875,7 @@ Paul's notes after build 163, built by two helpers plus option A:
   doubled gap under the island, long times ("1:23:45") on small iPhones,
   the bottom bar's words on a small iPhone.
 
-## On the branch for build 165 (16 Nov 2026; not built yet)
+## Done in build 165 (16 Nov 2026, PR #83; Paul: "include all that and build")
 
 Paul's notes after build 164:
 - **Pull down to close with Read along open** (Paul: "I can't pull down to
