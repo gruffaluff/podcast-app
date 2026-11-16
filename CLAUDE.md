@@ -2760,6 +2760,25 @@ Paul's notes after build 155, all in Deck:
 
 ## Queued for the next app build
 
+- **Tabs: hold and drag broken, swipes back** (Paul, 16 Nov 2026, build
+  162: "Hold and drag isn't working at all … Swipe left marks as played
+  with a visual confirmation. Right gives us next or last (but keeps it
+  first in a show group if it's the oldest)"). Mock-up you can swipe:
+  https://claude.ai/artifact/SYxmjsr1PGL9L8owLRUBCw. Plan: one gesture
+  per tab card that handles everything (so the hold no longer competes
+  with the card's button, the old swipe-to-close pan and the scroll
+  view): hold 0.35 s then drag (as built in 162, plus the page scrolls
+  when the tab is dragged near the top / bottom edge); swipe left = red
+  block with ✓, past ~40% it arms (tick), let go: the card shows a white
+  "✓ PLAYED" pill, folds away, Undo; swipe right = green Play next
+  (28–62% of the card's width), further = dark Add to end, let go: the
+  tab glides to its place with a ring pulse, Undo. Both follow "Keep each
+  show in order" (`QueueEngine.playNext` / `playLast`: never ahead of an
+  older episode of the same show, never behind a newer one), and the Undo
+  message says when that moved it ("After #41 to keep Paper Lanterns in
+  order"). × and tap unchanged; the tab playing can be swiped left
+  (played) but not moved. Waiting on Paul's OK.
+
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul
