@@ -200,11 +200,10 @@ struct DeckMiniPlayer: View {
                                 .font(Theme.outfit(14, .bold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(1)
-                            Text(subtitle(item))
-                                .font(Theme.outfit(12, .medium))
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.muted)
-                                .lineLimit(1)
+                            // Smoother scrolling (Paul, 16 Nov 2026): only
+                            // this line and the ring follow the clock, not
+                            // the whole bar floating over the page.
+                            DeckMiniTimeLeft(item: item)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -244,8 +243,23 @@ struct DeckMiniPlayer: View {
         .buttonStyle(.plain)
         .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
     }
+}
 
-    private func subtitle(_ item: PlayerModel.NowPlaying) -> String {
+/// "Show · 34m left" under the mini player's title. Follows the player's
+/// clock (twice a second), so it's its own small view.
+struct DeckMiniTimeLeft: View {
+    @Environment(PlayerModel.self) private var player
+    let item: PlayerModel.NowPlaying
+
+    var body: some View {
+        Text(subtitle)
+            .font(Theme.outfit(12, .medium))
+            .monospacedDigit()
+            .foregroundStyle(Theme.muted)
+            .lineLimit(1)
+    }
+
+    private var subtitle: String {
         guard player.duration > 0 else { return item.showTitle }
         let left: TimeInterval = max(0, player.duration - player.currentTime)
         let minutes = Int((left / 60).rounded(.up))

@@ -6,8 +6,9 @@ import PodcastCore
 /// like the ones Paul follows, and the UK top charts.
 struct DiscoverView: View {
     @Environment(LibraryStore.self) private var store
-    @Query(sort: \Podcast.followedAt, order: .reverse) private var followed: [Podcast]
-
+    @Query(sort: \Podcast.followedAt, order: .reverse) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var followed: [Podcast] { savedShows.followedOnly }
     @State private var query = ""
     @State private var searchResults: [DirectoryItem] = []
     @State private var searching = false
@@ -268,7 +269,7 @@ final class Follower {
             feedURL = (try? await FeedClient.lookup(appleID: item.appleID))?.feedURL
         }
         guard let feedURL else { failed = true; return }
-        let isNew = store.podcast(feedURL: feedURL.absoluteString) == nil
+        let isNew = store.followedPodcast(feedURL: feedURL.absoluteString) == nil
         guard let show = try? await store.follow(feedURL: feedURL) else { failed = true; return }
         if show.genre == nil { show.genre = item.genre }
         store.save()
@@ -283,7 +284,7 @@ private struct FollowButton: View {
     let follower: Follower
 
     private var isFollowing: Bool {
-        if let url = item.feedURL, store.podcast(feedURL: url.absoluteString) != nil { return true }
+        if let url = item.feedURL, store.followedPodcast(feedURL: url.absoluteString) != nil { return true }
         return follower.followed != nil
     }
 

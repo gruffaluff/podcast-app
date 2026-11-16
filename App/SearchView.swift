@@ -14,7 +14,9 @@ struct SearchView: View {
 
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
-    @Query(sort: \Podcast.title) private var shows: [Podcast]
+    @Query(sort: \Podcast.title) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var shows: [Podcast] { savedShows.followedOnly }
     @Query(sort: \Bookmark.created, order: .reverse) private var bookmarks: [Bookmark]
 
     @State private var query = ""

@@ -11,7 +11,11 @@ import PodcastCore
 /// The row of show cards with the ‹ dots › under it.
 struct DeckShowStack: View {
     let entries: [DeckShowEntry]
-    @Binding var index: Int
+    /// `DeckShowsCache.generation`: the same number means the same entries.
+    let generation: Int
+    /// Which show is on top of the deck. Kept here (it was the Shows page's
+    /// own state), so settling on a card redraws only this row and its dots.
+    @State private var index = 0
     @State private var shown: String?
 
     static let cardHeight: CGFloat = 376
@@ -19,7 +23,13 @@ struct DeckShowStack: View {
     var body: some View {
         let current: Int = min(max(0, index), entries.count - 1)
         VStack(spacing: 12) {
-            row
+            // Smoother scrolling (Paul, 16 Nov 2026): the cards are their
+            // own view that only redraws when the entries change, not each
+            // time the row passes a card while it's being swiped.
+            DeckShowRow(entries: entries, generation: generation, shown: $shown)
+                .equatable()
+                .accessibilityAction(named: Text("Next show")) { step(1) }
+                .accessibilityAction(named: Text("Previous show")) { step(-1) }
             DeckShowDots(count: entries.count, current: current) { step($0) }
         }
         .onAppear { shown = entries[current].id }
@@ -30,7 +40,31 @@ struct DeckShowStack: View {
         }
     }
 
-    private var row: some View {
+    /// The ‹ › keys: wrap round at the ends, as before.
+    private func step(_ by: Int) {
+        let count: Int = entries.count
+        guard count > 1 else { return }
+        let from: Int = min(max(0, index), count - 1)
+        let to: Int = ((from + by) % count + count) % count
+        withAnimation(.snappy(duration: 0.3)) {
+            index = to
+            shown = entries[to].id
+        }
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+}
+
+/// The sideways row of show cards, settling on each card.
+private struct DeckShowRow: View, Equatable {
+    let entries: [DeckShowEntry]
+    let generation: Int
+    @Binding var shown: String?
+
+    nonisolated static func == (lhs: DeckShowRow, rhs: DeckShowRow) -> Bool {
+        lhs.generation == rhs.generation
+    }
+
+    var body: some View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 12) {
                 ForEach(entries) { entry in
@@ -47,22 +81,7 @@ struct DeckShowStack: View {
         .contentMargins(.horizontal, 22, for: .scrollContent)
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
-        .frame(height: Self.cardHeight + 28)
-        .accessibilityAction(named: Text("Next show")) { step(1) }
-        .accessibilityAction(named: Text("Previous show")) { step(-1) }
-    }
-
-    /// The ‹ › keys: wrap round at the ends, as before.
-    private func step(_ by: Int) {
-        let count: Int = entries.count
-        guard count > 1 else { return }
-        let from: Int = min(max(0, index), count - 1)
-        let to: Int = ((from + by) % count + count) % count
-        withAnimation(.snappy(duration: 0.3)) {
-            index = to
-            shown = entries[to].id
-        }
-        UISelectionFeedbackGenerator().selectionChanged()
+        .frame(height: DeckShowStack.cardHeight + 28)
     }
 }
 
@@ -290,14 +309,36 @@ private struct DeckShowDots: View {
 /// "All your shows": every show, two across down the page (Paul, 14 Nov
 /// 2026: "stack your shows rather than scroll", then "full card images
 /// with text on top"). Tap one for its page.
-struct DeckAllShowsRow: View {
+struct DeckAllShowsRow: View, Equatable {
     let entries: [DeckShowEntry]
+    /// `DeckShowsCache.generation`: the same number means the same entries.
+    let generation: Int
     /// Paul, 15 Nov 2026: "add the sort button". Kept on this iPhone.
     @AppStorage("deckShowsSort") private var sortRaw: String = DeckShowsSort.newFirst.rawValue
-    private let columns: [GridItem] = [GridItem(.flexible(), spacing: 12),
-                                       GridItem(.flexible(), spacing: 12)]
+    /// The sorted list, kept until the entries or the order change.
+    @State private var memo = DeckShowsSortMemo()
+    private static let columns: [GridItem] = [GridItem(.flexible(), spacing: 12),
+                                              GridItem(.flexible(), spacing: 12)]
 
     private var sort: DeckShowsSort { DeckShowsSort(rawValue: sortRaw) ?? .newFirst }
+
+    /// Smoother scrolling (Paul, 16 Nov 2026): the Shows page redraws for
+    /// small reasons; the grid only does when its entries changed (its sort
+    /// setting still redraws it).
+    nonisolated static func == (lhs: DeckAllShowsRow, rhs: DeckAllShowsRow) -> Bool {
+        lhs.generation == rhs.generation
+    }
+
+    /// "Latest episode" goes through every episode of every show, so the
+    /// order is worked out once per list and sort, not on every redraw.
+    private func sortedEntries() -> [DeckShowEntry] {
+        let key: String = String(generation) + "|" + sortRaw
+        if memo.key != key {
+            memo.entries = sort.sorted(entries)
+            memo.key = key
+        }
+        return memo.entries
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -308,8 +349,8 @@ struct DeckAllShowsRow: View {
             }
             .padding(.leading, 22)
             .padding(.trailing, 16)
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(sort.sorted(entries)) { entry in
+            LazyVGrid(columns: Self.columns, spacing: 12) {
+                ForEach(sortedEntries()) { entry in
                     NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
                         .buttonStyle(.plain)
                 }
@@ -338,6 +379,13 @@ struct DeckAllShowsRow: View {
         }
         .accessibilityLabel("Sort your shows: " + sort.title)
     }
+}
+
+/// Holds All your shows in its chosen order between redraws (not observed).
+@MainActor
+final class DeckShowsSortMemo {
+    var key: String = ""
+    var entries: [DeckShowEntry] = []
 }
 
 /// The orders for All your shows.
@@ -391,6 +439,13 @@ private struct DeckShowTile: View {
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(Theme.cardEdge, lineWidth: 1))
+            // Smoother scrolling (Paul, 16 Nov 2026): the artwork, fade,
+            // name (with its soft shadow) and badge are drawn once into one
+            // picture, which then just moves as the page scrolls, instead
+            // of being put together (the name's shadow included) on every
+            // frame for every tile on screen. Everything sits inside the
+            // tile's rounded shape, so nothing is cut off.
+            .drawingGroup()
             // Smoother scrolling (Paul, 15 Nov 2026): the shadow comes from a
             // plain rounded shape behind the tile, not from the artwork,
             // fade and words drawn together, which was slow for every tile.

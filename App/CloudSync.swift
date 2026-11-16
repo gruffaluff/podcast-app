@@ -72,6 +72,7 @@ final class SettingsSync {
         "colourScheme", "showAdSkip",
         // Save for later (Paul, 15 Nov 2026): episode IDs, one per line.
         "savedForLater",
+        "triedShows",
     ]
 
     private let cloud = NSUbiquitousKeyValueStore.default

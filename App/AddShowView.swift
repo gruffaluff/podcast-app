@@ -71,7 +71,7 @@ struct AddShowView: View {
 
     private func state(for show: DirectoryShow) -> FollowState {
         guard let url = show.feedURL?.absoluteString else { return .none }
-        if store.podcast(feedURL: url) != nil { return .followed }
+        if store.followedPodcast(feedURL: url) != nil { return .followed }
         return following.contains(url) ? .following : .none
     }
 
@@ -122,7 +122,7 @@ struct AddShowView: View {
                     }
                     feedURL = found
                 }
-                let isNew = store.podcast(feedURL: feedURL.absoluteString) == nil
+                let isNew = store.followedPodcast(feedURL: feedURL.absoluteString) == nil
                 let show = try await store.follow(feedURL: feedURL)
                 message = "Following \(show.title)."
                 if isNew { justFollowed = show }

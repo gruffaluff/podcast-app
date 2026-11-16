@@ -21,6 +21,8 @@ struct ShowPreviewView: View {
     /// alerts, download the newest) instead of the old settings sheet.
     @State private var deckFollower = DeckFollower()
     @State private var feed: ParsedFeed?
+    /// The feed's link once known (charts may only give Apple's ID).
+    @State private var feedURL: URL?
     @State private var failed = false
     @State private var expanded: String?
     /// How far the list is pulled down past the top (fills the gap above
@@ -37,7 +39,7 @@ struct ShowPreviewView: View {
 
     /// Deck: the same look as a followed show's page (`DeckShowPreview`).
     private var deckBody: some View {
-        DeckShowPreview(item: item, feed: feed, failed: failed, followedShow: followedShow,
+        DeckShowPreview(item: item, feed: feed, feedURL: feedURL, failed: failed, followedShow: followedShow,
                         busy: followBusy, followFailed: followFailed,
                         colour: pageColour ?? Theme.ink, follow: followTapped)
             .task { await load() }
@@ -106,7 +108,7 @@ struct ShowPreviewView: View {
     private var followedShow: Podcast? {
         if let followed = deckFollower.followed { return followed }
         if let followed = follower.followed { return followed }
-        return item.feedURL.flatMap { store.podcast(feedURL: $0.absoluteString) }
+        return item.feedURL.flatMap { store.followedPodcast(feedURL: $0.absoluteString) }
     }
 
     /// Same look as a followed show's page: the artwork filling the card,
@@ -202,6 +204,7 @@ struct ShowPreviewView: View {
             failed = feed == nil
             return
         }
+        feedURL = url
         feed = parsed
     }
 }

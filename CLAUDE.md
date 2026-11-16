@@ -2606,7 +2606,96 @@ Paul's notes after build 155, all in Deck:
     menu: check on the phone).
 
 
+## Done in build 160 (16 Nov 2026, PR #78; Paul: "Option 1 and build")
+
+- **Show page: playing episode readable** (Paul, 16 Nov 2026, build 159
+  screenshot of 606: the played / paused episode was a black card, hard
+  to read). Done: it's a white card like the others with a
+  2 pt ink edge, ink title, the show's colour dot, and "Playing" /
+  "Paused" in the show's colour on the meta line; its opened keys are the
+  normal ones (`DeckShowEpisodeCard` / `DeckShowEpisodeText`).
+
+- **Add an episode without following the show** (Paul, 16 Nov 2026: "in
+  discover, if I click into a podcast, I want to be able to add an
+  episode to my queue without following the show … try out a show
+  without subscribing if they have a particular guest or topic"). Done (`App/TriedShows.swift`): every episode card on a show
+  you don't follow (Deck show preview from Find / charts) has "+ Up
+  next" and "Play next" ("In Up next" once there; Undo). The show is
+  saved as a "tried" show (Nowhere, no downloads, no alerts, its feed
+  not checked), listed in the synced setting "triedShows", and left out
+  of Your shows, Find, Search, settings lists, CarPlay, the alerts job
+  and OPML export (`followedOnly`, `store.followedPodcast`). It's tidied
+  away at the next feed check once none of its episodes are in Up next,
+  playing or part-played. Follow (preview, or the Follow pill on its
+  show page in place of Following) turns it into a normal followed show
+  (Bottom, downloads on). Older looks' preview page not changed.
+
+- **Smoother scrolling and animations** (Paul, 16 Nov 2026: Your shows
+  "very jerky … scrolling and animations need smoothing throughout").
+  Done: the Shows tab worked out each show's new episodes
+  by walking every episode of every show on every redraw; now one fetch of
+  the week's unplayed episodes, kept between redraws (`DeckShowsCache`,
+  remade when shows, ranking, the last feed check, Undo, the hour or a
+  return to the page change); the sideways show row and All your shows
+  grid only rebuild when that list changes (`.equatable()`), the grid's
+  sort is kept (`DeckShowsSortMemo`), tiles drawn once (`drawingGroup`);
+  the mini player and tabs bar only redraw their ring and time-left line
+  with the clock (`DeckMiniTimeLeft`, `DeckTabsBarRing`); the tab pager's
+  pull-down no longer refetches tabs each frame; the show page keeps its
+  episode sort; `CachedImage` doesn't reset a picture already shown; the
+  section edge swipe no longer lays strips over the screen edges that
+  swallowed scrolls starting there (`DeckSections` edge swipe now runs
+  alongside scrolling). Check on the phone: Shows tab scrolling, the tile
+  names' sharpness, new counts updating after playing / marking played.
+  Mock-up of everything in this build:
+  https://claude.ai/artifact/TgbPAWS9vWQQvMvaCLTYC2.
+- **"Play next" / "Add to end"** (Paul, 16 Nov 2026: "+ Up next" and
+  "Play next" were "quite close … meaning wise"; picked option 1): the
+  show preview's keys are Play next (ink, first) and Add to end; the
+  Deck show page's far right swipe and opened-card key say Add to end
+  (were Play last).
+
 ## Queued for the next app build
+
+- **Tabs: drag to reorder feels wrong** (Paul, 16 Nov 2026, FNB, build
+  159 screen recording): the lifted tab drops down a bit on its own and
+  it isn't clear which tab you're replacing. Wants the other cards to
+  shift out of the way as you drag (like Safari / the home screen). Plan:
+  a hand-made reorder in the tab grid (`DeckTabsGrid`): touch and hold
+  lifts the card under the finger (no jump), the other cards slide into
+  their new places live as it moves, drop puts it in the gap; holding
+  without moving still gives the menu.
+- **Tabs: full-colour cards** (Paul, 16 Nov 2026, FNB): redesign the tab
+  cards to be full colour with the artwork, keeping all the important
+  text (show, title, time left / date, progress, ×, playing edge). Plan:
+  the artwork fills the card, fading into the show's colour at the foot
+  where the show / title / time sit in white; × and the small ring on
+  top. Mock up first if unsure.
+- **One tab = player + episode page + show settings** (Paul, 16 Nov 2026,
+  FNB: "when you tap through on a card can it open the episode in a
+  player mode with all the standard player interface and the show
+  settings folded in … so we don't have a separate player and episode
+  screen, they're all the same tab"). Plan: tapping a tab opens one
+  scrolling page for that episode: the player at the top (dial, chapter
+  row, transport, Options · Read along · Chapters · AirPlay; for a tab
+  that isn't playing the same controls with a big Play, and pressing it
+  makes it the playing tab), then the episode (place in Up next,
+  Download, Transcribe, Played, Save for later, notes), then "This show"
+  (where new episodes go, alerts, speed, skip intro / outro, ads, keep
+  downloads, Open show). Scrolled down, a slim bar keeps play / pause
+  and the time at the top. Replaces `DeckTabsPager`, the separate player
+  (`DeckPlayerView`) and `DeckEpisodePage` in tabs mode; card deck mode
+  keeps them. Swipe sideways for the next tab, pull down for the
+  overview, as now. Mock-up:
+  https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS.
+
+- **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
+  Mac job that runs the app in a simulated iPhone with made-up shows,
+  does the main gestures and saves screenshots for checking before Paul
+  installs. Free while the repo is public; from 1 Dec (private) Mac time
+  counts 10× against the free 2,000 minutes (~15 runs a month, stops at
+  the limit, no charge). **Paul: "Let's see how this one goes first"**
+  (build 159). Not built.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways

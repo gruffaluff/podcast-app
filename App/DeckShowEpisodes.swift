@@ -6,7 +6,8 @@ import PodcastCore
 // card per episode: a dot in the show's colour (unplayed) or a tick
 // (played), "5h ago · 42m · 3rd in Up next", the title and DL / TX. Tap a
 // card for its keys; swipe left Played, right a little Play next, right
-// far Play last. The episode playing is the ink card.
+// far Play last. The episode playing is the white card with an ink edge
+// (it was an ink card; Paul, 16 Nov 2026: "black and hard to read").
 
 struct DeckShowEpisodeList: View {
     @Environment(LibraryStore.self) private var store
@@ -21,6 +22,8 @@ struct DeckShowEpisodeList: View {
     /// unplayed): tap episodes to tick them, then act on them all.
     @State private var selecting = false
     @State private var selected: Set<String> = []
+    /// The show's episodes newest first, kept between redraws.
+    @State private var sortMemo = DeckShowEpisodeSortMemo()
 
     var body: some View {
         let episodes: [PodcastEpisode] = visible()
@@ -88,7 +91,7 @@ struct DeckShowEpisodeList: View {
     /// Newest first; unplayed only unless All is on or something's typed
     /// (every word typed, in the title or notes).
     private func visible() -> [PodcastEpisode] {
-        let all: [PodcastEpisode] = show.episodes.sorted { $0.published > $1.published }
+        let all: [PodcastEpisode] = newestFirst()
         let words: [String] = query.lowercased().split(separator: " ").map(String.init)
         if !words.isEmpty {
             return all.filter { episode in
@@ -97,6 +100,23 @@ struct DeckShowEpisodeList: View {
             }
         }
         return showAll ? all : all.filter { !$0.played }
+    }
+
+    /// Smoother scrolling (Paul, 16 Nov 2026): sorting hundreds of
+    /// episodes by date (each date read from the saved data) happened on
+    /// every redraw: each played tick, Up next change and letter typed. Now
+    /// it's sorted again only when the set of episodes changes (worked out
+    /// from which objects they are, without reading any of them).
+    private func newestFirst() -> [PodcastEpisode] {
+        let all: [PodcastEpisode] = show.episodes
+        var mix: Int = all.count
+        for episode in all { mix ^= ObjectIdentifier(episode).hashValue }
+        if sortMemo.mix != mix || sortMemo.count != all.count {
+            sortMemo.sorted = all.sorted { $0.published > $1.published }
+            sortMemo.mix = mix
+            sortMemo.count = all.count
+        }
+        return sortMemo.sorted
     }
 
     /// EPISODES on its own line, then the pills (never squeezed: Paul saw
@@ -163,6 +183,14 @@ struct DeckShowEpisodeList: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
     }
+}
+
+/// A show's episodes newest first, held between redraws (not observed).
+@MainActor
+final class DeckShowEpisodeSortMemo {
+    var mix: Int = 0
+    var count: Int = -1
+    var sorted: [PodcastEpisode] = []
 }
 
 /// Search this show's episodes (titles and notes).
@@ -233,8 +261,8 @@ struct DeckShowEpisodeCard: View {
 
     private func cardShape(_ playing: Bool) -> some View {
         let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
-        return shape.fill(playing ? Theme.playingCard : Theme.surface)
-            .overlay(shape.strokeBorder(playing ? Theme.playingCard : Theme.cardEdge, lineWidth: 1))
+        return shape.fill(Theme.surface)
+            .overlay(shape.strokeBorder(playing ? Theme.ink : Theme.cardEdge, lineWidth: playing ? 2 : 1))
     }
 
     private var playNext: PosterSwipeAction {
@@ -244,7 +272,7 @@ struct DeckShowEpisodeCard: View {
     }
 
     private var playLast: PosterSwipeAction {
-        PosterSwipeAction(title: "Play last", icon: "text.line.last.and.arrowtriangle.forward", colour: DeckShowColour.dark(colour)) {
+        PosterSwipeAction(title: "Add to end", icon: "text.line.last.and.arrowtriangle.forward", colour: DeckShowColour.dark(colour)) {
             store.playLast(episode)
         }
     }
@@ -273,10 +301,9 @@ private struct DeckShowEpisodeText: View {
                 .frame(width: 10)
                 .padding(.top, 5)
             VStack(alignment: .leading, spacing: 3) {
-                Text(meta)
+                metaLine
                     .font(Theme.outfit(12, .medium))
                     .monospacedDigit()
-                    .foregroundStyle(playing ? Color.white.opacity(0.7) : Theme.muted)
                     .lineLimit(1)
                 Text(episode.title)
                     .font(Theme.outfit(16, episode.played ? .medium : .bold))
@@ -284,7 +311,7 @@ private struct DeckShowEpisodeText: View {
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
-                EpisodeLights(episode: episode, onDark: playing)
+                EpisodeLights(episode: episode)
                     .padding(.top, 2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -293,7 +320,6 @@ private struct DeckShowEpisodeText: View {
     }
 
     private var titleColour: Color {
-        if playing { return Color.white }
         return episode.played ? Theme.ink.opacity(0.55) : Theme.ink
     }
 
@@ -305,18 +331,28 @@ private struct DeckShowEpisodeText: View {
                 .accessibilityLabel("Played")
         } else {
             Circle()
-                .fill(playing ? Color.white : colour)
+                .fill(colour)
                 .frame(width: 8, height: 8)
                 .accessibilityLabel("Unplayed")
         }
     }
 
-    /// "5h ago · 42m · 3rd in Up next", "· Playing", or "· 12m left".
+    /// The meta line, with "Playing" / "Paused" picked out in the show's
+    /// colour on the episode that's on.
+    private var metaLine: Text {
+        let base: Text = Text(meta).foregroundStyle(Theme.muted)
+        guard playing else { return base }
+        let state: String = player.isPlaying ? "Playing" : "Paused"
+        return base + Text(" · " + state).foregroundStyle(colour).bold()
+    }
+
+    /// "5h ago · 42m · 3rd in Up next", or "· 12m left" (Playing / Paused
+    /// are added by `metaLine`).
     private var meta: String {
         var parts: [String] = [TimeFormat.ago(episode.published)]
         if let duration = episode.duration, duration > 0 { parts.append(TimeFormat.length(duration)) }
         if playing {
-            parts.append(player.isPlaying ? "Playing" : "Paused")
+            // "Playing" / "Paused" is added in the show's colour by metaLine.
         } else if let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
             parts.append("\(EpisodeStatusRows.ordinal(index + 1)) in Up next")
         } else if !episode.played, episode.position > 30, let left = episode.timeLeft, left > 0 {
@@ -345,7 +381,7 @@ private struct DeckShowEpisodeKeys: View {
             LazyVGrid(columns: columns, spacing: 6) {
                 playKey
                 key("text.line.first.and.arrowtriangle.forward", "Play next") { store.playNext(episode) }
-                key("text.line.last.and.arrowtriangle.forward", "Play last") { store.playLast(episode) }
+                key("text.line.last.and.arrowtriangle.forward", "Add to end") { store.playLast(episode) }
                 downloadKey
                 transcriptKey
                 playedKey
@@ -398,7 +434,7 @@ private struct DeckShowEpisodeKeys: View {
         Button { store.notesEpisode = episode } label: {
             Text("Notes and details")
                 .font(Theme.outfit(13, .semibold))
-                .foregroundStyle(playing ? Color.white : Theme.ink)
+                .foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity)
                 .frame(height: 36)
                 .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(keyFill))
@@ -407,7 +443,7 @@ private struct DeckShowEpisodeKeys: View {
     }
 
     private var keyFill: Color {
-        playing ? Color.white.opacity(0.12) : Theme.background
+        Theme.background
     }
 
     private func key(_ icon: String, _ title: String, fill: Color? = nil, action: @escaping () -> Void) -> some View {
@@ -420,7 +456,7 @@ private struct DeckShowEpisodeKeys: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(fill != nil || playing ? Color.white : Theme.ink)
+            .foregroundStyle(fill != nil ? Color.white : Theme.ink)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(fill ?? keyFill))

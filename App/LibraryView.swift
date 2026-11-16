@@ -6,7 +6,9 @@ struct LibraryView: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @State private var continuing: [PodcastEpisode] = []
-    @Query(sort: \Podcast.title) private var shows: [Podcast]
+    @Query(sort: \Podcast.title) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var shows: [Podcast] { savedShows.followedOnly }
     @Query(LibraryView.newEpisodesQuery) private var newEpisodes: [PodcastEpisode]
     @State private var addingShow = false
     @State private var showingSettings = false
