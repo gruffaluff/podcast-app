@@ -63,19 +63,46 @@ struct DeckRoot: View {
         }
         .overlay(alignment: .bottom) { bottomFade }
         .overlay(alignment: .bottom) { bottom }
-        .environment(\.deckOpenPlayer, { showingPlayer = true })
+        .environment(\.deckOpenPlayer, openPlayer)
         .environment(\.deckSelectTab, { tab = $0 })
         .environment(tabsModel)
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }
         // Tabs: an open tab, full screen; closing it goes to the overview.
         .fullScreenCover(isPresented: pagerShown) {
-            DeckTabsPager(openPlayer: { showingPlayer = true })
+            DeckTabsPager()
                 .environment(tabsModel)
                 .presentationBackground(.clear)
         }
         .onChange(of: tabsModel.pagerOpen) { _, open in
             if !open { tab = 0 }
         }
+        // Tabs: there's no separate player (Paul, 16 Nov 2026: one tab =
+        // player + episode page + show settings). Anything that asks for
+        // the player (a quick action, Up next's "Play") opens the playing
+        // episode's tab instead; RootView's cover stays shut in tabs mode.
+        .onChange(of: showingPlayer, initial: true) { _, open in
+            guard open, tabsMode else { return }
+            showingPlayer = false
+            openPlayingTab()
+        }
+    }
+
+    /// The player in card deck mode; the playing episode's tab in tabs mode.
+    private func openPlayer() {
+        if tabsMode {
+            openPlayingTab()
+        } else {
+            showingPlayer = true
+        }
+    }
+
+    /// Up next always has the episode playing as its first tab; Saved keeps
+    /// it when it's saved, else the overview switches to Up next.
+    private func openPlayingTab() {
+        guard let id = player.nowPlaying?.episodeID else { return }
+        let keep: Bool = tabsModel.group == .upNext || (tabsModel.group == .saved && SaveForLater.isSaved(id))
+        if !keep { tabsModel.choose(.upNext) }
+        tabsModel.open(id)
     }
 
     private var pagerShown: Binding<Bool> {

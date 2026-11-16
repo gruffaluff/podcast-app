@@ -135,7 +135,7 @@ private struct DeckTabsBarNow: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityHint("Opens the player")
+                .accessibilityHint("Opens its tab")
                 Button { player.togglePlayPause() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 17))

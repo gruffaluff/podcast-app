@@ -49,6 +49,9 @@ final class DeckTabsModel {
     var pagerOpen = false
     /// The tab the pager opens on (an episode ID).
     var start: String?
+    /// A tab is lifted and being dragged in the grid: the overview
+    /// doesn't scroll and the cards' swipes are off meanwhile.
+    var reordering = false
 
     init() {
         let saved: String = UserDefaults.standard.string(forKey: Self.groupKey) ?? ""
@@ -163,8 +166,8 @@ struct DeckTabActions {
         store.undoable("Removed from Up next", episodes: []) { store.removeFromQueue(episode.episodeID) }
     }
 
-    /// Drag to reorder in the Up next group: `dragged` takes `target`'s
-    /// place. Nothing moves above (or is) the episode playing.
+    /// Drag to reorder in the Up next group (`DeckTabsGrid`'s hand-made
+    /// drag): `dragged` takes `target`'s place. Nothing moves above (or is) the episode playing.
     func move(_ dragged: String, onto target: String) -> Bool {
         guard group == .upNext, dragged != target else { return false }
         let playing: String? = player.nowPlaying?.episodeID
@@ -219,6 +222,7 @@ struct DeckTabsView: View {
             .padding(.bottom, 16)
         }
         .scrollIndicators(.hidden)
+        .scrollDisabled(model.reordering)
         .deckPage()
         // Tabs · Your shows · Find and the edge swipes replace the pinned
         // tabs (Paul, 15 Nov 2026: Discover is part of Find now).
