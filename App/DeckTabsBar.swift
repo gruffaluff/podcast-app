@@ -54,7 +54,7 @@ struct DeckTabsBar: View {
     @Environment(\.deckOpenPlayer) private var openPlayer
     @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
-    @AppStorage(SaveForLater.key) private var savedRaw: String = ""
+    @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @Binding var tab: Int
 
     /// What's playing on top, Tabs · Your shows · Find under it (Paul,
@@ -65,12 +65,23 @@ struct DeckTabsBar: View {
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
+    /// Between the Up next · Started pill and the bar.
+    static let pillGap: CGFloat = 10
+    /// The Tabs page's extra room for that pill: none now (Paul, 16 Nov
+    /// 2026: "we drop the new pill. so the up next tab is simple"); the
+    /// Tabs page is always Up next. `DeckTabGroupPill` is kept, unused,
+    /// in case the groups come back.
+    static let pillRoom: CGFloat = 0
 
     var body: some View {
         let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
-                                                        unplayed: unplayed, triaged: triaged, saved: savedRaw)
+                                                        unplayed: unplayed, triaged: triaged, started: started)
+        bar(count: tabs.count)
+    }
+
+    private func bar(count: Int) -> some View {
         VStack(spacing: 0) {
-            DeckTabsBarNow(count: tabs.count, open: openPlayer)
+            DeckTabsBarNow(count: count, open: openPlayer)
                 .padding(.horizontal, 8)
                 .frame(height: Self.rowHeight)
             Rectangle()
@@ -232,5 +243,75 @@ private struct DeckTabsBarRing: View {
     private var progress: Double {
         guard player.duration > 0 else { return 0 }
         return min(1, max(0, player.currentTime / player.duration))
+    }
+}
+
+/// The tab groups as chips in a small white pill just above the bar, on
+/// the Tabs page only (Paul, 16 Nov 2026: "up next, new and started as
+/// chips above the bar"). The chosen group is ink with its count; the
+/// others are muted words. Tap one, or swipe along the pill for the group
+/// before / after. Switching is instant.
+struct DeckTabGroupPill: View {
+    @Environment(DeckTabsModel.self) private var model
+    /// How many tabs the chosen group has.
+    let count: Int
+
+    static let chipHeight: CGFloat = 31
+    static let height: CGFloat = chipHeight + 8
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(DeckTabGroup.allCases, id: \.self) { group in
+                chip(group)
+            }
+        }
+        .padding(4)
+        .background(Capsule().fill(Theme.surface))
+        .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.12), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.14), radius: 10, y: 8)
+        .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
+        .frame(height: Self.height)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func chip(_ group: DeckTabGroup) -> some View {
+        let on: Bool = model.group == group
+        let title: String = on ? group.name + " · \(count)" : group.name
+        return Button { choose(group) } label: {
+            Text(title)
+                .font(Theme.outfit(13, .bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .foregroundStyle(on ? Theme.surface : Theme.muted)
+                .padding(.horizontal, 13)
+                .frame(height: Self.chipHeight)
+                .background(Capsule().fill(on ? Theme.ink : Color.clear))
+                .contentShape(Capsule())
+                .transaction { $0.animation = nil }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(on ? group.name + ", \(count) tabs" : group.name)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    private func choose(_ group: DeckTabGroup) {
+        guard model.group != group else { return }
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) { model.choose(group) }
+    }
+
+    private func swiped(_ value: DragGesture.Value) {
+        guard let swipe = DeckBarSwipe.resolve(value) else { return }
+        let all: [DeckTabGroup] = DeckTabGroup.allCases
+        guard let at = all.firstIndex(of: model.group) else { return }
+        switch swipe {
+        case .up:
+            return
+        case .next:
+            if at + 1 < all.count { choose(all[at + 1]) }
+        case .previous:
+            if at > 0 { choose(all[at - 1]) }
+        }
     }
 }

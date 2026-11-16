@@ -45,9 +45,6 @@ struct DeckRoot: View {
     /// "Up next as" Tabs or Card deck (Paul, 15 Nov 2026: tabs).
     @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
     @State private var tabsModel = DeckTabsModel()
-    /// The section edge swipe in tabs mode (`DeckSections`): the section on
-    /// screen follows the finger and the one beside it slides in.
-    @State private var sectionSwipe = DeckSectionSwipe()
 
     private var tabsMode: Bool { home != DeckHome.deck }
 
@@ -69,12 +66,7 @@ struct DeckRoot: View {
         .environment(\.deckOpenPlayer, openPlayer)
         .environment(\.deckSelectTab, { tab = $0 })
         .environment(tabsModel)
-        .environment(\.deckSectionSwipe, sectionSwipe)
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }
-        // The section sliding in under an edge swipe is made as it starts.
-        .onChange(of: sectionSwipe.neighbour) { _, next in
-            if let next { made.insert(next) }
-        }
         // Tabs: an open tab, full screen; closing it goes to the overview.
         .fullScreenCover(isPresented: pagerShown) {
             DeckTabsPager()
@@ -104,11 +96,11 @@ struct DeckRoot: View {
         }
     }
 
-    /// Up next always has the episode playing as its first tab; Saved keeps
-    /// it when it's saved, else the overview switches to Up next.
+    /// Up next and Started always have the episode playing as their first
+    /// tab; from New the overview switches to Up next.
     private func openPlayingTab() {
         guard let id = player.nowPlaying?.episodeID else { return }
-        let keep: Bool = tabsModel.group == .upNext || (tabsModel.group == .saved && SaveForLater.isSaved(id))
+        let keep: Bool = tabsModel.group == .upNext || tabsModel.group == .started
         if !keep { tabsModel.choose(.upNext) }
         tabsModel.open(id)
     }
@@ -128,43 +120,16 @@ struct DeckRoot: View {
                 // top card redrew twice a second behind Shows and Find).
                 .environment(\.deckPageShown, tab == index)
                 .contentMargins(.bottom, room(for: index), for: .scrollContent)
-                .overlay { sectionShade(index) }
-                .offset(x: sectionOffset(index))
-                .opacity(tab == index || sliding(index) ? 1 : 0)
+                .opacity(tab == index ? 1 : 0)
                 .allowsHitTesting(tab == index)
                 .accessibilityHidden(tab != index)
         }
     }
 
-    /// The section sliding in beside the one on screen during an edge swipe.
-    private func sliding(_ index: Int) -> Bool {
-        tabsMode && sectionSwipe.neighbour == index && index != tab
-    }
-
-    /// Where a page sits during a section edge swipe: the one on screen
-    /// with the finger, the one sliding in a screen's width to its side.
-    private func sectionOffset(_ index: Int) -> CGFloat {
-        guard tabsMode else { return 0 }
-        if index == tab { return sectionSwipe.offset }
-        guard sliding(index) else { return 0 }
-        let side: CGFloat = index < tab ? -sectionSwipe.width : sectionSwipe.width
-        return sectionSwipe.offset + side
-    }
-
-    /// The page sliding in starts a little dimmed and clears as it arrives,
-    /// so the two read as separate pages (like Safari's).
-    @ViewBuilder private func sectionShade(_ index: Int) -> some View {
-        if sliding(index) {
-            Color.black
-                .opacity(0.12 * (1 - sectionSwipe.progress))
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-        }
-    }
-
     private func room(for index: Int) -> CGFloat {
         // Tabs: Safari's bar is the mini player too.
-        if tabsMode { return DeckTabsBar.room }
+        // The Tabs page also has the Up next · New · Started pill above it.
+        if tabsMode { return DeckTabsBar.room + (index == 0 ? DeckTabsBar.pillRoom : 0) }
         return Self.pillRoom + (index != 0 && player.nowPlaying != nil ? Self.miniRoom : 0)
     }
 
@@ -173,7 +138,7 @@ struct DeckRoot: View {
     private var bottomFade: some View {
         LinearGradient(colors: [Theme.background.opacity(0), Theme.background.opacity(0.92)],
                        startPoint: .top, endPoint: .bottom)
-            .frame(height: tabsMode ? 140 : 96)
+            .frame(height: tabsMode ? (tab == 0 ? 140 + DeckTabsBar.pillRoom : 140) : 96)
             .ignoresSafeArea(edges: .bottom)
             .allowsHitTesting(false)
     }

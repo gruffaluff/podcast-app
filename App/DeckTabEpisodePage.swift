@@ -67,7 +67,7 @@ struct DeckTabEpisodePage: View {
                     .frame(height: playerHeight)
                     .padding(.top, top)
                     .contentShape(Rectangle())
-                    .gesture(DeckPullDown(keepOut: Array(keepOut.values), handle: pulled))
+                    .gesture(DeckPullDown(keepOut: pullKeepOut, handle: pulled))
                 DeckTabEpisodeBelow(episode: episode, bottomRoom: bottom + 24, close: close, readAlong: readAlong)
             }
             .coordinateSpace(.named(DeckPullDown.space))
@@ -89,6 +89,14 @@ struct DeckTabEpisodePage: View {
                 .padding(.top, top + 4)
                 .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
         }
+    }
+
+    /// Only the places that are on screen in this mode: a dial or scrub
+    /// line left over from the other mode (its rect can outlive it while
+    /// the two cross-fade) would otherwise block the read-along header.
+    private var pullKeepOut: [CGRect] {
+        let skip: String = reading ? "dial" : "scrub"
+        return keepOut.filter { $0.key != skip }.map { $0.value }
     }
 
     private func scrollToTop() {
@@ -130,7 +138,7 @@ private struct DeckTabPlayerSection: View {
     let height: CGFloat
     @Binding var reading: Bool
     /// Where a pull down may not start (in the page's scroll content), by
-    /// name: the live dial, the words, the read-along scrub line, the volume.
+    /// name: the live dial, the read-along scrub line, the volume.
     @Binding var keepOut: [String: CGRect]
     let close: () -> Void
 
@@ -275,8 +283,9 @@ private struct DeckTabPlayerSection: View {
             .padding(.bottom, 4)
             DeckReadAlong(episode: episode)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                // The words scroll; a pull down only starts above them.
-                .keepingOut("words", in: $keepOut)
+                // The words scroll; a pull down starts on them only when
+                // they're scrolled to their top (`DeckPullDown`), and always
+                // from the rows above them.
                 .transition(AnyTransition.opacity.combined(with: .offset(y: 40)))
         }
     }

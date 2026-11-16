@@ -222,12 +222,6 @@ struct DeckSetChoice<Value: Hashable>: View {
 private struct DeckSettingsListening: View {
     @Environment(LibraryStore.self) private var store
     @State private var downloadsSize = ""
-    @AppStorage(SaveForLater.key) private var savedRaw: String = ""
-
-    private var savedCount: String {
-        let count: Int = SaveForLater.ids(savedRaw).count
-        return count == 0 ? "" : "\(count)"
-    }
 
     var body: some View {
         DeckSetGroup("Your listening") {
@@ -246,11 +240,6 @@ private struct DeckSettingsListening: View {
             // Paul, 15 Nov 2026: saved clips had no way in from Deck.
             NavigationLink { HaarSavedClipsView() } label: {
                 DeckSetRowLabel(icon: "quote.bubble", title: "Saved clips")
-            }
-            DeckSetLine()
-            // Save for later (Paul, 15 Nov 2026).
-            NavigationLink { DeckSavedForLaterView() } label: {
-                DeckSetRowLabel(icon: "bookmark", title: "Saved for later", value: savedCount)
             }
         }
         .buttonStyle(.plain)

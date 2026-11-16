@@ -15,6 +15,13 @@ import UIKit
 //   scroll view, and an upward drag scrolls as usual;
 // - the finger is measured against the screen, not the moving page.
 // Both players use the same distances (`DeckPullToClose`).
+// Read along (Paul, 16 Nov 2026: "I can't pull down to close when the
+// transcript is open"): the words filled most of the page and were kept
+// out, so there was nowhere to pull. Now a pull may also start on the words
+// when they're scrolled right up to their top (nothing above to scroll
+// back to); otherwise a drag on them scrolls them as before. The rule is
+// general: whatever scroll view is under the finger (the words, or the page
+// itself) must be at its top, and it waits for the pull to decide.
 
 /// The shared distances for pulling a player down to close it.
 enum DeckPullToClose {
@@ -40,10 +47,12 @@ enum DeckPullEvent {
     case ended(close: Bool)
 }
 
-/// The pan for the tab page. `keepOut` holds the places where a pull may
-/// not start (the dial, the words), measured in `DeckPullDown.space`: a
-/// coordinate space on the page's scroll content, so they don't change as
-/// it scrolls (and nothing redraws while scrolling).
+/// The pan for the tab page (and the card-deck player's read-along words).
+/// `keepOut` holds the places where a pull may not start (the dial, the
+/// scrub line, the volume), measured in `DeckPullDown.space`: a coordinate
+/// space on the page's scroll content, so they don't change as it scrolls
+/// (and nothing redraws while scrolling). A scroll view under the finger
+/// (the read-along words) only lets a pull start when it's at its top.
 struct DeckPullDown: UIGestureRecognizerRepresentable {
     static let space: String = "deckPullDownPage"
 
@@ -110,6 +119,17 @@ struct DeckPullDown: UIGestureRecognizerRepresentable {
             return scroll.contentOffset.y <= -scroll.adjustedContentInset.top + 2
         }
 
+        /// The innermost scroll view under a point in the window: the
+        /// read-along words when the finger is on them, else the page.
+        private func scrollUnder(_ point: CGPoint, in window: UIWindow?) -> UIScrollView? {
+            var hit: UIView? = window?.hitTest(point, with: nil)
+            while let at = hit {
+                if let scroll = at as? UIScrollView { return scroll }
+                hit = at.superview
+            }
+            return nil
+        }
+
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
             guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
             let moved: CGPoint = pan.translation(in: nil)
@@ -122,18 +142,21 @@ struct DeckPullDown: UIGestureRecognizerRepresentable {
             let now: CGPoint = pan.location(in: nil)
             let start = CGPoint(x: now.x - moved.x, y: now.y - moved.y)
             let point: CGPoint = scroll?.convert(start, from: nil) ?? start
-            return !keepOut.contains { $0.contains(point) }
+            guard !keepOut.contains(where: { $0.contains(point) }) else { return false }
+            // On the words: only when they're scrolled right up to the top.
+            return atTop(scrollUnder(start, in: pan.view?.window))
         }
 
-        /// The page's own scrolling (and the pager's sideways paging) waits
-        /// for this one to decide; it fails at once for anything that isn't a
-        /// pull down from the top, so they carry on after about 10 pt.
+        /// The page's own scrolling (and the pager's sideways paging), and
+        /// the read-along words' scrolling inside it, wait for this one to
+        /// decide; it fails at once for anything that isn't a pull down from
+        /// the top, so they carry on after about 10 pt.
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                                shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
             guard otherGestureRecognizer is UIPanGestureRecognizer,
                   let scroll = otherGestureRecognizer.view as? UIScrollView,
                   let view = gestureRecognizer.view else { return false }
-            return view.isDescendant(of: scroll)
+            return view.isDescendant(of: scroll) || scroll.isDescendant(of: view)
         }
     }
 }

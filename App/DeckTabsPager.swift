@@ -18,7 +18,7 @@ struct DeckTabsPager: View {
     @Environment(DeckTabsModel.self) private var model
     @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
-    @AppStorage(SaveForLater.key) private var savedRaw: String = ""
+    @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
 
     @State private var current: String?
     /// How far a pull down has moved the page.
@@ -26,7 +26,7 @@ struct DeckTabsPager: View {
 
     var body: some View {
         let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
-                                                        unplayed: unplayed, triaged: triaged, saved: savedRaw)
+                                                        unplayed: unplayed, triaged: triaged, started: started)
         let ids: [String] = tabs.map(\.episodeID)
         GeometryReader { (geometry: GeometryProxy) in
             ZStack(alignment: .bottom) {

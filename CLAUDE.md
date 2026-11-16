@@ -2875,6 +2875,101 @@ Paul's notes after build 163, built by two helpers plus option A:
   doubled gap under the island, long times ("1:23:45") on small iPhones,
   the bottom bar's words on a small iPhone.
 
+## Done in build 165 (16 Nov 2026, PR #83; Paul: "include all that and build")
+
+Paul's notes after build 164:
+- **Pull down to close with Read along open** (Paul: "I can't pull down to
+  close when the transcript is open"): the pull (`DeckPullDown`) now also
+  starts on the read-along words when they're scrolled to their top (it
+  checks the scroll view under the finger, `scrollUnder`), and the top
+  row and the small artwork / title header always take it; only the dial
+  (listening) or the scrub line (reading) are kept out (`pullKeepOut`).
+  The card-deck player's words do the same (`pulledOnWords`). The words
+  follow playback, so mid-episode pull from the top row / header.
+- **Edge swipe between sections removed** (Paul: "let's get rid of edge
+  scrolling; the menu being at the bottom gives us what we need"):
+  `App/DeckSections.swift` deleted; pages just show / hide; card swipes
+  work from the screen edge again.
+- **"n new" on show tiles** (Paul: "the 1 new being black … do we make
+  it white with a shaded corner like in tabs"): first `DeckCornerShadeLabel`;
+  then (Paul, 16 Nov 2026: "do we make it red like the other") the same
+  coral pill as the tabs' NEW, "2 NEW", in the top-right corner of
+  `DeckShowTile`.
+- **Tab groups: Up next · New · Started, as chips above the bar**
+  (replaced the same day: see "New and the group pill gone" below) (Paul,
+  16 Nov 2026, option A of the mock-up: "let's get rid of saved and have up
+  next, new and started as chips above the bar, and shows alone on the
+  your shows tab. Started should be anything started"). Tabs mode only;
+  card deck mode is unchanged.
+  - The chips that sat at the top of the Tabs page are gone. On the Tabs
+    page only, a small white pill floats just above the bottom bar,
+    centred: the chosen group in ink with its count ("Up next · 6"), the
+    others as muted words; tap one, or swipe along the pill for the group
+    before / after, instantly (`DeckTabGroupPill` in DeckTabsBar.swift).
+    It hides while a tab is open and on Your shows / Find. The Tabs page
+    has that much more room under its last row (`DeckTabsBar.pillRoom`),
+    and its Undo bar sits above the pill (`RootView.deckToastLift`).
+  - **Started** (`DeckTabGroup.started`, `DeckTabSource.startedQuery` /
+    `started`): every episode started and not finished (more than 30 s
+    in, not played), Up next ones included, the one playing first, then
+    most recently played. Tabs show their progress ring as usual; swipe
+    left / × = Played, swipe right = Play next / Add to end, the hold menu
+    as New's; no order numbers (only Up next has them). Empty: "Nothing
+    started".
+  - **Saved for later is gone** from the Deck look: the Saved group, the
+    Save for later row on a tab's page, the hold menu items, the bookmark
+    key on the card-deck episode page, the show page's hold menu item,
+    Settings → Your listening → Saved for later and the Shows tab's Saved
+    list. `App/DeckSavedForLater.swift` (`SaveForLater` and its views) is
+    deleted and "savedForLater" no longer syncs (an old saved choice of
+    the Saved group opens Up next). Played no longer touches it.
+- **Your shows = the shows alone** (tabs mode; Paul's pick "Shows
+  alone"): the page is just "Your shows", "n followed", the ⇅ sort key
+  and +, then every show as the two-across tiles in the chosen order
+  (`DeckShowsAloneHeader`, `DeckAllShowsRow(labelled: false)`, the sort
+  key is now its own `DeckShowsSortMenu`). Carry on, the sideways row of
+  new-episode show cards, its catch-up and the New sheet aren't on it any
+  more (New and Started are tab groups now). Card deck mode still shows
+  them, so that code stays.
+- Check on the phone: the pill's place over the bar on a small iPhone,
+  the last row of tabs scrolling clear of pill and bar, Undo above the
+  pill, swiping along the pill vs. the bar's own swipes, Started's order
+  while something plays (the one playing stays first), an episode only
+  just started (30 s) appearing in Started.
+- **Tab swipe-away smooth** (Paul's recording of build 164: "the
+  disappearing card animation when swiped away is very jerky"; frame by
+  frame the card snapped back, sat with a ✓ PLAYED pill, then just
+  vanished, and Undo popped it back): an armed left swipe now carries the
+  card on off its slot, fading, while the ✓ on the red block grows; ×
+  shrinks and fades it; then the tabs close up in one animation, the
+  corner numbers rolling (`DeckTabCell.flyOff` / `closeTapped` /
+  `settle`, `DeckTabsGrid` keeps its own `mirror` of the tabs and a
+  `gone` set so the gap closes at once; `DeckCornerShadeLabel` numeric
+  roll). Undo fades / grows the tab back; `undoable`'s restore now runs
+  in one animation everywhere. Not far enough: a real spring back.
+- No chapters pill: Paul was likely still on 163; on 164 it shows on the
+  playing tab (a tab not playing has no chapter row).
+
+- **New and the group pill gone: Up next only, new ones flagged**
+  (Paul, 16 Nov 2026, after the New group lost its "already looked at"
+  list: "everything new adds to up next in the relevant place based on
+  its rules … new episodes have an indicator … we drop the new pill. so
+  the up next tab is simple"). Tabs mode only. The Up next · New · Started
+  pill above the bar is gone (`DeckTabsBar.pillRoom` 0; `DeckTabGroupPill`
+  kept, unused) and the Tabs page is always Up next (`DeckTabGroup` is Up
+  next / Started; the model always starts on Up next). New episodes reach
+  Up next by their show's rule as they always did (Top / Bottom; Nowhere
+  shows don't add, so theirs stay on the show page). An Up next tab whose
+  episode came out in the last 48 hours and isn't started or playing has a
+  small coral NEW pill before the show's name (`DeckTabSource.isFresh`,
+  `DeckTabCard.newFlag`). Started went with the pill: started episodes in
+  Up next show their progress ring; ones started but not in Up next
+  (picked from Find, a show on Nowhere) sit under the tabs as Carry on
+  cards, up to three (Paul: "could have a carry on card below the up
+  next"; `DeckCarryOnSection(outsideUpNext: true)`: ring artwork, title,
+  show · time left, ▶; tap for the episode page). Mock-up:
+  https://claude.ai/artifact/UiDf53LQZssTvUkaWjMjs9. Card deck mode unchanged.
+
 ## Queued for the next app build
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub

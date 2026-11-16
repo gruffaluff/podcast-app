@@ -313,8 +313,11 @@ struct DeckAllShowsRow: View, Equatable {
     let entries: [DeckShowEntry]
     /// `DeckShowsCache.generation`: the same number means the same entries.
     let generation: Int
+    /// The "All your shows" label and sort key above the grid; off when the
+    /// page's own header has them (tabs mode's Your shows).
+    let labelled: Bool
     /// Paul, 15 Nov 2026: "add the sort button". Kept on this iPhone.
-    @AppStorage("deckShowsSort") private var sortRaw: String = DeckShowsSort.newFirst.rawValue
+    @AppStorage(DeckShowsSort.key) private var sortRaw: String = DeckShowsSort.newFirst.rawValue
     /// The sorted list, kept until the entries or the order change.
     @State private var memo = DeckShowsSortMemo()
     private static let columns: [GridItem] = [GridItem(.flexible(), spacing: 12),
@@ -326,7 +329,7 @@ struct DeckAllShowsRow: View, Equatable {
     /// small reasons; the grid only does when its entries changed (its sort
     /// setting still redraws it).
     nonisolated static func == (lhs: DeckAllShowsRow, rhs: DeckAllShowsRow) -> Bool {
-        lhs.generation == rhs.generation
+        lhs.generation == rhs.generation && lhs.labelled == rhs.labelled
     }
 
     /// "Latest episode" goes through every episode of every show, so the
@@ -342,13 +345,15 @@ struct DeckAllShowsRow: View, Equatable {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                DeckShowLabel(text: "All your shows")
-                Spacer(minLength: 8)
-                sortMenu
+            if labelled {
+                HStack(alignment: .firstTextBaseline) {
+                    DeckShowLabel(text: "All your shows")
+                    Spacer(minLength: 8)
+                    DeckShowsSortMenu()
+                }
+                .padding(.leading, 22)
+                .padding(.trailing, 16)
             }
-            .padding(.leading, 22)
-            .padding(.trailing, 16)
             LazyVGrid(columns: Self.columns, spacing: 12) {
                 ForEach(sortedEntries()) { entry in
                     NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
@@ -358,8 +363,15 @@ struct DeckAllShowsRow: View, Equatable {
             .padding(.horizontal, 16)
         }
     }
+}
 
-    private var sortMenu: some View {
+/// The ⇅ key for All your shows: the order it's in, tap for the choices.
+struct DeckShowsSortMenu: View {
+    @AppStorage(DeckShowsSort.key) private var sortRaw: String = DeckShowsSort.newFirst.rawValue
+
+    private var sort: DeckShowsSort { DeckShowsSort(rawValue: sortRaw) ?? .newFirst }
+
+    var body: some View {
         Menu {
             Picker("Sort", selection: $sortRaw) {
                 ForEach(DeckShowsSort.allCases, id: \.rawValue) { option in
@@ -391,6 +403,8 @@ final class DeckShowsSortMemo {
 /// The orders for All your shows.
 enum DeckShowsSort: String, CaseIterable {
     case newFirst, name, latestEpisode, topRank
+
+    static let key = "deckShowsSort"
 
     var title: String {
         switch self {
@@ -425,7 +439,8 @@ enum DeckShowsSort: String, CaseIterable {
 }
 
 /// A square tile that is the show's artwork, edge to edge, with the name
-/// in white over a dark fade at the foot and "n new" in the corner.
+/// in white over a dark fade at the foot and "n new" in white over a
+/// shaded top corner, like the tab cards' order number.
 private struct DeckShowTile: View {
     let entry: DeckShowEntry
 
@@ -481,14 +496,20 @@ private struct DeckShowTile: View {
 
     @ViewBuilder private var badge: some View {
         if !entry.fresh.isEmpty {
-            Text("\(entry.fresh.count) new")
-                .font(Theme.outfit(12, .bold))
+            // The same coral pill as NEW on the Up next tabs (Paul, 16 Nov
+            // 2026: "do we make it red like the other").
+            Text("\(entry.fresh.count) NEW")
+                .font(Theme.outfit(10, .heavy))
+                .tracking(0.6)
                 .foregroundStyle(Color.white)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Color(hex: 0x1C1B1A)))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.85), lineWidth: 1))
-                .padding(9)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(DeckRings.coral))
+                .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
+                .fixedSize()
+                .padding(10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .accessibilityLabel("\(entry.fresh.count) new")
         }
     }
 }
