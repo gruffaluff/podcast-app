@@ -2699,6 +2699,11 @@ Paul's notes after build 155, all in Deck:
   full-colour cards, renumbers live during the hand-made drag, and an
   open tab's top line says "2nd in Up next" / "Playing now". Shown on
   https://claude.ai/artifact/TgbPAWS9vWQQvMvaCLTYC2 (tabs phone).
+  Paul (16 Nov 2026): "that number's a bit too strong"; quieter options
+  on https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn: A dark pill (on
+  the branch now), B plain white number, no pill (suggested), C in the
+  show line ("2 · SHOW"), D frosted dot, E big outline numeral, F in the
+  time row ("3rd · 52m"). Waiting on Paul's pick.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
