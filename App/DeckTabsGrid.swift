@@ -38,6 +38,17 @@ struct DeckTabsGrid: View {
     @State private var notes: PodcastEpisode?
     @State private var width: CGFloat = 360
     @AppStorage(SaveForLater.key) private var savedRaw: String = ""
+    /// The tabs as last shown (build 165, Paul: "the disappearing card
+    /// animation when swiped away is very jerky"). `tabs` can change in a
+    /// transaction with no animation (New's query catching up, Saved's
+    /// stored list, the player moving on, Undo's played flags), so the grid
+    /// follows it here inside its own animation: tabs leaving close up,
+    /// ones coming back (Undo) fade and grow in, moved ones glide.
+    @State private var mirror: [PodcastEpisode]?
+    @State private var mirrorGroup: DeckTabGroup?
+    /// Tabs just closed here: out of the grid at once, in the same
+    /// animation, without waiting for the library to catch up.
+    @State private var gone: Set<String> = []
 
     static let gap: CGFloat = 10
 
@@ -51,6 +62,14 @@ struct DeckTabsGrid: View {
     private var cardHeight: CGFloat { (cardWidth * 1.25).rounded() }
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var playingID: String? { player.nowPlaying?.episodeID }
+
+    /// What the grid shows (before a drag's reordering): `tabs` as
+    /// followed, less tabs just closed.
+    private var base: [PodcastEpisode] {
+        let followed: [PodcastEpisode] = (mirrorGroup == model.group ? mirror : nil) ?? tabs
+        guard !gone.isEmpty else { return followed }
+        return followed.filter { !gone.contains($0.episodeID) }
+    }
 
     var body: some View {
         let shown: [PodcastEpisode] = displayed
@@ -67,6 +86,63 @@ struct DeckTabsGrid: View {
         // Never leave the page unable to scroll if the grid goes mid-drag.
         .onDisappear { dropLift() }
         .onChange(of: model.group) { _, _ in dropLift() }
+        .onChange(of: tabs.map(\.episodeID), initial: true) { _, ids in follow(ids) }
+        // Undo (or a close that didn't happen): bring back any tab that's
+        // open again.
+        .onChange(of: store.undoAction?.id) { _, _ in recheckGone() }
+    }
+
+    // MARK: Following the tabs
+
+    private func follow(_ ids: [String]) {
+        let present: Set<String> = Set(ids)
+        let stale: Set<String> = gone.subtracting(present)
+        if mirror == nil || mirrorGroup != model.group {
+            // First showing, or another group: no animation.
+            var instant = Transaction(animation: nil)
+            instant.disablesAnimations = true
+            withTransaction(instant) {
+                mirror = tabs
+                mirrorGroup = model.group
+                gone = []
+            }
+            return
+        }
+        guard mirror?.map(\.episodeID) != ids || !stale.isEmpty else { return }
+        withAnimation(LibraryStore.listChange) {
+            mirror = tabs
+            // Already hidden, so letting them go changes nothing on screen.
+            if !stale.isEmpty { gone.subtract(stale) }
+        }
+    }
+
+    /// A tab closed with × or a swipe: out of the grid (the others close
+    /// up) and marked played / off Saved, in one animation.
+    private func leave(_ episode: PodcastEpisode) {
+        let id: String = episode.episodeID
+        withAnimation(LibraryStore.listChange) {
+            _ = gone.insert(id)
+            actions.close(episode)
+        }
+        // If the close didn't take, the tab comes back rather than staying
+        // hidden.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { recheckGone() }
+    }
+
+    private func recheckGone() {
+        guard !gone.isEmpty else { return }
+        let back: Set<String> = gone.filter { id in
+            guard let tab = tabs.first(where: { $0.episodeID == id }) else { return false }
+            return stillOpen(tab)
+        }
+        guard !back.isEmpty else { return }
+        withAnimation(LibraryStore.listChange) { gone.subtract(back) }
+    }
+
+    /// Whether a tab in `tabs` should still show (the library may lag).
+    private func stillOpen(_ episode: PodcastEpisode) -> Bool {
+        if model.group == .saved { return SaveForLater.isSaved(episode.episodeID) }
+        return !episode.played
     }
 
     private func dropLift() {
@@ -85,7 +161,8 @@ struct DeckTabsGrid: View {
         DeckTabCell(episode: episode, place: place(of: episode, in: shown),
                     hidden: lift?.id == episode.episodeID, height: cardHeight,
                     hooks: hooks(for: episode),
-                    hold: { touch in held(touch, episode: episode) })
+                    hold: { touch in held(touch, episode: episode) },
+                    leave: { leave(episode) })
             .confirmationDialog(episode.title, isPresented: menuBinding(episode), titleVisibility: .visible) {
                 holdMenu(episode)
             }
@@ -144,6 +221,7 @@ struct DeckTabsGrid: View {
 
     /// The tabs as shown: the order being dragged into, while dragging.
     private var displayed: [PodcastEpisode] {
+        let tabs: [PodcastEpisode] = base
         guard let lift else { return tabs }
         var byID: [String: PodcastEpisode] = [:]
         for tab in tabs where byID[tab.episodeID] == nil { byID[tab.episodeID] = tab }
@@ -247,6 +325,7 @@ struct DeckTabsGrid: View {
     private func began(_ id: String) {
         guard lift == nil, still == nil, model.group == .upNext else { return }
         let playing: String? = playingID
+        let tabs: [PodcastEpisode] = base
         guard id != playing, let slot = tabs.firstIndex(where: { $0.episodeID == id }) else { return }
         let order: [String] = tabs.map(\.episodeID).filter { $0 != playing }
         let lead: Int = (playing != nil && tabs.first?.episodeID == playing) ? 1 : 0
@@ -304,7 +383,7 @@ struct DeckTabsGrid: View {
 
     /// VoiceOver: Move earlier / Move later.
     private func step(_ id: String, by offset: Int) {
-        let order: [String] = tabs.map(\.episodeID).filter { $0 != playingID }
+        let order: [String] = base.map(\.episodeID).filter { $0 != playingID }
         guard let at = order.firstIndex(of: id), order.indices.contains(at + offset) else { return }
         _ = actions.move(id, onto: order[at + offset])
     }
@@ -389,13 +468,19 @@ private enum DeckTabSwipeZone: Equatable {
 ///
 /// Swipe left (Paul, 16 Nov 2026: "Swipe left marks as played with a
 /// visual confirmation"): the card follows the finger over a red block
-/// with ✓ and "Played"; past 38% of its width (or a quick flick) it arms,
-/// let go and the card springs back, a white "✓ PLAYED" pill shows on it,
-/// then it folds away and is marked played (Undo). Swipe right: Play next
-/// (green, 28–62%), further Add to end (ink); let go and the tab glides to
-/// its new place with a ring pulse (Undo). Both keep each show in order.
-/// The tab playing can only be swiped left; Saved tabs only left (off the
-/// Saved list).
+/// with ✓ and "Played"; past 38% of its width (or a quick flick) it arms.
+/// Build 165 (Paul: "the disappearing card animation when swiped away is
+/// very jerky"): let go armed and the card keeps going the way it was
+/// thrown, at the finger's speed, fading as it goes, while the ✓ on the
+/// red block left in its slot grows (the confirmation); then the grid
+/// closes the gap in one animation (`DeckTabsGrid.leave`) and it's marked
+/// played (Undo brings it back the same way). × does the same with the
+/// card shrinking away instead. Not armed: it springs back, the block
+/// fading with it. Swipe right: Play next (green, 28–62%), further Add to
+/// end (ink); let go and it springs back, then glides to its new place
+/// with a ring pulse (Undo). Both keep each show in order. The tab
+/// playing can only be swiped left; Saved tabs only left (off the Saved
+/// list).
 private struct DeckTabCell: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
@@ -407,16 +492,27 @@ private struct DeckTabCell: View {
     let height: CGFloat
     let hooks: DeckTabHooks
     let hold: (DeckTabTouch) -> Void
+    /// Close the tab: the grid takes it out (closing the gap) and marks it
+    /// played / off Saved, all in one animation.
+    let leave: () -> Void
 
     @State private var drag: CGFloat = 0
     @State private var width: CGFloat = 170
     @State private var zone: DeckTabSwipeZone = .idle
     /// A swipe's action is under way: further touches wait.
     @State private var busy = false
-    @State private var stamped = false
-    @State private var folding = false
+    /// On its way out: the card fades as it goes.
+    @State private var leaving = false
+    /// × pressed: the card shrinks away rather than sliding.
+    @State private var tossed = false
+    /// The ✓ on the block has grown: it's done.
+    @State private var confirmed = false
     @State private var ringOpacity: Double = 0
     @State private var ringScale: CGFloat = 1
+
+    /// Back into place when a swipe isn't let go far enough (or after a
+    /// right swipe): a real spring the eye can follow.
+    private static let springBack: Animation = .interpolatingSpring(duration: 0.42, bounce: 0.16)
 
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
@@ -442,57 +538,37 @@ private struct DeckTabCell: View {
 
     private var content: some View {
         ZStack {
-            DeckTabSwipeBlock(zone: zone, saved: saved)
+            DeckTabSwipeBlock(zone: zone, saved: saved, confirmed: confirmed)
                 .opacity(blockOpacity)
-            DeckTabCard(episode: episode, place: place)
-                .overlay { stamp }
-                .offset(x: drag)
-                .opacity(hidden ? 0 : 1)
+            card
             pulseRing
             if hidden {
                 DeckTabGap()
             }
         }
-        .scaleEffect(folding ? 0.8 : 1)
-        .opacity(folding ? 0 : 1)
     }
 
-    /// The block fades in over the first 30 pt.
+    private var card: some View {
+        DeckTabCard(episode: episode, place: place)
+            .scaleEffect(tossed ? 0.84 : 1)
+            .offset(x: drag, y: tossed ? -12 : 0)
+            .opacity(hidden || leaving ? 0 : 1)
+    }
+
+    /// The block fades in over the first 30 pt (and out the same way as
+    /// the card springs back).
     private var blockOpacity: Double {
-        drag == 0 ? 0 : Double(min(1, abs(drag) / 30))
+        Double(min(1, abs(drag) / 30))
     }
 
     private var closeButton: some View {
-        Button(action: close) { DeckTabCloseGlyph() }
+        Button(action: closeTapped) { DeckTabCloseGlyph() }
             .buttonStyle(.plain)
+            .scaleEffect(tossed ? 0.84 : 1)
             .offset(x: drag)
-            .opacity(hidden || folding || stamped ? 0 : 1)
+            .opacity(hidden || leaving ? 0 : 1)
             .allowsHitTesting(!hidden && !busy)
             .accessibilityHidden(true)
-    }
-
-    /// "✓ PLAYED" over a dark wash, after a left swipe goes through.
-    private var stamp: some View {
-        ZStack {
-            Color.black.opacity(stamped ? 0.35 : 0)
-            HStack(spacing: 7) {
-                Image(systemName: saved ? "xmark" : "checkmark")
-                    .font(.system(size: 14, weight: .heavy))
-                Text(saved ? "REMOVED" : "PLAYED")
-                    .font(Theme.outfit(17, .heavy))
-                    .tracking(1)
-            }
-            .foregroundStyle(Color(hex: 0x1C1B1A))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 9)
-            .background(Capsule().fill(Color.white))
-            .shadow(color: Color.black.opacity(0.25), radius: 9, y: 6)
-            .scaleEffect(stamped ? 1 : 0.6)
-            .opacity(stamped ? 1 : 0)
-        }
-        .clipShape(shape)
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
     /// A brief ink ring after a right swipe moves the tab.
@@ -513,7 +589,7 @@ private struct DeckTabCell: View {
             Button("Play next") { actions.playNextInOrder(episode) }
             Button("Add to end") { actions.addToEnd(episode) }
         }
-        Button(saved ? "Close tab, remove from Saved" : "Close tab, mark played", action: close)
+        Button(saved ? "Close tab, remove from Saved" : "Close tab, mark played", action: leave)
     }
 
     // MARK: Touches
@@ -561,13 +637,14 @@ private struct DeckTabCell: View {
         var chosen: DeckTabSwipeZone = zone
         if speed < -700 && drag < -12 { chosen = .left(armed: true) }
         if cancelled || model.reordering || hidden || !chosen.armed {
-            withAnimation(.spring(duration: 0.3, bounce: 0.2)) { drag = 0 }
+            settle()
             return
         }
         busy = true
         switch chosen {
         case .left:
-            playedOut()
+            zone = chosen
+            flyOff(speed: speed)
         case .next:
             moveRight(toEnd: false)
         case .end:
@@ -577,33 +654,52 @@ private struct DeckTabCell: View {
         }
     }
 
-    /// Back in place, the pill, then it folds away and is closed (Undo).
-    private func playedOut() {
-        withAnimation(.spring(duration: 0.28, bounce: 0.15)) { drag = 0 }
-        withAnimation(.spring(duration: 0.25, bounce: 0.35)) { stamped = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.52) {
-            withAnimation(.easeIn(duration: 0.22)) { folding = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                close()
-                // If it's still here (or Undo brings it back), it's whole.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    var instant = Transaction(animation: nil)
-                    instant.disablesAnimations = true
-                    withTransaction(instant) {
-                        stamped = false
-                        folding = false
-                    }
-                    busy = false
-                }
-            }
+    /// Springs back into its slot; the block fades out with it and is
+    /// cleared once it's home.
+    private func settle() {
+        withAnimation(Self.springBack) { drag = 0 } completion: {
+            if drag == 0 { zone = .idle }
         }
     }
 
-    /// Back in place, then Up next changes (the grid glides it to its new
+    /// Armed and let go: the card carries on off its slot the way it was
+    /// going, as fast as the finger was (0.2–0.28 s, easing out), fading as
+    /// it goes; the ✓ on the red block grows; then the grid closes up.
+    private func flyOff(speed: CGFloat) {
+        let target: CGFloat = -(max(width, 1) + 30)
+        let remaining: CGFloat = abs(target - drag)
+        // An ease-out starts at about 1.8× its average speed, so this
+        // starts the card at the finger's speed.
+        let pace: CGFloat = max(-speed, 900)
+        let time: Double = min(0.28, max(0.2, Double(remaining / pace) * 1.8))
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        withAnimation(.easeOut(duration: time)) {
+            drag = target
+            leaving = true
+        }
+        withAnimation(.spring(duration: 0.34, bounce: 0.45)) { confirmed = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + time + 0.1) { leave() }
+    }
+
+    /// ×: the card shrinks and fades where it is, then the grid closes up.
+    private func closeTapped() {
+        guard !busy, !hidden, !model.reordering else { return }
+        busy = true
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.easeOut(duration: 0.22)) {
+            leaving = true
+            tossed = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { leave() }
+    }
+
+    /// Springs back, then Up next changes (the grid glides it to its new
     /// place) and a ring pulses round it.
     private func moveRight(toEnd: Bool) {
-        withAnimation(.spring(duration: 0.28, bounce: 0.15)) { drag = 0 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        withAnimation(Self.springBack) { drag = 0 } completion: {
+            if drag == 0 { zone = .idle }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
             if toEnd { actions.addToEnd(episode) } else { actions.playNextInOrder(episode) }
             busy = false
             pulse()
@@ -624,19 +720,17 @@ private struct DeckTabCell: View {
             }
         }
     }
-
-    private func close() {
-        actions.close(episode)
-    }
 }
 
 /// What shows behind a card being swiped: red Played on the right for a
 /// left swipe; grey, then green Play next, then ink Add to end on the left
 /// for a right swipe. The icon goes white with an ink tick once it would
-/// happen on letting go.
+/// happen on letting go; once the card has gone (`confirmed`) the ✓ grows
+/// and the block is the confirmation left in the tab's slot.
 private struct DeckTabSwipeBlock: View {
     let zone: DeckTabSwipeZone
     let saved: Bool
+    var confirmed = false
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -645,6 +739,7 @@ private struct DeckTabSwipeBlock: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(shape.fill(colour))
             .animation(.easeOut(duration: 0.12), value: zone)
+            .animation(.spring(duration: 0.34, bounce: 0.45), value: confirmed)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
@@ -655,6 +750,7 @@ private struct DeckTabSwipeBlock: View {
                 Spacer(minLength: 0)
                 words(alignment: .trailing)
                 icon
+                    .padding(.horizontal, confirmed ? 8 : 0)
             }
         } else if zone != .idle {
             HStack(spacing: 8) {
@@ -674,7 +770,7 @@ private struct DeckTabSwipeBlock: View {
                 .foregroundStyle(armed ? Color(hex: 0x1C1B1A) : Color.white)
         }
         .frame(width: 34, height: 34)
-        .scaleEffect(armed ? 1.22 : 1)
+        .scaleEffect(confirmed ? 1.6 : (armed ? 1.22 : 1))
     }
 
     private func words(alignment: HorizontalAlignment) -> some View {
@@ -683,7 +779,7 @@ private struct DeckTabSwipeBlock: View {
                 .font(Theme.outfit(15, .heavy))
             Text(hint)
                 .font(Theme.outfit(11, .semibold))
-                .opacity(0.85)
+                .opacity(confirmed ? 0 : 0.85)
         }
         .foregroundStyle(Color.white)
         .multilineTextAlignment(alignment == .trailing ? .trailing : .leading)
@@ -928,6 +1024,8 @@ struct DeckCornerShadeLabel: View {
                 .foregroundStyle(Color.white)
                 .lineLimit(1)
                 .fixedSize()
+                // Renumbers as tabs close up or move: it rolls, not jumps.
+                .contentTransition(.numericText())
                 .shadow(color: Color.black.opacity(0.55), radius: 3, y: 0)
                 .shadow(color: Color.black.opacity(0.5), radius: 0.5, y: 1)
                 .padding(side, 10)

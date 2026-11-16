@@ -31,14 +31,16 @@ extension LibraryStore {
         undoAction = UndoAction(label: label) { [weak self] in
             guard let self else { return }
             let saved = self.episodes(before.map(\.0))
-            for (id, played, playedAt, position) in before {
-                guard let episode = saved[id] else { continue }
-                episode.played = played
-                episode.playedAt = playedAt
-                episode.position = position
-            }
             let present = self.episodes(queueBefore.map(\.episode.id))
+            // All in one animation, so a row that comes back (its played
+            // flag and its place in Up Next) fades in rather than popping.
             withAnimation(Self.listChange) {
+                for (id, played, playedAt, position) in before {
+                    guard let episode = saved[id] else { continue }
+                    episode.played = played
+                    episode.playedAt = playedAt
+                    episode.position = position
+                }
                 self.commit(queueBefore.filter { present[$0.episode.id] != nil })
             }
             self.undoAction = nil
