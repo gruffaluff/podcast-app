@@ -1254,6 +1254,9 @@ struct PlayerOptionsSheet: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // The list in ink, not the accent (Paul, 16 Nov 2026: menus on
+            // the player had "a kind of purple tint").
+            .tint(Theme.ink)
             if player.sleepEndsAt != nil {
                 Button { player.extendSleepTimer() } label: {
                     Text("+5")
