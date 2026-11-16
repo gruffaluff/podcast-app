@@ -13,29 +13,33 @@ import PodcastCore
 //   the ring) with a big Play; pressing it makes it the playing episode and
 //   the page goes live;
 // - then the episode (place in Up next, download, transcript, played, save
-//   for later, notes) and "This show" (where new episodes go, alerts,
-//   speed, skip intro / outro, ads, keep downloads, Open show), on the
-//   app's own page colour.
+//   for later, Go to show, notes) on the app's own page colour. The show's
+//   settings live on its show page (Paul, 16 Nov 2026: "drop all the 'This
+//   show' details from the episode player card").
 // Scrolled down past the player, a slim bar at the top keeps play / pause
-// and the time. Pull down from the top of the page for the overview; the
-// pager (DeckTabsPager) still swipes sideways between tabs. Card deck mode
-// keeps DeckPlayerView and DeckEpisodePage.
+// and the time. Pull down from the top of the page for the overview
+// (DeckPullDown); swipe sideways on the page for the next / previous tab
+// (DeckTabsPager, which no longer has Safari's bar). Card deck mode keeps
+// DeckPlayerView and DeckEpisodePage.
 
 struct DeckTabEpisodePage: View {
     let episode: PodcastEpisode
     let index: Int
     let count: Int
+    /// The screen's safe area (the pager lays the pages out edge to edge,
+    /// so the colour runs up behind the status bar; the controls start
+    /// below it: Paul, 16 Nov 2026, "the top of the player screen is being
+    /// lost under the dynamic island").
+    let insets: EdgeInsets
     let close: () -> Void
+    /// A pull down from the top of the page (the pager moves and closes it).
+    let pulled: (DeckPullEvent) -> Void
 
     @State private var reading = false
     @State private var scrolledPast = false
-    @State private var pulledFar = false
     @State private var position = ScrollPosition(edge: .top)
-
-    /// Room for the pager's bar under the player's first screen.
-    static let barRoom: CGFloat = DeckTabsBar.height + 20
-    /// Pull down this far past the top and let go: back to the overview.
-    static let pullToClose: CGFloat = 80
+    /// Where a pull down may not start (in the scroll content), by name.
+    @State private var keepOut: [String: CGRect] = [:]
 
     private var colour: Color {
         ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.showTitle)
@@ -43,50 +47,46 @@ struct DeckTabEpisodePage: View {
 
     var body: some View {
         GeometryReader { (geometry: GeometryProxy) in
-            let playerHeight: CGFloat = max(480, geometry.size.height - Self.barRoom)
-            scroller(width: geometry.size.width, playerHeight: playerHeight)
+            // Only what the page doesn't already get from iOS.
+            let top: CGFloat = max(0, insets.top - geometry.safeAreaInsets.top)
+            let bottom: CGFloat = max(0, insets.bottom - geometry.safeAreaInsets.bottom)
+            let visible: CGFloat = geometry.size.height - top - bottom
+            let playerHeight: CGFloat = max(480, visible)
+            scroller(width: geometry.size.width, playerHeight: playerHeight, top: top, bottom: bottom)
         }
         .task(id: episode.episodeID) { await ArtworkColors.shared.load(episode.artwork) }
     }
 
-    private func scroller(width: CGFloat, playerHeight: CGFloat) -> some View {
+    private func scroller(width: CGFloat, playerHeight: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {
         let threshold: CGFloat = playerHeight - 140
-        let pull: CGFloat = Self.pullToClose
         return ScrollView(.vertical) {
             VStack(spacing: 0) {
                 DeckTabPlayerSection(episode: episode, index: index, count: count, colour: colour,
-                                     width: width, height: playerHeight, reading: $reading, close: close)
+                                     width: width, height: playerHeight, reading: $reading,
+                                     keepOut: $keepOut, close: close)
                     .frame(height: playerHeight)
-                DeckTabEpisodeBelow(episode: episode, close: close, readAlong: readAlong)
+                    .padding(.top, top)
+                    .contentShape(Rectangle())
+                    .gesture(DeckPullDown(keepOut: Array(keepOut.values), handle: pulled))
+                DeckTabEpisodeBelow(episode: episode, bottomRoom: bottom + 24, close: close, readAlong: readAlong)
             }
+            .coordinateSpace(.named(DeckPullDown.space))
         }
         .scrollPosition($position)
         .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.always, axes: .vertical)
         .onScrollGeometryChange(for: Bool.self, of: { (geometry: ScrollGeometry) -> Bool in
             geometry.contentOffset.y + geometry.contentInsets.top > threshold
         }, action: { (_: Bool, past: Bool) in
             withAnimation(.easeOut(duration: 0.2)) { scrolledPast = past }
         })
-        .onScrollGeometryChange(for: Bool.self, of: { (geometry: ScrollGeometry) -> Bool in
-            geometry.contentOffset.y + geometry.contentInsets.top < -pull
-        }, action: { (_: Bool, far: Bool) in
-            pulledFar = far
-        })
-        .onScrollPhaseChange { (old: ScrollPhase, phase: ScrollPhase) in
-            if old == .interacting, phase != .interacting, pulledFar {
-                pulledFar = false
-                close()
-            }
-        }
-        .overlay(alignment: .top) { slimBar }
+        .overlay(alignment: .top) { slimBar(top: top) }
     }
 
-    @ViewBuilder private var slimBar: some View {
+    @ViewBuilder private func slimBar(top: CGFloat) -> some View {
         if scrolledPast {
             DeckTabSlimBar(episode: episode, colour: colour, tap: scrollToTop)
                 .padding(.horizontal, 12)
-                .padding(.top, 4)
+                .padding(.top, top + 4)
                 .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
         }
     }
@@ -129,10 +129,14 @@ private struct DeckTabPlayerSection: View {
     let width: CGFloat
     let height: CGFloat
     @Binding var reading: Bool
+    /// Where a pull down may not start (in the page's scroll content), by
+    /// name: the live dial, the words, the read-along scrub line, the volume.
+    @Binding var keepOut: [String: CGRect]
     let close: () -> Void
 
     @State private var showingOptions = false
     @State private var showingChapters = false
+    @State private var showingMore = false
     /// Where a drag round the dial has got to (the dial and the times row).
     @State private var dialScrub = DeckDialScrub()
 
@@ -148,7 +152,8 @@ private struct DeckTabPlayerSection: View {
     var body: some View {
         let now: PlayerModel.NowPlaying? = live
         VStack(spacing: 0) {
-            DeckTabTopRow(episode: episode, index: index, count: count, live: now != nil, close: close)
+            DeckTabTopRow(episode: episode, index: index, count: count, live: now != nil,
+                          close: close, more: { showingMore = true })
             middle(now)
             controls(now)
         }
@@ -162,6 +167,9 @@ private struct DeckTabPlayerSection: View {
         .sheet(isPresented: $showingChapters) {
             DeckPlayerChaptersSheet().normalColours()
         }
+        .sheet(isPresented: $showingMore) {
+            DeckTabMoreSheet(episode: episode, live: now != nil)
+        }
     }
 
     // MARK: Middle
@@ -174,12 +182,16 @@ private struct DeckTabPlayerSection: View {
         }
     }
 
-    /// Room left for the dial once everything else has its place.
+    /// Room left for the dial once everything else has its place (the
+    /// times row is 26 pt with its bigger numbers).
     private var side: CGFloat {
-        let fixed: CGFloat = 44 + 92 + 42 + 20 + 86 + 68 + (volume ? 34 : 0) + 44
+        let fixed: CGFloat = 44 + 92 + 38 + DeckDialTimes.height + 86 + 68 + (volume ? 34 : 0) + 40
         return max(120, min(width - 72, height - fixed))
     }
 
+    /// Spare height goes above the dial; the title sits close over the
+    /// chapter row and times (Paul, 16 Nov 2026: the gap between the title
+    /// and the times was "an empty no man's land").
     private func listenTop(_ now: PlayerModel.NowPlaying?) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 8)
@@ -187,9 +199,10 @@ private struct DeckTabPlayerSection: View {
                 .frame(width: side, height: side)
                 .frame(maxWidth: .infinity)
             Spacer(minLength: 12)
+                .frame(maxHeight: 22)
             titleBlock
                 .padding(.horizontal, 24)
-            Spacer(minLength: 8)
+                .padding(.bottom, 8)
         }
     }
 
@@ -199,11 +212,14 @@ private struct DeckTabPlayerSection: View {
                 DeckPlayerDial(item: now, episode: episode, rect: CGRect(origin: .zero, size: proxy.size),
                                colour: colour, scrub: dialScrub)
             }
+            // The dial keeps its drags (scrubbing); a pull down can't start on it.
+            .keepingOut("dial", in: $keepOut)
         } else {
             Button { actions.playNow(episode) } label: {
                 DeckTabRestingDial(episode: episode, side: side)
             }
             .buttonStyle(.plain)
+            .onAppear { keepOut["dial"] = nil }
             .accessibilityLabel("Play " + episode.title)
         }
     }
@@ -259,6 +275,8 @@ private struct DeckTabPlayerSection: View {
             .padding(.bottom, 4)
             DeckReadAlong(episode: episode)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // The words scroll; a pull down only starts above them.
+                .keepingOut("words", in: $keepOut)
                 .transition(AnyTransition.opacity.combined(with: .offset(y: 40)))
         }
     }
@@ -272,12 +290,13 @@ private struct DeckTabPlayerSection: View {
     private func controls(_ now: PlayerModel.NowPlaying?) -> some View {
         VStack(spacing: 0) {
             chapterRow(now)
-                .padding(.bottom, 10)
+                .padding(.bottom, 6)
             times(now)
             transport(now)
                 .padding(.top, 10)
             if volume {
                 DeckPlayerVolume()
+                    .keepingOut("volume", in: $keepOut)
                     .padding(.top, 6)
             }
             bottomRow(now)
@@ -299,6 +318,7 @@ private struct DeckTabPlayerSection: View {
             DeckTabRestingTimes(episode: episode)
         } else if reading {
             DeckPlayerScrub()
+                .keepingOut("scrub", in: $keepOut)
         } else {
             DeckDialTimes(scrub: dialScrub)
         }
@@ -351,8 +371,7 @@ private struct DeckTabTopRow: View {
     let count: Int
     let live: Bool
     let close: () -> Void
-
-    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
+    let more: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
@@ -389,26 +408,17 @@ private struct DeckTabTopRow: View {
         return "TAB \(index + 1) OF \(count)"
     }
 
+    /// ⋯ opens a short sheet in the app's own colours (Paul, 16 Nov 2026:
+    /// iOS's menu over the show's colour came out with "a kind of purple
+    /// tint which is off from the rest of the app").
     private var menu: some View {
-        Menu {
-            if !live {
-                Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { actions.playNext(episode) }
-            }
-            if actions.isQueued(episode) && !live {
-                Button("Remove from Up next", systemImage: "minus.circle") { actions.removeFromUpNext(episode) }
-            }
-            if let show = episode.podcast {
-                Button("Open show", systemImage: "square.stack") {
-                    DeckTabNavigation.openShow(show, store: store, model: model)
-                }
-            }
-        } label: {
+        Button(action: more) {
             Image(systemName: "ellipsis")
                 .font(.system(size: 22, weight: .medium))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
-        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
         .accessibilityLabel("More")
     }
 }
@@ -456,18 +466,22 @@ private struct DeckTabRestingTimes: View {
         let left: TimeInterval = max(0, duration - at)
         return HStack(spacing: 4) {
             Text(TimeFormat.clock(at))
-                .frame(minWidth: 64, alignment: .leading)
+                .font(DeckDialTimes.clockFont)
+                .frame(minWidth: 72, alignment: .leading)
             Spacer(minLength: 0)
             Text(middle(at: at, left: left))
+                .font(DeckDialTimes.middleFont)
                 .lineLimit(1)
+                .opacity(0.75)
             Spacer(minLength: 0)
             Text(duration > 0 ? "−" + TimeFormat.clock(left) : "")
-                .frame(minWidth: 64, alignment: .trailing)
+                .font(DeckDialTimes.clockFont)
+                .frame(minWidth: 72, alignment: .trailing)
         }
-        .font(Theme.outfit(12, .medium))
         .monospacedDigit()
-        .opacity(0.8)
-        .frame(height: 20)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(height: DeckDialTimes.height)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(middle(at: at, left: left))
     }
@@ -533,5 +547,110 @@ struct DeckTabRing: View {
             return min(1, max(0, player.currentTime / player.duration))
         }
         return DeckRing.progress(of: episode)
+    }
+}
+
+// MARK: - ⋯ sheet
+
+/// The tab page's ⋯: a short sheet on the app's warm page with white card
+/// rows, ink words and icons (Paul, 16 Nov 2026: iOS's menu over the show's
+/// colour had "a kind of purple tint"). Sized to what's in it; Done or
+/// swipe down.
+private struct DeckTabMoreSheet: View {
+    @Environment(PlayerModel.self) private var player
+    @Environment(LibraryStore.self) private var store
+    @Environment(DeckTabsModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    let episode: PodcastEpisode
+    let live: Bool
+
+    @State private var height: CGFloat = 260
+
+    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            header
+            DeckSetCard { rows }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+        .foregroundStyle(Theme.ink)
+        .tint(Theme.ink)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationDetents([.height(height)])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(Theme.background)
+    }
+
+    private var header: some View {
+        ZStack {
+            Text(episode.title)
+                .font(Theme.outfit(15, .bold))
+                .lineLimit(1)
+                .padding(.horizontal, 64)
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }
+                    .font(Theme.outfit(16, .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .buttonStyle(.plain)
+            }
+        }
+        .frame(height: 32)
+    }
+
+    @ViewBuilder private var rows: some View {
+        let queued: Bool = actions.isQueued(episode)
+        if !live {
+            row(icon: "text.line.first.and.arrowtriangle.forward", title: "Play next") {
+                actions.playNext(episode)
+            }
+            DeckSetLine()
+        }
+        if queued && !live {
+            row(icon: "minus.circle", title: "Remove from Up next") {
+                actions.removeFromUpNext(episode)
+            }
+            DeckSetLine()
+        }
+        row(icon: "square.stack", title: "Open show") { openShow() }
+            .disabled(episode.podcast == nil)
+    }
+
+    private func row(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button {
+            dismiss()
+            action()
+        } label: {
+            DeckSetRowLabel(icon: icon, title: title, chevron: nil)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The sheet goes first, then the tab page, then Shows opens the show.
+    private func openShow() {
+        guard let show = episode.podcast else { return }
+        // Read now: the sheet's environment is gone once it has closed.
+        let library: LibraryStore = store
+        let tabs: DeckTabsModel = model
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            DeckTabNavigation.openShow(show, store: library, model: tabs)
+        }
+    }
+}
+
+private extension View {
+    /// Reports this view's place in the page under `name` while it's shown,
+    /// so a pull down to close never starts on it (it keeps its own drags).
+    func keepingOut(_ name: String, in places: Binding<[String: CGRect]>) -> some View {
+        self
+            .onGeometryChange(for: CGRect.self) { (proxy: GeometryProxy) -> CGRect in
+                proxy.frame(in: .named(DeckPullDown.space))
+            } action: { (rect: CGRect) in
+                places.wrappedValue[name] = rect
+            }
+            .onDisappear { places.wrappedValue[name] = nil }
     }
 }

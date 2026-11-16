@@ -625,6 +625,12 @@ struct DeckDialTimes: View {
     @Environment(PlayerModel.self) private var player
     let scrub: DeckDialScrub
 
+    /// Bigger numbers (Paul, 16 Nov 2026: with the line gone, the small
+    /// times looked "like something has failed to render").
+    static let height: CGFloat = 26
+    static var clockFont: Font { Theme.outfit(18, .semibold) }
+    static var middleFont: Font { Theme.outfit(13, .medium) }
+
     var body: some View {
         let shown: TimeInterval = scrub.time ?? player.currentTime
         let left: TimeInterval = max(0, player.duration - shown)
@@ -632,19 +638,22 @@ struct DeckDialTimes: View {
         let ends: Date = Date().addingTimeInterval(atSpeed)
         return HStack(spacing: 4) {
             Text(TimeFormat.clock(shown))
-                .frame(minWidth: 64, alignment: .leading)
+                .font(Self.clockFont)
+                .frame(minWidth: 72, alignment: .leading)
             Spacer(minLength: 0)
             Text(middle(shown, ends: ends))
-                .lineLimit(1)
+                .font(Self.middleFont)
                 .minimumScaleFactor(0.7)
+                .opacity(0.75)
             Spacer(minLength: 0)
             Text("−" + TimeFormat.clock(atSpeed))
-                .frame(minWidth: 64, alignment: .trailing)
+                .font(Self.clockFont)
+                .frame(minWidth: 72, alignment: .trailing)
         }
-        .font(Theme.outfit(12, .medium))
         .monospacedDigit()
-        .opacity(0.8)
-        .frame(height: 20)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(height: Self.height)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(TimeFormat.clock(atSpeed)) left, ends at \(UpNextTimes.clock(ends))")
     }

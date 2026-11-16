@@ -127,9 +127,9 @@ struct DeckPlayerView: View {
     }
 
     /// Room left for the dial once everything else has its place (the
-    /// times row is 20 pt where the progress line and times took 48).
+    /// times row is 26 pt with its bigger numbers).
     private func artworkSide(_ size: CGSize, volume: Bool) -> CGFloat {
-        let fixed: CGFloat = 44 + 92 + 44 + 34 + 96 + 64 + (volume ? 34 : 0) + 40
+        let fixed: CGFloat = 44 + 92 + 40 + DeckDialTimes.height + 8 + 96 + 64 + (volume ? 34 : 0) + 40
         let byHeight: CGFloat = size.height - fixed
         return max(120, min(size.width - 72, byHeight))
     }
@@ -181,10 +181,12 @@ struct DeckPlayerView: View {
     /// 60 pt or on a light flick slides the player away first and then
     /// closes it without iOS's own animation on top (which made it jump).
     /// Paul, 15 Nov 2026 (after build 157): still needed "a real motion".
-    /// It now starts after 4 pt and closes past 36 pt, on any downward
-    /// flick (300 pt/s) or a predicted 90 pt, so a light brush down will do.
+    /// It starts after 4 pt and closes past 64 pt, on any downward flick
+    /// (300 pt/s) or a predicted 120 pt (`DeckPullToClose`, the same as the
+    /// tab page, Paul, 16 Nov 2026: "consistent"); the gaps round the
+    /// controls take it too.
     private var closeSwipe: some Gesture {
-        DragGesture(minimumDistance: 4, coordinateSpace: .global)
+        DragGesture(minimumDistance: DeckPullToClose.start, coordinateSpace: .global)
             .onChanged { (value: DragGesture.Value) in
                 let down: CGFloat = value.translation.height
                 let sideways: CGFloat = abs(value.translation.width)
@@ -195,9 +197,10 @@ struct DeckPlayerView: View {
             }
             .onEnded { (value: DragGesture.Value) in
                 guard pull > 0 else { return }
-                let far: Bool = value.translation.height > 36
-                let flick: Bool = value.velocity.height > 300 || value.predictedEndTranslation.height > 90
-                if far || flick {
+                let shut: Bool = DeckPullToClose.closes(translation: value.translation.height,
+                                                        velocity: value.velocity.height,
+                                                        predicted: value.predictedEndTranslation.height)
+                if shut {
                     slideAwayAndClose()
                 } else {
                     withAnimation(.spring(duration: 0.3, bounce: 0.1)) { pull = 0 }
@@ -243,10 +246,14 @@ struct DeckPlayerView: View {
                 .frame(width: side, height: side)
                 .frame(maxWidth: .infinity)
                 .accessibilityHidden(true)
+            // Spare height goes above the dial; the title sits close over
+            // the chapter row and times (Paul, 16 Nov 2026: the gap was "an
+            // empty no man's land").
             Spacer(minLength: 12)
+                .frame(maxHeight: 22)
             titleBlock(item)
                 .padding(.horizontal, 24)
-            Spacer(minLength: 8)
+                .padding(.bottom, 8)
         }
     }
 
@@ -326,7 +333,7 @@ struct DeckPlayerView: View {
     private func controls(volume: Bool) -> some View {
         VStack(spacing: 0) {
             DeckChapterRow(openChapters: { showingChapters = true })
-                .padding(.bottom, 10)
+                .padding(.bottom, 6)
             if reading {
                 DeckPlayerScrub()
             } else {
@@ -343,6 +350,10 @@ struct DeckPlayerView: View {
                 .padding(.top, 10)
         }
         .padding(.horizontal, 24)
+        .contentShape(Rectangle())
+        // Not in Read along: its scrub line's drag slows down as the finger
+        // goes lower, so a pull there must stay a scrub.
+        .simultaneousGesture(closeSwipe, including: reading ? .subviews : .all)
     }
 
     private var bottomRow: some View {

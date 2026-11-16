@@ -71,7 +71,7 @@ struct UndoBar: View {
             Button { action.restore() } label: {
                 Text("Undo")
                     .font(Theme.outfit(15, .bold))
-                    .foregroundStyle(Color(hex: 0x1C1B1A))
+                    .foregroundStyle(Color(hex: 0x2A2826))
                     .padding(.horizontal, 16)
                     .frame(height: 36)
                     .background(Capsule().fill(Color.white))
@@ -82,12 +82,25 @@ struct UndoBar: View {
         .padding(.trailing, 8)
         .padding(.vertical, action.note == nil ? 0 : 8)
         .frame(minHeight: 52)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(hex: 0x1C1B1A)))
-        .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
+        .background { deckBarBackground }
+        .compositingGroup()
+        .shadow(color: .black.opacity(0.38), radius: 18, y: 8)
+        .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
         .task(id: action.id) {
             do { try await Task.sleep(for: .seconds(6)) } catch { return }
             if store.undoAction?.id == action.id { store.undoAction = nil }
         }
+    }
+
+    /// Paul, 16 Nov 2026: the near-black bar got "a bit lost on dark
+    /// background" (full-colour tab cards, dark artwork). A slightly lighter
+    /// ink with a fine light edge, so it shows on dark art as well as on
+    /// the light page.
+    private var deckBarBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+        return shape
+            .fill(Color(hex: 0x2A2826))
+            .overlay(shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 1))
     }
 
     private func bar(_ action: UndoAction) -> some View {

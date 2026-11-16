@@ -49,6 +49,24 @@ struct DeckChapterRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(accessibility(list, index: index))
                 .accessibilityHint("Shows every chapter")
+        } else {
+            // No chapters (Paul, 16 Nov 2026: "add the pill"): a faint
+            // outlined pill that opens the chapters sheet, where they can be
+            // made on the iPhone from the words. Keeps the row from looking
+            // empty; the row's height doesn't change.
+            Button(action: openChapters) {
+                Text("No chapters · Make them ›")
+                    .font(Theme.outfit(13, .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .opacity(0.75)
+                    .padding(.horizontal, 12)
+                    .frame(height: 30)
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 1.5))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("No chapters")
+            .accessibilityHint("Opens chapters, where they can be made from the transcript")
         }
     }
 

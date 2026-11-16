@@ -2758,7 +2758,7 @@ Paul's notes after build 155, all in Deck:
     tab closes, then Shows opens the show), smaller iPhones (the dial
     shrinks to fit).
 
-## Done in build 163 (16 Nov 2026; Paul: "great. build.")
+## Done in build 163 (16 Nov 2026, PR #81; Paul: "great. build.")
 
 - **Tabs: hold and drag fixed, swipes back** (Paul, 16 Nov 2026, build
   162: "Hold and drag isn't working at all … Swipe left marks as played
@@ -2811,6 +2811,69 @@ Paul's notes after build 155, all in Deck:
     finger's height, not the card's middle), the swipe distances on a
     small card, the Played pill timing, the ring pulse after the tab
     moves, a tap on × and a tap just after scrolling, VoiceOver actions.
+
+## Done in build 164 (16 Nov 2026, PR #82; Paul: "add the pill and build")
+
+Paul's notes after build 163, built by two helpers plus option A:
+- **Section edge swipe follows the finger** (Paul: "doesn't animate as
+  you move … the scroll up and down activates and twitches the display"):
+  a swipe from within 20 pt of the left / right edge, clearly sideways,
+  now drags the section on screen with the finger while the real
+  neighbouring section slides in (dimmed 12% at first); let go past 35%
+  of the width or flick to move on (0.32 s spring), otherwise it springs
+  back; no section that way = rubber band; a tap at the commit point.
+  Once it starts the page's own scrolling is cancelled, so it can't
+  twitch. `DeckEdgeSwipeRecognizer` / `DeckEdgeSwipe`, state in
+  `DeckSectionSwipe` (`\.deckSectionSwipe`), pages moved in `DeckRoot`.
+- **Tabs · Your shows · Find at the bottom: option A** (Paul: "lets try
+  A" from https://claude.ai/artifact/WmSfBvAqQ4Fk4QWXSspeLH): the words
+  row left the top of each page and is the second row of the bottom bar,
+  under what's playing, the page you're on in ink with a short line
+  (`DeckTabsBar`, `DeckBarSectionWords`; bar 101 pt). Tap a word (Tabs
+  also closes an open tab), swipe along the bar for the page before /
+  after, swipe up for the tab overview. Swiping along the bar no longer
+  moves between episodes; the count square is gone (the count is in
+  "Tabs · 6").
+- **Open tab page**: controls start below the Dynamic Island (the colour
+  still runs up behind it; `DeckTabsPager` passes the safe area to
+  `DeckTabEpisodePage`); the Safari bar inside the page is gone (swipe
+  sideways on the page for the next tab; `DeckTabsPagerBar` deleted);
+  pull down to close is a UIKit pan (`DeckPullDown`, `App/DeckPullToClose.swift`):
+  when the page is at the top, a downward drag anywhere but the live dial,
+  read-along words / scrub line and volume moves the whole page with the
+  finger and closes past 64 pt or a flick (300 pt/s, or predicted
+  120 pt), else springs back; the card-deck player's `closeSwipe` uses the
+  same distances. The "This show" section is gone from the page (Paul:
+  keep it in the show's settings); under Save for later one row "Go to
+  show · name ›" (`DeckTabGoToShowRow`). The ⋯ is a small sheet in the
+  app's colours (`DeckTabMoreSheet`: warm page, white card, ink) instead
+  of iOS's glass menu, which took a purple tint from the show colour
+  (Paul: "kind of purple tint"); the Options sheet's sleep list is ink.
+- **Gap between title and times** (Paul: "no man's land … looks like
+  something failed to render"): spare height goes above the dial, the
+  title sits close over the chapter row and times; times in Outfit
+  semibold 18 with steady digits (`DeckDialTimes`, 26 pt row), both
+  players.
+- **No chapters** (Paul: "and when there are no chapters present?",
+  then "add the pill and build", from
+  https://claude.ai/artifact/2BB2UmYB1yN474wjoad1HG): the chapter row
+  shows a faint outlined pill "No chapters · Make them ›" instead of an
+  empty band (`DeckChapterRow`); it opens the chapters sheet, which with
+  no chapters has a card explaining they're made on the iPhone from the
+  words and a Make chapters key (Transcribe now, downloading first if
+  needed; shows "Making the words first · 62%"; the chapters appear when
+  done) (`DeckMakeChaptersCard` in `DeckPlayerChapters.swift`).
+- **Undo bar on dark art**: a touch lighter ink (#2A2826), a fine white
+  22% edge and a stronger shadow (`UndoBar.deckBarBackground`).
+- **Tab card × and number**: × is a 26 pt circle in 58% black with a
+  white 35% edge and soft shadow; the corner shade behind "Now" / 1 / 2…
+  is darker and larger, number 15 pt with a glow (`DeckTabCard`).
+- Check on the phone: edge swipe on a page never opened yet (it's made
+  as the swipe starts), vertical scrolls starting near an edge, the
+  Undo edge on the light page, pull down on the tab page vs scrubbing the
+  dial (if the dial closes the page, the no-pull areas are off), no
+  doubled gap under the island, long times ("1:23:45") on small iPhones,
+  the bottom bar's words on a small iPhone.
 
 ## Queued for the next app build
 
