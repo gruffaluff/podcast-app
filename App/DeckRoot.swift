@@ -73,8 +73,15 @@ struct DeckRoot: View {
                 .environment(tabsModel)
                 .presentationBackground(.clear)
         }
+        // Closing it goes back to the page it was opened from (Your shows /
+        // Find when opened from the bar there), else the overview.
         .onChange(of: tabsModel.pagerOpen) { _, open in
-            if !open { tab = 0 }
+            if open {
+                tabsModel.returnTab = tab
+            } else {
+                tab = tabsModel.returnTab
+                tabsModel.returnTab = 0
+            }
         }
         // Tabs: there's no separate player (Paul, 16 Nov 2026: one tab =
         // player + episode page + show settings). Anything that asks for
@@ -192,6 +199,10 @@ struct DeckTabPill: View {
         return Button {
             var instant = Transaction(animation: nil)
             instant.disablesAnimations = true
+            if tab == index && index != 0 {
+                NotificationCenter.default.post(name: .deckPageToStart, object: index)
+                return
+            }
             withTransaction(instant) { tab = index }
         } label: {
             Text(Self.names[index])

@@ -110,8 +110,16 @@ struct DeckTabsBar: View {
     private func select(_ index: Int) {
         var instant = Transaction(animation: nil)
         instant.disablesAnimations = true
+        // Tapped the page already showing: back to its first screen.
+        if tab == index && index != 0 && !model.pagerOpen {
+            NotificationCenter.default.post(name: .deckPageToStart, object: index)
+            return
+        }
         withTransaction(instant) {
-            if index == 0 { model.pagerOpen = false }
+            if index == 0 {
+                model.returnTab = 0
+                model.pagerOpen = false
+            }
             tab = index
         }
     }

@@ -128,7 +128,10 @@ final class PodcastEpisode {
     var artwork: URL? { artworkURL ?? podcast?.artworkURL }
 
     var adBreaks: [AdBreak] {
-        get { adBreaksData.flatMap { try? JSONDecoder().decode([AdBreak].self, from: $0) } ?? [] }
+        get {
+            guard AdFeature.enabled else { return [] }
+            return adBreaksData.flatMap { try? JSONDecoder().decode([AdBreak].self, from: $0) } ?? []
+        }
         set { adBreaksData = try? JSONEncoder().encode(newValue) }
     }
 
@@ -218,4 +221,15 @@ final class UpNextEntry {
         self.manual = manual
         self.order = order
     }
+}
+
+/// Ad detection is switched off (Paul, 16 Nov 2026: "remove ad detection.
+/// It doesn't work as I want so let's just drop it for now"). With this
+/// false nothing looks for ads (on-device passes, the show's transcript,
+/// Find ads while listening), every episode reads as having no ad breaks
+/// (so no Skip ad, amber marks, ad bands or "Sponsor break" chapters) and
+/// the ad settings are hidden. The code stays: set it to true to bring it
+/// back. Breaks found before are kept in the saved data, just not shown.
+enum AdFeature {
+    static let enabled = false
 }

@@ -192,7 +192,9 @@ struct StatsView: View {
         HStack(alignment: .top, spacing: 10) {
             weekFigure(Self.hours(week.listened), "LISTENED")
             weekFigure(Self.hours(week.saved), "SAVED BY SPEED & TRIMS")
-            weekFigure(week.adsSkipped == 0 ? "0" : "\(week.adsSkipped) · \(Self.hours(week.adSeconds))", "ADS SKIPPED")
+            if AdFeature.enabled {
+                weekFigure(week.adsSkipped == 0 ? "0" : "\(week.adsSkipped) · \(Self.hours(week.adSeconds))", "ADS SKIPPED")
+            }
         }
     }
 

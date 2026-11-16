@@ -156,6 +156,13 @@ struct DeckPlayerScrub: View {
     @State private var scrubStart: TimeInterval?
     @State private var lastX: CGFloat?
     @State private var speedLabel: String?
+    /// The shared times row (`DeckDialTimes(compact: true)` under it) shows
+    /// the drag; this row's own times are left out then.
+    var shared: DeckDialScrub? = nil
+
+    init(shared: DeckDialScrub? = nil) {
+        self.shared = shared
+    }
 
     static let height: CGFloat = 28
 
@@ -165,8 +172,12 @@ struct DeckPlayerScrub: View {
         let left: TimeInterval = max(0, player.duration - shown)
         VStack(spacing: 2) {
             line(shown: shown, left: left, duration: duration)
-            timeRow(shown: shown, left: left)
+            if shared == nil {
+                timeRow(shown: shown, left: left)
+            }
         }
+        .onChange(of: scrubTime) { _, time in shared?.time = time }
+        .onChange(of: speedLabel) { _, label in shared?.hint = label }
     }
 
     private func line(shown: TimeInterval, left: TimeInterval, duration: TimeInterval) -> some View {

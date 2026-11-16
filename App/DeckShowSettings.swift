@@ -81,14 +81,18 @@ struct DeckShowSettingsSections: View {
             DeckSetLine()
             DeckSetChoice(icon: "backward.end", title: "Skip outro",
                           options: ShowSettingsView.skipOptions, selection: seconds(\.skipOutro))
-            DeckSetLine()
-            DeckSetChoice(icon: "forward.circle", title: "Skip ads", options: adSkipOptions,
-                          selection: adSkipBinding)
+            if AdFeature.enabled {
+                DeckSetLine()
+                DeckSetChoice(icon: "forward.circle", title: "Skip ads", options: adSkipOptions,
+                              selection: adSkipBinding)
+            }
         }
     }
 
     private var playbackFooter: String {
         let global: String = player.skipAds ? "on" : "off"
+        let base: String = "Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end."
+        guard AdFeature.enabled else { return base }
         return "Skip intro starts episodes this far in (only from the beginning). Skip outro moves on this long before the end. "
             + "Skip ads on Default follows Skip ads automatically in Settings (\(global) now); Always or Never is for this show only."
     }

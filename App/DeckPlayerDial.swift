@@ -20,6 +20,9 @@ import PodcastCore
 @Observable
 final class DeckDialScrub {
     var time: TimeInterval?
+    /// While the straight line in Read along is dragged: how fine ("Half
+    /// speed"), shown in the middle of the times row.
+    var hint: String?
 }
 
 /// One drag round the dial.
@@ -624,6 +627,16 @@ private struct DeckDialRing: View, Animatable {
 struct DeckDialTimes: View {
     @Environment(PlayerModel.self) private var player
     let scrub: DeckDialScrub
+    /// Read along: the same row, shrunk under the straight line. The numbers
+    /// shrink in place (a scale, so it animates smoothly with Read along's
+    /// move, like the chapter pill) instead of swapping for a smaller row
+    /// (Paul, 16 Nov 2026: "make the animation on the numbers getting
+    /// smaller and moving smoother like the chapter pill moving").
+    var compact: Bool = false
+
+    static let compactHeight: CGFloat = 16
+    private var clockScale: CGFloat { compact ? 12.0 / 18.0 : 1 }
+    private var middleScale: CGFloat { compact ? 12.0 / 13.0 : 1 }
 
     /// Bigger numbers (Paul, 16 Nov 2026: with the line gone, the small
     /// times looked "like something has failed to render").
@@ -640,25 +653,30 @@ struct DeckDialTimes: View {
             Text(TimeFormat.clock(shown))
                 .font(Self.clockFont)
                 .frame(minWidth: 72, alignment: .leading)
+                .scaleEffect(clockScale, anchor: .leading)
             Spacer(minLength: 0)
             Text(middle(shown, ends: ends))
                 .font(Self.middleFont)
                 .minimumScaleFactor(0.7)
                 .opacity(0.75)
+                .scaleEffect(middleScale)
             Spacer(minLength: 0)
             Text("−" + TimeFormat.clock(atSpeed))
                 .font(Self.clockFont)
                 .frame(minWidth: 72, alignment: .trailing)
+                .scaleEffect(clockScale, anchor: .trailing)
         }
         .monospacedDigit()
         .lineLimit(1)
         .minimumScaleFactor(0.8)
-        .frame(height: Self.height)
+        .opacity(compact ? 0.85 : 1)
+        .frame(height: compact ? Self.compactHeight : Self.height)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(TimeFormat.clock(atSpeed)) left, ends at \(UpNextTimes.clock(ends))")
     }
 
     private func middle(_ time: TimeInterval, ends: Date) -> String {
+        if let hint = scrub.hint { return hint }
         if scrub.time != nil {
             let chapters: [Chapter] = player.chapters
             if let index = Chapters.index(at: time, in: chapters) { return chapters[index].title }

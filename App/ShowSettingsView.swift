@@ -84,7 +84,9 @@ struct ShowSettingsView: View {
                     }))
                     DeckPicker(title: "Skip intro", options: Self.skipOptions, selection: secondsBinding(\.skipIntro))
                     DeckPicker(title: "Skip outro", options: Self.skipOptions, selection: secondsBinding(\.skipOutro))
-                    DeckPicker(title: "Skip ads", options: ShowAdSkip.options, selection: adSkipBinding)
+                    if AdFeature.enabled {
+                        DeckPicker(title: "Skip ads", options: ShowAdSkip.options, selection: adSkipBinding)
+                    }
                 } header: {
                     DeckHeader(title: "Playback for this show")
                 } footer: {
@@ -372,18 +374,20 @@ struct TopPriorityView: View {
             }
             .listRowBackground(Theme.surface)
 
-            Section {
-                Toggle("Find ads while listening", isOn: $findAds)
-                    .onChange(of: findAds) { _, on in AdScanner.isEnabled = on }
-                    .tint(Theme.accentFill)
-                Toggle("Skip ads automatically", isOn: Binding(get: { player.skipAds }, set: { player.setSkipAds($0) }))
-                    .tint(Theme.accentFill)
-            } header: {
-                DeckHeader(title: "Ads")
-            } footer: {
-                Text("While a downloaded episode plays, Poddeck checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
+            if AdFeature.enabled {
+                Section {
+                    Toggle("Find ads while listening", isOn: $findAds)
+                        .onChange(of: findAds) { _, on in AdScanner.isEnabled = on }
+                        .tint(Theme.accentFill)
+                    Toggle("Skip ads automatically", isOn: Binding(get: { player.skipAds }, set: { player.setSkipAds($0) }))
+                        .tint(Theme.accentFill)
+                } header: {
+                    DeckHeader(title: "Ads")
+                } footer: {
+                    Text("While a downloaded episode plays, Poddeck checks the next few minutes for sponsor reads on your iPhone. When an ad starts, a Skip ad button appears (or it skips by itself if you turn that on). Breaks are marked on the scrubber; tap Not an ad to correct one.")
+                }
+                .listRowBackground(Theme.surface)
             }
-            .listRowBackground(Theme.surface)
 
             Section {
                 Toggle("Keep each show in order", isOn: $store.keepShowOrder)

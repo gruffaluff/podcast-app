@@ -13,12 +13,17 @@ import PodcastCore
 struct DeckReadAlong: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
+    @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
 
     @State private var lines: [TranscriptLayout.Line] = []
     @State private var followPaused = false
     @State private var resume: Task<Void, Never>?
     @State private var clip: ClipRequest?
+    /// The last reported play time and when it came: the player reports
+    /// twice a second, so the words are lit in between from the clock.
+    @State private var anchorTime: TimeInterval = 0
+    @State private var anchorDate = Date()
 
     private static let anchor = UnitPoint(x: 0.5, y: 0.36)
 
@@ -40,6 +45,10 @@ struct DeckReadAlong: View {
         }
         .task(id: episode.transcriptStateRaw) { load() }
         .onChange(of: episode.syncAnchorsData) { load() }
+        .onChange(of: player.currentTime, initial: true) { _, time in
+            anchorTime = time
+            anchorDate = Date()
+        }
         .sheet(item: $clip) { request in
             ClipView(episode: episode, line: request.line, quote: request.quote)
                 .normalColours()
@@ -146,7 +155,7 @@ struct DeckReadAlong: View {
                         .lineLimit(1)
                         .opacity(0.7)
                 }
-                Text(line.text)
+                lineText(line, isNow: isNow && !ad)
                     .font(Theme.outfit(isNow ? 24 : 17, isNow ? .bold : .medium))
                     .lineSpacing(isNow ? 2 : 4)
                     .fixedSize(horizontal: false, vertical: true)
@@ -161,8 +170,74 @@ struct DeckReadAlong: View {
         .contextMenu {
             Button("Share a clip", systemImage: "scissors") { clip = ClipRequest(line: line, quote: line.text) }
             Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = line.text }
+            // The manual fix for words out of step (Paul, 16 Nov 2026, sync
+            // issues again): hold the line you can hear and choose this; the
+            // words from here on line up with the audio (a sync anchor, as
+            // the older looks' transcript screen has).
+            if isPlayingThis {
+                Button("This is playing now", systemImage: "arrow.left.and.right.text.vertical") { syncHere(line) }
+            }
         }
         .accessibilityHint("Plays from here")
+    }
+
+    /// Moves the words so this line sits at the play point now. The lines'
+    /// times already include earlier fixes, so map back to the
+    /// transcript's own time first.
+    private func syncHere(_ line: TranscriptLayout.Line) {
+        let anchors: [SyncAnchor] = episode.syncAnchors
+        let original: TimeInterval = TranscriptAlign.transcriptTime(forAudio: line.start, anchors: anchors)
+        episode.syncAnchors = TranscriptAlign.adding(SyncAnchor(transcriptTime: original, offset: player.currentTime - original), to: anchors)
+        store.save()
+        followPaused = false
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    /// The line now has its words lit as they're said (Paul, 16 Nov 2026:
+    /// "the transcript follows the sentences paragraphs but doesn't
+    /// highlight words as spoken"): words said in full white, the word now
+    /// white on a soft white mark, words to come faint. Transcripts time
+    /// lines, not words, so the place is worked out across the line by its
+    /// letters; between the player's twice-a-second reports it runs on the
+    /// clock, 10 times a second, only while playing.
+    @ViewBuilder private func lineText(_ line: TranscriptLayout.Line, isNow: Bool) -> some View {
+        if isNow && isPlayingThis {
+            TimelineView(.periodic(from: .now, by: 0.1)) { context in
+                Text(litText(line, at: context.date))
+            }
+        } else {
+            Text(line.text)
+        }
+    }
+
+    private func litText(_ line: TranscriptLayout.Line, at date: Date) -> AttributedString {
+        let words: [Substring] = line.text.split(separator: " ")
+        guard !words.isEmpty else { return AttributedString(line.text) }
+        let span: TimeInterval = max(0.5, line.end - line.start)
+        let running: Bool = player.isPlaying
+        let since: TimeInterval = running ? min(0.7, max(0, date.timeIntervalSince(anchorDate))) * player.speed : 0
+        let time: TimeInterval = anchorTime + since + 0.2
+        let done: Double = min(1, max(0, (time - line.start) / span))
+        let nowWord: Int = DeckReadAlongWords.word(at: done, in: words)
+        var text = AttributedString()
+        for (index, word) in words.enumerated() {
+            var piece = AttributedString(String(word))
+            if index < nowWord {
+                piece.foregroundColor = Color.white
+            } else if index == nowWord {
+                piece.foregroundColor = Color.white
+                piece.backgroundColor = Color.white.opacity(0.22)
+            } else {
+                piece.foregroundColor = Color.white.opacity(0.45)
+            }
+            text += piece
+            if index < words.count - 1 {
+                var gap = AttributedString(" ")
+                gap.foregroundColor = Color.white
+                text += gap
+            }
+        }
+        return text
     }
 
     /// "SPEAKER", "SPEAKER · AD" or "AD".
@@ -280,5 +355,21 @@ struct DeckWordsOnTheWay: View {
                 .background(Capsule().fill(Color.white))
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Which word of a line is being said, from how far through the line the
+/// time is (0...1), weighted by letters so long words take longer.
+enum DeckReadAlongWords {
+    static func word(at fraction: Double, in words: [Substring]) -> Int {
+        let lengths: [Int] = words.map { (word: Substring) -> Int in word.count + 1 }
+        let total: Int = max(1, lengths.reduce(0, +))
+        let target: Double = fraction * Double(total)
+        var passed: Int = 0
+        for (index, length) in lengths.enumerated() {
+            passed += length
+            if Double(passed) > target { return index }
+        }
+        return words.count - 1
     }
 }

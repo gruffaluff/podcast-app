@@ -51,6 +51,10 @@ final class DeckTabsModel {
     private(set) var group: DeckTabGroup
     /// The full-screen pager is open.
     var pagerOpen = false
+    /// The page (0 Tabs, 1 Your shows, 2 Find) to go back to when the
+    /// pager closes: where it was opened from (Paul, 16 Nov 2026: pulling
+    /// the player down on Your shows or Find "snaps me back to tabs").
+    var returnTab = 0
     /// The tab the pager opens on (an episode ID).
     var start: String?
     /// A tab is lifted and being dragged in the grid: the overview
@@ -278,6 +282,10 @@ struct DeckTabActions {
 extension Notification.Name {
     /// Find's search box should take the keyboard (the pinned Find tab).
     static let deckFocusFind = Notification.Name("deckFocusFind")
+    /// The bottom bar's word for the page already showing was tapped again
+    /// (object: the page's index, 1 Your shows, 2 Find): go back to that
+    /// page's first screen, like tapping an iPhone tab twice.
+    static let deckPageToStart = Notification.Name("deckPageToStart")
 }
 
 // MARK: - The overview

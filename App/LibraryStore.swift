@@ -463,7 +463,7 @@ final class LibraryStore {
     /// minus ones Paul said aren't ads) and the slice that was checked.
     @discardableResult
     func addAdBreaks(_ found: [AdBreak], scanned slice: ClosedRange<TimeInterval>, to episodeID: String) -> [AdBreak] {
-        guard let episode = self.episode(episodeID) else { return [] }
+        guard AdFeature.enabled, let episode = self.episode(episodeID) else { return [] }
         let dismissed = episode.dismissedAds
         let fresh = found.filter { ad in !dismissed.contains { abs($0 - ad.start) < 5 } }
         episode.adBreaks = AdDetection.merge(episode.adBreaks, fresh)

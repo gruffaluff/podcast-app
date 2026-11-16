@@ -54,6 +54,11 @@ struct DeckFindView: View {
             path = NavigationPath()
             fieldFocused = true
         }
+        // "Find" tapped again in the bottom bar: back to its first page.
+        .onReceive(NotificationCenter.default.publisher(for: .deckPageToStart)) { note in
+            guard note.object as? Int == 2 else { return }
+            path = NavigationPath()
+        }
     }
 
     private var page: some View {

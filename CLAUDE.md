@@ -408,7 +408,7 @@ to Nowhere / Top / Bottom" on the show page.
   (5–30s); options to include audio or link to the moment. (Video cards
   removed, Paul 5 Nov 2026: no interest in video for now.)
 
-### Ad skipping
+### Ad skipping (switched off, Paul 16 Nov 2026: see build 166; `AdFeature`)
 - Detect ad breaks from the transcript (sponsor-read language, promo codes,
   "brought to you by", plus audio boundary cues). Dynamically inserted ads
   differ per download, so detection runs on Paul's own downloaded file.
@@ -2969,6 +2969,74 @@ Paul's notes after build 164:
   next"; `DeckCarryOnSection(outsideUpNext: true)`: ring artwork, title,
   show · time left, ▶; tap for the episode page). Mock-up:
   https://claude.ai/artifact/UiDf53LQZssTvUkaWjMjs9. Card deck mode unchanged.
+
+## Done in build 166 (16 Nov 2026, PR #84; Paul: "Build")
+
+- **Ad detection switched off** (Paul, 16 Nov 2026: "remove ad detection.
+  It doesn't work as I want so let's just drop it for now"). One switch,
+  `AdFeature.enabled = false` (Models.swift): nothing looks for ads any
+  more (on-device passes, the show's own transcript, Find ads while
+  listening; `TranscriptService.prepare` no longer re-transcribes just for
+  ads), every episode reads as having no ad breaks (`adBreaks` returns
+  none, so no Skip ad, amber ad marks on the dial / line, ad bands in the
+  transcript or Sponsor break chapters), and the ad settings are hidden
+  (Settings' Find ads / Skip ads automatically, the show's Skip ads, the
+  older looks' Ads section, Stats' ADS SKIPPED). The transcript sync
+  check stays. Breaks found before are kept in the saved data, unseen;
+  set the switch to true to bring it all back. The website still has its
+  small "Ad breaks · optional, off by default" card: take it out next time
+  the site is touched.
+- **Words in the dial: tap the artwork** (Paul, 16 Nov 2026: asked for a
+  switch to show the words in the dial; then, on learning tapping the
+  artwork already does it, "I want read along to just function as
+  before"): no extra key and no change to Read along (it still switches
+  between the player and the full words). Tapping the dial's artwork
+  turns it over to the line being said and back, remembered as
+  "deckDialWords" (as before).
+- **Chapters button gone from the player's bottom row** (Paul, 16 Nov
+  2026: "drop the chapters button and space out the other 3"): Options ·
+  Read along · AirPlay, evenly spread; chapters open from the chapter row
+  under the title (the pill, or "No chapters · Make them ›"). Both players.
+- **"This is playing now" in Read along** (Paul, 16 Nov 2026, transcript
+  sync issues again, on an episode listened to across several builds; he
+  will test more): hold any line in Deck's Read along (while that episode
+  plays) for Share a clip / Copy / This is playing now; the last lines
+  the words up so the held line is at the play point from there on (a
+  sync anchor, like the older looks' transcript screen), with a tap, and
+  following resumes (`DeckReadAlong.syncHere`).
+
+- **Read along: the times shrink smoothly** (Paul, 16 Nov 2026: "when
+  tapping read along, can we make the animation on the numbers getting
+  smaller and moving smoother like the chapter pill moving"). Before, the
+  big times row under the dial and the small one under Read along's
+  straight line were two different rows swapped with a fade, so the
+  numbers popped. Now there's one row (`DeckDialTimes(compact:)`): in Read
+  along the line fades in above it and the numbers shrink in place (a
+  scale from 18 to 12 pt anchored at each edge, the row's height 26 to
+  16), on the same 0.4 s move as the chapter pill. Dragging the line still
+  shows the time and "Half speed" etc. in the row (`DeckPlayerScrub(shared:)`
+  writes into `DeckDialScrub.time / hint`). Both players.
+
+- **Read along lights the words as they're said** (Paul, 16 Nov 2026:
+  "the transcript follows the sentences paragraphs but doesn't highlight
+  words as spoken"; the Haar look had it, the Deck look's `DeckReadAlong`
+  never did). On the line now: words said in full white, the word now
+  white on a soft white mark, words to come faint (`lineText`,
+  `litText`, `DeckReadAlongWords`). Transcripts time lines, not words, so
+  the word is worked out across the line by its letters, and between the
+  player's twice-a-second reports it runs on the clock 10× a second
+  (`TimelineView`), only on the line now while this episode plays. It can
+  only be as right as the line timing, so it shares the sync issue below.
+
+- **Pull down to close keeps you where you were** (Paul, 16 Nov 2026,
+  FNB, recording of build 165: pulling the player down on Your shows or
+  Find "snaps me back to tabs"): the tab page goes back to the page it was
+  opened from (`DeckTabsModel.returnTab`, set by `DeckRoot` when the pager
+  opens); opened from the Tabs page it still goes to the overview.
+- **Tap "Your shows" / "Find" again to go back** (Paul, 16 Nov 2026,
+  FNB): tapping the bottom bar's word for the page already showing goes
+  back to its first screen (show pages and previews closed), like tapping
+  an iPhone tab twice (`.deckPageToStart`). Card deck's pill too.
 
 ## Queued for the next app build
 
