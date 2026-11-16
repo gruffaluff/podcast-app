@@ -2875,6 +2875,33 @@ Paul's notes after build 163, built by two helpers plus option A:
   doubled gap under the island, long times ("1:23:45") on small iPhones,
   the bottom bar's words on a small iPhone.
 
+## On the branch for build 165 (16 Nov 2026; not built yet)
+
+Paul's notes after build 164:
+- **Pull down to close with Read along open** (Paul: "I can't pull down to
+  close when the transcript is open"): the pull (`DeckPullDown`) now also
+  starts on the read-along words when they're scrolled to their top (it
+  checks the scroll view under the finger, `scrollUnder`), and the top
+  row and the small artwork / title header always take it; only the dial
+  (listening) or the scrub line (reading) are kept out (`pullKeepOut`).
+  The card-deck player's words do the same (`pulledOnWords`). The words
+  follow playback, so mid-episode pull from the top row / header.
+- **Edge swipe between sections removed** (Paul: "let's get rid of edge
+  scrolling; the menu being at the bottom gives us what we need"):
+  `App/DeckSections.swift` deleted; pages just show / hide; card swipes
+  work from the screen edge again.
+- **"n new" on show tiles** (Paul: "the 1 new being black … do we make
+  it white with a shaded corner like in tabs"): `DeckCornerShadeLabel`
+  (shared with the tab cards' order number) in the top-right corner of
+  `DeckShowTile`.
+- **Asked, waiting on Paul**: tab groups at the bottom
+  (https://claude.ai/artifact/Prxs3K7HJdhYCLH6UsHkpF: A chips above the
+  bar, B bar grows a row (suggested), C tap "Tabs ▾" for a groups menu)
+  and Shows as just the shows (suggested; Carry on becomes a "Started"
+  tab group). The jerky card swipe-away: Paul is sending a video. No
+  chapters pill: Paul was likely still on 163; on 164 it shows on the
+  playing tab (a tab not playing has no chapter row).
+
 ## Queued for the next app build
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
