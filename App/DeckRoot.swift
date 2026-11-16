@@ -173,7 +173,7 @@ struct DeckRoot: View {
     private var bottomFade: some View {
         LinearGradient(colors: [Theme.background.opacity(0), Theme.background.opacity(0.92)],
                        startPoint: .top, endPoint: .bottom)
-            .frame(height: 96)
+            .frame(height: tabsMode ? 140 : 96)
             .ignoresSafeArea(edges: .bottom)
             .allowsHitTesting(false)
     }

@@ -57,7 +57,11 @@ struct DeckTabsBar: View {
     @AppStorage(SaveForLater.key) private var savedRaw: String = ""
     @Binding var tab: Int
 
-    static let height: CGFloat = 60
+    /// What's playing on top, Tabs · Your shows · Find under it (Paul,
+    /// 16 Nov 2026, option A from the bottom-switcher mock-up).
+    static let rowHeight: CGFloat = 60
+    static let wordsHeight: CGFloat = 40
+    static let height: CGFloat = rowHeight + wordsHeight + 1
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -65,45 +69,93 @@ struct DeckTabsBar: View {
     var body: some View {
         let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
                                                         unplayed: unplayed, triaged: triaged, saved: savedRaw)
-        HStack(spacing: 8) {
+        VStack(spacing: 0) {
             DeckTabsBarNow(count: tabs.count, open: openPlayer)
-            if tab != 0 {
-                Button(action: overview) {
-                    DeckTabCountSquare(count: tabs.count)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Tabs, \(tabs.count) open")
-                .accessibilityHint("Back to the tab overview")
-            }
+                .padding(.horizontal, 8)
+                .frame(height: Self.rowHeight)
+            Rectangle()
+                .fill(Theme.ink.opacity(0.08))
+                .frame(height: 1)
+            DeckBarSectionWords(current: tab, tabCount: sectionCount, select: select)
+                .frame(height: Self.wordsHeight)
         }
-        .padding(.leading, 8)
-        .padding(.trailing, 8)
-        .frame(height: Self.height)
         .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Theme.surface))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.ink.opacity(0.14), lineWidth: 1))
         .shadow(color: Color.black.opacity(0.2), radius: 16, y: 8)
         .shadow(color: Color.black.opacity(0.06), radius: 3, y: 1)
         .padding(.horizontal, 16)
-        .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value, tabs: tabs) })
+        .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
     }
 
-    private func overview() {
-        withAnimation(.spring(duration: 0.35)) {
-            model.pagerOpen = false
-            tab = 0
+    /// Up next's length, the same count the words row always showed.
+    private var sectionCount: Int {
+        let playing: String? = player.nowPlaying?.episodeID
+        let queued: Int = store.queue.filter { $0.episode.id != playing }.count
+        return queued + (playing == nil ? 0 : 1)
+    }
+
+    /// Moves to a section at once; Tabs also goes back to the overview.
+    private func select(_ index: Int) {
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            if index == 0 { model.pagerOpen = false }
+            tab = index
         }
     }
 
-    private func swiped(_ value: DragGesture.Value, tabs: [PodcastEpisode]) {
+    /// Swipe up for the tab overview; swipe along the bar for the section
+    /// before / after (Paul, 16 Nov 2026: option A).
+    private func swiped(_ value: DragGesture.Value) {
         guard let swipe = DeckBarSwipe.resolve(value) else { return }
         switch swipe {
         case .up:
-            overview()
-        case .next, .previous:
-            model.openNeighbour(of: tabs, playingID: player.nowPlaying?.episodeID, forward: swipe == .next)
+            select(0)
+        case .next:
+            if tab < 2 { select(tab + 1) }
+        case .previous:
+            if tab > 0 { select(tab - 1) }
         }
+    }
+}
+
+/// Tabs · Your shows · Find along the foot of the bottom bar, the one
+/// you're on in ink with a short line under it.
+private struct DeckBarSectionWords: View {
+    let current: Int
+    let tabCount: Int
+    let select: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            word("Tabs · \(tabCount)", index: 0)
+            word("Your shows", index: 1)
+            word("Find", index: 2)
+        }
+        .padding(.horizontal, 6)
+    }
+
+    private func word(_ title: String, index: Int) -> some View {
+        let on: Bool = current == index
+        return Button { select(index) } label: {
+            Text(title)
+                .font(Theme.outfit(15, .bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundStyle(on ? Theme.ink : Theme.muted.opacity(0.7))
+                .padding(.bottom, 4)
+                .overlay(alignment: .bottom) {
+                    Capsule()
+                        .fill(on ? Theme.ink : Color.clear)
+                        .frame(width: 26, height: 3)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 

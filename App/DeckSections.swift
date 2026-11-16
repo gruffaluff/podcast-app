@@ -107,10 +107,9 @@ private struct DeckSectionsModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         if home != DeckHome.deck {
+            // The words Tabs · Your shows · Find now sit at the foot of
+            // the bottom bar (`DeckTabsBar`, Paul, 16 Nov 2026: option A).
             content
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    DeckSectionSwitcher(current: current, tabCount: tabCount)
-                }
                 // One UIKit recognizer that only starts from within 20 pt of
                 // the screen's edge and only when the finger goes sideways;
                 // once it starts the page's own scrolling lets go, so it
