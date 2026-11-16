@@ -11,7 +11,7 @@ import UIKit
 // its notes). ShowPreviewView keeps the following itself.
 //
 // Each episode can go into Up next without following the show (Paul, 16
-// Nov 2026: try a show for one guest or topic): "+ Up next" / "Play next"
+// Nov 2026: try a show for one guest or topic): "Play next" / "Add to end"
 // on its card, "In Up next" once it's there (TriedShows.swift).
 
 struct DeckShowPreview: View {
@@ -215,7 +215,7 @@ private struct DeckPreviewEpisodeCard: View {
 
     private var summary: String { PlainText.notesFromHTML(episode.summary ?? "") }
 
-    /// "+ Up next" and "Play next", or "In Up next" once it's there. No
+    /// "Play next" and "Add to end", or "In Up next" once it's there. No
     /// need to follow the show first.
     @ViewBuilder private func queueKeys(_ feedURL: URL) -> some View {
         if store.isQueued(feedURL: feedURL, guid: episode.guid) {
@@ -224,15 +224,15 @@ private struct DeckPreviewEpisodeCard: View {
                 .accessibilityLabel("In Up next")
         } else {
             HStack(spacing: 8) {
+                Button { add(feedURL, next: true) } label: {
+                    DeckShowPill(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", on: true, height: 32)
+                }
+                .buttonStyle(.plain)
                 Button { add(feedURL, next: false) } label: {
-                    DeckShowPill(title: "Up next", icon: "plus", on: true, height: 32)
+                    DeckShowPill(title: "Add to end", icon: "plus", height: 32)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Add to the end of Up next")
-                Button { add(feedURL, next: true) } label: {
-                    DeckShowPill(title: "Play next", icon: "text.line.first.and.arrowtriangle.forward", height: 32)
-                }
-                .buttonStyle(.plain)
             }
         }
     }

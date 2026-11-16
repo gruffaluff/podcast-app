@@ -272,7 +272,7 @@ struct DeckShowEpisodeCard: View {
     }
 
     private var playLast: PosterSwipeAction {
-        PosterSwipeAction(title: "Play last", icon: "text.line.last.and.arrowtriangle.forward", colour: DeckShowColour.dark(colour)) {
+        PosterSwipeAction(title: "Add to end", icon: "text.line.last.and.arrowtriangle.forward", colour: DeckShowColour.dark(colour)) {
             store.playLast(episode)
         }
     }
@@ -381,7 +381,7 @@ private struct DeckShowEpisodeKeys: View {
             LazyVGrid(columns: columns, spacing: 6) {
                 playKey
                 key("text.line.first.and.arrowtriangle.forward", "Play next") { store.playNext(episode) }
-                key("text.line.last.and.arrowtriangle.forward", "Play last") { store.playLast(episode) }
+                key("text.line.last.and.arrowtriangle.forward", "Add to end") { store.playLast(episode) }
                 downloadKey
                 transcriptKey
                 playedKey
