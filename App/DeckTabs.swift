@@ -297,9 +297,6 @@ struct DeckTabsView: View {
         .scrollIndicators(.hidden)
         .scrollDisabled(model.reordering)
         .deckPage()
-        // Tabs · Your shows · Find and the edge swipes replace the pinned
-        // tabs (Paul, 15 Nov 2026: Discover is part of Find now).
-        .deckSections(current: 0)
         .refreshable { await store.refreshAll() }
         .sheet(isPresented: $showingSettings) { DeckSettingsView() }
         .onChange(of: suggestionKey, initial: true) { _, _ in reloadSuggestions() }

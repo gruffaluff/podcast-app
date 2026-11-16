@@ -425,7 +425,8 @@ enum DeckShowsSort: String, CaseIterable {
 }
 
 /// A square tile that is the show's artwork, edge to edge, with the name
-/// in white over a dark fade at the foot and "n new" in the corner.
+/// in white over a dark fade at the foot and "n new" in white over a
+/// shaded top corner, like the tab cards' order number.
 private struct DeckShowTile: View {
     let entry: DeckShowEntry
 
@@ -481,14 +482,7 @@ private struct DeckShowTile: View {
 
     @ViewBuilder private var badge: some View {
         if !entry.fresh.isEmpty {
-            Text("\(entry.fresh.count) new")
-                .font(Theme.outfit(12, .bold))
-                .foregroundStyle(Color.white)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Color(hex: 0x1C1B1A)))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.85), lineWidth: 1))
-                .padding(9)
+            DeckCornerShadeLabel(text: "\(entry.fresh.count) new", corner: .topTrailing)
         }
     }
 }

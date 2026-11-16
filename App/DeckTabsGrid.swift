@@ -884,25 +884,9 @@ private struct DeckTabCard: View {
     /// fades, and the number has a firmer shadow; still no pill.
     @ViewBuilder private var placeBadge: some View {
         if let place {
-            ZStack(alignment: .topLeading) {
-                RadialGradient(stops: [
-                    .init(color: Color.black.opacity(0.56), location: 0),
-                    .init(color: Color.black.opacity(0.34), location: 0.45),
-                    .init(color: Color.black.opacity(0), location: 1),
-                ], center: .topLeading, startRadius: 0, endRadius: 78)
-                    .frame(width: 86, height: 86)
-                Text(place)
-                    .font(Theme.outfit(15, .heavy))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.white)
-                    .shadow(color: Color.black.opacity(0.55), radius: 3, y: 0)
-                    .shadow(color: Color.black.opacity(0.5), radius: 0.5, y: 1)
-                    .padding(.leading, 10)
-                    .padding(.top, 7)
-            }
-            .allowsHitTesting(false)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
+            DeckCornerShadeLabel(text: place, corner: .topLeading)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
         }
     }
 
@@ -917,4 +901,44 @@ private struct DeckTabCard: View {
         if episode.position > 30 && left > 0 { return DeckUpNextTime.length(left) + " left" }
         return date + " · " + DeckUpNextTime.length(duration)
     }
+}
+
+/// White heavy words in a picture's top corner over a dark shade that fades
+/// out from the corner, so they read on pale artwork too: the order number
+/// on a tab card ("Now", "1", "2"…) and "3 new" on a show tile (Paul, 16
+/// Nov 2026: the black "1 new" pill on the show art "doesn't align with the
+/// rest of the app … make it white with a shaded corner like in tabs").
+struct DeckCornerShadeLabel: View {
+    enum Corner { case topLeading, topTrailing }
+
+    let text: String
+    var corner: Corner = .topLeading
+
+    var body: some View {
+        let leading: Bool = corner == .topLeading
+        let alignment: Alignment = leading ? .topLeading : .topTrailing
+        let centre: UnitPoint = leading ? .topLeading : .topTrailing
+        let side: Edge.Set = leading ? .leading : .trailing
+        ZStack(alignment: alignment) {
+            RadialGradient(stops: Self.stops, center: centre, startRadius: 0, endRadius: 78)
+                .frame(width: 86, height: 86)
+            Text(text)
+                .font(Theme.outfit(15, .heavy))
+                .monospacedDigit()
+                .foregroundStyle(Color.white)
+                .lineLimit(1)
+                .fixedSize()
+                .shadow(color: Color.black.opacity(0.55), radius: 3, y: 0)
+                .shadow(color: Color.black.opacity(0.5), radius: 0.5, y: 1)
+                .padding(side, 10)
+                .padding(.top, 7)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private static let stops: [Gradient.Stop] = [
+        .init(color: Color.black.opacity(0.56), location: 0),
+        .init(color: Color.black.opacity(0.34), location: 0.45),
+        .init(color: Color.black.opacity(0), location: 1),
+    ]
 }

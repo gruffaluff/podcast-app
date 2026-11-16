@@ -303,7 +303,27 @@ struct DeckPlayerView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Pull down to close from the words too, when they're scrolled
+            // to their top (Paul, 16 Nov 2026: "I can't pull down to close
+            // when the transcript is open"); otherwise they scroll.
+            .gesture(DeckPullDown(handle: pulledOnWords))
             .transition(AnyTransition.opacity.combined(with: .offset(y: 40)))
+        }
+    }
+
+    /// The pull down that started on the read-along words.
+    private func pulledOnWords(_ event: DeckPullEvent) {
+        switch event {
+        case .moved(let down):
+            var still = Transaction(animation: nil)
+            still.disablesAnimations = true
+            withTransaction(still) { pull = down }
+        case .ended(let close):
+            if close {
+                slideAwayAndClose()
+            } else {
+                withAnimation(.spring(duration: 0.3, bounce: 0.1)) { pull = 0 }
+            }
         }
     }
 

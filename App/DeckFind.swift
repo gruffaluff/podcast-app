@@ -76,7 +76,6 @@ struct DeckFindView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
         .deckPage()
-        .deckSections(current: 2)
         .refreshable { await loadChart() }
         .toolbar(.hidden, for: .navigationBar)
         .task(id: query) { await search() }

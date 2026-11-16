@@ -40,9 +40,6 @@ final class DeckTabTouchRecognizer: UIGestureRecognizer {
 
     static let holdDelay: TimeInterval = 0.35
     static let slop: CGFloat = 8
-    /// Swipes that start this close to the screen's edge are left for the
-    /// section edge swipe (`DeckSections`).
-    static let edge: CGFloat = 20
 
     private(set) var mode: Mode = .pending
     /// Where the finger went down and is now, in window points.
@@ -100,9 +97,7 @@ final class DeckTabTouchRecognizer: UIGestureRecognizer {
             let moved: CGSize = travel
             guard hypot(moved.width, moved.height) > Self.slop else { return }
             holdToken += 1
-            let width: CGFloat = view?.window?.bounds.width ?? UIScreen.main.bounds.width
-            let fromEdge: Bool = start.x < Self.edge || start.x > width - Self.edge
-            if abs(moved.width) > abs(moved.height) * 1.2 && !fromEdge {
+            if abs(moved.width) > abs(moved.height) * 1.2 {
                 mode = .swipe
                 state = .began
             } else {
