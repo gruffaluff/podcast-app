@@ -2622,6 +2622,23 @@ Paul's notes after build 155, all in Deck:
   the artwork fills the card, fading into the show's colour at the foot
   where the show / title / time sit in white; × and the small ring on
   top. Mock up first if unsure.
+- **One tab = player + episode page + show settings** (Paul, 16 Nov 2026,
+  FNB: "when you tap through on a card can it open the episode in a
+  player mode with all the standard player interface and the show
+  settings folded in … so we don't have a separate player and episode
+  screen, they're all the same tab"). Plan: tapping a tab opens one
+  scrolling page for that episode: the player at the top (dial, chapter
+  row, transport, Options · Read along · Chapters · AirPlay; for a tab
+  that isn't playing the same controls with a big Play, and pressing it
+  makes it the playing tab), then the episode (place in Up next,
+  Download, Transcribe, Played, Save for later, notes), then "This show"
+  (where new episodes go, alerts, speed, skip intro / outro, ads, keep
+  downloads, Open show). Scrolled down, a slim bar keeps play / pause
+  and the time at the top. Replaces `DeckTabsPager`, the separate player
+  (`DeckPlayerView`) and `DeckEpisodePage` in tabs mode; card deck mode
+  keeps them. Swipe sideways for the next tab, pull down for the
+  overview, as now. Mock-up:
+  https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
