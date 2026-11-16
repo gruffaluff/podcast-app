@@ -7,6 +7,8 @@ import PodcastCore
 // Up next, hold and drag a tab onto another to move it there.
 
 struct DeckTabsGrid: View {
+    @Environment(PlayerModel.self) private var player
+    @Environment(DeckTabsModel.self) private var model
     let tabs: [PodcastEpisode]
 
     private static let columns: [GridItem] = [
@@ -17,10 +19,25 @@ struct DeckTabsGrid: View {
     var body: some View {
         LazyVGrid(columns: Self.columns, spacing: 10) {
             ForEach(tabs, id: \.episodeID) { episode in
-                DeckTabCard(episode: episode)
+                DeckTabCard(episode: episode, place: place(of: episode))
                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
         }
+    }
+
+    /// Up next's order on each tab (Paul, 16 Nov 2026: "add a number to
+    /// the up next tabs to make it clear the order"): "Now" on the one
+    /// playing, then 1, 2, 3… for what comes after. None in New / Saved.
+    private func place(of episode: PodcastEpisode) -> String? {
+        guard model.group == .upNext else { return nil }
+        let playing: String? = player.nowPlaying?.episodeID
+        if episode.episodeID == playing { return "Now" }
+        var number: Int = 0
+        for tab in tabs where tab.episodeID != playing {
+            number += 1
+            if tab.episodeID == episode.episodeID { return String(number) }
+        }
+        return nil
     }
 }
 
@@ -29,6 +46,8 @@ private struct DeckTabCard: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     let episode: PodcastEpisode
+    /// Its place in Up next ("Now", "1", "2"…), or nil.
+    var place: String? = nil
 
     /// How far the card has been swiped sideways (left only).
     @State private var drag: CGFloat = 0
@@ -93,6 +112,31 @@ private struct DeckTabCard: View {
         .frame(height: 30)
     }
 
+    /// "Now", "1", "2"… as a plain white number in the artwork's corner,
+    /// over a faint shade that fades in from the corner so it reads on
+    /// pale artwork too (Paul, 16 Nov 2026: the ink pill was "a bit too
+    /// strong"; picked B2 "corner shade" from
+    /// https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn).
+    @ViewBuilder private var placeBadge: some View {
+        if let place {
+            ZStack(alignment: .topLeading) {
+                RadialGradient(colors: [Color.black.opacity(0.42), Color.black.opacity(0)],
+                               center: .topLeading, startRadius: 0, endRadius: 64)
+                    .frame(width: 72, height: 72)
+                    .allowsHitTesting(false)
+                Text(place)
+                    .font(Theme.outfit(14, .heavy))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.white)
+                    .shadow(color: Color.black.opacity(0.45), radius: 1, y: 1)
+                    .padding(.leading, 10)
+                    .padding(.top, 7)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
+        }
+    }
+
     private var bodyPart: some View {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear
@@ -102,6 +146,7 @@ private struct DeckTabCard: View {
                     CachedImage(url: episode.artwork) { Theme.placeholderColor(for: episode.showTitle) }
                 }
                 .clipped()
+                .overlay(alignment: .topLeading) { placeBadge }
             Text(episode.title)
                 .font(Theme.outfit(13, .bold))
                 .foregroundStyle(Theme.ink)

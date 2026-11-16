@@ -2655,6 +2655,23 @@ Paul's notes after build 155, all in Deck:
   Deck show page's far right swipe and opened-card key say Add to end
   (were Play last).
 
+## Done in build 161 (16 Nov 2026, PR #79; Paul: "lets try corner shade and build")
+
+- **Order numbers on Up next tabs** (Paul, 16 Nov 2026: "add a number to
+  the up next tabs to make it clear the order"). In the Up next group
+  each tab card shows its place on the artwork's top-left corner: "Now"
+  on the one playing, then 1, 2, 3… for what comes after
+  (`DeckTabsGrid.place`, `DeckTabCard.placeBadge`). New and Saved tabs
+  have none. First an ink pill; Paul: "a bit too strong". Options on
+  https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn (A pill, B plain
+  number, C in the show line, D frosted dot, E outline numeral, F in the
+  time row; then B1 glow / B2 corner shade / B3 both, on pale artwork).
+  **Paul picked B2 corner shade**: a plain white 14 pt heavy number over
+  a faint dark radial shade fading from the corner (42% black, 64 pt).
+  For the queued tab work: the number stays in that corner on the
+  full-colour cards, renumbers live during the hand-made drag, and an
+  open tab's top line says "2nd in Up next" / "Playing now".
+
 ## Queued for the next app build
 
 - **Tabs: drag to reorder feels wrong** (Paul, 16 Nov 2026, FNB, build
