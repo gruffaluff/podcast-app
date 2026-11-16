@@ -2812,7 +2812,7 @@ Paul's notes after build 155, all in Deck:
     small card, the Played pill timing, the ring pulse after the tab
     moves, a tap on × and a tap just after scrolling, VoiceOver actions.
 
-## On the branch for build 164 (16 Nov 2026; not built yet)
+## Done in build 164 (16 Nov 2026, PR #82; Paul: "add the pill and build")
 
 Paul's notes after build 163, built by two helpers plus option A:
 - **Section edge swipe follows the finger** (Paul: "doesn't animate as
@@ -2854,6 +2854,15 @@ Paul's notes after build 163, built by two helpers plus option A:
   title sits close over the chapter row and times; times in Outfit
   semibold 18 with steady digits (`DeckDialTimes`, 26 pt row), both
   players.
+- **No chapters** (Paul: "and when there are no chapters present?",
+  then "add the pill and build", from
+  https://claude.ai/artifact/2BB2UmYB1yN474wjoad1HG): the chapter row
+  shows a faint outlined pill "No chapters · Make them ›" instead of an
+  empty band (`DeckChapterRow`); it opens the chapters sheet, which with
+  no chapters has a card explaining they're made on the iPhone from the
+  words and a Make chapters key (Transcribe now, downloading first if
+  needed; shows "Making the words first · 62%"; the chapters appear when
+  done) (`DeckMakeChaptersCard` in `DeckPlayerChapters.swift`).
 - **Undo bar on dark art**: a touch lighter ink (#2A2826), a fine white
   22% edge and a stronger shadow (`UndoBar.deckBarBackground`).
 - **Tab card × and number**: × is a 26 pt circle in 58% black with a

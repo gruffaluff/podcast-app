@@ -16,6 +16,9 @@ struct DeckPlayerChaptersSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 header
                     .padding(.bottom, 4)
+                if player.chapters.isEmpty {
+                    DeckMakeChaptersCard()
+                }
                 rows
                 DeckPlayerChaptersFooter()
                     .padding(.top, 6)
@@ -200,5 +203,59 @@ private struct DeckPlayerChaptersFooter: View {
         .buttonStyle(.plain)
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
+    }
+}
+
+
+/// With no chapters (Paul, 16 Nov 2026, the "No chapters · Make them"
+/// pill): chapters are made on the iPhone from the episode's words, so the
+/// sheet offers Transcribe now (downloading first if needed), shows how far
+/// it has got, and the chapters appear by themselves when it's done.
+private struct DeckMakeChaptersCard: View {
+    @Environment(PlayerModel.self) private var player
+    @Environment(LibraryStore.self) private var store
+    @Environment(TranscriptService.self) private var transcripts
+
+    var body: some View {
+        let episode: PodcastEpisode? = player.nowPlaying.flatMap { store.episode($0.episodeID) }
+        VStack(alignment: .leading, spacing: 10) {
+            Text(line(episode))
+                .font(Theme.outfit(15, .medium))
+                .foregroundStyle(Theme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if let episode, showsKey(episode) {
+                Button { transcripts.transcribeNow(episode) } label: {
+                    Text("Make chapters")
+                        .font(Theme.outfit(15, .bold))
+                        .foregroundStyle(Theme.background)
+                        .padding(.horizontal, 18)
+                        .frame(height: 40)
+                        .background(Capsule().fill(Theme.ink))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface))
+    }
+
+    private func showsKey(_ episode: PodcastEpisode) -> Bool {
+        episode.transcriptState != .transcribing && episode.transcriptState != .ready
+            && transcripts.progress[episode.episodeID] == nil
+    }
+
+    private func line(_ episode: PodcastEpisode?) -> String {
+        guard let episode else { return "Nothing is playing." }
+        if let done = transcripts.progress[episode.episodeID] {
+            return "Making the words first · \(Int((done * 100).rounded()))%. The chapters appear here when it's done."
+        }
+        if episode.transcriptState == .transcribing {
+            return "Making the words first. The chapters appear here when it's done."
+        }
+        if episode.transcriptState == .ready {
+            return "This episode's words didn't split into chapters."
+        }
+        return "This episode has no chapters. Poddeck can make them on your iPhone from the episode's words: it transcribes the episode first (downloading it if needed), then splits it where the topic changes."
     }
 }
