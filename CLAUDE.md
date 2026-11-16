@@ -2986,18 +2986,13 @@ Paul's notes after build 164:
   set the switch to true to bring it all back. The website still has its
   small "Ad breaks · optional, off by default" card: take it out next time
   the site is touched.
-- **Words in the dial from the Read along button** (Paul, 16 Nov 2026:
-  "a little switch to show the transcript in the dial like you see with
-  scrolling the dial", then "rather than this extra button, we have this
-  behaviour on the pre-existing transcript button"; no extra key on the
-  dial): Read along in the bottom row now steps through: first tap turns
-  the dial's middle over to the line being said (the same face as while
-  scrolling the dial, following playback; "No words yet" + Transcribe
-  when there are none), the next tap opens the full Read along, the next
-  goes back to the artwork (`readAlongTapped`). The button is lit while
-  the words show either way. Tapping the dial still swaps artwork and
-  words; the choice is remembered ("deckDialWords"). Both players (tab
-  page and card deck).
+- **Words in the dial: tap the artwork** (Paul, 16 Nov 2026: asked for a
+  switch to show the words in the dial; then, on learning tapping the
+  artwork already does it, "I want read along to just function as
+  before"): no extra key and no change to Read along (it still switches
+  between the player and the full words). Tapping the dial's artwork
+  turns it over to the line being said and back, remembered as
+  "deckDialWords" (as before).
 - **Chapters button gone from the player's bottom row** (Paul, 16 Nov
   2026: "drop the chapters button and space out the other 3"): Options ·
   Read along · AirPlay, evenly spread; chapters open from the chapter row

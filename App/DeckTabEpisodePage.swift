@@ -137,8 +137,6 @@ private struct DeckTabPlayerSection: View {
     let width: CGFloat
     let height: CGFloat
     @Binding var reading: Bool
-    /// The dial showing the words (shared with DeckPlayerDial).
-    @AppStorage("deckDialWords") private var dialWords = false
     /// Where a pull down may not start (in the page's scroll content), by
     /// name: the live dial, the read-along scrub line, the volume.
     @Binding var keepOut: [String: CGRect]
@@ -292,22 +290,6 @@ private struct DeckTabPlayerSection: View {
         }
     }
 
-    /// Read along steps through (Paul, 16 Nov 2026: the words key's
-    /// behaviour on the existing button, no extra key): first tap turns the
-    /// dial over to the line being said, the next opens the full words,
-    /// the next goes back to the artwork. Tapping the dial still swaps
-    /// artwork and words.
-    private func readAlongTapped() {
-        if reading {
-            setReading(false)
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { dialWords = false }
-        } else if dialWords {
-            setReading(true)
-        } else {
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { dialWords = true }
-        }
-    }
-
     private func setReading(_ on: Bool) {
         withAnimation(reduceMotion ? nil : DeckPlayerView.morph) { reading = on }
     }
@@ -368,7 +350,7 @@ private struct DeckTabPlayerSection: View {
     private func bottomRow(_ now: PlayerModel.NowPlaying?) -> some View {
         HStack(spacing: 0) {
             DeckPlayerButton(icon: "slider.horizontal.3", label: optionsLabel, on: optionsOn) { showingOptions = true }
-            DeckPlayerButton(icon: "text.quote", label: "Read along", on: reading || dialWords) { readAlongTapped() }
+            DeckPlayerButton(icon: "text.quote", label: "Read along", on: reading) { setReading(!reading) }
             DeckAirPlayButton()
         }
         .padding(.horizontal, -6)
