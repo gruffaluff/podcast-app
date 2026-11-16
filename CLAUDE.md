@@ -2694,7 +2694,11 @@ Paul's notes after build 155, all in Deck:
   the Up next group each tab card has a small ink pill on its artwork's
   top-left corner: "Now" on the one playing, then 1, 2, 3… for what
   comes after (`DeckTabsGrid.place`, `DeckTabCard.placeBadge`). New and
-  Saved tabs have none.
+  Saved tabs have none. Plan for the queued tab work (Paul asked 16 Nov
+  2026 how it will show): the number stays in the same corner on the
+  full-colour cards, renumbers live during the hand-made drag, and an
+  open tab's top line says "2nd in Up next" / "Playing now". Shown on
+  https://claude.ai/artifact/TgbPAWS9vWQQvMvaCLTYC2 (tabs phone).
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
