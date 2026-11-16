@@ -2655,6 +2655,23 @@ Paul's notes after build 155, all in Deck:
   Deck show page's far right swipe and opened-card key say Add to end
   (were Play last).
 
+## Done in build 161 (16 Nov 2026, PR #79; Paul: "lets try corner shade and build")
+
+- **Order numbers on Up next tabs** (Paul, 16 Nov 2026: "add a number to
+  the up next tabs to make it clear the order"). In the Up next group
+  each tab card shows its place on the artwork's top-left corner: "Now"
+  on the one playing, then 1, 2, 3… for what comes after
+  (`DeckTabsGrid.place`, `DeckTabCard.placeBadge`). New and Saved tabs
+  have none. First an ink pill; Paul: "a bit too strong". Options on
+  https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn (A pill, B plain
+  number, C in the show line, D frosted dot, E outline numeral, F in the
+  time row; then B1 glow / B2 corner shade / B3 both, on pale artwork).
+  **Paul picked B2 corner shade**: a plain white 14 pt heavy number over
+  a faint dark radial shade fading from the corner (42% black, 64 pt).
+  For the queued tab work: the number stays in that corner on the
+  full-colour cards, renumbers live during the hand-made drag, and an
+  open tab's top line says "2nd in Up next" / "Playing now".
+
 ## Queued for the next app build
 
 - **Tabs: drag to reorder feels wrong** (Paul, 16 Nov 2026, FNB, build
@@ -2688,26 +2705,6 @@ Paul's notes after build 155, all in Deck:
   keeps them. Swipe sideways for the next tab, pull down for the
   overview, as now. Mock-up:
   https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS.
-
-- **Order numbers on Up next tabs** (Paul, 16 Nov 2026: "add a number to
-  the up next tabs to make it clear the order"). Done on the branch: in
-  the Up next group each tab card has a small ink pill on its artwork's
-  top-left corner: "Now" on the one playing, then 1, 2, 3… for what
-  comes after (`DeckTabsGrid.place`, `DeckTabCard.placeBadge`). New and
-  Saved tabs have none. Plan for the queued tab work (Paul asked 16 Nov
-  2026 how it will show): the number stays in the same corner on the
-  full-colour cards, renumbers live during the hand-made drag, and an
-  open tab's top line says "2nd in Up next" / "Playing now". Shown on
-  https://claude.ai/artifact/TgbPAWS9vWQQvMvaCLTYC2 (tabs phone).
-  Paul (16 Nov 2026): "that number's a bit too strong"; quieter options
-  on https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn: A dark pill (on
-  the branch now), B plain white number, no pill (suggested), C in the
-  show line ("2 · SHOW"), D frosted dot, E big outline numeral, F in the
-  time row ("3rd · 52m"). Paul likes B but worried it gets lost on the
-  artwork; same link, section "B, made readable" on pale artwork: B1
-  soft glow round the figures, B2 corner shade (a faint dark fade from
-  the top-left corner, like the card's foot; suggested), B3 lighter
-  shade + glow. Waiting on Paul's pick.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,

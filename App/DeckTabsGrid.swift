@@ -112,19 +112,28 @@ private struct DeckTabCard: View {
         .frame(height: 30)
     }
 
-    /// "Now", "1", "2"… in a small ink pill on the artwork's corner.
+    /// "Now", "1", "2"… as a plain white number in the artwork's corner,
+    /// over a faint shade that fades in from the corner so it reads on
+    /// pale artwork too (Paul, 16 Nov 2026: the ink pill was "a bit too
+    /// strong"; picked B2 "corner shade" from
+    /// https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn).
     @ViewBuilder private var placeBadge: some View {
         if let place {
-            Text(place)
-                .font(Theme.outfit(13, .heavy))
-                .monospacedDigit()
-                .foregroundStyle(Color.white)
-                .padding(.horizontal, 8)
-                .frame(minWidth: 26, minHeight: 26)
-                .background(Capsule().fill(Color(hex: 0x1C1B1A)))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5))
-                .padding(7)
-                .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
+            ZStack(alignment: .topLeading) {
+                RadialGradient(colors: [Color.black.opacity(0.42), Color.black.opacity(0)],
+                               center: .topLeading, startRadius: 0, endRadius: 64)
+                    .frame(width: 72, height: 72)
+                    .allowsHitTesting(false)
+                Text(place)
+                    .font(Theme.outfit(14, .heavy))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.white)
+                    .shadow(color: Color.black.opacity(0.45), radius: 1, y: 1)
+                    .padding(.leading, 10)
+                    .padding(.top, 7)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(place == "Now" ? "Playing now" : "Number \(place) in Up next")
         }
     }
 
