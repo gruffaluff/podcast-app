@@ -149,6 +149,13 @@ struct RootView: View {
         }
     }
 
+    /// The full-screen player. Haar's home is the player and Deck's tabs
+    /// mode opens the playing episode's tab (DeckRoot), so neither uses it.
+    private var playerCover: Binding<Bool> {
+        let unused: Bool = Theme.isHaar || (Theme.isDeck && DeckHome.isTabs)
+        return unused ? Binding.constant(false) : $showingPlayer
+    }
+
     var body: some View {
         // Native warm (Paul, 11 Nov 2026): iOS's own tab bar, with the
         // mini player sitting above it as Apple Music does (the tab view's
@@ -183,7 +190,7 @@ struct RootView: View {
         .tint(Theme.ink)
         // The player fills the whole screen (Paul: no page showing through
         // at the top); swipe down to close it.
-        .fullScreenCover(isPresented: Theme.isHaar ? Binding.constant(false) : $showingPlayer) {
+        .fullScreenCover(isPresented: playerCover) {
             if Theme.isDeck { DeckPlayerView() } else { NowPlayingView() }
         }
         // Haar: the player is home, so "open the player" goes home.

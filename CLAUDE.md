@@ -2672,7 +2672,7 @@ Paul's notes after build 155, all in Deck:
   full-colour cards, renumbers live during the hand-made drag, and an
   open tab's top line says "2nd in Up next" / "Playing now".
 
-## Done in build 162 (16 Nov 2026; Paul: built now)
+## Done in build 162 (16 Nov 2026, PR #80; Paul: "i wanted them built 2 builds ago!")
 
 - **Tabs: hand-made drag to reorder** (Paul, 16 Nov 2026, build 159
   recording: the lifted tab dropped down on its own and it wasn't clear
@@ -2704,26 +2704,61 @@ Paul's notes after build 155, all in Deck:
   inside so it shows on any colour. Same two-across grid; every card is
   now the same height (1.25 × its width) (`DeckTabCard`). Check on the
   phone: white text on pale artwork colours.
-
-## Queued for the next app build
-
 - **One tab = player + episode page + show settings** (Paul, 16 Nov 2026,
   FNB: "when you tap through on a card can it open the episode in a
   player mode with all the standard player interface and the show
   settings folded in … so we don't have a separate player and episode
-  screen, they're all the same tab"). Plan: tapping a tab opens one
-  scrolling page for that episode: the player at the top (dial, chapter
-  row, transport, Options · Read along · Chapters · AirPlay; for a tab
-  that isn't playing the same controls with a big Play, and pressing it
-  makes it the playing tab), then the episode (place in Up next,
-  Download, Transcribe, Played, Save for later, notes), then "This show"
-  (where new episodes go, alerts, speed, skip intro / outro, ads, keep
-  downloads, Open show). Scrolled down, a slim bar keeps play / pause
-  and the time at the top. Replaces `DeckTabsPager`, the separate player
-  (`DeckPlayerView`) and `DeckEpisodePage` in tabs mode; card deck mode
-  keeps them. Swipe sideways for the next tab, pull down for the
-  overview, as now. Mock-up:
-  https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS.
+  screen, they're all the same tab"; mock-up
+  https://claude.ai/artifact/BRGBBkaHhpuDnarzHTxBPS). In tabs mode,
+  tapping a tab opens one scrolling page for that episode
+  (`DeckTabEpisodePage`, shown by `DeckTabsPager` in place of the old
+  ring page):
+  - Top: the Deck player on the show's colour, built from the player's
+    own pieces: ⌄ back to the tabs, "PLAYING NOW" / "PLAYING ON …" /
+    "2ND IN UP NEXT" / "TAB 3 OF 7" and a ⋯ menu (Play next, Remove from
+    Up next, Open show); the dial; show (opens the show) and title; the
+    chapter row; times; skip · play · skip; volume on tall screens;
+    Options · Read along · Chapters · AirPlay. A tab that isn't playing
+    has the same layout at rest: its saved place on the ring, the saved
+    time / time left, dim skips and a big white Play (the artwork plays
+    too); pressing it plays that episode and the page goes live. Read
+    along works on any tab (the words fill the top, small ringed artwork
+    to go back).
+  - Then, on the app's own page colour rising like a sheet, "This
+    episode": Playing now / "2nd in Up next" (Play next) / Not in Up next
+    (Add), Download (progress, Stop, Remove with a check), words
+    (Transcribe now, progress, Stop; "Words ready · Read along" scrolls
+    back up with the words showing), Played (with Undo; in Up next and
+    New the tab closes) and Save for later; then the episode notes.
+  - Then "This show": the show with Open show, New episodes go Top /
+    Bottom / Nowhere (`DeckShowRulePicker`, now shared), and the show's
+    own settings (downloads, alerts, keep downloads, speed, skip intro /
+    outro, skip ads, older episodes): `DeckShowSettingsSections`, now
+    shared with `DeckShowSettingsSheet`, which looks the same as before. A
+    show only being tried shows Follow this show instead.
+  - Scrolled down past the player, a slim bar pinned at the top keeps the
+    ringed artwork, title, time and play / pause; tap it to go back up
+    (`DeckTabSlimBar`).
+  - Swipe sideways for the next / previous tab as before; pull down past
+    the top of the page (80 pt) and let go for the overview (the page
+    watches its own scroll; the old pull-anywhere gesture is gone, so
+    scrolling back up and dragging round the dial never close it).
+    Safari's bar at the bottom is unchanged.
+  - No separate player in tabs mode: tapping what's playing on the bottom
+    bar, quick actions and anything else that opened the full-screen
+    player now open the playing episode's tab (`DeckRoot.openPlayingTab`;
+    in the New group it switches the overview to Up next first).
+    RootView's full-screen player stays shut in tabs mode. Card deck mode
+    keeps `DeckPlayerView` and `DeckEpisodePage` exactly as before.
+  - To check on the phone: pull down to close from the top of the page
+    (and that it doesn't fire when scrolling back up), scrolling the page
+    when the finger starts on the dial (the dial takes the drag, so start
+    beside it), the sideways swipe between tabs while scrolled down, the
+    slim bar appearing, Play on a tab that isn't playing, Open show (the
+    tab closes, then Shows opens the show), smaller iPhones (the dial
+    shrinks to fit).
+
+## Queued for the next app build
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,

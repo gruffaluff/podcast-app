@@ -257,7 +257,7 @@ private struct DeckShowPagePills: View {
 }
 
 /// Top / Bottom / Nowhere, equal widths, the chosen one ink.
-private struct DeckShowRulePicker: View {
+struct DeckShowRulePicker: View {
     @Environment(LibraryStore.self) private var store
     let show: Podcast
 

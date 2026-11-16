@@ -8,24 +8,14 @@ import PodcastCore
 // episodes go stays on the page itself (Top / Bottom / Nowhere).
 
 struct DeckShowSettingsSheet: View {
-    @Environment(LibraryStore.self) private var store
-    @Environment(PlayerModel.self) private var player
     @Environment(\.dismiss) private var dismiss
     let show: Podcast
-    @State private var addedAll = false
-    @State private var markedOlder = false
-    /// This show's ad skipping (per-show ad skipping, Paul, 15 Nov 2026).
-    @State private var adSkip: ShowAdSkip.Mode = .followSettings
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    downloads
-                    playback
-                    older
-                }
-                .padding(.bottom, 40)
+                DeckShowSettingsSections(show: show)
+                    .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
             .deckPage()
@@ -39,7 +29,30 @@ struct DeckShowSettingsSheet: View {
             }
         }
         .tint(Theme.ink)
+    }
+}
+
+/// The show settings' groups (downloads and alerts, playback for this
+/// show, older episodes), shared by the sheet above and an episode's tab
+/// page ("This show", Paul, 16 Nov 2026: one tab = player + episode page +
+/// show settings).
+struct DeckShowSettingsSections: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    let show: Podcast
+    @State private var addedAll = false
+    @State private var markedOlder = false
+    /// This show's ad skipping (per-show ad skipping, Paul, 15 Nov 2026).
+    @State private var adSkip: ShowAdSkip.Mode = .followSettings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            downloads
+            playback
+            older
+        }
         .onAppear { adSkip = ShowAdSkip.mode(for: show.feedURL) }
+        .onChange(of: show.feedURL) { _, feed in adSkip = ShowAdSkip.mode(for: feed) }
     }
 
     // MARK: Groups
