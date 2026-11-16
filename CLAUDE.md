@@ -3028,23 +3028,17 @@ Paul's notes after build 164:
   (`TimelineView`), only on the line now while this episode plays. It can
   only be as right as the line timing, so it shares the sync issue below.
 
+- **Pull down to close keeps you where you were** (Paul, 16 Nov 2026,
+  FNB, recording of build 165: pulling the player down on Your shows or
+  Find "snaps me back to tabs"): the tab page goes back to the page it was
+  opened from (`DeckTabsModel.returnTab`, set by `DeckRoot` when the pager
+  opens); opened from the Tabs page it still goes to the overview.
+- **Tap "Your shows" / "Find" again to go back** (Paul, 16 Nov 2026,
+  FNB): tapping the bottom bar's word for the page already showing goes
+  back to its first screen (show pages and previews closed), like tapping
+  an iPhone tab twice (`.deckPageToStart`). Card deck's pill too.
+
 ## Queued for the next app build
-
-- **Pull down to close the player keeps you where you were** (Paul, 16
-  Nov 2026, FNB, screen recording of build 165: "if I swipe down to
-  minimise the player on the your shows or find screens it snaps me back
-  to tabs"): opening what's playing from the bottom bar on Your shows or
-  Find, then pulling the tab page down, should land back on Your shows /
-  Find, not the Tabs overview. Plan: remember the page the player was
-  opened from and return to it on close (`DeckTabsPager` / `DeckRoot`).
-  Not started.
-
-- **Tap "Your shows" again to go back** (Paul, 16 Nov 2026, FNB: "If I
-  tap into a show I'd like to tap your shows at the bottom go to back"):
-  in tabs mode, with a show page (or anything else) open on the Your
-  shows page, tapping "Your shows" in the bottom bar goes back to the
-  shows list, like tapping an iPhone tab twice. Same for Find (back to
-  its first page). Not started.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,

@@ -140,6 +140,12 @@ struct DeckShowsView: View {
         // From the player's show name or an episode page's "Show ›": RootView
         // switches to this tab; push the show (and clear anything open).
         .onChange(of: store.revealShow, initial: true) { _, show in reveal(show) }
+        // "Your shows" tapped again in the bottom bar: back to the list.
+        .onReceive(NotificationCenter.default.publisher(for: .deckPageToStart)) { note in
+            guard note.object as? Int == 1 else { return }
+            showingNew = false
+            path = NavigationPath()
+        }
         .onChange(of: store.revealInUpNext) { _, id in
             if id != nil { showingNew = false }
         }
