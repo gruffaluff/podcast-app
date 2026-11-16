@@ -8,6 +8,9 @@ struct UndoAction: Identifiable {
     let id = UUID()
     let label: String
     let restore: @MainActor () -> Void
+    /// A second, smaller line under the label (Deck), e.g. why show order
+    /// moved an episode.
+    var note: String? = nil
 }
 
 // MARK: - Undo
