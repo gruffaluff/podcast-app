@@ -730,14 +730,21 @@ private struct DeckTabSwipeBlock: View {
     }
 }
 
-/// × on a soft dark circle (the cell's close key, and on the lifted copy).
+/// × on a dark circle (the cell's close key, and on the lifted copy).
+/// Paul, 16 Nov 2026: it was "a little lost depending on the episode art",
+/// so the circle is bigger and darker, with a fine light edge and a soft
+/// shadow, so it reads on pale and busy artwork alike.
 private struct DeckTabCloseGlyph: View {
     var body: some View {
         Image(systemName: "xmark")
-            .font(.system(size: 10, weight: .bold))
+            .font(.system(size: 11, weight: .heavy))
             .foregroundStyle(Color.white)
-            .frame(width: 24, height: 24)
-            .background(Circle().fill(Color.black.opacity(0.4)))
+            .frame(width: 26, height: 26)
+            .background {
+                Circle().fill(Color.black.opacity(0.58))
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
+            }
             .frame(width: 40, height: 40)
             .contentShape(Rectangle())
     }
@@ -871,18 +878,25 @@ private struct DeckTabCard: View {
     /// over a faint shade that fades in from the corner so it reads on
     /// pale artwork too (Paul, 16 Nov 2026: the ink pill was "a bit too
     /// strong"; picked B2 "corner shade" from
-    /// https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn).
+    /// https://claude.ai/artifact/PsQEdGqw4K5GF6Aq7SfHXn). Then (16 Nov:
+    /// "a little lost depending on the episode art") the shade is darker
+    /// and a little bigger, holding its strength further out before it
+    /// fades, and the number has a firmer shadow; still no pill.
     @ViewBuilder private var placeBadge: some View {
         if let place {
             ZStack(alignment: .topLeading) {
-                RadialGradient(colors: [Color.black.opacity(0.42), Color.black.opacity(0)],
-                               center: .topLeading, startRadius: 0, endRadius: 64)
-                    .frame(width: 72, height: 72)
+                RadialGradient(stops: [
+                    .init(color: Color.black.opacity(0.56), location: 0),
+                    .init(color: Color.black.opacity(0.34), location: 0.45),
+                    .init(color: Color.black.opacity(0), location: 1),
+                ], center: .topLeading, startRadius: 0, endRadius: 78)
+                    .frame(width: 86, height: 86)
                 Text(place)
-                    .font(Theme.outfit(14, .heavy))
+                    .font(Theme.outfit(15, .heavy))
                     .monospacedDigit()
                     .foregroundStyle(Color.white)
-                    .shadow(color: Color.black.opacity(0.45), radius: 1, y: 1)
+                    .shadow(color: Color.black.opacity(0.55), radius: 3, y: 0)
+                    .shadow(color: Color.black.opacity(0.5), radius: 0.5, y: 1)
                     .padding(.leading, 10)
                     .padding(.top, 7)
             }

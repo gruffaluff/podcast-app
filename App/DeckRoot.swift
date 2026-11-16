@@ -45,6 +45,9 @@ struct DeckRoot: View {
     /// "Up next as" Tabs or Card deck (Paul, 15 Nov 2026: tabs).
     @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
     @State private var tabsModel = DeckTabsModel()
+    /// The section edge swipe in tabs mode (`DeckSections`): the section on
+    /// screen follows the finger and the one beside it slides in.
+    @State private var sectionSwipe = DeckSectionSwipe()
 
     private var tabsMode: Bool { home != DeckHome.deck }
 
@@ -66,7 +69,12 @@ struct DeckRoot: View {
         .environment(\.deckOpenPlayer, openPlayer)
         .environment(\.deckSelectTab, { tab = $0 })
         .environment(tabsModel)
+        .environment(\.deckSectionSwipe, sectionSwipe)
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }
+        // The section sliding in under an edge swipe is made as it starts.
+        .onChange(of: sectionSwipe.neighbour) { _, next in
+            if let next { made.insert(next) }
+        }
         // Tabs: an open tab, full screen; closing it goes to the overview.
         .fullScreenCover(isPresented: pagerShown) {
             DeckTabsPager()
@@ -120,9 +128,37 @@ struct DeckRoot: View {
                 // top card redrew twice a second behind Shows and Find).
                 .environment(\.deckPageShown, tab == index)
                 .contentMargins(.bottom, room(for: index), for: .scrollContent)
-                .opacity(tab == index ? 1 : 0)
+                .overlay { sectionShade(index) }
+                .offset(x: sectionOffset(index))
+                .opacity(tab == index || sliding(index) ? 1 : 0)
                 .allowsHitTesting(tab == index)
                 .accessibilityHidden(tab != index)
+        }
+    }
+
+    /// The section sliding in beside the one on screen during an edge swipe.
+    private func sliding(_ index: Int) -> Bool {
+        tabsMode && sectionSwipe.neighbour == index && index != tab
+    }
+
+    /// Where a page sits during a section edge swipe: the one on screen
+    /// with the finger, the one sliding in a screen's width to its side.
+    private func sectionOffset(_ index: Int) -> CGFloat {
+        guard tabsMode else { return 0 }
+        if index == tab { return sectionSwipe.offset }
+        guard sliding(index) else { return 0 }
+        let side: CGFloat = index < tab ? -sectionSwipe.width : sectionSwipe.width
+        return sectionSwipe.offset + side
+    }
+
+    /// The page sliding in starts a little dimmed and clears as it arrives,
+    /// so the two read as separate pages (like Safari's).
+    @ViewBuilder private func sectionShade(_ index: Int) -> some View {
+        if sliding(index) {
+            Color.black
+                .opacity(0.12 * (1 - sectionSwipe.progress))
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
         }
     }
 
