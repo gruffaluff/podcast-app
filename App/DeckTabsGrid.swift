@@ -37,7 +37,6 @@ struct DeckTabsGrid: View {
     @State private var menuFor: String?
     @State private var notes: PodcastEpisode?
     @State private var width: CGFloat = 360
-    @AppStorage(SaveForLater.key) private var savedRaw: String = ""
 
     static let gap: CGFloat = 10
 
@@ -96,7 +95,6 @@ struct DeckTabsGrid: View {
     /// is gone from the cards, so it can't fight the hold either).
     @ViewBuilder private func holdMenu(_ episode: PodcastEpisode) -> some View {
         let on: Bool = episode.episodeID == playingID && player.isPlaying
-        let saved: Bool = SaveForLater.isSaved(episode.episodeID, in: savedRaw)
         Button(on ? "Pause" : "Play now") { actions.playNow(episode) }
         if episode.episodeID != playingID {
             Button("Play next") { actions.playNextInOrder(episode) }
@@ -106,7 +104,6 @@ struct DeckTabsGrid: View {
             Button("Remove from Up next", role: .destructive) { actions.removeFromUpNext(episode) }
         }
         Button("Episode notes") { notes = episode }
-        Button(saved ? "Remove from Saved for later" : "Save for later") { SaveForLater.toggle(episode.episodeID) }
         Button("Cancel", role: .cancel) {}
     }
 
@@ -420,7 +417,8 @@ private struct DeckTabCell: View {
 
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
-    private var saved: Bool { model.group == .saved }
+    /// Saved is gone (Paul, 16 Nov 2026): every group's left swipe is Played.
+    private var saved: Bool { false }
     private var canGoRight: Bool { !isOn && !saved }
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 16, style: .continuous) }
 
