@@ -26,6 +26,8 @@ struct DeckPlayerView: View {
     /// changes colour while you look at it); neutral until it's measured.
     @State private var colour: Color?
     @State private var episode: PodcastEpisode?
+    /// The dial showing the words (shared with DeckPlayerDial).
+    @AppStorage("deckDialWords") private var dialWords = false
     @State private var reading = false
     @State private var showingOptions = false
     @State private var showingChapters = false
@@ -233,6 +235,22 @@ struct DeckPlayerView: View {
     // unsmooth" as two copies cross-faded), round in both, with the ring
     // following it into the corner (Paul, 15 Nov 2026: dial).
 
+    /// Read along steps through (Paul, 16 Nov 2026: the words key's
+    /// behaviour on the existing button, no extra key): first tap turns the
+    /// dial over to the line being said, the next opens the full words,
+    /// the next goes back to the artwork. Tapping the dial still swaps
+    /// artwork and words.
+    private func readAlongTapped() {
+        if reading {
+            setReading(false)
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { dialWords = false }
+        } else if dialWords {
+            setReading(true)
+        } else {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { dialWords = true }
+        }
+    }
+
     private func setReading(_ on: Bool) {
         withAnimation(reduceMotion ? nil : Self.morph) { reading = on }
     }
@@ -383,7 +401,7 @@ struct DeckPlayerView: View {
     private var bottomRow: some View {
         HStack(spacing: 0) {
             DeckPlayerButton(icon: "slider.horizontal.3", label: optionsLabel, on: optionsOn) { showingOptions = true }
-            DeckPlayerButton(icon: "text.quote", label: "Read along", on: reading) { setReading(!reading) }
+            DeckPlayerButton(icon: "text.quote", label: "Read along", on: reading || dialWords) { readAlongTapped() }
             DeckPlayerButton(icon: "list.bullet", label: "Chapters", on: false) { showingChapters = true }
                 .disabled(player.chapters.isEmpty)
             DeckAirPlayButton()

@@ -166,39 +166,12 @@ struct DeckPlayerDial: View {
                                             toggle: toggleWords, transcribe: transcribe,
                                             forward: { player.skipForwardBy() },
                                             back: { player.skipBackward() }))
-            // The words key (Paul, 16 Nov 2026: "a little switch to show the
-            // transcript in the dial like you see with scrolling the dial"):
-            // in the empty corner of the dial's square, outside the ring and
-            // its drag, so a tap on it is only ever the switch.
-            .overlay(alignment: .bottomTrailing) {
-                if geometry.big { wordsKey(geometry) }
-            }
             .allowsHitTesting(geometry.big)
             .position(x: rect.midX, y: rect.midY)
             .task(id: lineKey) { await load() }
     }
 
     private var faceShown: Bool { scrub.time != nil || showWords }
-
-    /// A round key: speech bubble for the words, photo to go back to the
-    /// artwork. Filled white while the words show.
-    private func wordsKey(_ geometry: DeckDialGeometry) -> some View {
-        let size: CGFloat = 38
-        return Button(action: toggleWords) {
-            Image(systemName: showWords ? "photo" : "text.bubble")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(showWords ? DeckPlayerBackground.shade(colour) : Color.white)
-                .frame(width: size, height: size)
-                .background {
-                    Circle().fill(showWords ? Color.white : Color.white.opacity(0.18))
-                }
-                .overlay { Circle().strokeBorder(Color.white.opacity(0.45), lineWidth: 1) }
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .offset(x: 4, y: 4)
-        .accessibilityLabel(showWords ? "Show the artwork" : "Show the words")
-    }
 
     private func dial(_ geometry: DeckDialGeometry) -> some View {
         let shown: TimeInterval = scrub.time ?? player.currentTime
