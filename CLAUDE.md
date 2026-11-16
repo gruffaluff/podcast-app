@@ -2891,8 +2891,9 @@ Paul's notes after build 164:
   `App/DeckSections.swift` deleted; pages just show / hide; card swipes
   work from the screen edge again.
 - **"n new" on show tiles** (Paul: "the 1 new being black … do we make
-  it white with a shaded corner like in tabs"): `DeckCornerShadeLabel`
-  (shared with the tab cards' order number) in the top-right corner of
+  it white with a shaded corner like in tabs"): first `DeckCornerShadeLabel`;
+  then (Paul, 16 Nov 2026: "do we make it red like the other") the same
+  coral pill as the tabs' NEW, "2 NEW", in the top-right corner of
   `DeckShowTile`.
 - **Tab groups: Up next · New · Started, as chips above the bar**
   (replaced the same day: see "New and the group pill gone" below) (Paul,

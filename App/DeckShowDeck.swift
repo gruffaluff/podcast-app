@@ -496,7 +496,20 @@ private struct DeckShowTile: View {
 
     @ViewBuilder private var badge: some View {
         if !entry.fresh.isEmpty {
-            DeckCornerShadeLabel(text: "\(entry.fresh.count) new", corner: .topTrailing)
+            // The same coral pill as NEW on the Up next tabs (Paul, 16 Nov
+            // 2026: "do we make it red like the other").
+            Text("\(entry.fresh.count) NEW")
+                .font(Theme.outfit(10, .heavy))
+                .tracking(0.6)
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(DeckRings.coral))
+                .shadow(color: Color.black.opacity(0.25), radius: 3, y: 1)
+                .fixedSize()
+                .padding(10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .accessibilityLabel("\(entry.fresh.count) new")
         }
     }
 }
