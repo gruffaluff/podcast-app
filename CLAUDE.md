@@ -3038,7 +3038,7 @@ Paul's notes after build 164:
   back to its first screen (show pages and previews closed), like tapping
   an iPhone tab twice (`.deckPageToStart`). Card deck's pill too.
 
-## On the branch for build 167 (17 Nov 2026; not built yet)
+## Done in build 167 (17 Nov 2026, PR #85; Paul: "Build")
 
 - **Remembers what was playing** (Paul, 17 Nov 2026: "If the app exits
   or closes, it forgets what was last playing … after a fresh wipe or if
@@ -3075,6 +3075,17 @@ Paul's notes after build 164:
     to be working").
 
 ## Queued for the next app build
+
+- **Two alerts for one new episode** (Paul, 17 Nov 2026, screenshots:
+  #593 of Elis James and John Robins alerted once from the instant
+  alerts job via iCloud, "Show · Episode", and again about an hour later
+  when he opened the app, "Added to the top of Up Next"). The app's own
+  feed check doesn't know the iCloud alert went out. Proposed: on the
+  phone with instant alerts working, the app's check sends no alert of
+  its own for bell shows; if the iCloud alert is still in Notification
+  Centre it swaps it quietly (passive, no sound) for the fuller "Added to
+  the top of Up Next" one. Other phones keep the app's own alerts.
+  Waiting on Paul's yes.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
