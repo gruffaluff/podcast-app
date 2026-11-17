@@ -177,7 +177,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         // Pushes from iCloud when the alerts job finds a new episode.
-        application.registerForRemoteNotifications()
+        if !DemoMode.isOn { application.registerForRemoteNotifications() }
         return true
     }
 

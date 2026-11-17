@@ -58,6 +58,12 @@ struct DeckTabEpisodePage: View {
             scroller(width: geometry.size.width, playerHeight: playerHeight, top: top, bottom: bottom)
         }
         .task(id: episode.episodeID) { await ArtworkColors.shared.load(episode.artwork) }
+        // Demo mode only (Screenshots workflow): the first tab opens on Read along.
+        .task {
+            guard DemoMode.screen == .readalong, index == 0 else { return }
+            try? await Task.sleep(for: .milliseconds(500))
+            reading = true
+        }
     }
 
     private func scroller(width: CGFloat, playerHeight: CGFloat, top: CGFloat, bottom: CGFloat) -> some View {

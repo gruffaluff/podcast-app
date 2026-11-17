@@ -3093,7 +3093,18 @@ Paul's notes after build 164:
   installs. Free while the repo is public; from 1 Dec (private) Mac time
   counts 10× against the free 2,000 minutes (~15 runs a month, stops at
   the limit, no charge). **Paul: "Let's see how this one goes first"**
-  (build 159). Not built.
+  (build 159). **Paul: yes** (17 Nov 2026), built on a branch, not run
+  yet: `.github/workflows/screenshots.yml` (by hand, or the PR label
+  "screenshots"; never automatic) launches the app with `-PoddeckDemo`
+  and `-PoddeckScreen <tabs|player|readalong|shows|showpage|find|settings|carddeck>`
+  in light and dark and uploads the PNGs, the app log and any crash
+  reports as the "screenshots" artifact. Demo mode (`App/DemoData.swift`):
+  in-memory library, no iCloud / settings sync / push registration, no
+  feed checks (`refreshAll` returns), six invented shows with drawn
+  artwork, Up next, a part-played episode with auto chapters and a short
+  transcript loaded paused. Hooks only in PodcastsApp, LibraryStore.refreshAll,
+  AppDelegate (push registration), DeckRoot, DeckTabs (Settings) and
+  DeckTabEpisodePage (Read along). How to run: notes/SETUP.md.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
