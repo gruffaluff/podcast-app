@@ -3077,7 +3077,7 @@ Paul's notes after build 164:
     and "This is playing now" work (Paul, 17 Nov 2026: the resync "seems
     to be working").
 
-## On the branch for build 168 (17 Nov 2026; not built yet; Paul: "You can build one more")
+## Done in build 168 (17 Nov 2026, PR #86; Paul: "You can build one more")
 
 - **One alert per new episode** (Paul, 17 Nov 2026: two pushes for #593
   of Elis James and John Robins, one from the instant alerts job via
