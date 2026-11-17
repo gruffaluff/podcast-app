@@ -16,7 +16,7 @@ struct DeckTabsPager: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
-    @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
+    @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
 

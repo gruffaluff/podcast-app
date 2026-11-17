@@ -1,9 +1,10 @@
 import SwiftUI
 import PodcastCore
 
-/// A show's mini homepage from Discover or search, before following it:
+/// A show's mini homepage from Find or the charts, before following it:
 /// artwork, description, Follow, and its latest episodes (tap one for its
-/// notes). Once followed, it links to the show's own page.
+/// notes). Once followed, it links to the show's own page. Drawn by
+/// `DeckShowPreview`, the same look as a followed show's page.
 struct ShowPreviewView: View {
     @Environment(LibraryStore.self) private var store
     let item: DirectoryItem
@@ -16,184 +17,30 @@ struct ShowPreviewView: View {
         self.item = item
         _pageColour = State(initialValue: ArtworkColors.shared.background(for: item.artworkURL))
     }
-    @State private var follower = Follower()
-    /// Deck: Follow opens the Deck follow sheet (where new episodes go,
-    /// alerts, download the newest) instead of the old settings sheet.
+    /// Follow opens the Deck follow sheet (where new episodes go, alerts,
+    /// download the newest).
     @State private var deckFollower = DeckFollower()
     @State private var feed: ParsedFeed?
     /// The feed's link once known (charts may only give Apple's ID).
     @State private var feedURL: URL?
     @State private var failed = false
-    @State private var expanded: String?
-    /// How far the list is pulled down past the top (fills the gap above
-    /// the header with its colour instead of the sand page).
-    @State private var overscroll: CGFloat = 0
 
     var body: some View {
-        if Theme.isDeck {
-            deckBody
-        } else {
-            classicBody
-        }
-    }
-
-    /// Deck: the same look as a followed show's page (`DeckShowPreview`).
-    private var deckBody: some View {
         DeckShowPreview(item: item, feed: feed, feedURL: feedURL, failed: failed, followedShow: followedShow,
-                        busy: followBusy, followFailed: followFailed,
+                        busy: deckFollower.busy, followFailed: deckFollower.failed,
                         colour: pageColour ?? Theme.ink, follow: followTapped)
             .task { await load() }
             .refreshable { await load() }
             .sheet(item: $deckFollower.sheetShow) { DeckFollowSheet(show: $0) }
     }
 
-    private var classicBody: some View {
-        List {
-            header
-                .listRowBackground(Theme.rowBackground)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets())
-            Section {
-                if let feed {
-                    let shown = Array(feed.episodes.prefix(30))
-                    ForEach(Array(shown.enumerated()), id: \.element.guid) { index, episode in
-                        episodeRow(episode)
-                            .showRow(feed.artworkURL ?? item.artworkURL, title: feed.title)
-                    }
-                } else if failed {
-                    Text("Couldn't load this show's episodes. Pull down to try again.")
-                        .foregroundStyle(Theme.muted)
-                        .listRowBackground(Theme.rowBackground)
-                } else {
-                    HStack { Spacer(); ProgressView(); Spacer() }
-                        .listRowBackground(Theme.rowBackground)
-                }
-            } header: {
-                DeckHeader(title: "Latest episodes", detail: feed.map { "\($0.episodes.count) in all" })
-                    .padding(.vertical, 4)
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .ignoresSafeArea(edges: .top)
-        .onScrollGeometryChange(for: CGFloat.self) { max(0, -($0.contentOffset.y + $0.contentInsets.top)) } action: { _, pulled in
-            overscroll = pulled
-        }
-        // Pulling down past the top shows the header's colour, not a sand
-        // gap (Paul, 12 Nov 2026: the page pulled away from the top).
-        .background(alignment: .top) {
-            (pageColour ?? Theme.display)
-                .frame(height: overscroll > 0 ? overscroll + 40 : 0)
-                .ignoresSafeArea()
-        }
-        .haarPage()
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await load() }
-        .refreshable { await load() }
-        .sheet(item: $follower.justFollowed) { ShowSettingsView(show: $0, justFollowed: true) }
-        .sheet(item: $deckFollower.sheetShow) { DeckFollowSheet(show: $0) }
-    }
-
-    private var followBusy: Bool { Theme.isDeck ? deckFollower.busy : follower.busy }
-    private var followFailed: Bool { Theme.isDeck ? deckFollower.failed : follower.failed }
-
     private func followTapped() {
-        if Theme.isDeck {
-            Task { await deckFollower.follow(item, store: store) }
-        } else {
-            Task { await follower.follow(item, store: store) }
-        }
+        Task { await deckFollower.follow(item, store: store) }
     }
 
     private var followedShow: Podcast? {
         if let followed = deckFollower.followed { return followed }
-        if let followed = follower.followed { return followed }
         return item.feedURL.flatMap { store.followedPodcast(feedURL: $0.absoluteString) }
-    }
-
-    /// Same look as a followed show's page: the artwork filling the card,
-    /// fading into its colour, big title, then Follow (or Open show).
-    private var header: some View {
-        let art = feed?.artworkURL ?? item.artworkURL
-        let tint = pageColour ?? Theme.display
-        return VStack(alignment: .leading, spacing: 12) {
-            Spacer(minLength: 170)
-            // The show's poster, the artwork as a stamp beside the name.
-            HStack(alignment: .bottom, spacing: 12) {
-                Stamp(url: art, title: feed?.title ?? item.title, size: 72)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text([feed?.author ?? item.artist, item.genre, feed.map { "\($0.episodes.count) episodes" }].compactMap { $0 }.joined(separator: " · ").uppercased())
-                        .font(Theme.mono(9.5))
-                        .tracking(0.8)
-                        .foregroundStyle(Theme.displayDim)
-                        .lineLimit(2)
-                    Text(feed?.title ?? item.title)
-                        .font(Theme.big(40))
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.5)
-                        .shadow(color: .black.opacity(0.3), radius: 6, y: 2)
-                        .accessibilityAddTraits(.isHeader)
-                }
-            }
-            if let show = followedShow {
-                NavigationLink(value: show) {
-                    Text("✓ FOLLOWING · OPEN SHOW ▸")
-                        .font(Theme.mono(12, .bold))
-                        .foregroundStyle(tint)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button(action: followTapped) {
-                    Group {
-                        if followBusy { ProgressView().tint(tint) } else { Text(followFailed ? "TRY AGAIN" : "+ FOLLOW").font(Theme.mono(13, .bold)) }
-                    }
-                    .foregroundStyle(tint)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(Theme.displayText, in: RoundedRectangle(cornerRadius: 13))
-                }
-                .buttonStyle(.plain)
-                .disabled(followBusy)
-            }
-            if let summary = feed?.summary.map(PlainText.notesFromHTML), !summary.isEmpty {
-                Text(summary)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.displayDim)
-                    .lineLimit(4)
-            }
-        }
-        .foregroundStyle(Theme.displayText)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background { ShowHeroBackground(url: art, tint: tint) }
-        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 36, bottomTrailingRadius: 36))
-        .task(id: art) { await ArtworkColors.shared.load(art) }
-    }
-
-    private func episodeRow(_ episode: ParsedEpisode) -> some View {
-        let isOpen = expanded == episode.guid
-        let summary = PlainText.notesFromHTML(episode.summary ?? "")
-        let meta = [episode.published.map { $0.formatted(date: .abbreviated, time: .omitted) },
-                    episode.duration.map { TimeFormat.clock($0) }].compactMap { $0 }.joined(separator: " · ")
-        return VStack(alignment: .leading, spacing: 4) {
-            PosterRowText(label: meta, title: episode.title, titleSize: 18, lines: 2)
-            if !summary.isEmpty {
-                Text(summary)
-                    .font(isOpen ? .subheadline : .caption)
-                    .foregroundStyle(isOpen ? Theme.ink : Theme.muted)
-                    .lineLimit(isOpen ? nil : 2)
-            }
-        }
-        .padding(.vertical, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) { expanded = isOpen ? nil : episode.guid }
-        }
     }
 
     private func load() async {

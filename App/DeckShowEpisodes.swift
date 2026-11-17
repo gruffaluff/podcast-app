@@ -352,7 +352,7 @@ private struct DeckShowEpisodeText: View {
         if playing {
             // "Playing" / "Paused" is added in the show's colour by metaLine.
         } else if let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
-            parts.append("\(EpisodeStatusRows.ordinal(index + 1)) in Up next")
+            parts.append("\(UpNextPlace.ordinal(index + 1)) in Up next")
         } else if !episode.played, episode.position > 30, let left = episode.timeLeft, left > 0 {
             parts.append(TimeFormat.length(left) + " left")
         }

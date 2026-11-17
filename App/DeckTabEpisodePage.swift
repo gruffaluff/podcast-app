@@ -469,7 +469,7 @@ enum DeckTabPlace {
 
     /// "Next in Up next", "2nd in Up next".
     static func words(_ place: Int) -> String {
-        place == 1 ? "Next in Up next" : EpisodeStatusRows.ordinal(place) + " in Up next"
+        place == 1 ? "Next in Up next" : UpNextPlace.ordinal(place) + " in Up next"
     }
 }
 

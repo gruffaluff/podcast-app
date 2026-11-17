@@ -63,7 +63,7 @@ struct ClipView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .haarPage()
+            .pageBackground()
             .navigationTitle("Share a clip")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
