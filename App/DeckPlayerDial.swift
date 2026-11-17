@@ -166,12 +166,50 @@ struct DeckPlayerDial: View {
                                             toggle: toggleWords, transcribe: transcribe,
                                             forward: { player.skipForwardBy() },
                                             back: { player.skipBackward() }))
+            // Search hits (Paul, 17 Nov 2026): a phrase found in Find's
+            // "Said in your episodes" shows as yellow dots on the ring
+            // wherever it's said in this episode; the pill names it and
+            // clears it.
+            .overlay(alignment: .topLeading) {
+                if geometry.big, !searchHits.isEmpty, let term = search.term { searchPill(term) }
+            }
             .allowsHitTesting(geometry.big)
             .position(x: rect.midX, y: rect.midY)
             .task(id: lineKey) { await load() }
     }
 
     private var faceShown: Bool { scrub.time != nil || showWords }
+
+    private var search: DeckDialSearch { DeckDialSearch.shared }
+
+    /// Times of the lines in this episode that say the searched phrase.
+    private var searchHits: [TimeInterval] {
+        guard search.episodeID == item.episodeID, let term = search.term else { return [] }
+        return DeckDialSearch.times(of: term, in: lines)
+    }
+
+    private func searchPill(_ term: String) -> some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.2)) { search.clear() }
+        } label: {
+            HStack(spacing: 6) {
+                Circle().fill(DeckDialSearch.dotColour).frame(width: 7, height: 7)
+                Text("\u{201C}\(term)\u{201D} \u{00B7} \(searchHits.count)")
+                    .font(Theme.outfit(12, .semibold))
+                    .lineLimit(1)
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+            }
+            .foregroundStyle(Color.white)
+            .padding(.horizontal, 10)
+            .frame(height: 26)
+            .background(Capsule().fill(Color.black.opacity(0.35)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+            .frame(maxWidth: 170, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Search marks for \(term), \(searchHits.count). Clear")
+    }
 
     private func dial(_ geometry: DeckDialGeometry) -> some View {
         let shown: TimeInterval = scrub.time ?? player.currentTime
@@ -218,8 +256,9 @@ struct DeckPlayerDial: View {
             }
             clips = clipTimes.map { (time: TimeInterval) -> Double in time / duration }
         }
+        let hits: [Double] = duration > 0 ? searchHits.map { (time: TimeInterval) -> Double in time / duration } : []
         return DeckDialRingSpec(progress: min(1, max(0, progress)), chapters: chapters, ads: ads,
-                                clips: clips, deep: DeckPlayerBackground.shade(colour))
+                                clips: clips, deep: DeckPlayerBackground.shade(colour), hits: hits)
     }
 
     // MARK: Middle of the dial
@@ -503,6 +542,40 @@ struct DeckDialRingSpec {
     let ads: [ClosedRange<Double>]
     let clips: [Double]
     let deep: Color
+    /// Where a searched phrase is said (0–1 round the ring).
+    var hits: [Double] = []
+}
+
+/// The phrase last opened from Find's "Said in your episodes", and which
+/// episode it was in: that episode's dial marks every line saying it.
+@MainActor
+@Observable
+final class DeckDialSearch {
+    static let shared = DeckDialSearch()
+    nonisolated static let dotColour = Color(red: 1, green: 0.84, blue: 0.42)
+    private(set) var term: String?
+    private(set) var episodeID: String?
+
+    func set(_ term: String, episodeID: String) {
+        let trimmed: String = term.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.term = trimmed.isEmpty ? nil : trimmed
+        self.episodeID = trimmed.isEmpty ? nil : episodeID
+    }
+
+    func clear() {
+        term = nil
+        episodeID = nil
+    }
+
+    /// Lines containing every word of the phrase (any case or accents).
+    nonisolated static func times(of term: String, in lines: [TranscriptLayout.Line]) -> [TimeInterval] {
+        let words: [String] = term.split(separator: " ").map(String.init).filter { !$0.isEmpty }
+        guard !words.isEmpty else { return [] }
+        let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
+        return lines.filter { (line: TranscriptLayout.Line) -> Bool in
+            words.allSatisfy { line.text.range(of: $0, options: options) != nil }
+        }.map(\.start)
+    }
 }
 
 /// White on the player's colour: a faint track, the played part white,
@@ -557,6 +630,7 @@ private struct DeckDialRing: View, Animatable {
         marks.opacity = Double(geometry.presence)
         drawTicks(in: context, centre: centre, geometry: geometry, spec: spec)
         drawClips(in: marks, centre: centre, geometry: geometry, spec: spec)
+        drawHits(in: marks, centre: centre, geometry: geometry, spec: spec)
         drawKnob(in: marks, centre: centre, geometry: geometry, spec: spec)
     }
 
@@ -603,6 +677,18 @@ private struct DeckDialRing: View, Animatable {
             let rect = CGRect(x: point.x - dot, y: point.y - dot, width: dot * 2, height: dot * 2)
             context.fill(Path(ellipseIn: rect), with: .color(Color.white))
             context.stroke(Path(ellipseIn: rect), with: .color(spec.deep), lineWidth: 1.5)
+        }
+    }
+
+    /// Search hits: small yellow dots just inside the ring.
+    private static func drawHits(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,
+                                 spec: DeckDialRingSpec) {
+        let dot: CGFloat = max(2, geometry.lineWidth * 0.36)
+        let radius: CGFloat = geometry.ringRadius - geometry.lineWidth * 0.5 - dot - 2
+        for hit in spec.hits where hit >= 0 && hit <= 1 {
+            let point: CGPoint = DeckDialMath.point(centre, radius, at: hit)
+            let rect = CGRect(x: point.x - dot, y: point.y - dot, width: dot * 2, height: dot * 2)
+            context.fill(Path(ellipseIn: rect), with: .color(DeckDialSearch.dotColour))
         }
     }
 

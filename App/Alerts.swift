@@ -13,6 +13,7 @@ enum NewEpisodeAlerts {
 
     @MainActor
     static func post(for episodes: [PodcastEpisode], queue: [QueueItem]) {
+        var alerts: [Pending] = []
         for episode in episodes {
             guard let show = episode.podcast, show.notify else { continue }
             let content = UNMutableNotificationContent()
@@ -23,8 +24,43 @@ enum NewEpisodeAlerts {
             content.sound = .default
             content.threadIdentifier = show.feedURL
             content.userInfo = ["episodeID": episode.episodeID]
-            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: episode.episodeID, content: content, trigger: nil))
+            alerts.append(Pending(id: episode.episodeID, showTitle: show.title, episodeTitle: episode.title, content: content))
         }
+        guard !alerts.isEmpty else { return }
+        let center = UNUserNotificationCenter.current()
+        // On the phone with instant alerts, iCloud has already said (or soon
+        // will say) "Show · Episode" (Paul, 17 Nov 2026: two alerts for one
+        // episode). Don't alert again: if that alert is still in
+        // Notification Centre, swap it quietly for this fuller one ("Added
+        // to the top of Up Next"); otherwise leave it at the one.
+        guard RealtimeAlerts.instantAlertsOn else {
+            for alert in alerts { center.add(alert.request) }
+            return
+        }
+        Task {
+            let delivered: [UNNotification] = await center.deliveredNotifications()
+            for alert in alerts {
+                let match = delivered.first { note in
+                    let text = note.request.content.title + " " + note.request.content.body
+                    return note.request.identifier != alert.id
+                        && text.contains(alert.episodeTitle) && text.contains(alert.showTitle)
+                }
+                guard let match else { continue }
+                center.removeDeliveredNotifications(withIdentifiers: [match.request.identifier])
+                let quiet = alert.content
+                quiet.sound = nil
+                quiet.interruptionLevel = .passive
+                center.add(UNNotificationRequest(identifier: alert.id, content: quiet, trigger: nil))
+            }
+        }
+    }
+
+    private struct Pending {
+        let id: String
+        let showTitle: String
+        let episodeTitle: String
+        let content: UNMutableNotificationContent
+        var request: UNNotificationRequest { UNNotificationRequest(identifier: id, content: content, trigger: nil) }
     }
 
     static func placement(of episode: PodcastEpisode, show: Podcast, queue: [QueueItem]) -> String {

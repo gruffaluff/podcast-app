@@ -416,7 +416,7 @@ private struct DeckSaidSection: View {
                 ForEach(results.prefix(6), id: \.episodeID) { result in
                     if let episode = found[result.episodeID] {
                         ForEach(Array(result.matches.prefix(2).enumerated()), id: \.offset) { _, match in
-                            DeckSaidRow(episode: episode, match: match)
+                            DeckSaidRow(episode: episode, match: match, term: term)
                         }
                     }
                 }
@@ -430,6 +430,7 @@ private struct DeckSaidRow: View {
     @Environment(PlayerModel.self) private var player
     let episode: PodcastEpisode
     let match: TranscriptSearch.Match
+    let term: String
 
     var body: some View {
         Button(action: play) {
@@ -459,6 +460,8 @@ private struct DeckSaidRow: View {
     }
 
     private func play() {
+        // The dial marks every other place this is said (DeckDialSearch).
+        DeckDialSearch.shared.set(term, episodeID: episode.episodeID)
         player.play(episode)
         player.seek(to: match.time)
     }
