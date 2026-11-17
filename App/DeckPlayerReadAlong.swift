@@ -83,7 +83,7 @@ struct DeckReadAlong: View {
             }
             .onChange(of: now) { _, index in
                 guard let index, !followPaused else { return }
-                withAnimation(.easeInOut(duration: 0.6)) { proxy.scrollTo(index, anchor: Self.anchor) }
+                withAnimation(.smooth(duration: 0.5)) { proxy.scrollTo(index, anchor: Self.anchor) }
             }
             .onAppear {
                 if let now { proxy.scrollTo(now, anchor: Self.anchor) }
@@ -155,21 +155,28 @@ struct DeckReadAlong: View {
                         .lineLimit(1)
                         .opacity(0.7)
                 }
+                // Every line the same size (Paul, 17 Nov 2026, option A: the
+                // line now used to grow to 24 pt, so the lines below jumped
+                // and overlapped while the list scrolled); only the light
+                // changes, like lyrics.
                 lineText(line, isNow: isNow && !ad)
-                    .font(Theme.outfit(isNow ? 24 : 17, isNow ? .bold : .medium))
-                    .lineSpacing(isNow ? 2 : 4)
+                    .font(Theme.outfit(19, .semibold))
+                    .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .foregroundStyle(colour.opacity(isNow ? 1 : (ad ? 0.55 : 0.45)))
+            .foregroundStyle(colour.opacity(isNow ? 1 : (ad ? 0.55 : 0.4)))
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 7)
             .contentShape(Rectangle())
-            .animation(.easeOut(duration: 0.3), value: isNow)
+            .animation(.easeInOut(duration: 0.5), value: isNow)
         }
         .buttonStyle(.plain)
         .contextMenu {
             Button("Share a clip", systemImage: "scissors") { clip = ClipRequest(line: line, quote: line.text) }
-            Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = line.text }
+            Button("Copy", systemImage: "doc.on.doc") {
+                UIPasteboard.general.string = line.text
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            }
             // The manual fix for words out of step (Paul, 16 Nov 2026, sync
             // issues again): hold the line you can hear and choose this; the
             // words from here on line up with the audio (a sync anchor, as
@@ -210,6 +217,17 @@ struct DeckReadAlong: View {
         }
     }
 
+    /// The word now (Paul, 17 Nov 2026, option A: no block behind it): a
+    /// light tint of the show's colour, so it reads on the player's dark
+    /// shade of the same colour and matches the dial and ring.
+    private var wordTint: Color {
+        let base = UIColor(DeckRings.showColour(episode))
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        guard base.getRed(&r, green: &g, blue: &b, alpha: &a) else { return .white }
+        let mix: CGFloat = 0.55
+        return Color(red: Double(r + (1 - r) * mix), green: Double(g + (1 - g) * mix), blue: Double(b + (1 - b) * mix))
+    }
+
     private func litText(_ line: TranscriptLayout.Line, at date: Date) -> AttributedString {
         let words: [Substring] = line.text.split(separator: " ")
         guard !words.isEmpty else { return AttributedString(line.text) }
@@ -225,8 +243,7 @@ struct DeckReadAlong: View {
             if index < nowWord {
                 piece.foregroundColor = Color.white
             } else if index == nowWord {
-                piece.foregroundColor = Color.white
-                piece.backgroundColor = Color.white.opacity(0.22)
+                piece.foregroundColor = wordTint
             } else {
                 piece.foregroundColor = Color.white.opacity(0.45)
             }

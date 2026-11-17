@@ -38,6 +38,9 @@ struct DeckTabEpisodePage: View {
     @State private var reading = false
     @State private var scrolledPast = false
     @State private var position = ScrollPosition(edge: .top)
+    /// Scrolled down to the episode card at least once (this iPhone): the
+    /// arrow at the foot of the player stops bobbing.
+    @AppStorage(DeckTabMoreHint.seenKey) private var moreHintSeen = false
     /// Where a pull down may not start (in the scroll content), by name.
     @State private var keepOut: [String: CGRect] = [:]
 
@@ -68,7 +71,14 @@ struct DeckTabEpisodePage: View {
                     .padding(.top, top)
                     .contentShape(Rectangle())
                     .gesture(DeckPullDown(keepOut: pullKeepOut, handle: pulled))
+                // The "This episode" card starts fully off screen (Paul, 17
+                // Nov 2026, option B: it peeked up under the buttons); a
+                // small arrow says there's more, bobbing until the page has
+                // been scrolled down once.
+                DeckTabMoreHint(tap: scrollToBelow)
+                    .frame(height: max(bottom, 20) + 14)
                 DeckTabEpisodeBelow(episode: episode, bottomRoom: bottom + 24, close: close, readAlong: readAlong)
+                    .id(Self.belowID)
             }
             .coordinateSpace(.named(DeckPullDown.space))
         }
@@ -78,6 +88,11 @@ struct DeckTabEpisodePage: View {
             geometry.contentOffset.y + geometry.contentInsets.top > threshold
         }, action: { (_: Bool, past: Bool) in
             withAnimation(.easeOut(duration: 0.2)) { scrolledPast = past }
+        })
+        .onScrollGeometryChange(for: Bool.self, of: { (geometry: ScrollGeometry) -> Bool in
+            geometry.contentOffset.y + geometry.contentInsets.top > 60
+        }, action: { (_: Bool, down: Bool) in
+            if down && !moreHintSeen { moreHintSeen = true }
         })
         .overlay(alignment: .top) { slimBar(top: top) }
     }
@@ -97,6 +112,12 @@ struct DeckTabEpisodePage: View {
     private var pullKeepOut: [CGRect] {
         let skip: String = reading ? "dial" : "scrub"
         return keepOut.filter { $0.key != skip }.map { $0.value }
+    }
+
+    private static let belowID = "deckTabBelow"
+
+    private func scrollToBelow() {
+        withAnimation(.smooth(duration: 0.45)) { position.scrollTo(id: Self.belowID, anchor: .top) }
     }
 
     private func scrollToTop() {
@@ -665,5 +686,32 @@ private extension View {
                 places.wrappedValue[name] = rect
             }
             .onDisappear { places.wrappedValue[name] = nil }
+    }
+}
+
+/// A small arrow at the foot of the player: the episode card is below.
+/// Bobs gently until the page has been scrolled down once, then sits still.
+struct DeckTabMoreHint: View {
+    static let seenKey = "deckMoreHintSeen"
+    @AppStorage(seenKey) private var seen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let tap: () -> Void
+
+    var body: some View {
+        let still: Bool = seen || reduceMotion
+        Button(action: tap) {
+            TimelineView(.animation(paused: still)) { context in
+                let phase: Double = context.date.timeIntervalSinceReferenceDate * .pi / 0.8
+                Image(systemName: "chevron.compact.down")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.75))
+                    .offset(y: still ? 0 : 3 * sin(phase))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("This episode")
+        .accessibilityHint("Scrolls down to the episode's details")
     }
 }

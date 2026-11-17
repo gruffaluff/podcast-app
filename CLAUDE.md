@@ -3053,6 +3053,25 @@ Paul's notes after build 164:
   closed app picks up exactly there. Finished episodes aren't brought
   back.
 
+- **Read along polish** (Paul, 17 Nov 2026, build 166 recording;
+  mock-ups https://claude.ai/artifact/Lov1Pwxoi3e2ryuoCCtMxo, he picked
+  1 A, 2 A, 3 B):
+  - The word being said is a light tint of the show's colour, with no
+    block behind it (`DeckReadAlong.wordTint`: the show colour mixed 55%
+    toward white).
+  - Moving to the next line: every line is the same size (Outfit 19
+    semibold); only the light changes (line now full white, others 40%)
+    in a 0.5 s ease, with one smooth 0.5 s scroll. The line now used to
+    grow to 24 pt, so lines below jumped and overlapped mid-scroll.
+  - The tab page's "This episode" card starts fully off screen (it
+    peeked up under Options · Read along · AirPlay); a small arrow at the
+    foot of the player bobs gently until the page has been scrolled down
+    once ("deckMoreHintSeen", this iPhone), then sits still; tap it to
+    scroll down to the card (`DeckTabMoreHint`).
+  - Copy in Read along's hold menu now gives a success tap (it copied
+    with no sign it had). Asked Paul whether Share a clip shows nothing at
+    all when tapped (he said the white menu items "don't work").
+
 ## Queued for the next app build
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
