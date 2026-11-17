@@ -3,6 +3,7 @@ import MediaPlayer
 import Observation
 import UIKit
 import PodcastCore
+import SwiftData
 
 /// Plays one episode at a time (downloaded copy if any), remembers where Paul
 /// stopped, and moves on to the next episode in Up Next when one finishes.
@@ -222,6 +223,8 @@ final class PlayerModel {
     /// `autoplay: false` loads it ready to play without starting it (used
     /// to open the Deck player on Up next's top card when nothing is loaded).
     func play(_ episode: PodcastEpisode, autoplay: Bool = true) {
+        // Anything Paul (or the app) chooses wins over the remembered one.
+        if !restoring { restoreOpen = false }
         if nowPlaying?.episodeID == episode.episodeID {
             if autoplay { resume() }
             return
@@ -286,6 +289,7 @@ final class PlayerModel {
 
     func resume() {
         guard nowPlaying != nil else { return }
+        restoreOpen = false
         if let pausedAt, !isPlaying, abs(currentTime - pausedPosition) < 1,
            UserDefaults.standard.object(forKey: Self.rewindKey) as? Bool ?? true {
             let back = Self.rewind(afterPause: Date().timeIntervalSince(pausedAt))
@@ -578,6 +582,38 @@ final class PlayerModel {
         store.logListening(unloggedSeconds, feedURL: feed, showTitle: currentShowTitle)
         unloggedSeconds = 0
     }
+
+    // MARK: Remembering what was playing
+
+    /// Opening the app (even after a reinstall) brings back what was playing
+    /// last, ready to play but paused (Paul, 17 Nov 2026: "I'd want it to
+    /// remember what was playing last"). Uses each episode's `lastPlayedAt`,
+    /// which syncs through iCloud, so a fresh install gets it back once the
+    /// library has arrived. Open until Paul plays or picks anything.
+    @ObservationIgnored private var restoreOpen = true
+    @ObservationIgnored private var restoring = false
+
+    /// Loads the most recently played unfinished episode if nothing is on.
+    /// Called on launch and after each iCloud tidy; a later sync with a
+    /// newer one swaps it in while Paul hasn't touched anything yet.
+    func restoreLastPlayed() {
+        guard restoreOpen, !isPlaying else { return }
+        var descriptor = FetchDescriptor<PodcastEpisode>(
+            predicate: #Predicate { $0.lastPlayedAt != nil && $0.played == false },
+            sortBy: [SortDescriptor(\.lastPlayedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        guard let episode = (try? store.context.fetch(descriptor))?.first,
+              episode.podcast != nil,
+              episode.episodeID != nowPlaying?.episodeID else { return }
+        restoring = true
+        play(episode, autoplay: false)
+        restoring = false
+    }
+
+    /// Saves the place now (going to the background), so a closed app
+    /// picks up from here, not from the last 15-second save.
+    func saveProgressNow() { saveProgress() }
 
     private func saveProgress() {
         guard let id = nowPlaying?.episodeID else { return }

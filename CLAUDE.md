@@ -3038,6 +3038,21 @@ Paul's notes after build 164:
   back to its first screen (show pages and previews closed), like tapping
   an iPhone tab twice (`.deckPageToStart`). Card deck's pill too.
 
+## On the branch for build 167 (17 Nov 2026; not built yet)
+
+- **Remembers what was playing** (Paul, 17 Nov 2026: "If the app exits
+  or closes, it forgets what was last playing … after a fresh wipe or if
+  you go into the app, I'd want it to remember"). Opening the app loads
+  the most recently played unfinished episode, paused at its saved place
+  (`PlayerModel.restoreLastPlayed`, from each episode's `lastPlayedAt`,
+  which syncs through iCloud). After a reinstall it comes back once
+  iCloud has filled in the library: every iCloud tidy (`.libraryTidied`)
+  tries again, and a newer one from a later sync swaps in, until Paul
+  plays or picks anything. The place is also saved the moment the app
+  goes to the background (`saveProgressNow`; it was every 15 s), so a
+  closed app picks up exactly there. Finished episodes aren't brought
+  back.
+
 ## Queued for the next app build
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
