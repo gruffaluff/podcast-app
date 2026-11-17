@@ -44,6 +44,9 @@ may revisit. Before that: Tape Deck cassette D (`make_deck_icon.py`,
 It combines the best parts of Apple Podcasts, Spotify, Pocket Casts and
 Overcast. Goal: **minimal to look at, fully functional underneath**.
 
+**Look: "Deck"** is now the only look (Paul, 17 Nov 2026: "Clear out
+the old looks"; see build 168). Everything below about Haar, Native
+warm, Deck 0, Poster and Middle ground is history.
 **Look: "Haar"** (Paul, 13 Nov 2026: "work this as a version of Poddeck",
 "stick with P1"; the app keeps the name Poddeck, Haar names the look, after
 the cold sea fog off the North Sea). Mock-ups and a clickable prototype of
@@ -3074,20 +3077,26 @@ Paul's notes after build 164:
     and "This is playing now" work (Paul, 17 Nov 2026: the resync "seems
     to be working").
 
-## Queued for the next app build
+## On the branch for build 168 (17 Nov 2026; not built yet; Paul: "You can build one more")
 
-- **Two alerts for one new episode** (Paul, 17 Nov 2026, screenshots:
-  #593 of Elis James and John Robins alerted once from the instant
-  alerts job via iCloud, "Show · Episode", and again about an hour later
-  when he opened the app, "Added to the top of Up Next"). The app's own
-  feed check doesn't know the iCloud alert went out. Proposed: on the
-  phone with instant alerts working, the app's check sends no alert of
-  its own for bell shows; if the iCloud alert is still in Notification
-  Centre it swaps it quietly (passive, no sound) for the fuller "Added to
-  the top of Up Next" one. Other phones keep the app's own alerts.
-  Waiting on Paul's yes.
-
-- **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
+- **One alert per new episode** (Paul, 17 Nov 2026: two pushes for #593
+  of Elis James and John Robins, one from the instant alerts job via
+  iCloud as it came out, one from the app's own check when he opened the
+  app an hour later). On the phone with instant alerts
+  (`RealtimeAlerts.instantAlertsOn`: owner + subscribed), the app's own
+  feed check sends no alert of its own for bell shows; if the iCloud
+  alert ("Show · Episode") is still in Notification Centre it's swapped
+  for the fuller one ("Added to the top of Up Next") quietly (passive, no
+  sound) (`NewEpisodeAlerts.post`). Other phones keep the app's alerts.
+  If the iCloud alert was already cleared, the app can't tell it was
+  sent, so nothing more shows.
+- **Search hits on the dial** (Paul, 17 Nov 2026, yes; the one part of the
+  dial design not built in 159): tapping a quote under Find's "Said in
+  your episodes" remembers the phrase (`DeckDialSearch`); that episode's
+  dial shows a small yellow dot just inside the ring wherever a line says
+  it (every word, any case), and a pill in the dial's corner names it
+  with the count ("“panini” · 6 ✕"); tap the pill to clear.
+- **Simulator screenshots** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
   does the main gestures and saves screenshots for checking before Paul
   installs. Free while the repo is public; from 1 Dec (private) Mac time
@@ -3105,6 +3114,50 @@ Paul's notes after build 164:
   transcript loaded paused. Hooks only in PodcastsApp, LibraryStore.refreshAll,
   AppDelegate (push registration), DeckRoot, DeckTabs (Settings) and
   DeckTabEpisodePage (Read along). How to run: notes/SETUP.md.
+- **Old looks cleared out** (Paul, 17 Nov 2026: "Clear out the old
+  looks"): Deck is the only look. `ColourScheme` is `deck` / `deckNight`;
+  Settings → Look → Colours offers Auto / Deck / Deck night (any old
+  saved value, "haar", "sand"…, counts as Auto and is rewritten to
+  "auto"). `RootView` always shows `DeckRoot`. Deleted: Haar*.swift,
+  NowPlayingView, MiniPlayer, UpNextView, UpNextExtras, LibraryView,
+  DiscoverView, SearchView, Poster, ShowView, ShowSettingsView,
+  PlayerTranscript, AddShowView, ChaptersView, DeckParts; the DM Mono,
+  Fraunces Soft and Instrument Serif fonts. Pieces Deck still uses moved
+  to their own files: PlayerOptionsSheet, PlayerSystemControls
+  (`SystemVolumeSlider`, `RoutePicker`), SavedClipsView (was
+  `HaarSavedClipsView`), TranscriptIndex, ChartHistory,
+  TranscribeExplainer, UpNextTimes, UpNextPlace (was
+  `EpisodeStatusRows.ordinal`), NewEpisodes (was `LibraryView.newFor` /
+  queries), EpisodeMenuItems, ShowSettingChoices (was
+  `ShowSettingsView.speedChoices` / `skipOptions`), RowParts (`posterCard`,
+  `PosterRowText`, `Stamp`, `showTitle`…); `.haarPage()` is
+  `.pageBackground()`. `Theme.isDeck` / `isHaar` / `rounded` are gone.
+  Both Deck home modes (Tabs, Card deck) stay. The look history at the
+  top of this file is history only.
+- **Going live: notification options** (Paul asked 17 Nov 2026, for both
+  real-time push and the app checking). Told him: 1 the app checks by
+  itself (background refresh every 1 / 3 / 6 h, iOS picks the moment,
+  plus on open; its own local alert): no outside provider, free. 2
+  instant alerts for everyone needs something always on to check feeds
+  and ask Apple to push (Apple's push via iCloud is free): a the free
+  GitHub job made multi-user (sealed follows record per phone, per-user
+  alert records; loose timing; tens to a couple of hundred users; grey
+  area using free Actions as a service; minutes count once private), b
+  the same job on a Cloudflare cron (more reliable; free plan may do for
+  a few users, else $5 / month), c own server / paid push service (not
+  worth it). Suggested: launch on 1 for everyone, Paul keeps instant
+  alerts; move to 2b if people ask.
+
+## Queued for the next app build
+
+- Nothing queued. Still waiting on Paul: where he tried Undo and saw
+  nothing (old); other iPhone sizes not checked; feeds with a username
+  and password: later. The website refresh (Deck screenshots, drop the
+  "Ad breaks" card, real support address) is Paul's own task in another
+  session (17 Nov 2026). Old ideas cleared (Paul, 17 Nov 2026: sandier
+  app, the undecided "not like Apple" touches, the font notes, New
+  Episodes and player layout option rounds, the Cloudflare alerts
+  backup): all overtaken by the Deck look.
 
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
@@ -3134,189 +3187,6 @@ Paul's notes after build 164:
   for Paul, everyone else on the background check. Paul: "just
   interested in steps for now".
 
-
-
-- **Sandier app?** (Paul, 12 Nov 2026: "if we added a sandy tinge to the
-  app, add some colour"): https://claude.ai/artifact/RRkrs9ZBPtpjRtF4QFMjCN,
-  Up Next and Library in Now (#F5F2EC page, white cards), S1 Light sand
-  (#EEE7D9 page, white cards), S2 Sand + olive (S1 plus olive #45543A for
-  the selected tab, section labels, links and switches; suggested), S3
-  Deep sand (#E6DCC8 page, cream #FBF7EE cards, olive), each with its
-  matching icon (sand tile + fine edge). **Paul: leave the theme for now**
-  (12 Nov 2026).
-
-- **Still undecided** (from the player colour mock-ups,
-  https://claude.ai/artifact/FU45FUnYLfGc2K41NUnt5q): the other
-  "not like Apple" touches: olive as the app's own colour for the selected
-  tab / links / switches, DM Mono numbers, tape-style progress, start
-  times / done-by as a signature. Not built.
-
-- **Type: Fraunces Soft** (Paul, 11 Nov 2026: the font feels "a bit too bold /
-  strong"). Every title is Big Shoulders Black (900) in capitals. Options
-  on https://claude.ai/artifact/HcvktcXpssM9FtFPNdqdFo: 1 today, 2 Big
-  Shoulders Bold everywhere, 3 Display ExtraBold headings + Big Shoulders
-  Text SemiBold row titles, 4 Display ExtraBold only for screen titles and
-  section headings, row titles in SF semibold normal case, 5 Barlow
-  Condensed (SemiBold headings, Medium rows). Suggested 4. Paul: keep
-  proper case (not capitals); same link re-rendered in proper case
-  (option 1 left in capitals to compare). **Paul picked 5** (11 Nov
-  2026), on the branch: `App/Fonts/` now holds BarlowCondensed-SemiBold
-  and -Medium (Google Fonts, OFL licence file) in place of Big Shoulders
-  (removed); `Theme.big` = Barlow Condensed SemiBold (headings, screen
-  titles, player title and time), new `Theme.title` = Barlow Condensed
-  Medium (row titles, mini player, transcript lines); every title and
-  heading in proper case (no `.uppercased()`), tab and screen titles too
-  ("Up Next", "Library", "Episode notes"…); the iOS navigation bar titles
-  use Barlow Condensed SemiBold. Labels stay DM Mono capitals, body SF.
-  Then Paul held the build ("hold on build") and asked to see Fraunces
-  Soft, New York and Bricolage Grotesque:
-  https://claude.ai/artifact/RS87QNtkmwBu4QaRFnXYpu (Barlow beside them;
-  New York is Apple's built-in serif, nothing to bundle). **Paul picked
-  Fraunces (Soft)**, 11 Nov 2026, on the branch: `App/Fonts/` holds
-  FrauncesSoft-SemiBold (headings, `Theme.big`, drawn at 92%) and
-  FrauncesSoft-Medium (row titles, mini player, transcript lines,
-  `Theme.title`, drawn at 85% as it's wider than the condensed faces the
-  sizes were set for), static fonts made from Google Fonts' variable
-  Fraunces with fontTools (SOFT 100, WONK 1, opsz 36 / 18, wght 600 /
-  500; OFL, no reserved name); Barlow removed. Navigation bar titles use
-  Fraunces Soft SemiBold. Proper case throughout. Went out in build 139.
-- Library sections: decided, option 3 with each section's rule in its
-  own colour (Paul, 11 Nov 2026); on the branch (see above). Earlier
-  options on https://claude.ai/artifact/QVZuzJvu3x4p1cusBv2tbZ.
-
-- **New Episodes ideas** (Paul, 11 Nov 2026: fresh ideas for the Library's
-  New Episodes; 1 Inbox went in with the poster look, build 138). Mock-ups https://claude.ai/artifact/GR7UfPFs12b4Mpt8oZ1TyC
-  next to today's carousel: 1 Inbox (Today / Yesterday / This week rows,
-  swipe right Up Next, left played, "All caught up"), 2 Show circles like
-  Stories (ringed show icons with counts, tap for that show's new ones),
-  3 Triage deck (one big card, swipe right Up Next / left played / up
-  play now), 4 Tape shelf (episodes as cassette spines in show colours,
-  tap one to slide it out), 5 Morning digest (one front-page card, "6
-  new since yesterday", one line each, Add the rest to Up Next). Waiting
-  on Paul.
-- **Player layout ideas** (Paul, 10 Nov 2026, after build 136: "we're in
-  a good spot", but curious if another layout is better). Mock-ups
-  https://claude.ai/artifact/KrYT3het2R5buAj5JzCBzP next to build 136:
-  1 Tidy (fewer top keys, tiles as a slim icon row, Up Next as one line);
-  2 Artwork first (square artwork card on a washed page, titles under,
-  tap artwork for transcript, bottom icon bar); 3 Reader (transcript fills
-  the screen, compact control dock that pulls up); 4 Deck (cassette:
-  turning reels, LCD with chapter and times, latching keys); 5 Gestures
-  (full-bleed artwork, tap to pause, double tap sides to skip, chapter
-  cards, everything else in a pull-up drawer). Paul: none improve on
-  136. Round 2, https://claude.ai/artifact/LaxiGxbUhYrBwvFQHdMrQZ: 6 Pages
-  (fixed controls below, swipe the top between Art / Chapters / Text /
-  Next), 7 Timeline (chapters as stops down the screen, the current one
-  opens with the controls), 8 Dial (progress as a ring round play, drag
-  round to scrub), 9 Dashboard (tiles: said just now, chapter left, up
-  next, time saved, sleep), 10 Poster (no picture: artwork colour, huge
-  time and title in Big Shoulders). Paul liked 8 (Dial) and 10 (Poster).
-  Round 3, https://claude.ai/artifact/LAGJTUdpda11cHuwEJ6LrL: new 11
-  Moving tape (fixed playhead, loudness strip slides under it, pinch to
-  zoom), 12 Chapter cards (stack, flick to the next chapter), 13
-  Conversation (transcript as chat bubbles, controls where you'd type);
-  then 8 across the app (8a ring round the artwork with chapter ticks,
-  8b scrubbing round the ring, slide inward for finer, 8c progress rings
-  on Up Next rows and round the mini player's play key) and 10 across
-  the app (10a refined poster player, 10b transcript as big lyric type,
-  10c Library New Episodes as colour posters, poster mini player).
-  Then (Paul: "flesh out poster with screens of each page", with the
-  Inbox and Up Next): https://claude.ai/artifact/KbVas33x1ccwvAFM9YoccR,
-  every screen in the poster look: Up Next (playing episode as a colour
-  block, rows with a show-colour strip and big Big Shoulders titles),
-  Library with the Inbox (Today / Yesterday rows, swipe for Up Next /
-  played, Your shows as colour tiles), player, transcript as lyric
-  sheet, show page and episode page as colour posters, Discover (chips,
-  "because you listen to" tiles, chart rows), Search (shows, episodes,
-  quotes), Shows settings (plain, Top priority as colour rows), poster
-  mini player strip. Paul: "could work as a calmer and less busy
-  version of the app". Refreshed on the same link: swipe actions are
-  full-row blocks the row's own height and corners (right: To top / Up
-  Next, green; left: Played, red); player reorganised for reach (top
-  half = artwork printed in the show's colour with the title and
-  chapter on it; line, play, skips, SPEED / TRIM / BOOST / SLEEP keys,
-  transcript / chapters / Up Next all in the bottom half; no empty
-  band). Artwork ideas: A Stamp (small tilted artwork on each row and
-  the playing block), B Print (artwork as one ink in the show's colour
-  with halftone, on big colour areas), C Slice (row strip widens into a
-  slice of the artwork), D Gallery moments (artwork big only on show
-  pages and player), E Wall of sleeves (Your shows as artwork tiles).
-  Suggested A + B. Then real artwork in place (Paul asked to see one
-  in situ): the playing show is Wastelanders: Star-Lord, its artwork
-  cropped from Paul's Apple Podcasts screen recording (Apple's directory
-  is blocked from the cloud machine), poster colour #7E3F3A picked from
-  it; other shows stay made-up. Same link. **Paul picked A + B**
-  (11 Nov 2026) with the stamps square, not tilted: a "Your pick: A +
-  B" section on the same link shows Up Next (printed playing block,
-  square stamp on every row, stamp in the mini player), the Library
-  inbox and Your shows rows with stamps, and a show page (printed
-  poster with the artwork as a square stamp beside the name). **Built,
-  all screens at once** (Paul, 11 Nov 2026; see build 138 above).
-  Icons (Paul, 11 Nov 2026: no emoji like the bell, "a flat 2d icon
-  themed to the colour"): the mock-ups now use one set of flat line
-  icons drawn in the surrounding text colour (bell, moon, AirPlay, trim,
-  boost, transcript, chapters, tabs, sort…), shown on
-  https://claude.ai/artifact/KA9BVpN9mzKdXxfNByQ4T1. The app itself
-  already uses SF Symbols (flat, never emoji) in those spots; building
-  the poster look would keep SF Symbols tinted to the colour, or swap in
-  this set if Paul prefers its rounder style.
-  App icon re-theme for the poster look (Paul: "the logo would need
-  rethemeing"), same link: 1 Stamp (perforated postage stamp, rust print,
-  sand cassette), 2 Printed cassette (sand cassette on halftone rust,
-  off-register amber shadow), 3 Big P (Big Shoulders P on ink over the
-  progress line), 4 Poster type (POD / DECK on amber), 5 Reels on the
-  line (two reels joined by the progress line on rust); shown on dark /
-  light home screens and at 60 / 40 / 29 pt next to today's olive
-  cassette D. Suggested 1 or 5. Paul liked 2 and 5 ("evolve them a
-  bit"): https://claude.ai/artifact/Mxf14F2Xft1No9W8NBdWNM with 2a
-  Spoked (bigger cassette, spoked reels, no offset shadow), 2b Tape line
-  (progress line across the cassette's bottom + amber print shadow), 2c
-  Reversed (rust printed cassette on sand), 5a Tape path (tape running
-  between the reels into the line), 5b Ink (reels + line on near-black),
-  5c Big reel (one spool on the line), X Blend (printed cassette outline,
-  spoked reels, line). Suggested 2b or X; 5b sharpest small. **Paul
-  picked 2b** and asked if its shading matches the app: halftone dots,
-  sand and the amber ad already do; the rust came from Star-Lord's
-  artwork (not an app colour) and the hard offset shadow isn't used
-  anywhere in the app (cards have soft shadows). Colourways of 2b next to
-  the app's pieces: https://claude.ai/artifact/Qg7fe2hJ6WYjxc2ytCCbwy
-  (rust offset / rust soft / olive offset / olive soft / ink soft / sand
-  with olive cassette). Suggested olive + soft shadow. **Paul: go for olive + soft shadow**
-  (11 Nov 2026): it is the app icon and the website's on the branch
-  (UBDM; see the icon line at the top). The rest of the poster look is
-  still waiting on Paul.
-- 7 time row: left as it is (Paul, 9 Nov 2026).
-- Not now (Paul, 9 Nov 2026): "Save for later" list, sleep timer "end of
-  chapter". Dragging in Up Next is OK as of build 128: no hand-made
-  reorder.
-- **Still waiting on Paul**: where he tried Undo
-  and saw nothing; whether to move alerts to Cloudflare (free cron
-  Worker) as a backup to GitHub; other iPhone sizes not checked yet.
-  Feeds with a username and password: later.
-- Type (Paul asked 8 Nov "do we have a consistent font?"): one family,
-  Apple's system font (SF) everywhere, in three roles: `Theme.big`
-  (heavy condensed titles), `Theme.mono` (small spaced capitals; despite
-  the name not monospaced) and plain text. Sizes are set three ways:
-  Theme helpers (~106 places), fixed `.system(size:)` (~50, don't follow
-  the iPhone's text size) and iOS text styles (~46). Proposed with the
-  style rules (9): one small type scale in Theme and every text through
-  it, so sizes match and all follow the text size setting.
-  Font options for titles and labels (body text stays SF) on
-  https://claude.ai/artifact/P61T5FHNMwcgxsDNrzmgWM: A today, B New York
-  + SF Mono (built in), C Big Shoulders + DM Mono (my pick), D Fraunces +
-  IBM Plex Mono, E Archivo wide + JetBrains Mono. **Paul picked C, tape
-  deck (8 Nov)**, done on the branch: `App/Fonts/` holds
-  BigShouldersDisplay-Black, DMMono-Regular and DMMono-Medium (from Google
-  Fonts, with their OFL licence files), listed under `UIAppFonts` in
-  Config/Info.plist. `Theme.big` uses Big Shoulders (8% larger, it's
-  narrow), `Theme.mono` uses DM Mono (regular, or medium for any heavier
-  weight); both fall back to the system font if the files don't load.
-  Body text stays SF. Still to do: move the ~50 fixed `.system(size:)`
-  labels onto Theme (with the style rules), and check nothing is too wide
-  for its space on the phone (DM Mono is a little wider than SF).
-
-- Retake the website's Up Next, show and Discover screenshots on build
-  124 (new row style, skip keys without circles) and swap them in.
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's
   free private allowance is already used, so going private now would stop
@@ -3327,26 +3197,12 @@ Paul's notes after build 164:
   check once per build batch, not on every push. If alerts ever pause,
   move the cron to every 30 minutes. The website is on Cloudflare Pages
   (works with private repos); GitHub Pages stays off.
-- (poddeck.uk went out with PR #41 on 6 Nov 2026. Paul added the
-  Cloudflare DNS records himself. After the merge: tick Enforce HTTPS in
-  Settings → Pages once it's offered.)
-- (Bedtime timer default and CarPlay went out in the Friday batch.)
-- CarPlay: Apple granted the CarPlay audio entitlement (5 Nov 2026).
-  The entitlement is added to `Config/Podcasts.entitlements` on the PR #39
-  branch. Before merging, Paul ticks CarPlay on the App ID
-  (developer.apple.com → Certificates, Identifiers & Profiles →
-  Identifiers → com.gruffaluff.podcasts → Additional Capabilities); check
-  with a status_only run that the App ID's capabilities list shows
-  CarPlay, or the signed build fails. Done 5 Nov 2026: Paul ticked it;
-  status shows CARPLAY_PLAYABLE_CONTENT on the App ID (the API's name for
-  the CarPlay audio capability). If the next build's signing complains
-  about `com.apple.developer.carplay-audio`, check the profile's
-  entitlements first. Build only when Paul says; nothing runs automatically on
-  Monday (Paul, 5 Nov 2026).
+
 - **FNB notes also live in Notion** (Personal / Poddeck / FNB, page id
   40f7d696-6c51-80d4-898d-ef27b486ce92). Read only what is below the last
   "✅ Claude read everything above on …" line, then add a new such line
   (date and time) at the end so Paul knows where to add new notes.
+
 
 ## Done from the Notion FNB notes (5 Nov 2026)
 
