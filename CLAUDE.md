@@ -3146,7 +3146,9 @@ Paul's notes after build 164:
   the same job on a Cloudflare cron (more reliable; free plan may do for
   a few users, else $5 / month), c own server / paid push service (not
   worth it). Suggested: launch on 1 for everyone, Paul keeps instant
-  alerts; move to 2b if people ask.
+  alerts; move to 2b if people ask. **Paul agreed** (17 Nov 2026): that's
+  the plan for going live (already how build 168 works: instant alerts
+  only on the owner's phone).
 
 ## Queued for the next app build
 
