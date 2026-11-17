@@ -169,6 +169,7 @@ extension LibraryStore {
         changed = reconcileLocalFiles() || changed
         if changed { save() }
         reloadQueueFromSaved()
+        NotificationCenter.default.post(name: .libraryTidied, object: nil)
     }
 
     /// iCloud can't keep shows and episodes unique, so the same show can end
@@ -260,4 +261,10 @@ extension PodcastEpisode {
         if autoChapters.isEmpty { autoChapters = other.autoChapters }
         if syncAnchors.isEmpty { syncAnchors = other.syncAnchors }
     }
+}
+
+extension Notification.Name {
+    /// After an iCloud tidy (launch, coming back, changes arriving): the
+    /// player may bring back what was playing last (`restoreLastPlayed`).
+    static let libraryTidied = Notification.Name("libraryTidied")
 }

@@ -248,6 +248,11 @@ struct RootView: View {
         // Every followed show's colour is measured ahead, so a show's page
         // opens in its own colour (it's fixed when the page opens).
         .task { await store.preloadShowColours() }
+        // Bring back what was playing last (paused), on launch and when
+        // iCloud has filled in the library after a fresh install.
+        .onReceive(NotificationCenter.default.publisher(for: .libraryTidied)) { _ in
+            player.restoreLastPlayed()
+        }
         // "In Up Next · 2nd" on an episode page: close what's open, go to Up Next.
         .onChange(of: store.revealInUpNext) { _, id in
             guard id != nil else { return }
@@ -257,6 +262,7 @@ struct RootView: View {
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
+                player.saveProgressNow()
                 AppBadge.update(store: store)
                 WidgetSync.shared.flush()
                 transcripts.scheduleBackgroundWork()
@@ -266,6 +272,7 @@ struct RootView: View {
             guard phase == .active else { return }
             AppBadge.appOpened(store: store)
             store.tidyAfterSync()
+            player.restoreLastPlayed()
             store.cleanUpPlayedDownloads()
             transcripts.prepareUpNext()
             Task {

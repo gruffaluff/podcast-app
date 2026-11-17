@@ -3038,7 +3038,54 @@ Paul's notes after build 164:
   back to its first screen (show pages and previews closed), like tapping
   an iPhone tab twice (`.deckPageToStart`). Card deck's pill too.
 
+## Done in build 167 (17 Nov 2026, PR #85; Paul: "Build")
+
+- **Remembers what was playing** (Paul, 17 Nov 2026: "If the app exits
+  or closes, it forgets what was last playing … after a fresh wipe or if
+  you go into the app, I'd want it to remember"). Opening the app loads
+  the most recently played unfinished episode, paused at its saved place
+  (`PlayerModel.restoreLastPlayed`, from each episode's `lastPlayedAt`,
+  which syncs through iCloud). After a reinstall it comes back once
+  iCloud has filled in the library: every iCloud tidy (`.libraryTidied`)
+  tries again, and a newer one from a later sync swaps in, until Paul
+  plays or picks anything. The place is also saved the moment the app
+  goes to the background (`saveProgressNow`; it was every 15 s), so a
+  closed app picks up exactly there. Finished episodes aren't brought
+  back.
+
+- **Read along polish** (Paul, 17 Nov 2026, build 166 recording;
+  mock-ups https://claude.ai/artifact/Lov1Pwxoi3e2ryuoCCtMxo, he picked
+  1 A, 2 A, 3 B):
+  - The word being said is a light tint of the show's colour, with no
+    block behind it (`DeckReadAlong.wordTint`: the show colour mixed 55%
+    toward white).
+  - Moving to the next line: every line is the same size (Outfit 19
+    semibold); only the light changes (line now full white, others 40%)
+    in a 0.5 s ease, with one smooth 0.5 s scroll. The line now used to
+    grow to 24 pt, so lines below jumped and overlapped mid-scroll.
+  - The tab page's "This episode" card starts fully off screen (it
+    peeked up under Options · Read along · AirPlay); a small arrow at the
+    foot of the player bobs gently until the page has been scrolled down
+    once ("deckMoreHintSeen", this iPhone), then sits still; tap it to
+    scroll down to the card (`DeckTabMoreHint`).
+  - Read along's hold menu: its icons were white on iOS's light menu
+    (they took the player's white text); now dark (`menuItems`,
+    `.foregroundStyle(.primary)`). Copy gives a success tap. Share a clip
+    and "This is playing now" work (Paul, 17 Nov 2026: the resync "seems
+    to be working").
+
 ## Queued for the next app build
+
+- **Two alerts for one new episode** (Paul, 17 Nov 2026, screenshots:
+  #593 of Elis James and John Robins alerted once from the instant
+  alerts job via iCloud, "Show · Episode", and again about an hour later
+  when he opened the app, "Added to the top of Up Next"). The app's own
+  feed check doesn't know the iCloud alert went out. Proposed: on the
+  phone with instant alerts working, the app's check sends no alert of
+  its own for bell shows; if the iCloud alert is still in Notification
+  Centre it swaps it quietly (passive, no sound) for the fuller "Added to
+  the top of Up Next" one. Other phones keep the app's own alerts.
+  Waiting on Paul's yes.
 
 - **Testing in the iPhone Simulator** (offered 15 Nov 2026): a GitHub
   Mac job that runs the app in a simulated iPhone with made-up shows,
