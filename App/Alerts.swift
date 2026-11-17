@@ -50,7 +50,7 @@ enum NewEpisodeAlerts {
                 let quiet = alert.content
                 quiet.sound = nil
                 quiet.interruptionLevel = .passive
-                center.add(UNNotificationRequest(identifier: alert.id, content: quiet, trigger: nil))
+                try? await center.add(UNNotificationRequest(identifier: alert.id, content: quiet, trigger: nil))
             }
         }
     }
