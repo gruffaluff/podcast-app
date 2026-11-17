@@ -38,6 +38,7 @@ extension EnvironmentValues {
 
 struct DeckRoot: View {
     @Environment(PlayerModel.self) private var player
+    @Environment(LibraryStore.self) private var store
     /// 0 Up next, 1 Shows, 2 Find (kept by `SchemedRoot`).
     @Binding var tab: Int
     @Binding var showingPlayer: Bool
@@ -91,6 +92,29 @@ struct DeckRoot: View {
             guard open, tabsMode else { return }
             showingPlayer = false
             openPlayingTab()
+        }
+        // Demo mode only (Screenshots workflow): open the screen asked for.
+        .task { await openDemoScreen() }
+    }
+
+    /// Demo mode (`-PoddeckScreen`, DemoData.swift): opens the screen the
+    /// Screenshots workflow asked for. Does nothing otherwise.
+    private func openDemoScreen() async {
+        guard let screen = DemoMode.screen else { return }
+        try? await Task.sleep(for: .milliseconds(600))
+        switch screen {
+        case .player, .readalong:
+            if tabsMode { openPlayingTab() } else { showingPlayer = true }
+        case .shows:
+            tab = 1
+        case .find:
+            tab = 2
+        case .showpage:
+            tab = 1
+            try? await Task.sleep(for: .milliseconds(400))
+            store.revealShow = store.podcast(feedURL: DemoData.showcaseFeed)
+        case .tabs, .settings, .carddeck:
+            break
         }
     }
 

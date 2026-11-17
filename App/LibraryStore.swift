@@ -244,6 +244,8 @@ final class LibraryStore {
     }
 
     func refreshAll(postAlerts: Bool = true) async {
+        // Demo mode (screenshots): made-up shows, no feeds to check.
+        guard !DemoMode.isOn else { return }
         guard !isRefreshing else { return }
         isRefreshing = true
         defer {

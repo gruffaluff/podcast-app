@@ -176,6 +176,37 @@ The build makes a second App Store profile for the widgets itself
 - macOS runner minutes count more heavily against GitHub's free allowance;
   keep builds to merges into `main`.
 
+## Screenshots in the iPhone Simulator (free, run by hand)
+
+`.github/workflows/screenshots.yml` builds the app for the iPhone Simulator
+on one of GitHub's Macs, opens it with made-up shows (demo mode,
+`App/DemoData.swift`: six invented shows, Up next filled in, one episode
+part-played with chapters and a few lines of transcript, loaded paused in
+the player) and takes a picture of each main screen in light and dark:
+Tabs, the player, Read along, Your shows, a show page, Find, Settings and
+Up next as the card deck. Nothing is signed, uploaded or sent to Apple.
+
+To run it: GitHub → Actions → **Screenshots** → **Run workflow** (branch:
+the one to check; leave the machine as macos-15-intel). Or add the label
+`screenshots` to a pull request (it runs once each time the label is
+added). When it finishes (about 15–25 minutes), open the run and download
+**screenshots** under Artifacts: a zip of PNGs named like
+`light-player.png` / `dark-find.png`, plus `app-log.txt` and any crash
+reports. The run's summary lists each screen as ok or "closed" (the app
+stopped on that screen); the run fails if any screen closed. Find's charts
+come from Apple's directory, so they show real shows; everything else is
+invented.
+
+Demo mode only switches on with the launch argument `-PoddeckDemo`
+(`-PoddeckScreen <name>` picks the screen), which nothing on the iPhone
+passes. In demo mode the library is kept in memory, feeds aren't checked
+and nothing syncs with iCloud.
+
+Cost: free while the repo is public. On a private repo (from 1 Dec 2026)
+Mac minutes count 10× against the free 2,000 a month, so a run costs
+roughly 150–250 of them; with no card on GitHub it stops at the limit
+rather than charging. That's why it never runs by itself.
+
 ## Project generation
 
 Because no one opens Xcode, generate the project from a text spec

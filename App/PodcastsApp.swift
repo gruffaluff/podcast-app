@@ -12,12 +12,16 @@ struct PodcastsApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
+        // Demo mode (Screenshots workflow, DemoData.swift): made-up shows
+        // in memory, no iCloud. Off unless launched with -PoddeckDemo.
+        if DemoMode.isOn { DemoData.applyDefaults() }
         Self.styleSystemBars()
         // A roomier web cache for feeds and images (artwork has its own
         // cache too; see ArtworkImageCache).
         URLCache.shared = URLCache(memoryCapacity: 30 * 1024 * 1024, diskCapacity: 200 * 1024 * 1024)
-        SettingsSync.shared.start()
-        let container = Self.makeContainer()
+        if !DemoMode.isOn { SettingsSync.shared.start() }
+        let container = DemoMode.isOn ? DemoData.makeContainer() : Self.makeContainer()
+        if DemoMode.isOn { DemoData.seed(container.mainContext) }
         let store = LibraryStore(context: container.mainContext)
         self.container = container
         _store = State(initialValue: store)
@@ -25,6 +29,7 @@ struct PodcastsApp: App {
         AppServices.store = store
         AppServices.player = player
         _player = State(initialValue: player)
+        if DemoMode.isOn { DemoData.loadPlayer(player, store: store) }
         WidgetSync.shared.start(player: player, store: store)
         _downloads = State(initialValue: DownloadManager(store: store))
         let transcripts = TranscriptService(store: store)
