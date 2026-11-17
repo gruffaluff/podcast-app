@@ -190,7 +190,7 @@ private struct DeckEpisodeStatusCard: View {
 
     private var upNextRow: some View {
         let index: Int? = store.queue.firstIndex { $0.episode.id == episode.episodeID }
-        let title: String = index.map { $0 == 0 ? "Top of Up next" : "\(EpisodeStatusRows.ordinal($0 + 1)) in Up next" } ?? "Not in Up next"
+        let title: String = index.map { $0 == 0 ? "Top of Up next" : "\(UpNextPlace.ordinal($0 + 1)) in Up next" } ?? "Not in Up next"
         return DeckEpisodeStatusRow(icon: "rectangle.stack", title: title, action: index == nil ? "Add" : "Show",
                                     chevron: index != nil) {
             if index == nil {

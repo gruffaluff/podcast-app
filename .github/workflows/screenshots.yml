@@ -1,0 +1,191 @@
+name: Screenshots
+
+# Runs the app in the iPhone Simulator with made-up shows (demo mode,
+# App/DemoData.swift) and saves a screenshot of each main screen, in light
+# and dark, as a downloadable "screenshots" file on the run's page. Nothing
+# is signed or uploaded to Apple.
+#
+# Only runs when asked (it uses Mac time): Actions tab → Screenshots →
+# Run workflow, or by adding the label "screenshots" to a pull request
+# (runs once each time the label is added). Free while the repo is public;
+# on a private repo each run's Mac minutes count 10× against the free
+# monthly allowance (it stops at the limit, nothing is charged).
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Build machine (macos-15-intel is the reliable one; macos-latest is Apple silicon)"
+        default: macos-15-intel
+      device:
+        description: "Simulator iPhone name (blank = newest Pro the machine has)"
+        default: ""
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'screenshots'
+    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
+    timeout-minutes: 40
+    env:
+      BUNDLE_ID: com.gruffaluff.podcasts
+      SHOTS: shots
+      # The screens demo mode can open on (DemoScreen in App/DemoData.swift).
+      SCREENS: "tabs player readalong shows showpage find settings carddeck"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use the newest installed Xcode
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          echo "Selecting $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick a simulator iPhone
+        env:
+          WANTED: ${{ inputs.device }}
+        run: |
+          xcrun simctl list devices available -j > devices.json
+          UDID=$(python3 - <<'EOF'
+          import json, os, re
+          data = json.load(open("devices.json"))["devices"]
+          wanted = os.environ.get("WANTED", "").strip()
+          def version(runtime):
+              m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+              return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+          phones = []
+          for runtime, devices in data.items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if d.get("isAvailable") and d["name"].startswith("iPhone"):
+                      phones.append((version(runtime), d))
+          if not phones:
+              raise SystemExit("No iPhone simulators on this machine")
+          phones.sort(key=lambda p: p[0], reverse=True)
+          def pick(test):
+              for _, d in phones:
+                  if test(d["name"]):
+                      return d
+          choice = (wanted and pick(lambda n: n == wanted)) \
+              or pick(lambda n: re.fullmatch(r"iPhone \d+ Pro", n) is not None) \
+              or pick(lambda n: "Pro" in n and "Max" not in n) \
+              or phones[0][1]
+          print(choice["udid"])
+          EOF
+          )
+          NAME=$(python3 -c "import json,sys; d=json.load(open('devices.json'))['devices']; print(next(x['name'] for v in d.values() for x in v if x['udid']=='$UDID'))")
+          echo "Using $NAME ($UDID)"
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          echo "DEVICE_NAME=$NAME" >> "$GITHUB_ENV"
+
+      - name: Build the app for the simulator
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Podcasts.xcodeproj \
+            -scheme Podcasts \
+            -configuration Debug \
+            -destination "id=$UDID" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
+          APP=$(ls -d build/Build/Products/Debug-iphonesimulator/*.app | grep -v Widgets | head -1)
+          echo "Built $APP"
+          # Unsigned builds run in the simulator; an ad-hoc signature is
+          # added in case this simulator wants one (harmless if not).
+          codesign --force --sign - --timestamp=none "$APP" || true
+          echo "APP=$APP" >> "$GITHUB_ENV"
+
+      - name: Start the simulator and install
+        run: |
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          # A tidy status bar: 9:41, full signal and battery.
+          xcrun simctl status_bar "$UDID" override --time "9:41" \
+            --dataNetwork wifi --wifiMode active --wifiBars 3 \
+            --cellularMode active --cellularBars 4 \
+            --batteryState charged --batteryLevel 100 || true
+
+      - name: Take screenshots
+        run: |
+          mkdir -p "$SHOTS"
+          : > results.txt
+          first=1
+          for look in light dark; do
+            xcrun simctl ui "$UDID" appearance "$look"
+            sleep 2
+            for screen in $SCREENS; do
+              out=$(xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE_ID" \
+                -PoddeckDemo YES -PoddeckScreen "$screen" 2>&1) || { echo "$look $screen launch-failed" >> results.txt; echo "$out"; continue; }
+              pid=$(echo "$out" | awk -F': ' '{print $2}' | tr -d '[:space:]')
+              # The first launch also warms caches (artwork, fonts).
+              if [ "$first" = 1 ]; then sleep 14; first=0; else sleep 7; fi
+              name="$look-$screen.png"
+              xcrun simctl io "$UDID" screenshot --type=png "$SHOTS/$name" >/dev/null 2>&1 || true
+              if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
+                echo "$look $screen closed" >> results.txt
+              elif [ -f "$SHOTS/$name" ]; then
+                echo "$look $screen ok" >> results.txt
+              else
+                echo "$look $screen no-picture" >> results.txt
+              fi
+              xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
+            done
+          done
+          cat results.txt
+
+      - name: Save the app's log
+        if: always()
+        run: |
+          mkdir -p "$SHOTS"
+          xcrun simctl spawn "$UDID" log show --last 30m --style compact \
+            --predicate 'process == "Poddeck"' > "$SHOTS/app-log.txt" 2>&1 || true
+          # Crash reports, if the app closed on any screen.
+          mkdir -p "$SHOTS/crashes"
+          find ~/Library/Logs/DiagnosticReports -name 'Poddeck*' -mmin -60 -exec cp {} "$SHOTS/crashes/" \; 2>/dev/null || true
+
+      - name: Write the summary
+        if: always()
+        run: |
+          {
+            echo "## Screenshots"
+            echo
+            echo "Simulator: ${DEVICE_NAME:-?}. Download **screenshots** under Artifacts on this run's page."
+            echo
+            echo "| Screen | Light | Dark |"
+            echo "| --- | --- | --- |"
+            for screen in $SCREENS; do
+              light=$(grep "^light $screen " results.txt 2>/dev/null | awk '{print $3}')
+              dark=$(grep "^dark $screen " results.txt 2>/dev/null | awk '{print $3}')
+              echo "| $screen | ${light:-not run} (light-$screen.png) | ${dark:-not run} (dark-$screen.png) |"
+            done
+            echo
+            echo "\"closed\" means the app wasn't running when the picture was taken (look in crashes/ and app-log.txt)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: ${{ env.SHOTS }}
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Fail if any screen closed the app
+        run: |
+          if grep -qE " (closed|launch-failed|no-picture)$" results.txt; then
+            echo "Some screens didn't work:"; grep -E " (closed|launch-failed|no-picture)$" results.txt
+            exit 1
+          fi

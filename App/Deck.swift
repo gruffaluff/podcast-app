@@ -30,7 +30,6 @@ struct KeyButtonStyle: ButtonStyle {
 
 extension ButtonStyle where Self == KeyButtonStyle {
     static var key: KeyButtonStyle { KeyButtonStyle() }
-    static var accentKey: KeyButtonStyle { KeyButtonStyle(kind: .accent) }
 }
 
 /// The dark display panel (like a deck's readout).
@@ -75,33 +74,6 @@ extension EnvironmentValues {
     }
 }
 
-/// A small status light.
-struct LED: View {
-    let on: Bool
-    var color: Color = Theme.ink
-
-    var body: some View {
-        Circle()
-            .fill(on ? color : Theme.controlBorder)
-            .frame(width: 7, height: 7)
-    }
-}
-
-/// A boxed monospaced tag, e.g. "TOP1", "BTM", "YOU".
-struct DeckTag: View {
-    let text: String
-    @Environment(\.showColour) private var showColour
-
-    var body: some View {
-        Text(text)
-            .font(Theme.mono(10, .bold))
-            .foregroundStyle(Theme.showAccentText(showColour))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 2)
-            .overlay(Capsule().stroke(Theme.showAccentText(showColour), lineWidth: 1.5))
-    }
-}
-
 /// A section heading: monospaced title, with an optional detail on the right.
 struct DeckHeader: View {
     let title: String
@@ -123,38 +95,6 @@ struct DeckHeader: View {
         .textCase(nil)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
-    }
-}
-
-/// A row of keys where one is pressed in: the deck's version of a
-/// segmented control (e.g. OFF / TOP / BOTTOM).
-struct DeckSwitch<Value: Hashable>: View {
-    let options: [(label: String, value: Value)]
-    @Binding var selection: Value
-    @Environment(\.showColour) private var showColour
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(options.indices, id: \.self) { index in
-                let option = options[index]
-                let selected = option.value == selection
-                Button { selection = option.value } label: {
-                    Text(option.label.uppercased())
-                        .font(Theme.mono(12, .bold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .frame(maxWidth: .infinity, minHeight: 38)
-                        .foregroundStyle(selected ? Theme.showOnAccent(showColour) : Theme.ink)
-                        .background(selected ? Theme.showAccentFill(showColour) : .clear, in: RoundedRectangle(cornerRadius: 11))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(option.label)
-                .accessibilityAddTraits(selected ? .isSelected : [])
-            }
-        }
-        .padding(4)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 15))
     }
 }
 
@@ -190,31 +130,6 @@ struct DeckPicker<Value: Hashable>: View {
                     .background(Theme.background, in: RoundedRectangle(cornerRadius: 10))
             }
             .accessibilityLabel("\(title): \(current)")
-        }
-    }
-}
-
-/// "Do something" in a settings row: the row's title, then a key. Dark for
-/// the main action, sand for others (style rules, Paul 9 Nov 2026).
-struct DeckActionRow: View {
-    let title: String
-    let key: String
-    var main = false
-    let action: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Text(title)
-                .foregroundStyle(Theme.ink)
-            Spacer(minLength: 8)
-            Button(action: action) {
-                Text(key.uppercased())
-                    .font(Theme.mono(11, .bold))
-                    .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 32)
-            }
-            .buttonStyle(KeyButtonStyle(kind: main ? .dark : .sand, radius: 10))
         }
     }
 }
@@ -281,35 +196,22 @@ struct EpisodeLights: View {
     }
 }
 
-extension View {
-    /// A tab's big title on the same line as its bar buttons (no tall
-    /// large-title gap above the content). The plain title stays for back
-    /// buttons on screens pushed from here.
-    func tabTitle(_ title: String) -> some View {
-        // iOS's large title, but on the same line as the bar's buttons
-        // (Paul, build 145: "Up Next level with the buttons at the top"),
-        // so every tab's content starts higher.
-        self.navigationTitle(title)
-            .toolbarTitleDisplayMode(.inlineLarge)
-    }
-}
-
 // MARK: - List rows (one row style everywhere)
 
 extension View {
+    /// The page colour behind a screen, filling under the bars.
+    func pageBackground() -> some View {
+        background { Theme.background.ignoresSafeArea() }
+    }
+
     /// The app's one card look (Paul picked B, 9 Nov 2026): a rounded
     /// paper card sitting slightly off the sand on a soft shadow. Every
     /// list row and every card-like panel uses it.
     func deckCard(_ fill: Color = Theme.surface, radius: CGFloat = Theme.cardRadius) -> some View {
         background {
-            // Haar: frosted white over the fog. Other schemes: flat, like an
-            // iOS inset list (no shadows).
-            if Theme.isHaar && fill == Theme.surface {
-                Color.clear.frostedCard(radius: radius)
-            } else {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(fill)
-            }
+            // Flat, like an iOS inset list (no shadows).
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .fill(fill)
         }
     }
 

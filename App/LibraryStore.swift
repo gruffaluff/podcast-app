@@ -23,8 +23,6 @@ final class LibraryStore {
     /// Set to a show to open its page (from the player's or an episode
     /// page's show name / artwork); the root view goes to Library and pushes it.
     var revealShow: Podcast?
-    /// Haar: the show open as a sheet (`HaarShowSheet`).
-    var showSheet: Podcast?
     /// The last change that can be undone (shown as an Undo bar for a few seconds).
     var undoAction: UndoAction?
     /// The episode playing now (set by PlayerModel), so its download is never trimmed.
@@ -244,6 +242,8 @@ final class LibraryStore {
     }
 
     func refreshAll(postAlerts: Bool = true) async {
+        // Demo mode (screenshots): made-up shows, no feeds to check.
+        guard !DemoMode.isOn else { return }
         guard !isRefreshing else { return }
         isRefreshing = true
         defer {

@@ -1,8 +1,9 @@
 import SwiftUI
 import PodcastCore
 
-/// An episode's notes (its description from the feed), with play and the
-/// download / transcript lights. Opened from "Episode notes" in episode menus.
+/// An episode's page (Deck, Paul 14 Nov 2026: white cards, prototype
+/// renderEpisode, `DeckEpisodePage`). Opened from "Episode notes" in
+/// episode menus.
 struct EpisodeNotesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(LibraryStore.self) private var store
@@ -20,17 +21,11 @@ struct EpisodeNotesView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                if Theme.isDeck {
-                    // Deck (Paul, 14 Nov 2026): white cards, prototype
-                    // renderEpisode (DeckEpisodePage.swift).
-                    DeckEpisodePage(episode: episode, colour: pageColour, openShow: openShow)
-                } else {
-                    standardPage
-                }
+                DeckEpisodePage(episode: episode, colour: pageColour, openShow: openShow)
             }
-            .haarPage()
+            .pageBackground()
             .environment(\.showColour, pageColour)
-            .navigationTitle(Theme.isDeck ? "" : "Episode notes")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
@@ -39,130 +34,10 @@ struct EpisodeNotesView: View {
         .transcribeExplainer()
     }
 
-    /// Every look but Deck.
-    private var standardPage: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            poster
-            VStack(alignment: .leading, spacing: 14) {
-                // Haar: three words like the Now screen instead of
-                // the white cards that looked like buttons (Paul,
-                // 14 Nov 2026, A on
-                // https://claude.ai/artifact/NVL7stWLG81ydyDosUnihH).
-                if Theme.isHaar {
-                    HaarEpisodeWords(episode: episode)
-                } else {
-                    EpisodeStatusRows(episode: episode)
-                }
-                EpisodeNotesText(episode: episode)
-            }
-            .padding(.horizontal, 16)
-        }
-        .padding(.bottom, 16)
-    }
-
-    /// The top of the page on the warm page (Paul, 12 Nov 2026: the printed
-    /// block with a huge title and six keys looked off and repeated the
-    /// status rows below): artwork, "Show ›" and date · length, the title
-    /// as the feed writes it, DL / TX, then one Play / Resume key in the
-    /// episode's colour with small Play next and Played keys. Download,
-    /// transcript and the place in Up Next are only the rows below.
-    private var poster: some View {
-        let art = episode.showArtwork
-        let details = [episode.published.formatted(date: .abbreviated, time: .omitted),
-                       episode.duration.map { TimeFormat.length($0) }].compactMap { $0 }.joined(separator: " · ")
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                Button(action: openShow) {
-                    ArtworkView(url: episode.artwork, title: episode.showTitle.isEmpty ? episode.title : episode.showTitle, size: 64, radius: 10)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Open \(episode.podcast?.title ?? "the show")")
-                VStack(alignment: .leading, spacing: 3) {
-                    Button(action: openShow) {
-                        HStack(spacing: 4) {
-                            Text(episode.showTitle)
-                            Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
-                        }
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Theme.showAccentText(pageColour))
-                        .lineLimit(1)
-                    }
-                    .buttonStyle(.plain)
-                    Text(details)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.muted)
-                }
-            }
-            Text(episode.title)
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(4)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
-            if !Theme.isHaar { EpisodeLights(episode: episode) }
-            EpisodePageKeys(episode: episode, colour: pageColour)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .task(id: art) { await ArtworkColors.shared.load(art) }
-    }
-
     private func openShow() {
         guard let show = episode.podcast else { return }
         store.revealShow = show
         dismiss()
-    }
-}
-
-/// The episode page's keys: one wide Play / Resume (Pause while it's on)
-/// in the episode's colour, and small Play next and Played beside it.
-private struct EpisodePageKeys: View {
-    @Environment(LibraryStore.self) private var store
-    @Environment(PlayerModel.self) private var player
-    let episode: PodcastEpisode
-    let colour: Color?
-
-    private var isThis: Bool { player.nowPlaying?.episodeID == episode.episodeID }
-
-    private var playTitle: String {
-        if isThis && player.isPlaying { return "Pause" }
-        return episode.position > 30 && !episode.played ? "Resume" : "Play"
-    }
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Button {
-                if isThis { player.togglePlayPause() } else { player.play(episode) }
-            } label: {
-                Label(playTitle, systemImage: isThis && player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.showOnAccent(colour))
-                    .frame(maxWidth: .infinity, minHeight: 46)
-                    .background(Theme.showAccentFill(colour), in: RoundedRectangle(cornerRadius: 12))
-            }
-            .buttonStyle(.plain)
-            smallKey("text.line.first.and.arrowtriangle.forward", label: "Play next") { store.playNext(episode) }
-            if episode.played {
-                smallKey("arrow.uturn.backward", label: "Mark unplayed") { store.markUnplayed(episode) }
-            } else {
-                smallKey("checkmark", label: "Mark played") {
-                    store.undoable("Marked played", episodes: [episode]) { store.markPlayed(episode.episodeID) }
-                }
-            }
-        }
-    }
-
-    private func smallKey(_ icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.ink)
-                .frame(width: 52, height: 46)
-                .background(Theme.plate, in: RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 }
 
@@ -196,8 +71,8 @@ struct EpisodeNotesText: View {
                     })
             }
         }
-        .padding(Theme.isHaar ? 0 : 14)
-        .modifier(NotesCard())
+        .padding(14)
+        .deckCard()
     }
 
     private var detail: String {
@@ -232,84 +107,5 @@ struct EpisodeNotesText: View {
             }
         }
         return result
-    }
-}
-
-
-/// The notes sit in a card everywhere but Haar, where they're plain text on
-/// the page.
-private struct NotesCard: ViewModifier {
-    func body(content: Content) -> some View {
-        if Theme.isHaar { content } else { content.deckCard() }
-    }
-}
-
-/// The episode page's state in Haar: where it is in Up next, its download
-/// and its words, as three words spread across like the Now screen. Tap a
-/// word to act on it; a download or transcript on its way fills the word.
-private struct HaarEpisodeWords: View {
-    @Environment(LibraryStore.self) private var store
-    @Environment(DownloadManager.self) private var downloads
-    @Environment(TranscriptService.self) private var transcripts
-    @Environment(\.dismiss) private var dismiss
-    let episode: PodcastEpisode
-    @State private var showingTranscript = false
-    @State private var confirmRemove = false
-
-    var body: some View {
-        HStack(spacing: 0) {
-            upNextWord
-            downloadWord
-            transcriptWord
-        }
-        .frame(height: 36)
-        .sheet(isPresented: $showingTranscript) { TranscriptView(episode: episode) }
-        .alert("Remove the download?", isPresented: $confirmRemove) {
-            Button("Cancel", role: .cancel) {}
-            Button("Remove", role: .destructive) { store.removeDownload(episode) }
-        } message: {
-            Text("It will stream instead, or you can download it again.")
-        }
-    }
-
-    private var upNextWord: HaarKeyWord {
-        if let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) {
-            return HaarKeyWord(text: "\(EpisodeStatusRows.ordinal(index + 1)) in Up next", state: .action) {
-                store.revealInUpNext = episode.episodeID
-                dismiss()
-            }
-        }
-        if episode.played {
-            return HaarKeyWord(text: "Played", state: .done) {
-                store.markUnplayed(episode)
-            }
-        }
-        return HaarKeyWord(text: "Add to Up next", state: .action) { store.playLast(episode) }
-    }
-
-    private var downloadWord: HaarKeyWord {
-        if let fraction = downloads.progress[episode.episodeID] {
-            return HaarKeyWord(text: "Downloading \(Int(fraction * 100))%", state: .working(fraction)) {
-                store.removeDownload(episode)
-            }
-        }
-        if store.localAudioURL(for: episode) != nil {
-            return HaarKeyWord(text: "Downloaded", state: .done) { confirmRemove = true }
-        }
-        return HaarKeyWord(text: "Download", state: .action) { downloads.download(episode) }
-    }
-
-    private var transcriptWord: HaarKeyWord {
-        let id: String = episode.episodeID
-        if transcripts.isQueued(episode) {
-            let transcribing: Bool = episode.transcriptState == .transcribing
-            let fraction: Double = transcribing ? (transcripts.progress[id] ?? 0) : (downloads.progress[id] ?? 0)
-            return HaarKeyWord(text: transcribing ? "Transcribing \(Int(fraction * 100))%" : "Waiting…",
-                               state: .working(fraction)) { transcripts.stop(episode) }
-        }
-        if episode.transcriptState == .ready {
-            return HaarKeyWord(text: "Read along", state: .done) { showingTranscript = true }
-        }
-        return HaarKeyWord(text: "Transcribe", state: .action) { transcripts.transcribeNow(episode) }
     }
 }

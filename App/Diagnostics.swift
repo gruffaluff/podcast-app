@@ -60,30 +60,3 @@ enum Diagnostics {
         }
     }
 }
-
-/// The Shows screen's diagnostics row: copies the report for a bug report.
-struct DiagnosticsSection: View {
-    @Environment(LibraryStore.self) private var store
-    @Environment(PlayerModel.self) private var player
-    @Environment(TranscriptService.self) private var transcripts
-    @Environment(DownloadManager.self) private var downloads
-    @State private var copied = false
-
-    var body: some View {
-        Section {
-            DeckActionRow(title: copied ? "Copied" : "Diagnostics", key: "Copy") {
-                UIPasteboard.general.string = Diagnostics.report(store: store, player: player, transcripts: transcripts, downloads: downloads)
-                copied = true
-                Task {
-                    try? await Task.sleep(for: .seconds(2))
-                    copied = false
-                }
-            }
-        } header: {
-            DeckHeader(title: "Problems")
-        } footer: {
-            Text("Copies a summary of how Poddeck is set up and what it's doing (no feed links), to paste into a message about a problem.")
-        }
-        .listRowBackground(Theme.surface)
-    }
-}

@@ -74,6 +74,13 @@ enum RealtimeAlerts {
         UserDefaults.standard.string(forKey: ownerKey) == "no"
     }
 
+    /// True on the phone that gets instant alerts through iCloud: its
+    /// own feed check then doesn't alert again (see `NewEpisodeAlerts`).
+    static var instantAlertsOn: Bool {
+        UserDefaults.standard.string(forKey: ownerKey) == "yes"
+            && UserDefaults.standard.bool(forKey: subscriptionsKey)
+    }
+
     static let nonOwnerNote = "Instant alerts are set up for the app's owner; your alerts come from the background check."
 
     /// Public-database records can only be changed by whoever made them,

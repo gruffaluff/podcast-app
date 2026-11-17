@@ -38,7 +38,7 @@ enum DeckShowOrder {
     /// sorting them. Same result: unplayed, out in the last week, newest
     /// first.
     static func entries(_ shows: [Podcast], top: [Podcast], context: ModelContext) -> [DeckShowEntry] {
-        let cutoff: Date = Date().addingTimeInterval(-LibraryView.newFor)
+        let cutoff: Date = Date().addingTimeInterval(-NewEpisodes.newFor)
         var ranks: [String: Int] = [:]
         for (index, show) in top.enumerated() { ranks[show.feedURL] = index + 1 }
         let descriptor = FetchDescriptor<PodcastEpisode>(
@@ -72,7 +72,7 @@ enum DeckShowOrder {
         switch show.autoAdd {
         case .top:
             guard let rank else { return "Top of Up next" }
-            return "Top of Up next · \(EpisodeStatusRows.ordinal(rank)) in your ranking"
+            return "Top of Up next · \(UpNextPlace.ordinal(rank)) in your ranking"
         case .bottom:
             return "Dealt in at the bottom of Up next"
         case .off:
@@ -290,7 +290,7 @@ struct DeckShowsView: View {
     }
 
     private func reveal(_ show: Podcast?) {
-        guard let show, Theme.isDeck else { return }
+        guard let show else { return }
         showingNew = false
         var fresh = NavigationPath()
         fresh.append(show)

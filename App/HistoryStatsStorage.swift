@@ -76,7 +76,7 @@ struct HistoryView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .haarPage()
+        .pageBackground()
         .navigationTitle("History")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { episodes = store.listeningHistory() }
@@ -300,7 +300,7 @@ struct StatsView: View {
             }
             .padding(16)
         }
-        .haarPage()
+        .pageBackground()
         .navigationTitle("Stats")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -344,15 +344,10 @@ struct StatsView: View {
     }
 }
 
-/// The weekly recap's card: the Deck's plain white card in the Deck look,
-/// the usual paper card otherwise.
+/// The weekly recap's card: the Deck's plain white card.
 private struct RecapCardBackground: ViewModifier {
-    @ViewBuilder func body(content: Content) -> some View {
-        if Theme.isDeck {
-            content.deckPlainCard()
-        } else {
-            content.deckCard()
-        }
+    func body(content: Content) -> some View {
+        content.deckPlainCard()
     }
 }
 
@@ -429,7 +424,7 @@ struct StorageView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .haarPage()
+        .pageBackground()
         .navigationTitle("Storage")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }

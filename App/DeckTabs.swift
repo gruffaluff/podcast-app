@@ -295,7 +295,7 @@ struct DeckTabsView: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     @Environment(\.deckSelectTab) private var selectTab
-    @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
+    @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @State private var showingSettings = false
@@ -326,6 +326,12 @@ struct DeckTabsView: View {
         .deckPage()
         .refreshable { await store.refreshAll() }
         .sheet(isPresented: $showingSettings) { DeckSettingsView() }
+        // Demo mode only (Screenshots workflow): open on Settings.
+        .task {
+            guard DemoMode.screen == .settings else { return }
+            try? await Task.sleep(for: .milliseconds(600))
+            showingSettings = true
+        }
         .onChange(of: suggestionKey, initial: true) { _, _ in reloadSuggestions() }
         // "In Up next · 2nd" on an episode page: show the Up next tabs.
         .onChange(of: store.revealInUpNext, initial: true) { _, id in

@@ -31,7 +31,7 @@ enum DeckTriage {
 struct DeckShowsNewSheet: View {
     @Environment(LibraryStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
+    @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
     @State private var listMode = false
     /// The episode page opened from here (shown over this sheet; the root
@@ -39,7 +39,7 @@ struct DeckShowsNewSheet: View {
     @State private var opened: PodcastEpisode?
 
     private var fresh: [PodcastEpisode] {
-        let cutoff: Date = Date().addingTimeInterval(-LibraryView.newFor)
+        let cutoff: Date = Date().addingTimeInterval(-NewEpisodes.newFor)
         return unplayed.filter { $0.podcast != nil && DeckShowOrder.isNew($0, cutoff: cutoff) }
     }
 
@@ -307,7 +307,7 @@ private struct DeckShowsNewRow: View {
 
     private var place: String {
         guard let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) else { return "Not in Up next" }
-        return "\(EpisodeStatusRows.ordinal(index + 1)) in Up next"
+        return "\(UpNextPlace.ordinal(index + 1)) in Up next"
     }
 
     private func round(_ symbol: String, label: String, dark: Bool, action: @escaping () -> Void) -> some View {
@@ -436,7 +436,7 @@ private struct DeckTriageCard: View {
         guard let index = store.queue.firstIndex(where: { $0.episode.id == episode.episodeID }) else {
             return "Not in Up next"
         }
-        return "Already \(EpisodeStatusRows.ordinal(index + 1)) in Up next"
+        return "Already \(UpNextPlace.ordinal(index + 1)) in Up next"
     }
 
     private var notes: String { episode.summary }
