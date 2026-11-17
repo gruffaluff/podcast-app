@@ -172,6 +172,15 @@ struct DeckReadAlong: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            menuItems(for: line)
+        }
+        .accessibilityHint("Plays from here")
+    }
+
+    /// The hold menu. Its icons are dark on iOS's light menu (Paul, 17 Nov
+    /// 2026: they came out white, from the player's white text).
+    @ViewBuilder private func menuItems(for line: TranscriptLayout.Line) -> some View {
+        Group {
             Button("Share a clip", systemImage: "scissors") { clip = ClipRequest(line: line, quote: line.text) }
             Button("Copy", systemImage: "doc.on.doc") {
                 UIPasteboard.general.string = line.text
@@ -185,7 +194,8 @@ struct DeckReadAlong: View {
                 Button("This is playing now", systemImage: "arrow.left.and.right.text.vertical") { syncHere(line) }
             }
         }
-        .accessibilityHint("Plays from here")
+        .foregroundStyle(Color.primary)
+        .tint(Color.primary)
     }
 
     /// Moves the words so this line sits at the play point now. The lines'

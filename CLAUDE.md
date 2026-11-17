@@ -3068,9 +3068,11 @@ Paul's notes after build 164:
     foot of the player bobs gently until the page has been scrolled down
     once ("deckMoreHintSeen", this iPhone), then sits still; tap it to
     scroll down to the card (`DeckTabMoreHint`).
-  - Copy in Read along's hold menu now gives a success tap (it copied
-    with no sign it had). Asked Paul whether Share a clip shows nothing at
-    all when tapped (he said the white menu items "don't work").
+  - Read along's hold menu: its icons were white on iOS's light menu
+    (they took the player's white text); now dark (`menuItems`,
+    `.foregroundStyle(.primary)`). Copy gives a success tap. Share a clip
+    and "This is playing now" work (Paul, 17 Nov 2026: the resync "seems
+    to be working").
 
 ## Queued for the next app build
 
