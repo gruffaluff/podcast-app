@@ -238,7 +238,7 @@ private struct DeckSettingsListening: View {
             }
             DeckSetLine()
             // Paul, 15 Nov 2026: saved clips had no way in from Deck.
-            NavigationLink { HaarSavedClipsView() } label: {
+            NavigationLink { SavedClipsView() } label: {
                 DeckSetRowLabel(icon: "quote.bubble", title: "Saved clips")
             }
         }
@@ -295,8 +295,6 @@ private struct DeckSettingsUpNext: View {
 
 private struct DeckSettingsLook: View {
     @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.auto
-    @AppStorage(FogBackdrop.densityKey) private var fogDensity = 1.0
-    @AppStorage(FogBackdrop.tintKey) private var fogTint = true
     /// "Up next as" Tabs / Card deck (Paul, 15 Nov 2026: tabs).
     @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
     @State private var refreshed = false
@@ -306,8 +304,7 @@ private struct DeckSettingsLook: View {
         (label: "Card deck", value: DeckHome.deck),
     ]
 
-    /// Auto, then every scheme by name (Deck, Deck night, Haar, Sand,
-    /// Slate, Clay, Night).
+    /// Auto (follows the iPhone), Deck or Deck night.
     private var schemes: [(label: String, value: String)] {
         [(label: "Auto", value: ColourScheme.auto)] + ColourScheme.allCases.map { (label: $0.label, value: $0.rawValue) }
     }
@@ -322,7 +319,6 @@ private struct DeckSettingsLook: View {
             DeckSetChoice(icon: "square.on.square", title: "Up next as", options: Self.homes, selection: $home)
             DeckSetLine()
             DeckSetChoice(icon: "paintpalette", title: "Colours", options: schemes, selection: $colourScheme)
-            if Theme.isHaar { haarFog }
             DeckSetLine()
             Button(action: refreshArtwork) {
                 DeckSetRowLabel(icon: "photo.on.rectangle", title: "Refresh artwork",
@@ -331,19 +327,6 @@ private struct DeckSettingsLook: View {
             }
             .buttonStyle(.plain)
         }
-    }
-
-    /// Haar's fog settings, only while Haar is the look.
-    @ViewBuilder private var haarFog: some View {
-        DeckSetLine()
-        HStack(spacing: 10) {
-            Text("Fog").font(Theme.outfit(15, .medium)).foregroundStyle(Theme.ink)
-            Slider(value: $fogDensity, in: 0...1.4).tint(Theme.ink)
-        }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 54)
-        DeckSetLine()
-        DeckSetToggle(title: "Tint the mist with each show", isOn: $fogTint)
     }
 
     private func refreshArtwork() {

@@ -87,8 +87,8 @@ enum AppBadge {
         case .topShows:
             return newSinceOpen(store: store).filter { $0.podcast?.autoAdd == .top }.count
         case .newEpisodes:
-            let unplayed = (try? store.context.fetch(LibraryView.newEpisodesQueryForList)) ?? []
-            return LibraryView.pickNew(from: unplayed, limit: 999).count
+            let unplayed = (try? store.context.fetch(NewEpisodes.queryForList)) ?? []
+            return NewEpisodes.pickNew(from: unplayed, limit: 999).count
         case .upNext:
             return store.queue.count
         case .downloaded:

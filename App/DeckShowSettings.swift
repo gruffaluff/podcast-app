@@ -74,13 +74,13 @@ struct DeckShowSettingsSections: View {
         DeckSetGroup("Playback for this show",
                      footer: playbackFooter) {
             DeckSetChoice(icon: "gauge.with.dots.needle.33percent", title: "Speed",
-                          options: ShowSettingsView.speedChoices, selection: speed)
+                          options: ShowSettingChoices.speedChoices, selection: speed)
             DeckSetLine()
             DeckSetChoice(icon: "forward.end", title: "Skip intro",
-                          options: ShowSettingsView.skipOptions, selection: seconds(\.skipIntro))
+                          options: ShowSettingChoices.skipOptions, selection: seconds(\.skipIntro))
             DeckSetLine()
             DeckSetChoice(icon: "backward.end", title: "Skip outro",
-                          options: ShowSettingsView.skipOptions, selection: seconds(\.skipOutro))
+                          options: ShowSettingChoices.skipOptions, selection: seconds(\.skipOutro))
             if AdFeature.enabled {
                 DeckSetLine()
                 DeckSetChoice(icon: "forward.circle", title: "Skip ads", options: adSkipOptions,

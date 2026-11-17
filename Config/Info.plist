@@ -2,15 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Tape deck type (Paul, 8 Nov 2026): Big Shoulders Display for big
-	     titles, DM Mono for labels. Open Font Licence, in App/Fonts. -->
+	<!-- Deck type: Outfit (Open Font Licence, in App/Fonts). -->
 	<key>UIAppFonts</key>
 	<array>
-		<string>FrauncesSoft-SemiBold.ttf</string>
-		<string>FrauncesSoft-Medium.ttf</string>
-		<string>DMMono-Regular.ttf</string>
-		<string>DMMono-Medium.ttf</string>
-		<string>InstrumentSerif-Regular.ttf</string>
 		<string>Outfit-Medium.ttf</string>
 		<string>Outfit-SemiBold.ttf</string>
 		<string>Outfit-Bold.ttf</string>

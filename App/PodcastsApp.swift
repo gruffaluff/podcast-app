@@ -49,18 +49,12 @@ struct PodcastsApp: App {
         .modelContainer(container)
     }
 
-    /// Fraunces Soft titles (Paul's type pick) and plain tab labels.
+    /// Outfit large titles (the Deck type) and plain tab labels.
     private static func styleSystemBars() {
-        // Follows the scheme's light / dark (Night is dark).
+        // Follows the scheme's light / dark (Deck night is dark).
         let ink = UIColor.label
-        // Haar: big titles in SF Rounded bold.
         let plainLarge = UIFont.systemFont(ofSize: 34, weight: .bold)
-        var largeFont: UIFont = plainLarge
-        if Theme.isDeck {
-            largeFont = UIFont(name: "Outfit-ExtraBold", size: 34) ?? plainLarge
-        } else if Theme.isHaar {
-            largeFont = UIFont(descriptor: plainLarge.fontDescriptor.withDesign(.rounded) ?? plainLarge.fontDescriptor, size: 34)
-        }
+        let largeFont: UIFont = UIFont(name: "Outfit-ExtraBold", size: 34) ?? plainLarge
         UINavigationBar.appearance().largeTitleTextAttributes = [
             .font: largeFont, .foregroundColor: ink
         ]
@@ -99,7 +93,7 @@ struct RootView: View {
                 showingPlayer = true
             }
         case QuickActions.search:
-            tab = (Theme.isHaar || Theme.isDeck) ? 2 : 3
+            tab = 2
         default:
             tab = 0
         }
@@ -132,65 +126,33 @@ struct RootView: View {
     @AppStorage(DeckHome.key) private var deckHome: String = DeckHome.tabs
     @State private var showingWelcome = false
 
-    /// Haar (phase 3): the player as home with Library and Find as layers
-    /// and a floating dock. Every other scheme: iOS's tab bar with the
-    /// mini player above it (Native warm).
-    @ViewBuilder private var content: some View {
-        if Theme.isDeck {
-            // Deck (Paul, 14 Nov 2026): Up next · Shows · Find in a
-            // floating pill, the player full screen over everything.
-            DeckRoot(tab: $tab, showingPlayer: $showingPlayer)
-                .onAppear { if tab > 2 { tab = 2 } }
-        } else if Theme.isHaar {
-            HaarRoot(tab: $tab)
-                .onAppear { if tab > 2 { tab = 2 } }
-        } else {
-            TabView(selection: $tab) {
-                Tab("Up Next", systemImage: "list.bullet", value: 0) { UpNextView() }
-                Tab("Library", systemImage: "square.stack", value: 1) { LibraryView() }
-                Tab("Discover", systemImage: "safari", value: 2) { DiscoverView() }
-                Tab(value: 3, role: .search) { SearchView() }
-            }
-            .tabViewBottomAccessory {
-                NowPlayingBar { showingPlayer = true }
-            }
-            .tabBarMinimizeBehavior(.onScrollDown)
-        }
+    /// Deck (Paul, 14 Nov 2026): Up next · Shows · Find, the player full
+    /// screen over everything.
+    private var content: some View {
+        DeckRoot(tab: $tab, showingPlayer: $showingPlayer)
+            .onAppear { if tab > 2 { tab = 2 } }
     }
 
-    /// The full-screen player. Haar's home is the player and Deck's tabs
-    /// mode opens the playing episode's tab (DeckRoot), so neither uses it.
+    /// The full-screen player. Deck's tabs mode opens the playing episode's
+    /// tab (DeckRoot), so only card deck mode uses it.
     private var playerCover: Binding<Bool> {
-        let unused: Bool = Theme.isHaar || (Theme.isDeck && DeckHome.isTabs)
-        return unused ? Binding.constant(false) : $showingPlayer
+        DeckHome.isTabs ? Binding.constant(false) : $showingPlayer
     }
 
     var body: some View {
-        // Native warm (Paul, 11 Nov 2026): iOS's own tab bar, with the
-        // mini player sitting above it as Apple Music does (the tab view's
-        // bottom accessory). iOS lays the lists out round both, so nothing
-        // overlaps a list (the dead spots of builds 140-141 came from our
-        // own dock over iOS's hidden bar).
         content
-        // Haar: this root page's fog is the one that drifts; every page,
-        // layer and sheet inside draws its fog standing still, so only one
-        // fog moves on screen (smoother scrolling).
-        .environment(\.haarFogBehind, true)
-        // Undo and No internet float above the tab bar (or Haar's dock)
-        // while they show.
-        .overlay(alignment: Theme.isHaar ? .top : .bottom) {
-            // Deck: just above the pill (and the mini player).
-            // Haar (prototype): toasts sit near the top, under the top bar.
+        // Undo and No internet float just above the pill (and the mini
+        // player) while they show.
+        .overlay(alignment: .bottom) {
             VStack(spacing: 6) {
                 OfflineBar()
                 UndoBar()
             }
-            // Deck: the same 16 pt edges as the cards above (Paul: line it up).
-            .padding(.horizontal, Theme.isHaar ? 20 : (Theme.isDeck ? 16 : 12))
-            .padding(.top, Theme.isHaar ? 64 : 0)
-            .padding(.bottom, Theme.isHaar ? 0 : (Theme.isDeck ? deckToastLift : 128))
+            // The same 16 pt edges as the cards above (Paul: line it up).
+            .padding(.horizontal, 16)
+            .padding(.bottom, deckToastLift)
         }
-        .haarPage()
+        .pageBackground()
         .onChange(of: quickActions.pending, initial: true) { _, action in
             guard let action else { return }
             quickActions.pending = nil
@@ -200,15 +162,9 @@ struct RootView: View {
         // The player fills the whole screen (Paul: no page showing through
         // at the top); swipe down to close it.
         .fullScreenCover(isPresented: playerCover) {
-            if Theme.isDeck { DeckPlayerView() } else { NowPlayingView() }
+            DeckPlayerView()
         }
-        // Haar: the player is home, so "open the player" goes home.
-        .onChange(of: showingPlayer) { _, open in
-            guard open, Theme.isHaar else { return }
-            showingPlayer = false
-            tab = 0
-        }
-        .sheet(item: Binding(get: { store.showSheet == nil ? store.notesEpisode : nil },
+        .sheet(item: Binding(get: { store.notesEpisode },
                              set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)
         }
@@ -230,8 +186,6 @@ struct RootView: View {
         .onChange(of: store.revealShow) { _, show in
             guard show != nil else { return }
             store.notesEpisode = nil
-            // Haar: HaarRoot opens the show as a sheet where you are.
-            guard !Theme.isHaar else { return }
             showingPlayer = false
             tab = 1
             // Library pushes the show page; clear the request once it has.
@@ -291,7 +245,8 @@ struct RootView: View {
 
 /// Draws the app in the chosen colour scheme. Changing the scheme redraws
 /// everything (open sheets close), since every colour comes from it.
-/// "Auto" (the default) follows the iPhone: Sand in light, Night in dark.
+/// "Auto" (the default) follows the iPhone: Deck in light, Deck night in
+/// dark. An old saved scheme that's gone (Haar, Sand…) counts as auto.
 private struct SchemedRoot: View {
     @AppStorage(ColourScheme.key) private var setting = ColourScheme.auto
     @Environment(\.colorScheme) private var systemScheme
@@ -318,7 +273,12 @@ private struct SchemedRoot: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { systemDark = systemScheme == .dark }
             }
+            // An old scheme that's gone (Haar, Sand, Slate, Clay, Night)
+            // is saved as auto, so Settings shows Auto ticked.
+            .onChange(of: setting, initial: true) { _, value in
+                if ColourScheme.isAuto(value) && value != ColourScheme.auto { setting = ColourScheme.auto }
+            }
             // Auto leaves light / dark to the iPhone; a picked scheme sets it.
-            .preferredColorScheme(setting == ColourScheme.auto ? nil : (chosen.isDark ? .dark : .light))
+            .preferredColorScheme(ColourScheme.isAuto(setting) ? nil : (chosen.isDark ? .dark : .light))
     }
 }

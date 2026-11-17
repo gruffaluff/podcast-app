@@ -41,7 +41,7 @@ struct OfflineBar: View {
             .foregroundStyle(Theme.displayText)
             .padding(.horizontal, 14)
             .frame(minHeight: 36)
-            .background(Theme.display, in: RoundedRectangle(cornerRadius: Theme.isDeck ? 18 : 12, style: .continuous))
+            .background(Theme.display, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("No internet. Downloaded episodes still play.")
         }
@@ -95,7 +95,7 @@ struct WelcomeView: View {
             .padding(24)
             .padding(.top, 20)
         }
-        .haarPage()
+        .pageBackground()
         .onDisappear { UserDefaults.standard.set(true, forKey: Self.seenKey) }
     }
 

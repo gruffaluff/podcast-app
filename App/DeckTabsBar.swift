@@ -52,7 +52,7 @@ struct DeckTabsBar: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     @Environment(\.deckOpenPlayer) private var openPlayer
-    @Query(LibraryView.newEpisodesQueryForList) private var unplayed: [PodcastEpisode]
+    @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
     @AppStorage(DeckTriage.key) private var triaged: String = ""
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @Binding var tab: Int
