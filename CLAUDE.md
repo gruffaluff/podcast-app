@@ -3202,6 +3202,16 @@ Paul's notes after build 164:
   Workers paid, $5 / month). Simplest for launch: instant alerts only
   for Paul, everyone else on the background check. Paul: "just
   interested in steps for now".
+  Tips on the website (Paul asked 18 Nov 2026 if a tip jar would make
+  him "commercial"): told him it's a grey area for Apple's EU trader
+  question (any money tied to the app may count; answer it honestly, or
+  hold tips until after the store listing is settled); keep the tip
+  link on poddeck.uk only, never in the app (a tip button or link in
+  the app would have to go through Apple's in-app purchase, Apple takes
+  a cut); UK tax: casual gifts are usually not trading income, and the
+  £1,000 trading allowance covers small amounts; tip sites take a fee
+  per tip (Ko-fi / Buy Me a Coffee plus card fees). Not legal or tax
+  advice; nothing decided.
 
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's
