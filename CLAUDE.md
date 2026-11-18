@@ -3150,7 +3150,7 @@ Paul's notes after build 164:
   the plan for going live (already how build 168 works: instant alerts
   only on the owner's phone).
 
-## On the branch for build 169 (18 Nov 2026; not built yet)
+## Done in build 169 (18 Nov 2026, PR #87; Paul: "build")
 
 - **Tabs reshuffled just after opening** (Paul, 18 Nov 2026, recording:
   opened from closed, Up next's tabs showed in queue order with "Nothing
