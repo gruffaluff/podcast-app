@@ -3150,6 +3150,20 @@ Paul's notes after build 164:
   the plan for going live (already how build 168 works: instant alerts
   only on the owner's phone).
 
+## Done in build 169 (18 Nov 2026, PR #87; Paul: "build")
+
+- **Tabs reshuffled just after opening** (Paul, 18 Nov 2026, recording:
+  opened from closed, Up next's tabs showed in queue order with "Nothing
+  playing", then a moment later the part-played episode jumped to the
+  front as "Now" and the others slid along). Cause: build 167's "remember
+  what was playing" loaded the last episode only once the app reported
+  itself open, after the first screen was drawn, and the tab grid animated
+  the change like a reorder. Now it's loaded before the first screen
+  (`PodcastsApp.init` calls `restoreLastPlayed`), and if it still arrives
+  later (iCloud filling in after a reinstall) the grid puts it first in
+  one step with no slide (`PlayerModel.restoredEpisodeID`,
+  `DeckTabsGrid.follow`). Up next's order itself never changed.
+
 ## Queued for the next app build
 
 - Nothing queued. Still waiting on Paul: where he tried Undo and saw
@@ -3188,6 +3202,16 @@ Paul's notes after build 164:
   Workers paid, $5 / month). Simplest for launch: instant alerts only
   for Paul, everyone else on the background check. Paul: "just
   interested in steps for now".
+  Tips on the website (Paul asked 18 Nov 2026 if a tip jar would make
+  him "commercial"): told him it's a grey area for Apple's EU trader
+  question (any money tied to the app may count; answer it honestly, or
+  hold tips until after the store listing is settled); keep the tip
+  link on poddeck.uk only, never in the app (a tip button or link in
+  the app would have to go through Apple's in-app purchase, Apple takes
+  a cut); UK tax: casual gifts are usually not trading income, and the
+  £1,000 trading allowance covers small amounts; tip sites take a fee
+  per tip (Ko-fi / Buy Me a Coffee plus card fees). Not legal or tax
+  advice; nothing decided.
 
 - **Repo back to private on 1 Dec 2026** (Paul, 6 Nov 2026): Paul flips
   it (Settings → General → Change visibility). Not before: November's

@@ -108,6 +108,18 @@ struct DeckTabsGrid: View {
             return
         }
         guard mirror?.map(\.episodeID) != ids || !stale.isEmpty else { return }
+        // What was playing last coming back on opening (or swapped in by
+        // iCloud) takes first place as "Now" in one step, not a shuffle.
+        if let restored = player.restoredEpisodeID, ids.first == restored,
+           mirror?.first?.episodeID != restored {
+            var instant = Transaction(animation: nil)
+            instant.disablesAnimations = true
+            withTransaction(instant) {
+                mirror = tabs
+                if !stale.isEmpty { gone.subtract(stale) }
+            }
+            return
+        }
         withAnimation(LibraryStore.listChange) {
             mirror = tabs
             // Already hidden, so letting them go changes nothing on screen.

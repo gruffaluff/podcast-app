@@ -224,7 +224,10 @@ final class PlayerModel {
     /// to open the Deck player on Up next's top card when nothing is loaded).
     func play(_ episode: PodcastEpisode, autoplay: Bool = true) {
         // Anything Paul (or the app) chooses wins over the remembered one.
-        if !restoring { restoreOpen = false }
+        if !restoring {
+            restoreOpen = false
+            if episode.episodeID != restoredEpisodeID { restoredEpisodeID = nil }
+        }
         if nowPlaying?.episodeID == episode.episodeID {
             if autoplay { resume() }
             return
@@ -592,6 +595,9 @@ final class PlayerModel {
     /// library has arrived. Open until Paul plays or picks anything.
     @ObservationIgnored private var restoreOpen = true
     @ObservationIgnored private var restoring = false
+    /// The episode brought back on opening, so Up next's tabs can put it
+    /// first as "Now" without the shuffle animation (Paul, 18 Nov 2026).
+    @ObservationIgnored private(set) var restoredEpisodeID: String?
 
     /// Loads the most recently played unfinished episode if nothing is on.
     /// Called on launch and after each iCloud tidy; a later sync with a
@@ -607,6 +613,7 @@ final class PlayerModel {
               episode.podcast != nil,
               episode.episodeID != nowPlaying?.episodeID else { return }
         restoring = true
+        restoredEpisodeID = episode.episodeID
         play(episode, autoplay: false)
         restoring = false
     }
