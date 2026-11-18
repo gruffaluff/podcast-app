@@ -3150,6 +3150,20 @@ Paul's notes after build 164:
   the plan for going live (already how build 168 works: instant alerts
   only on the owner's phone).
 
+## On the branch for build 169 (18 Nov 2026; not built yet)
+
+- **Tabs reshuffled just after opening** (Paul, 18 Nov 2026, recording:
+  opened from closed, Up next's tabs showed in queue order with "Nothing
+  playing", then a moment later the part-played episode jumped to the
+  front as "Now" and the others slid along). Cause: build 167's "remember
+  what was playing" loaded the last episode only once the app reported
+  itself open, after the first screen was drawn, and the tab grid animated
+  the change like a reorder. Now it's loaded before the first screen
+  (`PodcastsApp.init` calls `restoreLastPlayed`), and if it still arrives
+  later (iCloud filling in after a reinstall) the grid puts it first in
+  one step with no slide (`PlayerModel.restoredEpisodeID`,
+  `DeckTabsGrid.follow`). Up next's order itself never changed.
+
 ## Queued for the next app build
 
 - Nothing queued. Still waiting on Paul: where he tried Undo and saw

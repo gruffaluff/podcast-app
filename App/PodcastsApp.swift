@@ -36,6 +36,10 @@ struct PodcastsApp: App {
         transcripts.registerBackgroundTask()
         BackgroundRefresh.register(store: store)
         _transcripts = State(initialValue: transcripts)
+        // Bring back what was playing before the first screen is drawn, so
+        // Up next opens with it already first as "Now" (Paul, 18 Nov 2026:
+        // the tabs reshuffled a moment after opening).
+        if !DemoMode.isOn { player.restoreLastPlayed() }
     }
 
     var body: some Scene {
