@@ -894,8 +894,12 @@ final class PlayerModel {
         guard let url else { return }
         let episodeID = nowPlaying?.episodeID
         Task {
-            guard let response = try? await URLSession.shared.data(from: url),
-                  let image = UIImage(data: response.0) else { return }
+            // The app's own artwork cache: already on the phone (works
+            // offline and at once on reopening) and at most 600 points.
+            // The full feed picture (often 3000 × 3000) came from the
+            // network each time and left the lock screen and Dynamic
+            // Island with a blank square (Paul, 19 Nov 2026).
+            guard let image = await ArtworkImageCache.shared.image(for: url) else { return }
             guard nowPlaying?.episodeID == episodeID else { return }
             artwork = Self.makeArtwork(image)
             updateNowPlayingInfo()
@@ -904,6 +908,14 @@ final class PlayerModel {
 
     /// Built outside the main actor: iOS asks for the image on a background thread.
     nonisolated private static func makeArtwork(_ image: UIImage) -> MPMediaItemArtwork {
-        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        MPMediaItemArtwork(boundsSize: image.size) { size in
+            // Hand back a copy drawn at the size iOS asks for.
+            guard size.width > 0, size.height > 0, size != image.size else { return image }
+            let format = UIGraphicsImageRendererFormat.default()
+            format.opaque = true
+            return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+                image.draw(in: CGRect(origin: .zero, size: size))
+            }
+        }
     }
 }

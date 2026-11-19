@@ -3164,6 +3164,18 @@ Paul's notes after build 164:
   one step with no slide (`PlayerModel.restoredEpisodeID`,
   `DeckTabsGrid.follow`). Up next's order itself never changed.
 
+## On the branch for build 170 (19 Nov 2026; not built yet)
+
+- **No artwork on the lock screen / Dynamic Island** (Paul, 19 Nov 2026,
+  screenshots: Tailenders playing, blank grey square where the picture
+  should be). The player fetched the episode's full feed picture (often
+  3000 × 3000) from the internet afresh for Now Playing, apart from the
+  app's artwork cache, and handed iOS that huge image at every size;
+  offline or slow, nothing came. Now it uses the app's own cached copy
+  (`ArtworkImageCache`, on the phone, at most 600 points) and draws it at
+  the size iOS asks for (`PlayerModel.loadArtwork` / `makeArtwork`).
+  Check on the phone: lock screen, Dynamic Island, Control Centre, CarPlay.
+
 ## Queued for the next app build
 
 - Nothing queued. Still waiting on Paul: where he tried Undo and saw
