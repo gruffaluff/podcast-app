@@ -185,7 +185,7 @@ struct DeckPlayerDial: View {
     /// Times of the lines in this episode that say the searched phrase.
     private var searchHits: [TimeInterval] {
         guard search.episodeID == item.episodeID, let term = search.term else { return [] }
-        return DeckDialSearch.times(of: term, in: lines)
+        return search.hits(of: term, in: lines)
     }
 
     private func searchPill(_ term: String) -> some View {
@@ -565,6 +565,20 @@ final class DeckDialSearch {
     func clear() {
         term = nil
         episodeID = nil
+    }
+
+    /// Worked out once per phrase and transcript, not on every redraw
+    /// (Paul, 19 Nov 2026: pulling the player down got jerky once the dial
+    /// had search dots: every frame of the pull searched every line again).
+    @ObservationIgnored private var memoKey: String = ""
+    @ObservationIgnored private var memo: [TimeInterval] = []
+
+    func hits(of term: String, in lines: [TranscriptLayout.Line]) -> [TimeInterval] {
+        let key: String = "\(term)|\(episodeID ?? "")|\(lines.count)|\(lines.first?.start ?? 0)|\(lines.last?.start ?? 0)"
+        if key == memoKey { return memo }
+        memo = Self.times(of: term, in: lines)
+        memoKey = key
+        return memo
     }
 
     /// Lines containing every word of the phrase (any case or accents).

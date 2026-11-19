@@ -38,10 +38,11 @@ struct DeckSettingsView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                         .font(Theme.outfit(16, .bold))
+                        .tint(Theme.ink)
                 }
             }
         }
-        .tint(Theme.ink)
+        .tint(Theme.switchOn)
     }
 }
 
@@ -184,7 +185,7 @@ struct DeckSetToggle: View {
                 }
             }
         }
-        .tint(Theme.ink)
+        .tint(Theme.switchOn)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .frame(minHeight: 54)

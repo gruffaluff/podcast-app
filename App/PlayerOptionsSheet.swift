@@ -30,7 +30,9 @@ struct PlayerOptionsSheet: View {
         .padding(.top, 14)
         .padding(.bottom, 10)
         .foregroundStyle(Theme.ink)
-        .tint(Theme.accentFill)
+        // The episode's colour on switches; with nothing playing, the
+        // scheme's switch colour (Deck night's light accent read as white).
+        .tint(AccentColour.shared.colour == nil ? Theme.switchOn : Theme.accentFill)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .presentationDetents([.height(height)])
         .presentationDragIndicator(.hidden)
@@ -38,17 +40,25 @@ struct PlayerOptionsSheet: View {
     }
 
     private var header: some View {
+        // Done as a white pill whose right edge lines up with the cards
+        // below, its middle level with the title (Paul, 19 Nov 2026: Done
+        // "could be better aligned"; it was loose text near the corner).
         ZStack {
-            Text("Options").font(.headline)
+            Text("Options").font(Theme.outfit(17, .semibold))
             HStack {
                 Spacer()
-                Button("Done") { dismiss() }
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Theme.ink)
-                    .buttonStyle(.plain)
+                Button { dismiss() } label: {
+                    Text("Done")
+                        .font(Theme.outfit(15, .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 16)
+                        .frame(height: 34)
+                        .background(Theme.surface, in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
         }
-        .frame(height: 32)
+        .frame(height: 36)
     }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {

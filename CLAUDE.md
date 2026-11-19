@@ -186,6 +186,11 @@ to Nowhere / Top / Bottom" on the show page.
   change on the branch (and open a PR so GitHub's free check compiles
   it), but don't merge, so no Codemagic build starts until Paul says
   "build".
+- **Ask before every build** (Paul, 19 Nov 2026, now Codemagic charges
+  per minute): never merge to main (which starts a paid build) without
+  asking Paul first and getting his yes for that build, even if an
+  earlier message said "build". Pushing to the branch and the free
+  GitHub check are fine.
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
   decisions, progress and open questions in the same change, without
   asking first, and mention briefly what changed here in your reply.
@@ -3164,7 +3169,52 @@ Paul's notes after build 164:
   one step with no slide (`PlayerModel.restoredEpisodeID`,
   `DeckTabsGrid.follow`). Up next's order itself never changed.
 
+## Done in build 170 (19 Nov 2026, PR #88; Paul: "Build")
+
+- **No artwork on the lock screen / Dynamic Island** (Paul, 19 Nov 2026,
+  screenshots: Tailenders playing, blank grey square where the picture
+  should be). The player fetched the episode's full feed picture (often
+  3000 × 3000) from the internet afresh for Now Playing, apart from the
+  app's artwork cache, and handed iOS that huge image at every size;
+  offline or slow, nothing came. Now it uses the app's own cached copy
+  (`ArtworkImageCache`, on the phone, at most 600 points) and draws it at
+  the size iOS asks for (`PlayerModel.loadArtwork` / `makeArtwork`).
+  Check on the phone: lock screen, Dynamic Island, Control Centre, CarPlay.
+- **Paul's build 169 screenshots** (19 Nov 2026; tabs, dial with search
+  dots, Read along, Options, the tab page, Deck night, Settings):
+  - Tapping a quote in Find's "Said in your episodes" jumped to it and
+    lost the place he was at: now "Jumped to 6:59 · Undo" puts you back
+    where you were (same episode: back to the time; another episode: back
+    to that one, playing if it was) (`DeckSaidRow.play`).
+  - Search dots only appear after tapping a quote: as designed (the dots
+    mark the phrase you opened that episode from). Offered: show them on
+    the episode playing as soon as you search. **Paul: leave as is**
+    (19 Nov 2026).
+  - **Find in Read along** (Paul, 19 Nov 2026: "we need a search on the
+    transcript page"): a round magnifier at the top right of the words
+    opens a box ("Find in the words"); lines with every word typed (any
+    case or accents) have the words marked in yellow, the one shown
+    brighter, "2 of 6" with up / down keys (Return goes to the next);
+    it starts at the first match from where it's playing, and following
+    stops while a match is shown; Done closes it and following carries
+    on (`DeckReadAlong` search, both players).
+  - Pulling the player down got jerky once the dial had search dots
+    (recording): every frame of the pull searched every transcript line
+    again; now worked out once per phrase and transcript
+    (`DeckDialSearch.hits`).
+  - Options sheet Done: a white pill, right edge in line with the cards,
+    level with the title (`PlayerOptionsSheet.header`).
+  - Deck night switches were white on white (light ink tint, white knob):
+    switches that are on are coral #EC6550 in Deck night, ink in Deck
+    (`Theme.switchOn`; Settings, show settings, the tab page, Keep
+    playing, Options with nothing playing). Done keys stay ink.
+
 ## Queued for the next app build
+
+- **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
+  builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
+  minutes, so about 50p a build (estimate; Codemagic's pricing page has
+  the real figures). Keep batching changes into fewer builds.
 
 - Nothing queued. Still waiting on Paul: where he tried Undo and saw
   nothing (old); other iPhone sizes not checked; feeds with a username
