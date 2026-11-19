@@ -3169,7 +3169,7 @@ Paul's notes after build 164:
   one step with no slide (`PlayerModel.restoredEpisodeID`,
   `DeckTabsGrid.follow`). Up next's order itself never changed.
 
-## On the branch for build 170 (19 Nov 2026; not built yet)
+## Done in build 170 (19 Nov 2026, PR #88; Paul: "Build")
 
 - **No artwork on the lock screen / Dynamic Island** (Paul, 19 Nov 2026,
   screenshots: Tailenders playing, blank grey square where the picture
