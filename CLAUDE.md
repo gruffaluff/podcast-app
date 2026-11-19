@@ -3175,6 +3175,25 @@ Paul's notes after build 164:
   (`ArtworkImageCache`, on the phone, at most 600 points) and draws it at
   the size iOS asks for (`PlayerModel.loadArtwork` / `makeArtwork`).
   Check on the phone: lock screen, Dynamic Island, Control Centre, CarPlay.
+- **Paul's build 169 screenshots** (19 Nov 2026; tabs, dial with search
+  dots, Read along, Options, the tab page, Deck night, Settings):
+  - Tapping a quote in Find's "Said in your episodes" jumped to it and
+    lost the place he was at: now "Jumped to 6:59 · Undo" puts you back
+    where you were (same episode: back to the time; another episode: back
+    to that one, playing if it was) (`DeckSaidRow.play`).
+  - Search dots only appear after tapping a quote: as designed (the dots
+    mark the phrase you opened that episode from). Offered: show them on
+    the episode playing as soon as you search. Waiting on Paul.
+  - Pulling the player down got jerky once the dial had search dots
+    (recording): every frame of the pull searched every transcript line
+    again; now worked out once per phrase and transcript
+    (`DeckDialSearch.hits`).
+  - Options sheet Done: a white pill, right edge in line with the cards,
+    level with the title (`PlayerOptionsSheet.header`).
+  - Deck night switches were white on white (light ink tint, white knob):
+    switches that are on are coral #EC6550 in Deck night, ink in Deck
+    (`Theme.switchOn`; Settings, show settings, the tab page, Keep
+    playing, Options with nothing playing). Done keys stay ink.
 
 ## Queued for the next app build
 

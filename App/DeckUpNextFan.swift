@@ -152,7 +152,7 @@ struct DeckUpNextFan: View {
             Toggle("Keep playing new episodes",
                    isOn: Binding(get: { store.keepPlayingNew }, set: { store.keepPlayingNew = $0 }))
                 .labelsHidden()
-                .tint(Theme.ink)
+                .tint(Theme.switchOn)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)

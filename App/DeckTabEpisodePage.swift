@@ -617,7 +617,7 @@ private struct DeckTabMoreSheet: View {
         .padding(.top, 14)
         .padding(.bottom, 12)
         .foregroundStyle(Theme.ink)
-        .tint(Theme.ink)
+        .tint(Theme.switchOn)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .presentationDetents([.height(height)])
         .presentationDragIndicator(.hidden)

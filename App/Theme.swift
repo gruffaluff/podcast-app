@@ -89,6 +89,10 @@ enum Theme {
     /// Outline buttons and quiet borders.
     static var controlBorder: Color { Color(hex: p.controlBorder) }
     static var ink: Color { Color(hex: p.ink) }
+    /// Switches that are on: ink on the light page; in Deck night the
+    /// app's coral, because a light ink switch with iOS's white knob read
+    /// as all white (Paul, 19 Nov 2026).
+    static var switchOn: Color { ColourScheme.current.isDark ? Color(hex: 0xEC6550) : Color(hex: p.ink) }
     /// Secondary text.
     static var muted: Color { Color(hex: p.muted) }
     /// The accent: keys that are on, switches; text on it is `onAccent`.

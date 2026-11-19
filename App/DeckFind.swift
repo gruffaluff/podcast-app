@@ -428,6 +428,7 @@ private struct DeckSaidSection: View {
 
 private struct DeckSaidRow: View {
     @Environment(PlayerModel.self) private var player
+    @Environment(LibraryStore.self) private var store
     let episode: PodcastEpisode
     let match: TranscriptSearch.Match
     let term: String
@@ -462,8 +463,25 @@ private struct DeckSaidRow: View {
     private func play() {
         // The dial marks every other place this is said (DeckDialSearch).
         DeckDialSearch.shared.set(term, episodeID: episode.episodeID)
+        // Remember where you were, so Undo takes you back (Paul, 19 Nov
+        // 2026: jumping to a quote lost his place in the same episode).
+        let previousID: String? = player.nowPlaying?.episodeID
+        let previousTime: TimeInterval = player.currentTime
+        let wasPlaying: Bool = player.isPlaying
+        let player = self.player
+        let store = self.store
         player.play(episode)
         player.seek(to: match.time)
+        guard let previousID, abs(previousTime - match.time) > 5 || previousID != episode.episodeID else { return }
+        store.undoAction = UndoAction(label: "Jumped to \(TimeFormat.clock(match.time))") {
+            store.undoAction = nil
+            if previousID == player.nowPlaying?.episodeID {
+                player.seek(to: previousTime)
+            } else if let earlier = store.episode(previousID) {
+                player.play(earlier, autoplay: wasPlaying)
+                player.seek(to: previousTime)
+            }
+        }
     }
 }
 
