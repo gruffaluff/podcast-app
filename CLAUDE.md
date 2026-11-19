@@ -3183,7 +3183,16 @@ Paul's notes after build 164:
     to that one, playing if it was) (`DeckSaidRow.play`).
   - Search dots only appear after tapping a quote: as designed (the dots
     mark the phrase you opened that episode from). Offered: show them on
-    the episode playing as soon as you search. Waiting on Paul.
+    the episode playing as soon as you search. **Paul: leave as is**
+    (19 Nov 2026).
+  - **Find in Read along** (Paul, 19 Nov 2026: "we need a search on the
+    transcript page"): a round magnifier at the top right of the words
+    opens a box ("Find in the words"); lines with every word typed (any
+    case or accents) have the words marked in yellow, the one shown
+    brighter, "2 of 6" with up / down keys (Return goes to the next);
+    it starts at the first match from where it's playing, and following
+    stops while a match is shown; Done closes it and following carries
+    on (`DeckReadAlong` search, both players).
   - Pulling the player down got jerky once the dial had search dots
     (recording): every frame of the pull searched every transcript line
     again; now worked out once per phrase and transcript
@@ -3196,6 +3205,11 @@ Paul's notes after build 164:
     playing, Options with nothing playing). Done keys stay ink.
 
 ## Queued for the next app build
+
+- **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
+  builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
+  minutes, so about 50p a build (estimate; Codemagic's pricing page has
+  the real figures). Keep batching changes into fewer builds.
 
 - Nothing queued. Still waiting on Paul: where he tried Undo and saw
   nothing (old); other iPhone sizes not checked; feeds with a username
