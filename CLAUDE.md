@@ -186,6 +186,11 @@ to Nowhere / Top / Bottom" on the show page.
   change on the branch (and open a PR so GitHub's free check compiles
   it), but don't merge, so no Codemagic build starts until Paul says
   "build".
+- **Ask before every build** (Paul, 19 Nov 2026, now Codemagic charges
+  per minute): never merge to main (which starts a paid build) without
+  asking Paul first and getting his yes for that build, even if an
+  earlier message said "build". Pushing to the branch and the free
+  GitHub check are fine.
 - **Keep CLAUDE.md updated as you go** (Paul, 4 Nov 2026): record
   decisions, progress and open questions in the same change, without
   asking first, and mention briefly what changed here in your reply.
