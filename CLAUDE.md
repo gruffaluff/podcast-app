@@ -3219,6 +3219,13 @@ Paul's notes after build 164:
   again. Now the store clears it 6 s after it's offered whatever is on
   screen (`LibraryStore.undoAction` / `UndoAction.made`), leaving the app
   clears it, and coming back drops any that's past its 6 s.
+- **App icon badge a step behind** (Paul, 20 Nov 2026: finished an
+  episode, the next started, left the app: the icon still said 2 until he
+  opened it again). The number was only worked out on opening / leaving
+  the app and after a feed check, so Up Next changing in the background
+  (an episode finishing on the lock screen, in the car) left it stale.
+  Now it's worked out again a second after Up Next or what's playing
+  changes (with the widgets' update, `WidgetSync.schedule`).
 
 ## Queued for the next app build
 
