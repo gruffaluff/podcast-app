@@ -24,7 +24,33 @@ final class LibraryStore {
     /// page's show name / artwork); the root view goes to Library and pushes it.
     var revealShow: Podcast?
     /// The last change that can be undone (shown as an Undo bar for a few seconds).
-    var undoAction: UndoAction?
+    /// The store clears it itself 6 s after it's set (Paul, 20 Nov 2026: an
+    /// Undo from hours earlier was back on the player; the bar's own timer
+    /// stopped when the bar left the screen, so it was never cleared).
+    var undoAction: UndoAction? {
+        didSet { expireUndoLater() }
+    }
+    @ObservationIgnored private var undoExpiry: Task<Void, Never>?
+
+    private func expireUndoLater() {
+        undoExpiry?.cancel()
+        guard let action = undoAction else { return }
+        undoExpiry = Task { @MainActor [weak self] in
+            let left: TimeInterval = UndoAction.lifetime - Date().timeIntervalSince(action.made)
+            if left > 0 {
+                do { try await Task.sleep(for: .seconds(left)) } catch { return }
+            }
+            guard let self, self.undoAction?.id == action.id else { return }
+            self.undoAction = nil
+        }
+    }
+
+    /// Drops an Undo that has outlived its few seconds (e.g. on coming back
+    /// to the app, when the timer may not have run while it was away).
+    func dropStaleUndo() {
+        guard let action = undoAction, Date().timeIntervalSince(action.made) >= UndoAction.lifetime else { return }
+        undoAction = nil
+    }
     /// The episode playing now (set by PlayerModel), so its download is never trimmed.
     @ObservationIgnored var playingEpisodeID: String?
     private(set) var lastChecked: Date? = nil {

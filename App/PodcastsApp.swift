@@ -225,6 +225,8 @@ struct RootView: View {
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .background {
+                // An Undo doesn't outlive leaving the app.
+                store.undoAction = nil
                 player.saveProgressNow()
                 AppBadge.update(store: store)
                 WidgetSync.shared.flush()
@@ -233,6 +235,7 @@ struct RootView: View {
             }
             // Check feeds when the app opens, at most once an hour.
             guard phase == .active else { return }
+            store.dropStaleUndo()
             AppBadge.appOpened(store: store)
             store.tidyAfterSync()
             player.restoreLastPlayed()
