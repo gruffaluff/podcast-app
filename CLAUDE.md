@@ -3257,7 +3257,7 @@ Paul's notes after build 164:
   - Check on the phone: the hero on a small iPhone, three-across cards'
     text, dragging in the three-across grid, the island's keys' reach.
 
-## On the branch for build 173 (21 Nov 2026; not built yet)
+## Done in build 173 (21 Nov 2026, PR #91; Paul: "Merge")
 
 - **Hero card works like the small tabs** (Paul, 21 Nov 2026, build 172
   screenshot: "have the same actions as the smaller ones … remove that
