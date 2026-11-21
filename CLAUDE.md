@@ -3227,7 +3227,7 @@ Paul's notes after build 164:
   Now it's worked out again a second after Up Next or what's playing
   changes (with the widgets' update, `WidgetSync.schedule`).
 
-## On the branch for build 172 (21 Nov 2026; not built yet)
+## Done in build 172 (21 Nov 2026, PR #90; Paul: "Go with U1 and the island, then build")
 
 - **Tab stuck as a red "Played" block** (Paul, 21 Nov 2026, screenshot:
   marked an episode played with a swipe, added it back to Up next, and
