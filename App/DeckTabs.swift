@@ -314,23 +314,21 @@ struct DeckTabsView: View {
                     // U1 (Paul, 21 Nov 2026: "Go with U1 and the island"):
                     // the first tab (playing, else the top of Up next) as one
                     // big hero card, the rest three across under "Then".
-                    DeckTabsHero(episode: first)
+                    DeckTabsHeroCell(episode: first)
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
                     let rest: [PodcastEpisode] = Array(shown.dropFirst())
-                    if !rest.isEmpty {
-                        Text("THEN")
-                            .font(Theme.outfit(12, .bold))
-                            .tracking(0.8)
-                            .foregroundStyle(Theme.muted)
-                            .padding(.horizontal, 22)
-                            .padding(.top, 20)
-                            .padding(.bottom, 8)
-                            .accessibilityAddTraits(.isHeader)
-                        let heroPlays: Bool = first.episodeID == player.nowPlaying?.episodeID
-                        DeckTabsGrid(tabs: rest, placeOffset: heroPlays ? 0 : 1)
-                            .padding(.horizontal, 16)
-                    }
+                    Text("THEN")
+                        .font(Theme.outfit(12, .bold))
+                        .tracking(0.8)
+                        .foregroundStyle(Theme.muted)
+                        .padding(.horizontal, 22)
+                        .padding(.top, 20)
+                        .padding(.bottom, 8)
+                        .accessibilityAddTraits(.isHeader)
+                    let heroPlays: Bool = first.episodeID == player.nowPlaying?.episodeID
+                    DeckTabsGrid(tabs: rest, placeOffset: heroPlays ? 0 : 1, findTile: true)
+                        .padding(.horizontal, 16)
                 }
                 // Started but not in Up next (picked from Find, or a show
                 // on Nowhere): slim Carry on cards under the tabs.

@@ -33,16 +33,12 @@ struct DeckTabsHero: View {
         .frame(height: Self.height)
         .clipShape(shape)
         .overlay(alignment: .topLeading) { label }
-        .overlay(alignment: .topTrailing) { playedButton }
         .background {
             shape.fill(colour)
                 .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.18), radius: 14, y: 8)
         }
         .contentShape(shape)
-        .onTapGesture { model.open(episode.episodeID) }
         .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
-        .accessibilityElement(children: .contain)
-        .accessibilityAction(named: "Open") { model.open(episode.episodeID) }
     }
 
     private var artwork: some View {
@@ -87,29 +83,6 @@ struct DeckTabsHero: View {
             .allowsHitTesting(false)
     }
 
-    private var playedButton: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            withAnimation(LibraryStore.listChange) { actions.close(episode) }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .bold))
-                Text("Played")
-                    .font(Theme.outfit(12, .bold))
-            }
-            .foregroundStyle(Color.white)
-            .padding(.horizontal, 12)
-            .frame(height: 32)
-            .background(Capsule().fill(Color.black.opacity(0.4)))
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.4), lineWidth: 1))
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .padding(12)
-        .accessibilityLabel("Mark played")
-    }
-
     private var words: some View {
         HStack(alignment: .bottom, spacing: 14) {
             VStack(alignment: .leading, spacing: 0) {
@@ -129,12 +102,35 @@ struct DeckTabsHero: View {
                     .padding(.top, 12)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            playButton
+            // The real key is laid over the card by its cell (outside the
+            // card's touch handler, so a tap on it is only ever play).
+            Color.clear
+                .frame(width: 58, height: 58)
                 .padding(.bottom, 22)
         }
         .shadow(color: Color.black.opacity(0.25), radius: 2, y: 1)
         .padding(.horizontal, 18)
         .padding(.bottom, 16)
+    }
+
+    /// Where the play key sits on the card (bottom right).
+    static let playInset: EdgeInsets = EdgeInsets(top: 0, leading: 0, bottom: 38, trailing: 18)
+}
+
+/// The hero's big white play / pause key.
+struct DeckTabsHeroPlay: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @Environment(DeckTabsModel.self) private var model
+    let episode: PodcastEpisode
+
+    private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+    private var playing: Bool { isOn && player.isPlaying }
+    private var colour: Color { DeckRings.showColour(episode) }
+    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
+
+    var body: some View {
+        playButton
     }
 
     private var playButton: some View {

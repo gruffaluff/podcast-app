@@ -31,6 +31,8 @@ struct DeckTabsGrid: View {
     /// Numbers start after this (1 when the hero above is Up next's first
     /// and nothing is playing, so the grid starts at 2).
     var placeOffset: Int = 0
+    /// A dashed "Find something" tile after the last tab.
+    var findTile: Bool = false
 
     /// The tab being dragged, while it is.
     @State private var lift: DeckTabLift?
@@ -84,6 +86,10 @@ struct DeckTabsGrid: View {
             LazyVGrid(columns: Self.columns, spacing: Self.gap) {
                 ForEach(shown, id: \.episodeID) { episode in
                     cell(episode, shown: shown)
+                }
+                if findTile {
+                    DeckTabsFindTile(height: cardHeight)
+                        .opacity(lift == nil ? 1 : 0.4)
                 }
             }
             liftedCard(shown: shown)
@@ -511,6 +517,9 @@ private struct DeckTabCell: View {
     /// Close the tab: the grid takes it out (closing the gap) and marks it
     /// played / off Saved, all in one animation.
     let leave: () -> Void
+    /// The big first card above the grid (Paul, 21 Nov 2026: "have the
+    /// same actions as the smaller ones"): same touches, no ×.
+    var hero: Bool = false
 
     @State private var drag: CGFloat = 0
     @State private var width: CGFloat = 170
@@ -535,7 +544,7 @@ private struct DeckTabCell: View {
     /// Saved is gone (Paul, 16 Nov 2026): every group's left swipe is Played.
     private var saved: Bool { false }
     private var canGoRight: Bool { !isOn && !saved }
-    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 16, style: .continuous) }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: hero ? 22 : 16, style: .continuous) }
 
     var body: some View {
         content
@@ -568,10 +577,18 @@ private struct DeckTabCell: View {
     }
 
     private var card: some View {
-        DeckTabCard(episode: episode, place: place)
+        cardFace
             .scaleEffect(tossed ? 0.84 : 1)
             .offset(x: drag, y: tossed ? -12 : 0)
             .opacity(hidden || leaving ? 0 : 1)
+    }
+
+    @ViewBuilder private var cardFace: some View {
+        if hero {
+            DeckTabsHero(episode: episode)
+        } else {
+            DeckTabCard(episode: episode, place: place)
+        }
     }
 
     /// The block fades in over the first 30 pt (and out the same way as
@@ -580,7 +597,20 @@ private struct DeckTabCell: View {
         Double(min(1, abs(drag) / 30))
     }
 
-    private var closeButton: some View {
+    @ViewBuilder private var closeButton: some View {
+        if hero {
+            DeckTabsHeroPlay(episode: episode)
+                .padding(DeckTabsHero.playInset)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .offset(x: drag)
+                .opacity(hidden || leaving ? 0 : 1)
+                .allowsHitTesting(!hidden && !busy)
+        } else {
+            closeKey
+        }
+    }
+
+    private var closeKey: some View {
         Button(action: closeTapped) { DeckTabCloseGlyph() }
             .buttonStyle(.plain)
             .scaleEffect(tossed ? 0.84 : 1)
@@ -1102,4 +1132,86 @@ struct DeckCornerShadeLabel: View {
         .init(color: Color.black.opacity(0.34), location: 0.45),
         .init(color: Color.black.opacity(0), location: 1),
     ]
+}
+
+
+// MARK: - The hero card's cell (U1)
+
+/// The first tab, big, above the grid, with the same touches as the small
+/// ones (Paul, 21 Nov 2026): tap opens it, swipe left Played, swipe right
+/// Play next / Add to end (not for the one playing), hold for the menu.
+/// It isn't dragged into the grid.
+struct DeckTabsHeroCell: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    @Environment(DeckTabsModel.self) private var model
+    let episode: PodcastEpisode
+
+    @State private var menu = false
+    @State private var notes: PodcastEpisode?
+
+    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
+    private var playingID: String? { player.nowPlaying?.episodeID }
+
+    var body: some View {
+        DeckTabCell(episode: episode, place: nil, hidden: false, height: DeckTabsHero.height,
+                    hooks: DeckTabHooks(earlier: nil, later: nil, more: { menu = true }),
+                    hold: held,
+                    leave: { withAnimation(LibraryStore.listChange) { actions.close(episode) } },
+                    hero: true)
+            .id(episode.episodeID)
+            .confirmationDialog(episode.title, isPresented: $menu, titleVisibility: .visible) {
+                holdMenu
+            }
+            .sheet(item: $notes) { episode in EpisodeNotesView(episode: episode) }
+    }
+
+    private func held(_ touch: DeckTabTouch) {
+        if case .holdBegan = touch {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            menu = true
+        }
+    }
+
+    @ViewBuilder private var holdMenu: some View {
+        let on: Bool = episode.episodeID == playingID && player.isPlaying
+        Button(on ? "Pause" : "Play now") { actions.playNow(episode) }
+        if episode.episodeID != playingID {
+            Button("Play next") { actions.playNextInOrder(episode) }
+            Button("Add to end") { actions.addToEnd(episode) }
+        }
+        if actions.isQueued(episode) {
+            Button("Remove from Up next", role: .destructive) { actions.removeFromUpNext(episode) }
+        }
+        Button("Episode notes") { notes = episode }
+        Button("Cancel", role: .cancel) {}
+    }
+}
+
+/// A dashed "Find something" tile after the last tab (from the U1
+/// prototype): goes to Find.
+struct DeckTabsFindTile: View {
+    @Environment(\.deckOpenFind) private var openFind
+    var height: CGFloat
+
+    var body: some View {
+        Button(action: openFind) {
+            VStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 20, weight: .semibold))
+                Text("Find something")
+                    .font(Theme.outfit(12, .semibold))
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundStyle(Theme.muted)
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .background {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Theme.ink.opacity(0.18), style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 }
