@@ -16,6 +16,18 @@ private struct DeckOpenPlayerKey: EnvironmentKey {
     static let defaultValue: () -> Void = {}
 }
 
+/// Go to Find (the Tabs page's dashed "Find something" tile).
+private struct DeckOpenFindKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    var deckOpenFind: () -> Void {
+        get { self[DeckOpenFindKey.self] }
+        set { self[DeckOpenFindKey.self] = newValue }
+    }
+}
+
 extension EnvironmentValues {
     var deckOpenPlayer: () -> Void {
         get { self[DeckOpenPlayerKey.self] }
@@ -65,6 +77,7 @@ struct DeckRoot: View {
         .overlay(alignment: .bottom) { bottomFade }
         .overlay(alignment: .bottom) { bottom }
         .environment(\.deckOpenPlayer, openPlayer)
+        .environment(\.deckOpenFind, { tab = 2 })
         .environment(\.deckSelectTab, { tab = $0 })
         .environment(tabsModel)
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }

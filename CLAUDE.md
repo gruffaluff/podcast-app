@@ -3257,6 +3257,24 @@ Paul's notes after build 164:
   - Check on the phone: the hero on a small iPhone, three-across cards'
     text, dragging in the three-across grid, the island's keys' reach.
 
+## Done in build 173 (21 Nov 2026, PR #91; Paul: "Merge")
+
+- **Hero card works like the small tabs** (Paul, 21 Nov 2026, build 172
+  screenshot: "have the same actions as the smaller ones … remove that
+  played button. It's confusing"): the big first card uses the same
+  touch handler as the tabs (`DeckTabCell(hero: true)`, wrapped by
+  `DeckTabsHeroCell` in DeckTabsGrid.swift): tap opens its tab page,
+  swipe left Played (red block, flies off, Undo), swipe right Play next /
+  Add to end (not on the one playing), hold for the menu (Play now /
+  Pause, Play next, Add to end, Remove from Up next, Episode notes). The
+  ✓ Played pill is gone; the white play key stays, laid over the card
+  outside the touch handler (`DeckTabsHeroPlay`). It isn't dragged into
+  the grid.
+- **Dashed "Find something" tile** (Paul: "I thought we were adding a
+  dashed find something button", from the U1 prototype): always the last
+  slot under THEN, so with only one episode it shows on its own; tap goes
+  to Find (`DeckTabsFindTile`, `\.deckOpenFind`).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
