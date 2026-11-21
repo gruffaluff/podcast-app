@@ -3241,8 +3241,11 @@ Paul's notes after build 164:
   two floating pills (dark mini player + small word pill), B2 bar in the
   show's colour with progress along its top edge, B3 a raised ring in
   the middle (play / pause) with Tabs · Shows · Find · Settings round
-  it, B4 one slim dark island (ring, title, three icon keys). Waiting on
-  Paul's picks; nothing built.
+  it, B4 one slim dark island (ring, title, three icon keys). Paul (21
+  Nov 2026): not U4; U2 nice but no timetable pressure; B1 or B4 could
+  work. Both drawn over his real Up next screenshot (Elis James and John
+  Robins #594 playing, Straight Outta Cobham next), bottom row of the
+  same page. Waiting on his pick; nothing built.
 
 ## Queued for the next app build
 
