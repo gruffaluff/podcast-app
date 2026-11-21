@@ -57,11 +57,11 @@ struct DeckTabsBar: View {
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @Binding var tab: Int
 
-    /// What's playing on top, Tabs · Your shows · Find under it (Paul,
-    /// 16 Nov 2026, option A from the bottom-switcher mock-up).
-    static let rowHeight: CGFloat = 60
-    static let wordsHeight: CGFloat = 40
-    static let height: CGFloat = rowHeight + wordsHeight + 1
+    /// One slim dark island (Paul, 21 Nov 2026: "Go with U1 and the
+    /// island", B4 from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3):
+    /// the ring artwork (play / pause), title and time left (opens what's
+    /// playing), then Tabs (with the count), Your shows and Find as icons.
+    static let height: CGFloat = 66
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -80,23 +80,31 @@ struct DeckTabsBar: View {
     }
 
     private func bar(count: Int) -> some View {
-        VStack(spacing: 0) {
-            DeckTabsBarNow(count: count, open: openPlayer)
-                .padding(.horizontal, 8)
-                .frame(height: Self.rowHeight)
+        HStack(spacing: 0) {
+            DeckIslandNow(first: firstTab, open: openPlayer)
             Rectangle()
-                .fill(Theme.ink.opacity(0.08))
-                .frame(height: 1)
-            DeckBarSectionWords(current: tab, tabCount: sectionCount, select: select)
-                .frame(height: Self.wordsHeight)
+                .fill(Color.white.opacity(0.18))
+                .frame(width: 1, height: 30)
+                .padding(.trailing, 6)
+            DeckIslandKey(symbol: "square.grid.2x2", label: "Tabs", on: tab == 0,
+                          badge: sectionCount) { select(0) }
+            DeckIslandKey(symbol: "rectangle.stack", label: "Your shows", on: tab == 1) { select(1) }
+            DeckIslandKey(symbol: "magnifyingglass", label: "Find", on: tab == 2) { select(2) }
         }
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Theme.surface))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.ink.opacity(0.14), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.2), radius: 16, y: 8)
-        .shadow(color: Color.black.opacity(0.06), radius: 3, y: 1)
-        .padding(.horizontal, 16)
+        .padding(.leading, 8)
+        .padding(.trailing, 6)
+        .frame(height: Self.height)
+        .background(Capsule().fill(DeckIslandKey.ink))
+        .overlay(Capsule().strokeBorder(Color.white.opacity(ColourScheme.current.isDark ? 0.14 : 0), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.3), radius: 14, y: 12)
+        .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
+        .padding(.horizontal, 14)
         .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
+    }
+
+    /// The top of Up next, so the ring can start it when nothing's on.
+    private var firstTab: PodcastEpisode? {
+        DeckTabSource.upNext(store: store, player: player).first
     }
 
     /// Up next's length, the same count the words row always showed.
@@ -321,5 +329,129 @@ struct DeckTabGroupPill: View {
         case .previous:
             if at > 0 { choose(all[at - 1]) }
         }
+    }
+}
+
+
+/// The island's left part: ring artwork with play / pause over it, then the
+/// title and time left (tap for what's playing). With nothing on, the ring
+/// starts the top of Up next.
+private struct DeckIslandNow: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    let first: PodcastEpisode?
+    let open: () -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Button(action: playPause) {
+                ZStack {
+                    if let item = player.nowPlaying {
+                        DeckTabsBarRing(item: item)
+                    } else if let first {
+                        DeckRingArtwork(url: first.artwork, showTitle: first.showTitle, size: 44,
+                                        progress: DeckRing.progress(of: first), lineWidth: 3, gap: 2)
+                    } else {
+                        Circle().fill(Color.white.opacity(0.12)).frame(width: 44, height: 44)
+                    }
+                    Circle()
+                        .fill(Color.black.opacity(0.38))
+                        .frame(width: 34, height: 34)
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.white)
+                }
+                .frame(width: 50, height: 50)
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+            Button(action: { if player.nowPlaying != nil { open() } }) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(player.nowPlaying?.title ?? first?.title ?? "Nothing playing")
+                        .font(Theme.outfit(14, .bold))
+                        .foregroundStyle(Color.white)
+                        .lineLimit(1)
+                    DeckIslandTimeLeft(first: first)
+                }
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens its tab")
+        }
+    }
+
+    private func playPause() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        if player.nowPlaying != nil {
+            player.togglePlayPause()
+        } else if let first {
+            DeckQueueMoves(store: store, player: player).playNow(first)
+        }
+    }
+}
+
+/// "57m left" under the island's title, following the clock (only this).
+private struct DeckIslandTimeLeft: View {
+    @Environment(PlayerModel.self) private var player
+    let first: PodcastEpisode?
+
+    var body: some View {
+        Text(words)
+            .font(Theme.outfit(11, .medium))
+            .monospacedDigit()
+            .foregroundStyle(Color.white.opacity(0.6))
+            .lineLimit(1)
+    }
+
+    private var words: String {
+        if let item = player.nowPlaying {
+            guard player.duration > 0 else { return item.showTitle }
+            return DeckUpNextTime.length(max(0, player.duration - player.currentTime)) + " left"
+        }
+        guard let first else { return "Up next is empty" }
+        let left: TimeInterval = first.timeLeft ?? first.duration ?? 0
+        return left > 0 ? "Up first · " + DeckUpNextTime.length(left) : "Up first"
+    }
+}
+
+/// One of the island's page keys: a white icon, lit with a soft circle
+/// when it's the page showing; Tabs carries Up next's count in coral.
+private struct DeckIslandKey: View {
+    static let ink: Color = Color(red: 28 / 255, green: 27 / 255, blue: 26 / 255)
+
+    let symbol: String
+    let label: String
+    let on: Bool
+    var badge: Int = 0
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(on ? 1 : 0.65))
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(Color.white.opacity(on ? 0.16 : 0)))
+                .overlay(alignment: .topTrailing) {
+                    if badge > 0 {
+                        Text("\(min(badge, 99))")
+                            .font(Theme.outfit(10, .heavy))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.white)
+                            .padding(.horizontal, 4)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(Capsule().fill(DeckRings.coral))
+                            .offset(x: -2, y: 3)
+                    }
+                }
+                .contentShape(Circle())
+                .transaction { $0.animation = nil }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(badge > 0 ? label + ", \(badge)" : label)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }

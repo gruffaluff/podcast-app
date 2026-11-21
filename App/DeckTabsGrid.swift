@@ -28,6 +28,9 @@ struct DeckTabsGrid: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     let tabs: [PodcastEpisode]
+    /// Numbers start after this (1 when the hero above is Up next's first
+    /// and nothing is playing, so the grid starts at 2).
+    var placeOffset: Int = 0
 
     /// The tab being dragged, while it is.
     @State private var lift: DeckTabLift?
@@ -51,14 +54,19 @@ struct DeckTabsGrid: View {
 
     static let gap: CGFloat = 10
 
-    private static let columns: [GridItem] = [
-        GridItem(.flexible(), spacing: DeckTabsGrid.gap),
-        GridItem(.flexible(), spacing: DeckTabsGrid.gap),
-    ]
+    /// Three across under the hero card (Paul, 21 Nov 2026: U1 "now
+    /// playing hero" from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3).
+    static let columnCount: Int = 3
 
-    private var cardWidth: CGFloat { max(40, (width - Self.gap) / 2) }
+    private static let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: DeckTabsGrid.gap),
+                                                   count: DeckTabsGrid.columnCount)
+
+    private var cardWidth: CGFloat {
+        let n: CGFloat = CGFloat(Self.columnCount)
+        return max(40, (width - Self.gap * (n - 1)) / n)
+    }
     /// Every card the same height, so the slots can be worked out.
-    private var cardHeight: CGFloat { (cardWidth * 1.25).rounded() }
+    private var cardHeight: CGFloat { (cardWidth * 1.58).rounded() }
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var playingID: String? { player.nowPlaying?.episodeID }
 
@@ -254,7 +262,7 @@ struct DeckTabsGrid: View {
         guard model.group == .upNext else { return nil }
         let playing: String? = playingID
         if episode.episodeID == playing { return "Now" }
-        var number: Int = 0
+        var number: Int = placeOffset
         for tab in shown where tab.episodeID != playing {
             number += 1
             if tab.episodeID == episode.episodeID { return String(number) }
@@ -265,8 +273,8 @@ struct DeckTabsGrid: View {
     // MARK: Slots
 
     private func slotOrigin(_ slot: Int) -> CGPoint {
-        let column: Int = slot % 2
-        let row: Int = slot / 2
+        let column: Int = slot % Self.columnCount
+        let row: Int = slot / Self.columnCount
         return CGPoint(x: CGFloat(column) * (cardWidth + Self.gap), y: CGFloat(row) * (cardHeight + Self.gap))
     }
 
@@ -285,9 +293,9 @@ struct DeckTabsGrid: View {
         let start: CGPoint = slotOrigin(lift.startSlot)
         let midX: CGFloat = start.x + lift.translation.width + cardWidth / 2
         let midY: CGFloat = start.y + lift.translation.height + lift.shift + cardHeight / 2
-        let column: Int = midX < width / 2 ? 0 : 1
+        let column: Int = min(Self.columnCount - 1, max(0, Int((midX / (cardWidth + Self.gap)).rounded(.down))))
         let row: Int = max(0, Int((midY / (cardHeight + Self.gap)).rounded(.down)))
-        let index: Int = row * 2 + column - lift.lead
+        let index: Int = row * Self.columnCount + column - lift.lead
         return min(max(0, lift.order.count - 1), max(0, index))
     }
 
@@ -543,6 +551,8 @@ private struct DeckTabCell: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { model.open(episode.episodeID) }
             .accessibilityActions { voiceOverActions }
+            // A grid can hand back a cell it kept from before the close.
+            .onAppear { comeBack() }
     }
 
     private var content: some View {
@@ -688,6 +698,29 @@ private struct DeckTabCell: View {
         }
         withAnimation(.spring(duration: 0.34, bounce: 0.45)) { confirmed = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + time + 0.1) { leave() }
+        restoreIfStillHere(after: time + 1.4)
+    }
+
+    /// The tab came back after being closed (Undo, or added to Up next
+    /// again soon after; Paul, 21 Nov 2026: the slot showed the red
+    /// "Played" block with no card): put the card back in its slot
+    /// rather than leave it flown off.
+    private func restoreIfStillHere(after delay: Double) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { comeBack() }
+    }
+
+    private func comeBack() {
+        guard leaving || busy || drag != 0 || confirmed else { return }
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            confirmed = false
+            zone = .idle
+            tossed = false
+            drag = 0
+        }
+        withAnimation(.easeOut(duration: 0.25)) { leaving = false }
+        busy = false
     }
 
     /// ×: the card shrinks and fades where it is, then the grid closes up.
@@ -700,6 +733,7 @@ private struct DeckTabCell: View {
             tossed = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { leave() }
+        restoreIfStillHere(after: 1.6)
     }
 
     /// Springs back, then Up next changes (the grid glides it to its new
@@ -935,13 +969,13 @@ private struct DeckTabCard: View {
             HStack(spacing: 5) {
                 if fresh { newFlag }
                 Text(episode.showTitle.uppercased())
-                    .font(Theme.outfit(10, .bold))
+                    .font(Theme.outfit(9, .bold))
                     .tracking(0.6)
                     .foregroundStyle(Color.white.opacity(0.85))
                     .lineLimit(1)
             }
             Text(episode.title)
-                .font(Theme.outfit(14, .bold))
+                .font(Theme.outfit(13, .bold))
                 .foregroundStyle(Color.white)
                 .lineLimit(2, reservesSpace: true)
                 .multilineTextAlignment(.leading)
@@ -949,17 +983,17 @@ private struct DeckTabCard: View {
                 .padding(.top, 3)
         }
         .shadow(color: Color.black.opacity(0.28), radius: 2, y: 1)
-        .padding(.horizontal, 10)
-        .padding(.bottom, 10)
+        .padding(.horizontal, 9)
+        .padding(.bottom, 9)
     }
 
     private var timeRow: some View {
         HStack(spacing: 6) {
             DeckRing(progress: DeckRing.progress(of: episode), lineWidth: 2.5,
                      colour: Color.white, track: Color.white.opacity(0.3))
-                .frame(width: 16, height: 16)
+                .frame(width: 14, height: 14)
             Text(detail)
-                .font(Theme.outfit(11, .semibold))
+                .font(Theme.outfit(10.5, .semibold))
                 .monospacedDigit()
                 .foregroundStyle(Color.white.opacity(0.9))
                 .lineLimit(1)

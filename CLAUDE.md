@@ -3227,6 +3227,69 @@ Paul's notes after build 164:
   Now it's worked out again a second after Up Next or what's playing
   changes (with the widgets' update, `WidgetSync.schedule`).
 
+## Done in build 172 (21 Nov 2026, PR #90; Paul: "Go with U1 and the island, then build")
+
+- **Tab stuck as a red "Played" block** (Paul, 21 Nov 2026, screenshot:
+  marked an episode played with a swipe, added it back to Up next, and
+  its slot showed the red Played block with the ✓ and no card). The card
+  kept its "flown away" state when the same tab came back. Now a closed
+  tab that's still there 1.5 s later (Undo, added back, or a close that
+  didn't take) puts its card back in its slot, and a card shown again
+  starts fresh (`DeckTabCell.comeBack`).
+- **Up next as U1, the bar as one slim island** (Paul, 21 Nov 2026: "Go
+  with U1 and the island, then build", from
+  https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3). Tabs mode only.
+  - The first tab (the one playing, else the top of Up next) is one big
+    hero card (`App/DeckTabsHero.swift`): artwork fading into the show's
+    colour, PLAYING NOW / PAUSED / UP FIRST, ✓ Played (Undo), show,
+    title, a progress line with the time and time left, a big white
+    play / pause; tap the card for its tab page. Under it "THEN" and the
+    rest of Up next three across (`DeckTabsGrid.columnCount` 3, smaller
+    card text; numbers start at 1 after the one playing, or 2 when
+    nothing plays). Hold-and-drag, swipes and × work as before in the
+    grid; the hero itself isn't dragged.
+  - The bottom bar is one dark island 66 pt tall (`DeckTabsBar`): ring
+    artwork with play / pause on it (with nothing on it starts the top
+    of Up next), title and time left (tap for what's playing), then
+    Tabs (coral count), Your shows and Find as white icons, the page
+    showing lit with a soft circle. Swipes along / up the bar as before.
+    Card deck mode unchanged.
+  - Check on the phone: the hero on a small iPhone, three-across cards'
+    text, dragging in the three-across grid, the island's keys' reach.
+
+## Finishing touches: looks to choose from (21 Nov 2026)
+
+- Paul (21 Nov 2026): happy with how everything works; wants a few
+  different looks for Up next and the bottom bar, as a final beautiful
+  touch. Mock-ups: https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
+  (today's look first in each row). Up next: U1 now playing hero (the
+  playing episode as one big card with progress and play, the rest three
+  across with start times; the bar keeps only the words), U2 evening
+  timeline (start times down a line, wide cards), U3 fanned tab stack
+  (Safari-style overlapping cards), U4 white label cards (artwork inside
+  a white card with the title on white, like a cassette label). Bar: B1
+  two floating pills (dark mini player + small word pill), B2 bar in the
+  show's colour with progress along its top edge, B3 a raised ring in
+  the middle (play / pause) with Tabs · Shows · Find · Settings round
+  it, B4 one slim dark island (ring, title, three icon keys). Paul (21
+  Nov 2026): not U4; U2 nice but no timetable pressure; B1 or B4 could
+  work. Both drawn over his real Up next screenshot (Elis James and John
+  Robins #594 playing, Straight Outta Cobham next), bottom row of the
+  same page. Then (Paul: try the other U ideas with the real example;
+  a timeline without start times): bottom row of the same page, with
+  his two real episodes: U1 hero (words pill only), U3 fanned stack (B4
+  island), U2 as an order rail (Now / Next dots on a line, the playing
+  dot fills as you listen, "about 1h 56m of listening", no clock), and
+  U2 as lengths on a tape (one bar across the top split by episode in
+  each show's colour, each card with a length bar). Paul (21 Nov
+  2026): likes U1 and U3 (fanned stack; he first wrote U2 by mistake),
+  each with the one slim island; asked for a usable prototype of each
+  (the U2 rail one stays on the page too). Two tappable boards at the foot
+  of the same page (play / pause on the card and the island, progress
+  runs 10× fast, tap another card to play it, mark played with a 6 s
+  Undo, island icons switch Tabs / Your shows / Find, the tab count
+  badge). **Paul picked U1 with the island** (21 Nov 2026): build 172.
+
 ## Queued for the next app build
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
