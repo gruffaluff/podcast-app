@@ -3236,6 +3236,26 @@ Paul's notes after build 164:
   tab that's still there 1.5 s later (Undo, added back, or a close that
   didn't take) puts its card back in its slot, and a card shown again
   starts fresh (`DeckTabCell.comeBack`).
+- **Up next as U1, the bar as one slim island** (Paul, 21 Nov 2026: "Go
+  with U1 and the island, then build", from
+  https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3). Tabs mode only.
+  - The first tab (the one playing, else the top of Up next) is one big
+    hero card (`App/DeckTabsHero.swift`): artwork fading into the show's
+    colour, PLAYING NOW / PAUSED / UP FIRST, ✓ Played (Undo), show,
+    title, a progress line with the time and time left, a big white
+    play / pause; tap the card for its tab page. Under it "THEN" and the
+    rest of Up next three across (`DeckTabsGrid.columnCount` 3, smaller
+    card text; numbers start at 1 after the one playing, or 2 when
+    nothing plays). Hold-and-drag, swipes and × work as before in the
+    grid; the hero itself isn't dragged.
+  - The bottom bar is one dark island 66 pt tall (`DeckTabsBar`): ring
+    artwork with play / pause on it (with nothing on it starts the top
+    of Up next), title and time left (tap for what's playing), then
+    Tabs (coral count), Your shows and Find as white icons, the page
+    showing lit with a soft circle. Swipes along / up the bar as before.
+    Card deck mode unchanged.
+  - Check on the phone: the hero on a small iPhone, three-across cards'
+    text, dragging in the three-across grid, the island's keys' reach.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
@@ -3268,7 +3288,7 @@ Paul's notes after build 164:
   of the same page (play / pause on the card and the island, progress
   runs 10× fast, tap another card to play it, mark played with a 6 s
   Undo, island icons switch Tabs / Your shows / Find, the tab count
-  badge). Waiting on his pick; nothing built.
+  badge). **Paul picked U1 with the island** (21 Nov 2026): build 172.
 
 ## Queued for the next app build
 
