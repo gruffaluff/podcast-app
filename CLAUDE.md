@@ -3262,8 +3262,9 @@ Paul's notes after build 164:
   dot fills as you listen, "about 1h 56m of listening", no clock), and
   U2 as lengths on a tape (one bar across the top split by episode in
   each show's colour, each card with a length bar). Paul (21 Nov
-  2026): likes U1 and U2 (order rail), each with the one slim island;
-  asked for a usable prototype of each. Two tappable boards at the foot
+  2026): likes U1 and U3 (fanned stack; he first wrote U2 by mistake),
+  each with the one slim island; asked for a usable prototype of each
+  (the U2 rail one stays on the page too). Two tappable boards at the foot
   of the same page (play / pause on the card and the island, progress
   runs 10× fast, tap another card to play it, mark played with a 6 s
   Undo, island icons switch Tabs / Your shows / Find, the tab count
