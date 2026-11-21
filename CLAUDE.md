@@ -3209,7 +3209,7 @@ Paul's notes after build 164:
     (`Theme.switchOn`; Settings, show settings, the tab page, Keep
     playing, Options with nothing playing). Done keys stay ink.
 
-## On the branch for build 171 (20 Nov 2026; not built yet)
+## Done in build 171 (21 Nov 2026, PR #89; Paul: "Go")
 
 - **Old Undo coming back** (Paul, 20 Nov 2026: swiped an episode away as
   played, hours later opened the player and its Undo was still there).
