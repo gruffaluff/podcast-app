@@ -3255,7 +3255,14 @@ Paul's notes after build 164:
   Nov 2026): not U4; U2 nice but no timetable pressure; B1 or B4 could
   work. Both drawn over his real Up next screenshot (Elis James and John
   Robins #594 playing, Straight Outta Cobham next), bottom row of the
-  same page. Waiting on his pick; nothing built.
+  same page. Then (Paul: try the other U ideas with the real example;
+  a timeline without start times): bottom row of the same page, with
+  his two real episodes: U1 hero (words pill only), U3 fanned stack (B4
+  island), U2 as an order rail (Now / Next dots on a line, the playing
+  dot fills as you listen, "about 1h 56m of listening", no clock), and
+  U2 as lengths on a tape (one bar across the top split by episode in
+  each show's colour, each card with a length bar). Waiting on his
+  pick; nothing built.
 
 ## Queued for the next app build
 
