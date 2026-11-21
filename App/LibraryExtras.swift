@@ -6,6 +6,9 @@ import PodcastCore
 /// Something Paul just did that an Undo bar can reverse.
 struct UndoAction: Identifiable {
     let id = UUID()
+    /// When it was offered; it's dropped `lifetime` seconds later.
+    let made = Date()
+    static let lifetime: TimeInterval = 6
     let label: String
     let restore: @MainActor () -> Void
     /// A second, smaller line under the label (Deck), e.g. why show order

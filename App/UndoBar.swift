@@ -56,10 +56,8 @@ struct UndoBar: View {
         .compositingGroup()
         .shadow(color: .black.opacity(0.38), radius: 18, y: 8)
         .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
-        .task(id: action.id) {
-            do { try await Task.sleep(for: .seconds(6)) } catch { return }
-            if store.undoAction?.id == action.id { store.undoAction = nil }
-        }
+        // The store clears it after 6 s (`LibraryStore.undoAction`), even
+        // when this bar isn't on screen.
     }
 
     /// Paul, 16 Nov 2026: the near-black bar got "a bit lost on dark

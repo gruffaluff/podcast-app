@@ -56,6 +56,12 @@ final class WidgetSync {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             await self?.write()
+            // The app icon's number follows Up Next too (Paul, 20 Nov 2026:
+            // it said 2 after an episode finished and the next began; it was
+            // only worked out on opening / leaving the app and after feed
+            // checks, so a change while the app was in the background, or
+            // just before leaving, could leave it a step behind).
+            if let store = self?.store { AppBadge.update(store: store) }
         }
     }
 

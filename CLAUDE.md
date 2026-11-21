@@ -3209,6 +3209,24 @@ Paul's notes after build 164:
     (`Theme.switchOn`; Settings, show settings, the tab page, Keep
     playing, Options with nothing playing). Done keys stay ink.
 
+## Done in build 171 (21 Nov 2026, PR #89; Paul: "Go")
+
+- **Old Undo coming back** (Paul, 20 Nov 2026: swiped an episode away as
+  played, hours later opened the player and its Undo was still there).
+  The 6-second timer lived in the Undo bar itself, so when the bar left
+  the screen (closing the app, switching page) the timer stopped and the
+  Undo was never cleared; the next screen with an Undo bar showed it
+  again. Now the store clears it 6 s after it's offered whatever is on
+  screen (`LibraryStore.undoAction` / `UndoAction.made`), leaving the app
+  clears it, and coming back drops any that's past its 6 s.
+- **App icon badge a step behind** (Paul, 20 Nov 2026: finished an
+  episode, the next started, left the app: the icon still said 2 until he
+  opened it again). The number was only worked out on opening / leaving
+  the app and after a feed check, so Up Next changing in the background
+  (an episode finishing on the lock screen, in the car) left it stale.
+  Now it's worked out again a second after Up Next or what's playing
+  changes (with the widgets' update, `WidgetSync.schedule`).
+
 ## Queued for the next app build
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
