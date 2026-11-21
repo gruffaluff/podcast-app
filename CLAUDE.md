@@ -3227,6 +3227,23 @@ Paul's notes after build 164:
   Now it's worked out again a second after Up Next or what's playing
   changes (with the widgets' update, `WidgetSync.schedule`).
 
+## Finishing touches: looks to choose from (21 Nov 2026)
+
+- Paul (21 Nov 2026): happy with how everything works; wants a few
+  different looks for Up next and the bottom bar, as a final beautiful
+  touch. Mock-ups: https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
+  (today's look first in each row). Up next: U1 now playing hero (the
+  playing episode as one big card with progress and play, the rest three
+  across with start times; the bar keeps only the words), U2 evening
+  timeline (start times down a line, wide cards), U3 fanned tab stack
+  (Safari-style overlapping cards), U4 white label cards (artwork inside
+  a white card with the title on white, like a cassette label). Bar: B1
+  two floating pills (dark mini player + small word pill), B2 bar in the
+  show's colour with progress along its top edge, B3 a raised ring in
+  the middle (play / pause) with Tabs · Shows · Find · Settings round
+  it, B4 one slim dark island (ring, title, three icon keys). Waiting on
+  Paul's picks; nothing built.
+
 ## Queued for the next app build
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
