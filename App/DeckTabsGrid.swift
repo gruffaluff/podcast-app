@@ -543,6 +543,8 @@ private struct DeckTabCell: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { model.open(episode.episodeID) }
             .accessibilityActions { voiceOverActions }
+            // A grid can hand back a cell it kept from before the close.
+            .onAppear { comeBack() }
     }
 
     private var content: some View {
@@ -688,6 +690,29 @@ private struct DeckTabCell: View {
         }
         withAnimation(.spring(duration: 0.34, bounce: 0.45)) { confirmed = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + time + 0.1) { leave() }
+        restoreIfStillHere(after: time + 1.4)
+    }
+
+    /// The tab came back after being closed (Undo, or added to Up next
+    /// again soon after; Paul, 21 Nov 2026: the slot showed the red
+    /// "Played" block with no card): put the card back in its slot
+    /// rather than leave it flown off.
+    private func restoreIfStillHere(after delay: Double) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { comeBack() }
+    }
+
+    private func comeBack() {
+        guard leaving || busy || drag != 0 || confirmed else { return }
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            confirmed = false
+            zone = .idle
+            tossed = false
+            drag = 0
+        }
+        withAnimation(.easeOut(duration: 0.25)) { leaving = false }
+        busy = false
     }
 
     /// ×: the card shrinks and fades where it is, then the grid closes up.
@@ -700,6 +725,7 @@ private struct DeckTabCell: View {
             tossed = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { leave() }
+        restoreIfStillHere(after: 1.6)
     }
 
     /// Springs back, then Up next changes (the grid glides it to its new

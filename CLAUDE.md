@@ -3227,6 +3227,16 @@ Paul's notes after build 164:
   Now it's worked out again a second after Up Next or what's playing
   changes (with the widgets' update, `WidgetSync.schedule`).
 
+## On the branch for build 172 (21 Nov 2026; not built yet)
+
+- **Tab stuck as a red "Played" block** (Paul, 21 Nov 2026, screenshot:
+  marked an episode played with a swipe, added it back to Up next, and
+  its slot showed the red Played block with the ✓ and no card). The card
+  kept its "flown away" state when the same tab came back. Now a closed
+  tab that's still there 1.5 s later (Undo, added back, or a close that
+  didn't take) puts its card back in its slot, and a card shown again
+  starts fresh (`DeckTabCell.comeBack`).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
