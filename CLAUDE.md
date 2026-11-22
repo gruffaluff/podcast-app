@@ -3275,7 +3275,7 @@ Paul's notes after build 164:
   slot under THEN, so with only one episode it shows on its own; tap goes
   to Find (`DeckTabsFindTile`, `\.deckOpenFind`).
 
-## On the branch for build 174 (22 Nov 2026; not built yet)
+## Done in build 174 (22 Nov 2026, PR #92; Paul: "Yes")
 
 - **Player: ring to look at, line under your thumb, colour sweep**
   (Paul, 22 Nov 2026, option 2: dragging round the dial was hard
