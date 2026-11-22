@@ -3313,6 +3313,19 @@ Paul's notes after build 164:
   of words, Tabs · n / Shows / Find, the page showing in an ink capsule;
   swipes along / up it as before (`DeckBarDisc`, `DeckBarWords` in
   DeckTabsBar.swift; bar 70 pt).
+- **Player: big time with chapter and time-left pills** (Paul, 22 Nov
+  2026: "v1 with the chapter and ends from v2 but instead of end time
+  it's remaining time", from the V1–V3 boards on the finishing-touches
+  page). Both players, while listening: under the title the time played
+  big (Outfit 60 heavy), then two pills: the chapter ("2/5 · Comfort
+  darts", tap for chapters; "No chapters · Make them ›" or Skip ad as
+  before) and "57m left" at your speed (the drag's "Half speed" while
+  scrubbing) (`DeckBigReadout`, `DeckChapterRow(compact:)`). Then the
+  line, then deck keys: the skips as soft square keys, play in a ring
+  that fills as you listen (`DeckPlayerTransport`). The ‹ › chapter
+  arrows and the small times row are gone while listening (chapters skip
+  from the chapters sheet, headphones and the lock screen); Read along
+  keeps its chapter row and small times under the line.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
@@ -3375,7 +3388,8 @@ Paul's notes after build 164:
   (no ring, the whole picture fills with colour), Q4 tape-deck counter;
   bars M1 today's island with the sweep, M2 the island itself fills in
   the show's colour, M3 a big play disc + a word pill, M4 full-width bar
-  with a colour line along the top. Waiting on Paul.
+  with a colour line along the top. **Paul: M3 disc and pill**; for the
+  player, V1 with V2's pills (time left instead of ends): build 174.
 
 ## Queued for the next app build
 

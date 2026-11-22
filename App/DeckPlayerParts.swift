@@ -15,8 +15,19 @@ struct DeckChapterRow: View {
     @Environment(PlayerModel.self) private var player
     @Environment(TranscriptService.self) private var transcripts
     let openChapters: () -> Void
+    /// Just the pill, no ‹ › (under the big time readout).
+    var compact: Bool = false
 
     var body: some View {
+        if compact {
+            middle
+                .animation(.easeOut(duration: 0.25), value: player.currentAd?.start)
+        } else {
+            row
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: 0) {
             if !player.chapters.isEmpty {
                 arrow("chevron.left", label: "Previous chapter", enabled: true) { player.previousChapter() }
@@ -373,25 +384,37 @@ private struct DeckPlayerLine: View, Animatable {
 struct DeckPlayerTransport: View {
     @Environment(PlayerModel.self) private var player
 
+    /// Deck keys (Paul, 22 Nov 2026, V1): the skips as soft square keys,
+    /// play in a ring that fills as you listen.
     var body: some View {
-        HStack(spacing: 40) {
-            SkipButton(direction: .back, iconSize: 30, frame: 56)
+        HStack(spacing: 36) {
+            skipKey(.back)
             playKey
-            SkipButton(direction: .forward, iconSize: 30, frame: 56)
+            skipKey(.forward)
         }
         .frame(maxWidth: .infinity)
     }
 
+    private func skipKey(_ direction: SkipButton.Direction) -> some View {
+        SkipButton(direction: direction, iconSize: 26, frame: 58)
+            .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(Color.white.opacity(0.12)))
+    }
+
     private var playKey: some View {
         Button { player.togglePlayPause() } label: {
-            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: 30, weight: .semibold))
-                .foregroundStyle(DeckPlayerColours.ink)
-                .offset(x: player.isPlaying ? 0 : 2)
-                .frame(width: 76, height: 76)
-                .background(Circle().fill(Color.white))
-                .shadow(color: Color.black.opacity(0.25), radius: 14, y: 8)
-                .contentShape(Circle())
+            ZStack {
+                DeckRing(progress: player.duration > 0 ? player.currentTime / player.duration : 0,
+                         lineWidth: 4, colour: Color.white, track: Color.white.opacity(0.22))
+                    .frame(width: 90, height: 90)
+                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(DeckPlayerColours.ink)
+                    .offset(x: player.isPlaying ? 0 : 2)
+                    .frame(width: 76, height: 76)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: Color.black.opacity(0.25), radius: 14, y: 8)
+            }
+            .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
@@ -480,5 +503,48 @@ struct DeckAirPlayButton: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Playing on \(device ?? "iPhone"). Choose another device")
             .accessibilityAddTraits(.isButton)
+    }
+}
+
+
+// MARK: - Big time readout
+
+/// The time played, big, with the chapter and the time left as two pills
+/// under it (Paul, 22 Nov 2026: "v1 with the chapter and ends from v2 but
+/// instead of end time it's remaining time"). Follows the progress line
+/// while it's dragged.
+struct DeckBigReadout: View {
+    @Environment(PlayerModel.self) private var player
+    let scrub: DeckDialScrub
+    let openChapters: () -> Void
+
+    static let height: CGFloat = 62 + 10 + 32
+
+    var body: some View {
+        let shown: TimeInterval = scrub.time ?? player.currentTime
+        let left: TimeInterval = max(0, player.duration - shown) / max(player.speed, 0.5)
+        VStack(spacing: 10) {
+            Text(TimeFormat.clock(shown))
+                .font(Theme.outfit(60, .heavy))
+                .tracking(-2)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(height: 62)
+                .accessibilityLabel("Played \(TimeFormat.clock(shown))")
+            HStack(spacing: 8) {
+                DeckChapterRow(openChapters: openChapters, compact: true)
+                Text(scrub.hint ?? DeckUpNextTime.length(left) + " left")
+                    .font(Theme.outfit(13, .semibold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .frame(height: 32)
+                    .background(Capsule().fill(Color.white.opacity(0.16)))
+                    .fixedSize()
+            }
+            .frame(height: 32)
+        }
+        .frame(maxWidth: .infinity)
     }
 }

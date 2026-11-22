@@ -220,7 +220,7 @@ private struct DeckTabPlayerSection: View {
     /// Room left for the dial once everything else has its place (the
     /// times row is 26 pt with its bigger numbers).
     private var side: CGFloat {
-        let fixed: CGFloat = 44 + 92 + 38 + DeckPlayerScrub.height + 2 + DeckDialTimes.height + 86 + 68 + (volume ? 34 : 0) + 40
+        let fixed: CGFloat = 44 + 92 + DeckBigReadout.height + 12 + DeckPlayerScrub.height + 14 + 90 + 68 + (volume ? 34 : 0) + 40
         return max(120, min(width - 72, height - fixed))
     }
 
@@ -325,7 +325,6 @@ private struct DeckTabPlayerSection: View {
     private func controls(_ now: PlayerModel.NowPlaying?) -> some View {
         VStack(spacing: 0) {
             chapterRow(now)
-                .padding(.bottom, 6)
             times(now)
             transport(now)
                 .padding(.top, 10)
@@ -341,10 +340,17 @@ private struct DeckTabPlayerSection: View {
     }
 
     @ViewBuilder private func chapterRow(_ now: PlayerModel.NowPlaying?) -> some View {
-        if now != nil {
+        if now != nil, !reading {
+            // Listening: the big time with the chapter and time-left pills
+            // (Paul, 22 Nov 2026, V1).
+            DeckBigReadout(scrub: dialScrub, openChapters: { showingChapters = true })
+                .padding(.bottom, 12)
+        } else if now != nil {
             DeckChapterRow(openChapters: { showingChapters = true })
+                .padding(.bottom, 6)
         } else {
             Color.clear.frame(height: 32)
+                .padding(.bottom, 6)
         }
     }
 
@@ -359,7 +365,9 @@ private struct DeckTabPlayerSection: View {
             VStack(spacing: 2) {
                 DeckPlayerScrub(shared: dialScrub)
                     .keepingOut("scrub", in: $keepOut)
-                DeckDialTimes(scrub: dialScrub, compact: reading)
+                if reading {
+                    DeckDialTimes(scrub: dialScrub, compact: true)
+                }
             }
         }
     }
