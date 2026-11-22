@@ -17,11 +17,17 @@ struct DeckChapterRow: View {
     let openChapters: () -> Void
     /// Just the pill, no ‹ › (under the big time readout).
     var compact: Bool = false
+    /// One full-width bar with ‹ › at its ends (Paul, 22 Nov 2026, T1).
+    var wide: Bool = false
 
     var body: some View {
         if compact {
             middle
                 .animation(.easeOut(duration: 0.25), value: player.currentAd?.start)
+        } else if wide {
+            row
+                .frame(height: 40)
+                .background(Capsule().fill(Color.white.opacity(0.14)))
         } else {
             row
         }
@@ -92,7 +98,7 @@ struct DeckChapterRow: View {
             .truncationMode(.tail)
             .padding(.horizontal, 12)
             .frame(height: 32)
-            .background(Capsule().fill(Color.white.opacity(0.16)))
+            .background(Capsule().fill(Color.white.opacity(wide ? 0 : 0.16)))
     }
 
     private func arrow(_ icon: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -516,12 +522,14 @@ struct DeckBigReadout: View {
     let scrub: DeckDialScrub
     let openChapters: () -> Void
 
-    static let height: CGFloat = 62 + 10 + 32
+    /// T1 (Paul, 22 Nov 2026): the time, a small "54m left" pill under it,
+    /// then the chapter on its own as a full-width bar with ‹ ›.
+    static let height: CGFloat = 62 + 6 + 24 + 12 + 40
 
     var body: some View {
         let shown: TimeInterval = scrub.time ?? player.currentTime
         let left: TimeInterval = max(0, player.duration - shown) / max(player.speed, 0.5)
-        VStack(spacing: 10) {
+        VStack(spacing: 0) {
             Text(TimeFormat.clock(shown))
                 .font(Theme.outfit(60, .heavy))
                 .tracking(-2)
@@ -530,18 +538,17 @@ struct DeckBigReadout: View {
                 .minimumScaleFactor(0.6)
                 .frame(height: 62)
                 .accessibilityLabel("Played \(TimeFormat.clock(shown))")
-            HStack(spacing: 8) {
-                DeckChapterRow(openChapters: openChapters, compact: true)
-                Text(scrub.hint ?? DeckUpNextTime.length(left) + " left")
-                    .font(Theme.outfit(13, .semibold))
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .frame(height: 32)
-                    .background(Capsule().fill(Color.white.opacity(0.16)))
-                    .fixedSize()
-            }
-            .frame(height: 32)
+            Text(scrub.hint ?? DeckUpNextTime.length(left) + " left")
+                .font(Theme.outfit(12, .bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .padding(.horizontal, 10)
+                .frame(height: 24)
+                .background(Capsule().fill(Color.white.opacity(0.14)))
+                .fixedSize()
+                .padding(.top, 6)
+            DeckChapterRow(openChapters: openChapters, wide: true)
+                .padding(.top, 12)
         }
         .frame(maxWidth: .infinity)
     }

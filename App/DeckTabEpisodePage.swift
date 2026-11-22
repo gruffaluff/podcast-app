@@ -741,7 +741,7 @@ private struct DeckTabRestingReadout: View {
     var body: some View {
         let duration: TimeInterval = episode.duration ?? 0
         let at: TimeInterval = episode.played ? 0 : min(episode.position, duration > 0 ? duration : episode.position)
-        VStack(spacing: 10) {
+        VStack(spacing: 6) {
             Text(TimeFormat.clock(at))
                 .font(Theme.outfit(60, .heavy))
                 .tracking(-2)
@@ -751,12 +751,12 @@ private struct DeckTabRestingReadout: View {
                 .frame(height: 62)
                 .opacity(0.55)
             Text(words(at: at, duration: duration))
-                .font(Theme.outfit(13, .semibold))
+                .font(Theme.outfit(12, .bold))
                 .monospacedDigit()
                 .lineLimit(1)
-                .padding(.horizontal, 12)
-                .frame(height: 32)
-                .background(Capsule().fill(Color.white.opacity(0.16)))
+                .padding(.horizontal, 10)
+                .frame(height: 24)
+                .background(Capsule().fill(Color.white.opacity(0.14)))
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)

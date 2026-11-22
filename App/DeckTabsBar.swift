@@ -473,6 +473,22 @@ private struct DeckBarDisc: View {
         .frame(width: Self.size, height: Self.size)
         .contentShape(Circle())
         .onTapGesture { playPause() }
+        // G3 (Paul, 22 Nov 2026): swipe the disc up for the player, like
+        // Apple Music; a small handle above it says so.
+        .gesture(DragGesture(minimumDistance: 12).onEnded { value in
+            guard value.translation.height < -30, abs(value.translation.width) < abs(value.translation.height),
+                  player.nowPlaying != nil else { return }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            open()
+        })
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(Theme.ink.opacity(0.3))
+                .frame(width: 22, height: 4)
+                .offset(y: -12)
+                .opacity(player.nowPlaying == nil ? 0 : 1)
+                .allowsHitTesting(false)
+        }
         .onLongPressGesture(minimumDuration: 0.35) {
             guard player.nowPlaying != nil else { return }
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -482,7 +498,7 @@ private struct DeckBarDisc: View {
         .accessibilityLabel(player.nowPlaying?.title ?? first?.title ?? "Nothing playing")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { playPause() }
-        .accessibilityAction(named: "Open") { if player.nowPlaying != nil { open() } }
+        .accessibilityAction(named: "Open player") { if player.nowPlaying != nil { open() } }
     }
 
     @ViewBuilder private var art: some View {

@@ -3347,6 +3347,14 @@ Paul's notes after build 164:
     17m" or "54m left"), its progress as a still line, the square skip
     keys dimmed and the white Play (`DeckTabRestingReadout`,
     `DeckTabRestingLine`, `DeckTabRestingTransport`).
+- **Bar: swipe the disc up for the player** (Paul, 22 Nov 2026: G3):
+  tap still plays / pauses; a quick upward swipe on the disc (or touch
+  and hold) opens what's playing; a small handle sits above the disc
+  while something's on (`DeckBarDisc`).
+- **Readout T1** (Paul, 22 Nov 2026): the big time, a small "54m left"
+  pill under it, then the chapter on its own as a full-width bar with
+  ‹ › at its ends (`DeckBigReadout`, `DeckChapterRow(wide:)`); the resting
+  tab page's pill is the same small size.
 - **Asked, mocked, waiting on Paul** (bottom of
   https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3):
   - No way to the player from the bar now (the disc only plays /
@@ -3362,6 +3370,9 @@ Paul's notes after build 164:
     (playing one in its colour), K3 two across with Now spanning the row;
     without cards L1 plain list with round artwork and hairlines, L2 big
     numbers and show-colour dots, L3 artwork mosaic with words under.
+    **Paul: G3, T1** (22 Nov 2026, built above); Up next: K1, K2 and L2
+    the strongest; asked whether L2 works with Your shows as cards, and
+    to see Your shows done in a similar (not identical) way.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
