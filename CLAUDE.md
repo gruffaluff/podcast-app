@@ -3362,6 +3362,12 @@ Paul's notes after build 164:
   the queue as a shelf of discs that fill with colour). **Paul: I1 + I3**
   (22 Nov 2026), in build 174; asked for more player display and menu
   bar options.
+  More options on the same page: player Q1 the line being said under the
+  title, Q2 info strip (chapter, ends, speed, sleep), Q3 edge to edge
+  (no ring, the whole picture fills with colour), Q4 tape-deck counter;
+  bars M1 today's island with the sweep, M2 the island itself fills in
+  the show's colour, M3 a big play disc + a word pill, M4 full-width bar
+  with a colour line along the top. Waiting on Paul.
 
 ## Queued for the next app build
 
