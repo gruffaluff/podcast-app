@@ -3305,6 +3305,14 @@ Paul's notes after build 164:
     a little quieter (`DeckShowTile.art`).
   - Check on the phone: a whole Up next of untouched episodes looks grey
     (that's the idea, but say if it's too dull), the coral NEW still reads.
+- **Bottom bar: disc and pill** (Paul, 22 Nov 2026: "I quite like disc
+  and pill", M3): the dark island is gone. Left, a 70 pt round disc: what's
+  playing (or the top of Up next) with its ring and the colour sweeping
+  in, play / pause on it; tap plays or pauses, touch and hold opens its
+  tab (the hero card and its tab still open it too). Right, a white pill
+  of words, Tabs · n / Shows / Find, the page showing in an ink capsule;
+  swipes along / up it as before (`DeckBarDisc`, `DeckBarWords` in
+  DeckTabsBar.swift; bar 70 pt).
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 

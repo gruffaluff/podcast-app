@@ -57,11 +57,13 @@ struct DeckTabsBar: View {
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @Binding var tab: Int
 
-    /// One slim dark island (Paul, 21 Nov 2026: "Go with U1 and the
-    /// island", B4 from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3):
-    /// the ring artwork (play / pause), title and time left (opens what's
-    /// playing), then Tabs (with the count), Your shows and Find as icons.
-    static let height: CGFloat = 66
+    /// A big play disc and a pill of words (Paul, 22 Nov 2026: "I quite
+    /// like disc and pill", M3 from
+    /// https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3): the disc is
+    /// what's playing (its artwork filling with colour as you listen, a
+    /// ring round it); tap to play / pause, touch and hold to open it.
+    /// The pill is Tabs · n, Shows and Find.
+    static let height: CGFloat = 70
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -80,26 +82,13 @@ struct DeckTabsBar: View {
     }
 
     private func bar(count: Int) -> some View {
-        HStack(spacing: 0) {
-            DeckIslandNow(first: firstTab, open: openPlayer)
-            Rectangle()
-                .fill(Color.white.opacity(0.18))
-                .frame(width: 1, height: 30)
-                .padding(.trailing, 6)
-            DeckIslandKey(symbol: "square.grid.2x2", label: "Tabs", on: tab == 0,
-                          badge: sectionCount) { select(0) }
-            DeckIslandKey(symbol: "rectangle.stack", label: "Your shows", on: tab == 1) { select(1) }
-            DeckIslandKey(symbol: "magnifyingglass", label: "Find", on: tab == 2) { select(2) }
+        HStack(spacing: 12) {
+            DeckBarDisc(first: firstTab, open: openPlayer)
+            DeckBarWords(current: tab, count: sectionCount, select: select)
+                .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
         }
-        .padding(.leading, 8)
-        .padding(.trailing, 6)
         .frame(height: Self.height)
-        .background(Capsule().fill(DeckIslandKey.ink))
-        .overlay(Capsule().strokeBorder(Color.white.opacity(ColourScheme.current.isDark ? 0.14 : 0), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.3), radius: 14, y: 12)
-        .shadow(color: Color.black.opacity(0.08), radius: 3, y: 1)
-        .padding(.horizontal, 14)
-        .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
+        .padding(.horizontal, 16)
     }
 
     /// The top of Up next, so the ring can start it when nothing's on.
@@ -452,6 +441,123 @@ private struct DeckIslandKey: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(badge > 0 ? label + ", \(badge)" : label)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
+
+/// The bar's play disc: what's playing (or the top of Up next) as round
+/// artwork in a ring, the colour sweeping in as you listen, with play /
+/// pause on it. Tap plays or pauses; touch and hold opens its tab.
+private struct DeckBarDisc: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(PlayerModel.self) private var player
+    let first: PodcastEpisode?
+    let open: () -> Void
+
+    private static let size: CGFloat = 70
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(DeckIslandKey.ink)
+                .shadow(color: Color.black.opacity(0.28), radius: 12, y: 8)
+            art
+            Circle()
+                .fill(Color.black.opacity(0.32))
+                .frame(width: 40, height: 40)
+            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 17))
+                .foregroundStyle(Color.white)
+        }
+        .frame(width: Self.size, height: Self.size)
+        .contentShape(Circle())
+        .onTapGesture { playPause() }
+        .onLongPressGesture(minimumDuration: 0.35) {
+            guard player.nowPlaying != nil else { return }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            open()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(player.nowPlaying?.title ?? first?.title ?? "Nothing playing")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { playPause() }
+        .accessibilityAction(named: "Open") { if player.nowPlaying != nil { open() } }
+    }
+
+    @ViewBuilder private var art: some View {
+        if let item = player.nowPlaying {
+            DeckBarDiscLive(item: item, size: Self.size - 6)
+        } else if let first {
+            DeckRingArtwork(url: first.artwork, showTitle: first.showTitle, size: Self.size - 6,
+                            progress: DeckRing.progress(of: first), lineWidth: 3.5, gap: 3,
+                            colour: Color.white, track: Color.white.opacity(0.2), sweep: true)
+        } else {
+            Circle().fill(Color.white.opacity(0.12)).frame(width: Self.size - 14, height: Self.size - 14)
+        }
+    }
+
+    private func playPause() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        if player.nowPlaying != nil {
+            player.togglePlayPause()
+        } else if let first {
+            DeckQueueMoves(store: store, player: player).playNow(first)
+        }
+    }
+}
+
+/// The disc's artwork and ring for the one playing; only this follows
+/// the clock.
+private struct DeckBarDiscLive: View {
+    @Environment(PlayerModel.self) private var player
+    let item: PlayerModel.NowPlaying
+    let size: CGFloat
+
+    var body: some View {
+        let progress: Double = player.duration > 0 ? player.currentTime / player.duration : 0
+        DeckRingArtwork(url: item.artworkURL, showTitle: item.showTitle, size: size,
+                        progress: progress, lineWidth: 3.5, gap: 3,
+                        colour: Color.white, track: Color.white.opacity(0.2), sweep: true)
+    }
+}
+
+/// The bar's pill: Tabs · n, Shows, Find; the page showing in ink.
+private struct DeckBarWords: View {
+    let current: Int
+    let count: Int
+    let select: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            word(count > 0 ? "Tabs · \(count)" : "Tabs", index: 0)
+            word("Shows", index: 1)
+            word("Find", index: 2)
+        }
+        .padding(5)
+        .frame(maxWidth: .infinity)
+        .frame(height: 58)
+        .background(Capsule().fill(Theme.surface))
+        .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.08), lineWidth: 1))
+        .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 11, y: 8)
+    }
+
+    private func word(_ text: String, index: Int) -> some View {
+        let on: Bool = current == index
+        return Button { select(index) } label: {
+            Text(text)
+                .font(Theme.outfit(15, .bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundStyle(on ? Theme.surface : Theme.muted)
+                .frame(maxWidth: .infinity)
+                .frame(height: 46)
+                .background(Capsule().fill(on ? Theme.ink : Color.clear))
+                .contentShape(Capsule())
+                .transaction { $0.animation = nil }
+        }
+        .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
