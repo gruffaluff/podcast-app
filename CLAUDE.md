@@ -3400,6 +3400,24 @@ Paul's notes after build 164:
       share of the row's width, so longer than on the tiles), dragging a
       row, long show names.
 
+## On the branch for build 176 (22 Nov 2026; not built yet)
+
+- **Back to the cards** (Paul, 22 Nov 2026, after build 175: "I prefer
+  the old look with the cards before I added the big card. So both your
+  shows and up next go back to the smaller card views"). Tabs mode:
+  - Up next is the two-across full-colour tab cards again, as in builds
+    162–171: every episode a card (1.25 × its width), "Now" on the one
+    playing first, then 1, 2, 3…; card text back to its two-across sizes.
+    No big first card, no "THEN", no running-order rows. Kept from later
+    builds: colour fills in as you listen (I1), the dashed "Find
+    something" tile as the last card, the disc and pill bar.
+  - Your shows is the two-across artwork tiles again (black and white
+    when caught up, coral "n NEW").
+  - The big card (`DeckTabsHero`, `DeckTabsHeroCell`), the L2 rows
+    (`DeckTabsGrid(rows:)`, `DeckTabRow`) and the S-L2a list
+    (`DeckAllShowsRow(list:)`, `DeckShowLine`) stay in the code, unused,
+    in case Paul wants them back.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
