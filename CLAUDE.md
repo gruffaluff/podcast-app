@@ -3400,7 +3400,7 @@ Paul's notes after build 164:
       share of the row's width, so longer than on the tiles), dragging a
       row, long show names.
 
-## On the branch for build 176 (22 Nov 2026; not built yet)
+## Done in build 176 (22 Nov 2026, PR #94; Paul: "Build")
 
 - **Back to the cards** (Paul, 22 Nov 2026, after build 175: "I prefer
   the old look with the cards before I added the big card. So both your
