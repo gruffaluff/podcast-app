@@ -3307,6 +3307,16 @@ Paul's notes after build 164:
   runs 10× fast, tap another card to play it, mark played with a 6 s
   Undo, island icons switch Tabs / Your shows / Find, the tab count
   badge). **Paul picked U1 with the island** (21 Nov 2026): build 172.
+- **Player one-handed** (Paul, 22 Nov 2026: dragging round the dial is
+  hard one-handed; move progress elsewhere, e.g. artwork going from
+  black and white to colour, or scrap the ring?). Suggested: keep the
+  ring to look at only (progress, chapters, search dots; tap still turns
+  it to the words) and scrub with a straight line in the thumb zone just
+  above skip / play / skip (same drag rules as the old line); the colour
+  sweep only as a finish on top, not as the scrubber. Three playable
+  boards at the foot of https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
+  (1 ring to look at + line, 2 the same with the artwork's colour
+  sweeping in, 3 no ring, just the line). Waiting on his pick.
 
 ## Queued for the next app build
 
