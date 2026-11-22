@@ -3336,6 +3336,17 @@ Paul's notes after build 164:
   (1 ring to look at + line, 2 the same with the artwork's colour
   sweeping in, 3 no ring, just the line). **Paul picked 2** (22 Nov
   2026); see build 174.
+- **Identity** (Paul, 22 Nov 2026: "Have we lost some identity … just
+  another podcast app"). Told him: the ring, tabs and the show's colour
+  are the Poddeck bits; the island and the player's lower half are
+  generic. Suggested "colour fills in as you listen" as the thread.
+  Mock-ups at the foot of https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
+  (tap play): mini I1 tabs black and white until started, colour wipes
+  in with progress, island artwork sweeps too; mini I2 player with a big
+  time readout, chapter-cut line with a ring knob, square deck keys and a
+  ring round play; mini I3 Your shows in colour only when there's
+  something new; major I4 Up next as records (big disc for what's on,
+  the queue as a shelf of discs that fill with colour). Waiting on Paul.
 
 ## Queued for the next app build
 
