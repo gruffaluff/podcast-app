@@ -3275,6 +3275,24 @@ Paul's notes after build 164:
   slot under THEN, so with only one episode it shows on its own; tap goes
   to Find (`DeckTabsFindTile`, `\.deckOpenFind`).
 
+## On the branch for build 174 (22 Nov 2026; not built yet)
+
+- **Player: ring to look at, line under your thumb, colour sweep**
+  (Paul, 22 Nov 2026, option 2: dragging round the dial was hard
+  one-handed). Both players (the tab page and the card-deck player):
+  - The dial no longer takes drags; it shows progress, chapters and
+    search dots, and tapping it still turns it over to the words. Pull
+    down to close can now start on it.
+  - The straight progress line (`DeckPlayerScrub`) is always shown, just
+    above the times and skip / play / skip, with the old line's rules
+    (moves by how far the finger travels, lower for finer, bubble, Undo
+    for 2 min+). While it's dragged the dial's middle shows the time,
+    what's said there and how fine.
+  - The artwork starts black and white and its colour sweeps in round
+    the circle as you listen, in step with the ring (`DeckDialSweep`).
+  - Check on the phone: dial size on a small iPhone (it gives up the
+    line's 30 pt), the sweep on dark artwork, pulling down from the dial.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
@@ -3316,7 +3334,8 @@ Paul's notes after build 164:
   sweep only as a finish on top, not as the scrubber. Three playable
   boards at the foot of https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
   (1 ring to look at + line, 2 the same with the artwork's colour
-  sweeping in, 3 no ring, just the line). Waiting on his pick.
+  sweeping in, 3 no ring, just the line). **Paul picked 2** (22 Nov
+  2026); see build 174.
 
 ## Queued for the next app build
 

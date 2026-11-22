@@ -129,7 +129,7 @@ struct DeckPlayerView: View {
     /// Room left for the dial once everything else has its place (the
     /// times row is 26 pt with its bigger numbers).
     private func artworkSide(_ size: CGSize, volume: Bool) -> CGFloat {
-        let fixed: CGFloat = 44 + 92 + 40 + DeckDialTimes.height + 8 + 96 + 64 + (volume ? 34 : 0) + 40
+        let fixed: CGFloat = 44 + 92 + 40 + DeckPlayerScrub.height + 2 + DeckDialTimes.height + 8 + 96 + 64 + (volume ? 34 : 0) + 40
         let byHeight: CGFloat = size.height - fixed
         return max(120, min(size.width - 72, byHeight))
     }
@@ -357,11 +357,11 @@ struct DeckPlayerView: View {
             // The dial replaces the straight line (Paul, 15 Nov 2026: dial);
             // in Read along the line comes back above the same times row,
             // which shrinks smoothly rather than swapping.
+            // The line is always here now, in the thumb zone (Paul, 22 Nov
+            // 2026: the dial was hard to drag one-handed); the ring above
+            // is for looking.
             VStack(spacing: 2) {
-                if reading {
-                    DeckPlayerScrub(shared: dialScrub)
-                        .transition(.opacity)
-                }
+                DeckPlayerScrub(shared: dialScrub)
                 DeckDialTimes(scrub: dialScrub, compact: reading)
             }
             DeckPlayerTransport()
@@ -377,7 +377,7 @@ struct DeckPlayerView: View {
         .contentShape(Rectangle())
         // Not in Read along: its scrub line's drag slows down as the finger
         // goes lower, so a pull there must stay a scrub.
-        .simultaneousGesture(closeSwipe, including: reading ? .subviews : .all)
+        .simultaneousGesture(closeSwipe, including: .subviews)
     }
 
     private var bottomRow: some View {
