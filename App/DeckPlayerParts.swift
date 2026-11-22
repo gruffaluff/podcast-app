@@ -402,10 +402,8 @@ struct DeckPlayerTransport: View {
 
     private var playKey: some View {
         Button { player.togglePlayPause() } label: {
+            // No ring round play (Paul, 22 Nov 2026).
             ZStack {
-                DeckRing(progress: player.duration > 0 ? player.currentTime / player.duration : 0,
-                         lineWidth: 4, colour: Color.white, track: Color.white.opacity(0.22))
-                    .frame(width: 90, height: 90)
                 Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(DeckPlayerColours.ink)

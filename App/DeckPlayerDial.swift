@@ -659,7 +659,8 @@ private struct DeckDialRing: View, Animatable {
         drawTicks(in: context, centre: centre, geometry: geometry, spec: spec)
         drawClips(in: marks, centre: centre, geometry: geometry, spec: spec)
         drawHits(in: marks, centre: centre, geometry: geometry, spec: spec)
-        drawKnob(in: marks, centre: centre, geometry: geometry, spec: spec)
+        // No knob (Paul, 22 Nov 2026: "makes you think you can click it"):
+        // the dial is only for looking now.
     }
 
     private static func drawAds(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,

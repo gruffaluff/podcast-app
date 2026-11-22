@@ -349,14 +349,17 @@ private struct DeckTabPlayerSection: View {
             DeckChapterRow(openChapters: { showingChapters = true })
                 .padding(.bottom, 6)
         } else {
-            Color.clear.frame(height: 32)
-                .padding(.bottom, 6)
+            // A tab that isn't playing: the same big time (its saved place)
+            // and pills as the live page (Paul, 22 Nov 2026: "still the old
+            // screen").
+            DeckTabRestingReadout(episode: episode)
+                .padding(.bottom, 12)
         }
     }
 
     @ViewBuilder private func times(_ now: PlayerModel.NowPlaying?) -> some View {
         if now == nil {
-            DeckTabRestingTimes(episode: episode)
+            DeckTabRestingLine(episode: episode)
         } else {
             // One times row that shrinks under the line in Read along
             // (smooth, like the chapter pill) rather than two rows swapped.
@@ -545,7 +548,7 @@ private struct DeckTabRestingTransport: View {
     let play: () -> Void
 
     var body: some View {
-        HStack(spacing: 40) {
+        HStack(spacing: 36) {
             skip("gobackward.\(player.skipBackSeconds)")
             Button(action: play) {
                 Image(systemName: "play.fill")
@@ -566,9 +569,10 @@ private struct DeckTabRestingTransport: View {
 
     private func skip(_ icon: String) -> some View {
         Image(systemName: icon)
-            .font(.system(size: 30))
-            .frame(width: 56, height: 56)
-            .opacity(0.3)
+            .font(.system(size: 26))
+            .frame(width: 58, height: 58)
+            .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(Color.white.opacity(0.12)))
+            .opacity(0.35)
             .accessibilityHidden(true)
     }
 }
@@ -725,5 +729,63 @@ struct DeckTabMoreHint: View {
         .buttonStyle(.plain)
         .accessibilityLabel("This episode")
         .accessibilityHint("Scrolls down to the episode's details")
+    }
+}
+
+
+/// A tab that isn't playing: its saved place, big, and a pill with how
+/// long it is or how much is left, like the live readout.
+private struct DeckTabRestingReadout: View {
+    let episode: PodcastEpisode
+
+    var body: some View {
+        let duration: TimeInterval = episode.duration ?? 0
+        let at: TimeInterval = episode.played ? 0 : min(episode.position, duration > 0 ? duration : episode.position)
+        VStack(spacing: 10) {
+            Text(TimeFormat.clock(at))
+                .font(Theme.outfit(60, .heavy))
+                .tracking(-2)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(height: 62)
+                .opacity(0.55)
+            Text(words(at: at, duration: duration))
+                .font(Theme.outfit(13, .semibold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .padding(.horizontal, 12)
+                .frame(height: 32)
+                .background(Capsule().fill(Color.white.opacity(0.16)))
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func words(at: TimeInterval, duration: TimeInterval) -> String {
+        guard duration > 0 else { return "Not started" }
+        if at > 30 { return DeckUpNextTime.length(max(0, duration - at)) + " left" }
+        return "Not started · " + DeckUpNextTime.length(duration)
+    }
+}
+
+/// A tab that isn't playing: its progress as a still line (press Play to
+/// scrub).
+private struct DeckTabRestingLine: View {
+    let episode: PodcastEpisode
+
+    var body: some View {
+        let fraction: Double = DeckRing.progress(of: episode)
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.22))
+                Capsule().fill(Color.white)
+                    .frame(width: max(0, proxy.size.width * fraction))
+            }
+            .frame(height: 6)
+            .frame(maxHeight: .infinity)
+        }
+        .frame(height: DeckPlayerScrub.height)
+        .accessibilityHidden(true)
     }
 }
