@@ -129,7 +129,7 @@ struct DeckPlayerView: View {
     /// Room left for the dial once everything else has its place (the
     /// times row is 26 pt with its bigger numbers).
     private func artworkSide(_ size: CGSize, volume: Bool) -> CGFloat {
-        let fixed: CGFloat = 44 + 92 + 40 + DeckDialTimes.height + 8 + 96 + 64 + (volume ? 34 : 0) + 40
+        let fixed: CGFloat = 44 + 92 + DeckBigReadout.height + 12 + DeckPlayerScrub.height + 8 + 14 + 96 + 64 + (volume ? 34 : 0) + 40
         let byHeight: CGFloat = size.height - fixed
         return max(120, min(size.width - 72, byHeight))
     }
@@ -352,17 +352,23 @@ struct DeckPlayerView: View {
 
     private func controls(volume: Bool) -> some View {
         VStack(spacing: 0) {
-            DeckChapterRow(openChapters: { showingChapters = true })
-                .padding(.bottom, 6)
-            // The dial replaces the straight line (Paul, 15 Nov 2026: dial);
-            // in Read along the line comes back above the same times row,
-            // which shrinks smoothly rather than swapping.
+            // Listening: the big time with the chapter and time-left pills
+            // (Paul, 22 Nov 2026, V1); Read along keeps the chapter row and
+            // the small times under the line.
+            if reading {
+                DeckChapterRow(openChapters: { showingChapters = true })
+                    .padding(.bottom, 6)
+            } else {
+                DeckBigReadout(scrub: dialScrub, openChapters: { showingChapters = true })
+                    .padding(.bottom, 12)
+            }
+            // The line is always here, in the thumb zone (Paul, 22 Nov
+            // 2026: the dial was hard to drag one-handed).
             VStack(spacing: 2) {
+                DeckPlayerScrub(shared: dialScrub)
                 if reading {
-                    DeckPlayerScrub(shared: dialScrub)
-                        .transition(.opacity)
+                    DeckDialTimes(scrub: dialScrub, compact: true)
                 }
-                DeckDialTimes(scrub: dialScrub, compact: reading)
             }
             DeckPlayerTransport()
                 .padding(.top, 10)
@@ -377,7 +383,7 @@ struct DeckPlayerView: View {
         .contentShape(Rectangle())
         // Not in Read along: its scrub line's drag slows down as the finger
         // goes lower, so a pull there must stay a scrub.
-        .simultaneousGesture(closeSwipe, including: reading ? .subviews : .all)
+        .simultaneousGesture(closeSwipe, including: .subviews)
     }
 
     private var bottomRow: some View {

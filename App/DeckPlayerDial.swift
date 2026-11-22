@@ -159,7 +159,10 @@ struct DeckPlayerDial: View {
             .frame(width: geometry.side, height: geometry.side)
             .contentShape(Circle())
             .coordinateSpace(.named(Self.space))
-            .gesture(dragGesture(side: geometry.side))
+            // Look, don't drag (Paul, 22 Nov 2026, option 2: dragging round
+            // the ring was hard one-handed): scrubbing is the straight line
+            // in the thumb zone; the ring shows where you are, and while the
+            // line is dragged the middle shows the time and what's said.
             .onTapGesture { tapped() }
             .modifier(DeckDialAccessibility(big: geometry.big, value: accessibilityValue,
                                             words: showWords, canTranscribe: canStartWords,
@@ -226,12 +229,23 @@ struct DeckPlayerDial: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: face)
     }
 
+    /// The artwork starts black and white and its colour sweeps in round
+    /// the circle as you listen, in step with the ring (Paul, 22 Nov 2026,
+    /// option 2 from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3).
     private func artwork(_ geometry: DeckDialGeometry) -> some View {
         let diameter: CGFloat = geometry.artwork
+        let shown: TimeInterval = scrub.time ?? player.currentTime
+        let progress: Double = min(1, max(0, shown / max(player.duration, 1)))
         return Color.clear
             .frame(width: diameter, height: diameter)
             .overlay {
-                CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
+                ZStack {
+                    CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
+                        .grayscale(1)
+                        .brightness(-0.04)
+                    CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
+                        .mask(DeckSweepShape(progress: progress))
+                }
             }
             .clipShape(Circle())
             .background {
@@ -276,11 +290,11 @@ struct DeckPlayerDial: View {
     }
 
     @ViewBuilder private func faceText(time: TimeInterval, lineSize: CGFloat) -> some View {
-        if let drag {
+        if drag != nil || scrub.time != nil {
             // Scrubbing: the time, what's said there, how fine.
             DeckDialFaceText(time: TimeFormat.clock(time),
                              line: DeckDialMath.line(at: time + 0.2, in: lines)?.text,
-                             hint: DeckDialMath.hint(drag.factor), lineSize: lineSize)
+                             hint: drag.map { DeckDialMath.hint($0.factor) } ?? scrub.hint ?? "", lineSize: lineSize)
         } else if let line = DeckDialMath.line(at: player.currentTime + 0.2, in: lines) {
             DeckDialFaceText(time: nil, line: line.text, hint: "Tap for the artwork", lineSize: lineSize)
                 .id(line.start)
@@ -784,3 +798,4 @@ struct DeckDialTimes: View {
         return "ends " + UpNextTimes.clock(ends)
     }
 }
+

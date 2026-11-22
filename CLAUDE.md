@@ -3275,6 +3275,65 @@ Paul's notes after build 164:
   slot under THEN, so with only one episode it shows on its own; tap goes
   to Find (`DeckTabsFindTile`, `\.deckOpenFind`).
 
+## Done in build 174 (22 Nov 2026, PR #92; Paul: "Yes")
+
+- **Player: ring to look at, line under your thumb, colour sweep**
+  (Paul, 22 Nov 2026, option 2: dragging round the dial was hard
+  one-handed). Both players (the tab page and the card-deck player):
+  - The dial no longer takes drags; it shows progress, chapters and
+    search dots, and tapping it still turns it over to the words. Pull
+    down to close can now start on it.
+  - The straight progress line (`DeckPlayerScrub`) is always shown, just
+    above the times and skip / play / skip, with the old line's rules
+    (moves by how far the finger travels, lower for finer, bubble, Undo
+    for 2 min+). While it's dragged the dial's middle shows the time,
+    what's said there and how fine.
+  - The artwork starts black and white and its colour sweeps in round
+    the circle as you listen, in step with the ring (`DeckDialSweep`).
+  - Check on the phone: dial size on a small iPhone (it gives up the
+    line's 30 pt), the sweep on dark artwork, pulling down from the dial.
+- **Colour fills in as you listen** (Paul, 22 Nov 2026: "1 and 3 is a
+  good call", from the identity mock-ups):
+  - I1: Up next tab cards and the big first card show their artwork in
+    black and white until the episode is started; the colour wipes in
+    from the left as far as you've listened (live for the one playing).
+    The island's round artwork sweeps in with its ring
+    (`DeckColourFill`, `DeckWipeShape`, `DeckSweepShape` in DeckRing.swift;
+    `DeckRingArtwork(sweep:)`; the player dial uses the same sweep).
+  - I3: Your shows tiles are in colour only when the show has something
+    new (with the coral "n NEW"); caught-up shows are black and white and
+    a little quieter (`DeckShowTile.art`).
+  - Check on the phone: a whole Up next of untouched episodes looks grey
+    (that's the idea, but say if it's too dull), the coral NEW still reads.
+- **Bottom bar: disc and pill** (Paul, 22 Nov 2026: "I quite like disc
+  and pill", M3): the dark island is gone. Left, a 70 pt round disc: what's
+  playing (or the top of Up next) with its ring and the colour sweeping
+  in, play / pause on it; tap plays or pauses, touch and hold opens its
+  tab (the hero card and its tab still open it too). Right, a white pill
+  of words, Tabs · n / Shows / Find, the page showing in an ink capsule;
+  swipes along / up it as before (`DeckBarDisc`, `DeckBarWords` in
+  DeckTabsBar.swift; bar 70 pt).
+- **Player: big time with chapter and time-left pills** (Paul, 22 Nov
+  2026: "v1 with the chapter and ends from v2 but instead of end time
+  it's remaining time", from the V1–V3 boards on the finishing-touches
+  page). Both players, while listening: under the title the time played
+  big (Outfit 60 heavy), then two pills: the chapter ("2/5 · Comfort
+  darts", tap for chapters; "No chapters · Make them ›" or Skip ad as
+  before) and "57m left" at your speed (the drag's "Half speed" while
+  scrubbing) (`DeckBigReadout`, `DeckChapterRow(compact:)`). Then the
+  line, then deck keys: the skips as soft square keys, play in a ring
+  that fills as you listen (`DeckPlayerTransport`). The ‹ › chapter
+  arrows and the small times row are gone while listening (chapters skip
+  from the chapters sheet, headphones and the lock screen); Read along
+  keeps its chapter row and small times under the line.
+- **Big Up next card the height of the others** (Paul, 22 Nov 2026:
+  "keep it wide but make it the same height as the other cards"): the
+  first card is still full width but as tall as a three-across tab
+  (`DeckTabsGrid.cardHeight(forWidth:)`): words on the left (PLAYING NOW /
+  PAUSED / UP FIRST, show, title on two lines, progress with time and
+  time left), square artwork on the right fading into the show's colour,
+  a 50 pt white play key over the artwork's corner. Same swipes and hold.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
@@ -3307,6 +3366,37 @@ Paul's notes after build 164:
   runs 10× fast, tap another card to play it, mark played with a 6 s
   Undo, island icons switch Tabs / Your shows / Find, the tab count
   badge). **Paul picked U1 with the island** (21 Nov 2026): build 172.
+- **Player one-handed** (Paul, 22 Nov 2026: dragging round the dial is
+  hard one-handed; move progress elsewhere, e.g. artwork going from
+  black and white to colour, or scrap the ring?). Suggested: keep the
+  ring to look at only (progress, chapters, search dots; tap still turns
+  it to the words) and scrub with a straight line in the thumb zone just
+  above skip / play / skip (same drag rules as the old line); the colour
+  sweep only as a finish on top, not as the scrubber. Three playable
+  boards at the foot of https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
+  (1 ring to look at + line, 2 the same with the artwork's colour
+  sweeping in, 3 no ring, just the line). **Paul picked 2** (22 Nov
+  2026); see build 174.
+- **Identity** (Paul, 22 Nov 2026: "Have we lost some identity … just
+  another podcast app"). Told him: the ring, tabs and the show's colour
+  are the Poddeck bits; the island and the player's lower half are
+  generic. Suggested "colour fills in as you listen" as the thread.
+  Mock-ups at the foot of https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3
+  (tap play): mini I1 tabs black and white until started, colour wipes
+  in with progress, island artwork sweeps too; mini I2 player with a big
+  time readout, chapter-cut line with a ring knob, square deck keys and a
+  ring round play; mini I3 Your shows in colour only when there's
+  something new; major I4 Up next as records (big disc for what's on,
+  the queue as a shelf of discs that fill with colour). **Paul: I1 + I3**
+  (22 Nov 2026), in build 174; asked for more player display and menu
+  bar options.
+  More options on the same page: player Q1 the line being said under the
+  title, Q2 info strip (chapter, ends, speed, sleep), Q3 edge to edge
+  (no ring, the whole picture fills with colour), Q4 tape-deck counter;
+  bars M1 today's island with the sweep, M2 the island itself fills in
+  the show's colour, M3 a big play disc + a word pill, M4 full-width bar
+  with a colour line along the top. **Paul: M3 disc and pill**; for the
+  player, V1 with V2's pills (time left instead of ends): build 174.
 
 ## Queued for the next app build
 

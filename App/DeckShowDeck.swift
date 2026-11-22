@@ -473,8 +473,13 @@ private struct DeckShowTile: View {
             .accessibilityElement(children: .combine)
     }
 
+    /// Colour means something new (Paul, 22 Nov 2026, I3): shows you're
+    /// caught up on go black and white and a little quieter.
     private var art: some View {
-        CachedImage(url: entry.show.artworkURL) { Theme.placeholderColor(for: entry.show.title) }
+        let caughtUp: Bool = entry.fresh.isEmpty
+        return CachedImage(url: entry.show.artworkURL) { Theme.placeholderColor(for: entry.show.title) }
+            .grayscale(caughtUp ? 1 : 0)
+            .opacity(caughtUp ? 0.82 : 1)
     }
 
     private var shade: some View {

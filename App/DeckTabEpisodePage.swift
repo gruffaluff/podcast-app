@@ -220,7 +220,7 @@ private struct DeckTabPlayerSection: View {
     /// Room left for the dial once everything else has its place (the
     /// times row is 26 pt with its bigger numbers).
     private var side: CGFloat {
-        let fixed: CGFloat = 44 + 92 + 38 + DeckDialTimes.height + 86 + 68 + (volume ? 34 : 0) + 40
+        let fixed: CGFloat = 44 + 92 + DeckBigReadout.height + 12 + DeckPlayerScrub.height + 14 + 90 + 68 + (volume ? 34 : 0) + 40
         return max(120, min(width - 72, height - fixed))
     }
 
@@ -247,8 +247,7 @@ private struct DeckTabPlayerSection: View {
                 DeckPlayerDial(item: now, episode: episode, rect: CGRect(origin: .zero, size: proxy.size),
                                colour: colour, scrub: dialScrub)
             }
-            // The dial keeps its drags (scrubbing); a pull down can't start on it.
-            .keepingOut("dial", in: $keepOut)
+            // The dial only looks now (no drags), so a pull down can start on it.
         } else {
             Button { actions.playNow(episode) } label: {
                 DeckTabRestingDial(episode: episode, side: side)
@@ -326,7 +325,6 @@ private struct DeckTabPlayerSection: View {
     private func controls(_ now: PlayerModel.NowPlaying?) -> some View {
         VStack(spacing: 0) {
             chapterRow(now)
-                .padding(.bottom, 6)
             times(now)
             transport(now)
                 .padding(.top, 10)
@@ -342,10 +340,17 @@ private struct DeckTabPlayerSection: View {
     }
 
     @ViewBuilder private func chapterRow(_ now: PlayerModel.NowPlaying?) -> some View {
-        if now != nil {
+        if now != nil, !reading {
+            // Listening: the big time with the chapter and time-left pills
+            // (Paul, 22 Nov 2026, V1).
+            DeckBigReadout(scrub: dialScrub, openChapters: { showingChapters = true })
+                .padding(.bottom, 12)
+        } else if now != nil {
             DeckChapterRow(openChapters: { showingChapters = true })
+                .padding(.bottom, 6)
         } else {
             Color.clear.frame(height: 32)
+                .padding(.bottom, 6)
         }
     }
 
@@ -355,13 +360,14 @@ private struct DeckTabPlayerSection: View {
         } else {
             // One times row that shrinks under the line in Read along
             // (smooth, like the chapter pill) rather than two rows swapped.
+            // The line is always here (Paul, 22 Nov 2026): scrub with your
+            // thumb; the ring above is for looking.
             VStack(spacing: 2) {
+                DeckPlayerScrub(shared: dialScrub)
+                    .keepingOut("scrub", in: $keepOut)
                 if reading {
-                    DeckPlayerScrub(shared: dialScrub)
-                        .keepingOut("scrub", in: $keepOut)
-                        .transition(.opacity)
+                    DeckDialTimes(scrub: dialScrub, compact: true)
                 }
-                DeckDialTimes(scrub: dialScrub, compact: reading)
             }
         }
     }

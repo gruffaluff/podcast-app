@@ -68,7 +68,14 @@ struct DeckTabsGrid: View {
         return max(40, (width - Self.gap * (n - 1)) / n)
     }
     /// Every card the same height, so the slots can be worked out.
-    private var cardHeight: CGFloat { (cardWidth * 1.58).rounded() }
+    private var cardHeight: CGFloat { Self.cardHeight(forWidth: width) }
+
+    /// A tab's height for a grid this wide (the hero card above uses it too).
+    static func cardHeight(forWidth width: CGFloat) -> CGFloat {
+        let n: CGFloat = CGFloat(columnCount)
+        let card: CGFloat = max(40, (width - gap * (n - 1)) / n)
+        return (card * 1.58).rounded()
+    }
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var playingID: String? { player.nowPlaying?.episodeID }
 
@@ -585,7 +592,7 @@ private struct DeckTabCell: View {
 
     @ViewBuilder private var cardFace: some View {
         if hero {
-            DeckTabsHero(episode: episode)
+            DeckTabsHero(episode: episode, height: height)
         } else {
             DeckTabCard(episode: episode, place: place)
         }
@@ -964,13 +971,21 @@ private struct DeckTabCard: View {
         .contentShape(Rectangle())
     }
 
+    /// How far through: live for the one playing, else its saved place.
+    private var heard: Double {
+        if isOn, player.duration > 0 { return player.currentTime / player.duration }
+        return DeckRing.progress(of: episode)
+    }
+
     private var artwork: some View {
         VStack(spacing: 0) {
             Color.clear
                 .aspectRatio(1, contentMode: .fit)
                 .frame(maxWidth: .infinity)
                 .overlay {
-                    CachedImage(url: episode.artwork) { Theme.placeholderColor(for: episode.showTitle) }
+                    // Black and white until started; the colour fills in as
+                    // you listen (Paul, 22 Nov 2026, I1).
+                    DeckColourFill(url: episode.artwork, showTitle: episode.showTitle, progress: heard)
                 }
                 .clipped()
             Spacer(minLength: 0)
@@ -1149,17 +1164,20 @@ struct DeckTabsHeroCell: View {
 
     @State private var menu = false
     @State private var notes: PodcastEpisode?
+    @State private var width: CGFloat = 358
 
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var playingID: String? { player.nowPlaying?.episodeID }
 
     var body: some View {
-        DeckTabCell(episode: episode, place: nil, hidden: false, height: DeckTabsHero.height,
+        DeckTabCell(episode: episode, place: nil, hidden: false,
+                    height: DeckTabsGrid.cardHeight(forWidth: width),
                     hooks: DeckTabHooks(earlier: nil, later: nil, more: { menu = true }),
                     hold: held,
                     leave: { withAnimation(LibraryStore.listChange) { actions.close(episode) } },
                     hero: true)
             .id(episode.episodeID)
+            .onGeometryChange(for: CGFloat.self) { proxy in proxy.size.width } action: { new in width = new }
             .confirmationDialog(episode.title, isPresented: $menu, titleVisibility: .visible) {
                 holdMenu
             }
