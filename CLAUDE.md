@@ -3378,7 +3378,27 @@ Paul's notes after build 164:
     (Your shows as a running list: big numbers for Top shows, colour
     dot, show name, "2 NEW" / Caught up, small artwork on the right) and
     S-L2b (colour blocks two across, the show's colour and name, no
-    artwork, grey when caught up). Waiting on Paul.
+    artwork, grey when caught up). **Paul: L2 + S-L2a** ("Yea let's go
+    for it", 22 Nov 2026), built:
+    - Up next (tabs mode): the big first card stays; under THEN the rest
+      are a cardless running order, one row each (`DeckTabsGrid(rows:
+      true)`, `DeckTabRow`, 92 pt): a big order number (ink once
+      started, pale grey #C9C4BA until then), the title in Outfit 18
+      heavy with two lines' room, then a dot in the show's colour (NEW
+      pill when fresh) and "Show · 9 Nov · 52m"; hairlines, no artwork,
+      no ×. Same touches as the tiles: tap opens, swipe left Played,
+      right Play next / Add to end, hold and drag to reorder (the slot
+      maths now works for one column too), still hold for the menu. The
+      "Find something" tile is a short dashed row at the end.
+    - Your shows (tabs mode): a running list (`DeckAllShowsRow(list:
+      true)`, `DeckShowLine`): big rank number for Top shows (a faint ·
+      for the others), the show's colour dot and name in big type, where
+      new episodes go and a coral "2 NEW" or "Caught up", 48 pt artwork
+      on the right (black and white when caught up), hairlines; sort key
+      as before. Card deck mode keeps the tiles.
+    - Check on the phone: swipe distances on a full-width row (they're a
+      share of the row's width, so longer than on the tiles), dragging a
+      row, long show names.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 

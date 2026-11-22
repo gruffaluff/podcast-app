@@ -33,6 +33,9 @@ struct DeckTabsGrid: View {
     var placeOffset: Int = 0
     /// A dashed "Find something" tile after the last tab.
     var findTile: Bool = false
+    /// L2 (Paul, 22 Nov 2026: "Yea let's go for it"): a cardless running
+    /// order, one row each, big order numbers, no artwork. Off = tiles.
+    var rows: Bool = false
 
     /// The tab being dragged, while it is.
     @State private var lift: DeckTabLift?
@@ -60,15 +63,21 @@ struct DeckTabsGrid: View {
     /// playing hero" from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3).
     static let columnCount: Int = 3
 
-    private static let columns: [GridItem] = Array(repeating: GridItem(.flexible(), spacing: DeckTabsGrid.gap),
-                                                   count: DeckTabsGrid.columnCount)
+    /// A row's height in the L2 list (two lines of title always kept).
+    static let rowHeight: CGFloat = 92
+
+    private var columnCount: Int { rows ? 1 : Self.columnCount }
+    private var spacing: CGFloat { rows ? 0 : Self.gap }
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: spacing), count: columnCount)
+    }
 
     private var cardWidth: CGFloat {
-        let n: CGFloat = CGFloat(Self.columnCount)
-        return max(40, (width - Self.gap * (n - 1)) / n)
+        let n: CGFloat = CGFloat(columnCount)
+        return max(40, (width - spacing * (n - 1)) / n)
     }
     /// Every card the same height, so the slots can be worked out.
-    private var cardHeight: CGFloat { Self.cardHeight(forWidth: width) }
+    private var cardHeight: CGFloat { rows ? Self.rowHeight : Self.cardHeight(forWidth: width) }
 
     /// A tab's height for a grid this wide (the hero card above uses it too).
     static func cardHeight(forWidth width: CGFloat) -> CGFloat {
@@ -90,12 +99,13 @@ struct DeckTabsGrid: View {
     var body: some View {
         let shown: [PodcastEpisode] = displayed
         ZStack(alignment: .topLeading) {
-            LazyVGrid(columns: Self.columns, spacing: Self.gap) {
+            LazyVGrid(columns: columns, spacing: spacing) {
                 ForEach(shown, id: \.episodeID) { episode in
                     cell(episode, shown: shown)
                 }
                 if findTile {
-                    DeckTabsFindTile(height: cardHeight)
+                    DeckTabsFindTile(height: rows ? 64 : cardHeight)
+                        .padding(.top, rows ? 12 : 0)
                         .opacity(lift == nil ? 1 : 0.4)
                 }
             }
@@ -193,7 +203,7 @@ struct DeckTabsGrid: View {
                     hidden: lift?.id == episode.episodeID, height: cardHeight,
                     hooks: hooks(for: episode),
                     hold: { touch in held(touch, episode: episode) },
-                    leave: { leave(episode) })
+                    leave: { leave(episode) }, row: rows)
             .confirmationDialog(episode.title, isPresented: menuBinding(episode), titleVisibility: .visible) {
                 holdMenu(episode)
             }
@@ -233,8 +243,7 @@ struct DeckTabsGrid: View {
     @ViewBuilder private func liftedCard(shown: [PodcastEpisode]) -> some View {
         if let lift, let episode = shown.first(where: { $0.episodeID == lift.id }) {
             let raised: Bool = lift.phase == .raised
-            DeckTabCard(episode: episode, place: place(of: episode, in: shown), lifted: true)
-                .overlay(alignment: .topTrailing) { DeckTabCloseGlyph() }
+            liftedFace(episode, place: place(of: episode, in: shown))
                 .frame(width: cardWidth, height: cardHeight)
                 .scaleEffect(raised ? 1.05 : 1)
                 .shadow(color: Color.black.opacity(raised ? 0.24 : 0.08), radius: raised ? 18 : 6, y: raised ? 10 : 2)
@@ -243,6 +252,15 @@ struct DeckTabsGrid: View {
                 .animation(.spring(duration: 0.26, bounce: 0.15), value: lift.phase)
                 .transaction { $0.animation = nil }
                 .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder private func liftedFace(_ episode: PodcastEpisode, place: String?) -> some View {
+        if rows {
+            DeckTabRow(episode: episode, place: place, lifted: true)
+        } else {
+            DeckTabCard(episode: episode, place: place, lifted: true)
+                .overlay(alignment: .topTrailing) { DeckTabCloseGlyph() }
         }
     }
 
@@ -286,9 +304,9 @@ struct DeckTabsGrid: View {
     // MARK: Slots
 
     private func slotOrigin(_ slot: Int) -> CGPoint {
-        let column: Int = slot % Self.columnCount
-        let row: Int = slot / Self.columnCount
-        return CGPoint(x: CGFloat(column) * (cardWidth + Self.gap), y: CGFloat(row) * (cardHeight + Self.gap))
+        let column: Int = slot % columnCount
+        let row: Int = slot / columnCount
+        return CGPoint(x: CGFloat(column) * (cardWidth + spacing), y: CGFloat(row) * (cardHeight + spacing))
     }
 
     private func liftOffset(_ lift: DeckTabLift) -> CGSize {
@@ -306,9 +324,9 @@ struct DeckTabsGrid: View {
         let start: CGPoint = slotOrigin(lift.startSlot)
         let midX: CGFloat = start.x + lift.translation.width + cardWidth / 2
         let midY: CGFloat = start.y + lift.translation.height + lift.shift + cardHeight / 2
-        let column: Int = min(Self.columnCount - 1, max(0, Int((midX / (cardWidth + Self.gap)).rounded(.down))))
-        let row: Int = max(0, Int((midY / (cardHeight + Self.gap)).rounded(.down)))
-        let index: Int = row * Self.columnCount + column - lift.lead
+        let column: Int = min(columnCount - 1, max(0, Int((midX / (cardWidth + spacing)).rounded(.down))))
+        let row: Int = max(0, Int((midY / (cardHeight + spacing)).rounded(.down)))
+        let index: Int = row * columnCount + column - lift.lead
         return min(max(0, lift.order.count - 1), max(0, index))
     }
 
@@ -527,6 +545,8 @@ private struct DeckTabCell: View {
     /// The big first card above the grid (Paul, 21 Nov 2026: "have the
     /// same actions as the smaller ones"): same touches, no ×.
     var hero: Bool = false
+    /// A row of the L2 list rather than a tile: no ×, the row face.
+    var row: Bool = false
 
     @State private var drag: CGFloat = 0
     @State private var width: CGFloat = 170
@@ -593,6 +613,8 @@ private struct DeckTabCell: View {
     @ViewBuilder private var cardFace: some View {
         if hero {
             DeckTabsHero(episode: episode, height: height)
+        } else if row {
+            DeckTabRow(episode: episode, place: place)
         } else {
             DeckTabCard(episode: episode, place: place)
         }
@@ -612,7 +634,7 @@ private struct DeckTabCell: View {
                 .offset(x: drag)
                 .opacity(hidden || leaving ? 0 : 1)
                 .allowsHitTesting(!hidden && !busy)
-        } else {
+        } else if !row {
             closeKey
         }
     }
@@ -1214,13 +1236,7 @@ struct DeckTabsFindTile: View {
 
     var body: some View {
         Button(action: openFind) {
-            VStack(spacing: 6) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 20, weight: .semibold))
-                Text("Find something")
-                    .font(Theme.outfit(12, .semibold))
-                    .multilineTextAlignment(.center)
-            }
+            label
             .foregroundStyle(Theme.muted)
             .frame(maxWidth: .infinity)
             .frame(height: height)
@@ -1231,5 +1247,104 @@ struct DeckTabsFindTile: View {
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    /// Stacked in a tile; on one line in the L2 list's short dashed row.
+    @ViewBuilder private var label: some View {
+        if height < 80 {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .semibold))
+                Text("Find something")
+                    .font(Theme.outfit(15, .semibold))
+            }
+        } else {
+            VStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 20, weight: .semibold))
+                Text("Find something")
+                    .font(Theme.outfit(12, .semibold))
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+}
+
+
+// MARK: - The L2 row
+
+/// One episode in Up next's running order (Paul, 22 Nov 2026, L2 from
+/// https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3: "Yea let's go for
+/// it"): no card and no artwork; a big order number (ink once started,
+/// pale grey until then), the title in big type, and under it a dot in the
+/// show's colour with "Show · 9 Nov · 52m". A hairline under each row. The
+/// page colour behind it, so a swipe slides the whole row over its block.
+private struct DeckTabRow: View {
+    @Environment(PlayerModel.self) private var player
+    let episode: PodcastEpisode
+    var place: String? = nil
+    var lifted = false
+
+    private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
+    private var started: Bool { isOn || episode.position > 30 }
+    private var colour: Color { DeckRings.showColour(episode) }
+    private var fresh: Bool { !isOn && DeckTabSource.isFresh(episode) }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            number
+            VStack(alignment: .leading, spacing: 5) {
+                Text(episode.title)
+                    .font(Theme.outfit(18, .heavy))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+                meta
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(Theme.background)
+        .overlay(alignment: .bottom) {
+            if !lifted {
+                Rectangle().fill(Theme.ink.opacity(0.1)).frame(height: 0.5)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: lifted ? 14 : 0, style: .continuous))
+        .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
+    }
+
+    private var number: some View {
+        Text(place ?? "")
+            .font(Theme.outfit(place == "Now" ? 17 : 34, .heavy))
+            .monospacedDigit()
+            .foregroundStyle(started ? Theme.ink : Color(hex: 0xC9C4BA))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(width: 46, alignment: .leading)
+            .contentTransition(.numericText())
+            .accessibilityLabel(place.map { $0 == "Now" ? "Playing now" : "Number \($0) in Up next" } ?? "")
+    }
+
+    private var meta: some View {
+        HStack(spacing: 7) {
+            Circle().fill(colour).frame(width: 8, height: 8)
+            if fresh {
+                Text("NEW")
+                    .font(Theme.outfit(9, .heavy))
+                    .tracking(0.6)
+                    .foregroundStyle(Color.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(DeckRings.coral))
+                    .fixedSize()
+            }
+            Text(episode.showTitle + " · " + DeckTabCard.detail(episode, isOn: isOn))
+                .font(Theme.outfit(13, .semibold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+        }
     }
 }
