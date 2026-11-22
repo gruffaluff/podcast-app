@@ -294,7 +294,7 @@ struct DeckPlayerDial: View {
             // Scrubbing: the time, what's said there, how fine.
             DeckDialFaceText(time: TimeFormat.clock(time),
                              line: DeckDialMath.line(at: time + 0.2, in: lines)?.text,
-                             hint: drag.map { DeckDialMath.hint($0.factor) } ?? scrub.hint, lineSize: lineSize)
+                             hint: drag.map { DeckDialMath.hint($0.factor) } ?? scrub.hint ?? "", lineSize: lineSize)
         } else if let line = DeckDialMath.line(at: player.currentTime + 0.2, in: lines) {
             DeckDialFaceText(time: nil, line: line.text, hint: "Tap for the artwork", lineSize: lineSize)
                 .id(line.start)
