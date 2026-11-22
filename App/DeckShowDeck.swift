@@ -316,6 +316,8 @@ struct DeckAllShowsRow: View, Equatable {
     /// The "All your shows" label and sort key above the grid; off when the
     /// page's own header has them (tabs mode's Your shows).
     let labelled: Bool
+    /// S-L2a (Paul, 22 Nov 2026): a running list instead of the tiles.
+    var list: Bool = false
     /// Paul, 15 Nov 2026: "add the sort button". Kept on this iPhone.
     @AppStorage(DeckShowsSort.key) private var sortRaw: String = DeckShowsSort.newFirst.rawValue
     /// The sorted list, kept until the entries or the order change.
@@ -329,7 +331,7 @@ struct DeckAllShowsRow: View, Equatable {
     /// small reasons; the grid only does when its entries changed (its sort
     /// setting still redraws it).
     nonisolated static func == (lhs: DeckAllShowsRow, rhs: DeckAllShowsRow) -> Bool {
-        lhs.generation == rhs.generation && lhs.labelled == rhs.labelled
+        lhs.generation == rhs.generation && lhs.labelled == rhs.labelled && lhs.list == rhs.list
     }
 
     /// "Latest episode" goes through every episode of every show, so the
@@ -354,13 +356,23 @@ struct DeckAllShowsRow: View, Equatable {
                 .padding(.leading, 22)
                 .padding(.trailing, 16)
             }
-            LazyVGrid(columns: Self.columns, spacing: 12) {
-                ForEach(sortedEntries()) { entry in
-                    NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
-                        .buttonStyle(.plain)
+            if list {
+                LazyVStack(spacing: 0) {
+                    ForEach(sortedEntries()) { entry in
+                        NavigationLink(value: entry.show) { DeckShowLine(entry: entry) }
+                            .buttonStyle(.plain)
+                    }
                 }
+                .padding(.horizontal, 16)
+            } else {
+                LazyVGrid(columns: Self.columns, spacing: 12) {
+                    ForEach(sortedEntries()) { entry in
+                        NavigationLink(value: entry.show) { DeckShowTile(entry: entry) }
+                            .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
             }
-            .padding(.horizontal, 16)
         }
     }
 }
@@ -574,6 +586,97 @@ struct DeckShowPan: UIGestureRecognizerRepresentable {
             guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
             let velocity: CGPoint = pan.velocity(in: nil)
             return abs(velocity.x) > abs(velocity.y) * 1.2
+        }
+    }
+}
+
+
+/// One show in Your shows' running list (Paul, 22 Nov 2026, S-L2a from
+/// https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3, to go with Up next's
+/// L2): a big rank number for Top shows (a faint dot for the others), a dot
+/// in the show's colour and its name in big type, then where new episodes
+/// go and a coral "2 NEW" or "Caught up"; small artwork on the right, black
+/// and white when caught up. A hairline under each.
+private struct DeckShowLine: View {
+    let entry: DeckShowEntry
+
+    private var caughtUp: Bool { entry.fresh.isEmpty }
+    private var colour: Color {
+        ArtworkColors.shared.background(for: entry.show.artworkURL) ?? Theme.placeholderColor(for: entry.show.title)
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            rank
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .center, spacing: 8) {
+                    Circle().fill(colour).frame(width: 9, height: 9)
+                    Text(entry.show.title)
+                        .font(Theme.outfit(19, .heavy))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                HStack(spacing: 8) {
+                    Text(rule)
+                        .font(Theme.outfit(13, .semibold))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                    status
+                }
+            }
+            Spacer(minLength: 8)
+            CachedImage(url: entry.show.artworkURL) { Theme.placeholderColor(for: entry.show.title) }
+                .frame(width: 48, height: 48)
+                .grayscale(caughtUp ? 1 : 0)
+                .opacity(caughtUp ? 0.82 : 1)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Theme.ink.opacity(0.1)).frame(height: 0.5)
+        }
+        .contentShape(Rectangle())
+        .task(id: entry.show.artworkURL) { await ArtworkColors.shared.load(entry.show.artworkURL) }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var rank: some View {
+        Text(entry.rank.map(String.init) ?? "·")
+            .font(Theme.outfit(entry.rank == nil ? 28 : 34, .heavy))
+            .monospacedDigit()
+            .foregroundStyle(entry.rank == nil ? Color(hex: 0xC9C4BA) : Theme.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(width: 40, alignment: .leading)
+            .accessibilityLabel(entry.rank.map { "Top show number \($0)" } ?? "")
+    }
+
+    private var rule: String {
+        switch entry.show.autoAdd {
+        case .top: return "Top of Up next"
+        case .bottom: return "Bottom of Up next"
+        case .off: return "Nowhere"
+        }
+    }
+
+    @ViewBuilder private var status: some View {
+        if caughtUp {
+            Text("· Caught up")
+                .font(Theme.outfit(13, .semibold))
+                .foregroundStyle(Theme.muted.opacity(0.8))
+                .lineLimit(1)
+        } else {
+            Text("\(entry.fresh.count) NEW")
+                .font(Theme.outfit(10, .heavy))
+                .tracking(0.6)
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(DeckRings.coral))
+                .fixedSize()
         }
     }
 }

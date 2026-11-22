@@ -313,7 +313,7 @@ struct DeckTabsView: View {
                 } else if let first = shown.first {
                     // U1 (Paul, 21 Nov 2026: "Go with U1 and the island"):
                     // the first tab (playing, else the top of Up next) as one
-                    // big hero card, the rest three across under "Then".
+                    // big hero card; then (L2, 22 Nov 2026) the rest as a running order.
                     DeckTabsHeroCell(episode: first)
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
@@ -327,7 +327,7 @@ struct DeckTabsView: View {
                         .padding(.bottom, 8)
                         .accessibilityAddTraits(.isHeader)
                     let heroPlays: Bool = first.episodeID == player.nowPlaying?.episodeID
-                    DeckTabsGrid(tabs: rest, placeOffset: heroPlays ? 0 : 1, findTile: true)
+                    DeckTabsGrid(tabs: rest, placeOffset: heroPlays ? 0 : 1, findTile: true, rows: true)
                         .padding(.horizontal, 16)
                 }
                 // Started but not in Up next (picked from Find, or a show

@@ -3334,6 +3334,72 @@ Paul's notes after build 164:
   time left), square artwork on the right fading into the show's colour,
   a 50 pt white play key over the artwork's corner. Same swipes and hold.
 
+## Done in build 175 (22 Nov 2026, PR #93; Paul: "Build")
+
+- **After build 174** (Paul, 22 Nov 2026, screenshots of the 606 tab
+  page and the readout):
+  - No ring round the play key (`DeckPlayerTransport`).
+  - No knob on the dial's ring ("makes you think you can click it"); the
+    dial is only for looking (`DeckDialRing.draw`).
+  - A tab that isn't playing ("NEXT IN UP NEXT") was still the old
+    layout (small times row, round dim skips): now the same as the live
+    page: its saved place big and faded, one pill ("Not started · 1h
+    17m" or "54m left"), its progress as a still line, the square skip
+    keys dimmed and the white Play (`DeckTabRestingReadout`,
+    `DeckTabRestingLine`, `DeckTabRestingTransport`).
+- **Bar: swipe the disc up for the player** (Paul, 22 Nov 2026: G3):
+  tap still plays / pauses; a quick upward swipe on the disc (or touch
+  and hold) opens what's playing; a small handle sits above the disc
+  while something's on (`DeckBarDisc`).
+- **Readout T1** (Paul, 22 Nov 2026): the big time, a small "54m left"
+  pill under it, then the chapter on its own as a full-width bar with
+  ‹ › at its ends (`DeckBigReadout`, `DeckChapterRow(wide:)`); the resting
+  tab page's pill is the same small size.
+- **Asked, mocked, waiting on Paul** (bottom of
+  https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3):
+  - No way to the player from the bar now (the disc only plays /
+    pauses, hold opens): G1 tap the disc opens, a small white play key
+    on its edge; G2 "Now" as the pill's first word; G3 swipe the disc up
+    (Apple Music style); G4 a slim title strip above the bar.
+  - Chapter on its own, full width; time left near the time: T1 small
+    "54m left" pill under the time, chapter bar with ‹ › full width; T2
+    "−54:12" pill beside the time; T3 time left as quiet words, chapter
+    bar without arrows.
+  - Up next ("have I ruined it with the bigger card?"): with cards K1
+    even three-across grid, Now outlined (no big card), K2 wide row cards
+    (playing one in its colour), K3 two across with Now spanning the row;
+    without cards L1 plain list with round artwork and hairlines, L2 big
+    numbers and show-colour dots, L3 artwork mosaic with words under.
+    **Paul: G3, T1** (22 Nov 2026, built above); Up next: K1, K2 and L2
+    the strongest; asked whether L2 works with Your shows as cards, and
+    to see Your shows done in a similar (not identical) way.
+    Told him: L2 with today's artwork tiles for Your shows would feel
+    like two apps. Mocked, last row of the same page: L2 beside S-L2a
+    (Your shows as a running list: big numbers for Top shows, colour
+    dot, show name, "2 NEW" / Caught up, small artwork on the right) and
+    S-L2b (colour blocks two across, the show's colour and name, no
+    artwork, grey when caught up). **Paul: L2 + S-L2a** ("Yea let's go
+    for it", 22 Nov 2026), built:
+    - Up next (tabs mode): the big first card stays; under THEN the rest
+      are a cardless running order, one row each (`DeckTabsGrid(rows:
+      true)`, `DeckTabRow`, 92 pt): a big order number (ink once
+      started, pale grey #C9C4BA until then), the title in Outfit 18
+      heavy with two lines' room, then a dot in the show's colour (NEW
+      pill when fresh) and "Show · 9 Nov · 52m"; hairlines, no artwork,
+      no ×. Same touches as the tiles: tap opens, swipe left Played,
+      right Play next / Add to end, hold and drag to reorder (the slot
+      maths now works for one column too), still hold for the menu. The
+      "Find something" tile is a short dashed row at the end.
+    - Your shows (tabs mode): a running list (`DeckAllShowsRow(list:
+      true)`, `DeckShowLine`): big rank number for Top shows (a faint ·
+      for the others), the show's colour dot and name in big type, where
+      new episodes go and a coral "2 NEW" or "Caught up", 48 pt artwork
+      on the right (black and white when caught up), hairlines; sort key
+      as before. Card deck mode keeps the tiles.
+    - Check on the phone: swipe distances on a full-width row (they're a
+      share of the row's width, so longer than on the tiles), dragging a
+      row, long show names.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
