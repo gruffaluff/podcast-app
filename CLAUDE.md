@@ -3418,6 +3418,36 @@ Paul's notes after build 164:
     (`DeckAllShowsRow(list:)`, `DeckShowLine`) stay in the code, unused,
     in case Paul wants them back.
 
+- **Player G3: Apple-style artwork, blurred backdrop, colour creeps in**
+  (Paul, 22 Nov 2026: "is there another design for the dial that uses
+  the space across?", then "more like apple podcast with the artwork in
+  the middle and the background … blur … dropping the ring", then "the
+  colour sweep line isn't such a line. More of a colour creep", picked
+  G3 from https://claude.ai/artifact/NN8buzwaa8vmcJAntVSsZq, options A
+  square frame, B wide pill, C gauge, D record and sleeve, E wide
+  rectangle, F edge-to-edge, G / G2 / G3 Apple style). Both players
+  (the tab page and the card-deck player):
+  - No ring round the artwork: it's a big rounded square in the middle
+    (screen width less 56 pt where the height allows; `DeckDialGeometry.
+    artwork` = the whole spot, `corner`), with a soft shadow. Progress is
+    the line above the keys. Tapping it still turns it over to the words
+    (now a rounded square too); the search pill stays, its dots went with
+    the ring. Read along's corner picture is a small rounded square.
+  - Behind the whole player, the artwork blurred and darkened over the
+    show's colour (`DeckPlayerBackground(artwork:)`, `DeckBlurredArtwork`:
+    blurred once per artwork into a 96 pt picture off the main thread,
+    kept in memory, so nothing blurs live).
+  - The colour creeps in with no line, everywhere it fills in
+    (Paul: "can the colour creep also apply on any other effects like
+    this"): a wide soft, slightly tilted fade on square artwork
+    (`DeckSoftWipe`: the player, a resting tab's page, Up next tab cards)
+    and a soft fade round the turn on round artwork (`DeckSoftSweep`: the
+    bar's disc and other ringed artwork). `DeckWipeShape` /
+    `DeckSweepShape` are no longer used.
+  - Check on the phone: the blur on pale and dark artwork, the creep on
+    a just-started episode (barely any colour yet), the artwork size on a
+    small iPhone.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few

@@ -76,7 +76,7 @@ struct DeckTabsPager: View {
         if let episode {
             colour = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.showTitle)
         }
-        return DeckPlayerBackground(colour: colour)
+        return DeckPlayerBackground(colour: colour, artwork: episode?.artwork)
             .ignoresSafeArea()
             .animation(.easeInOut(duration: 0.35), value: current)
     }
