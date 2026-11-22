@@ -106,7 +106,11 @@ struct DeckDialGeometry {
     var knob: CGFloat { lineWidth * 1.3 * presence }
     var ringRadius: CGFloat { side / 2 - max(lineWidth / 2, knob) }
     var gap: CGFloat { big ? 8 : 3 }
-    var artwork: CGFloat { max(10, 2 * (ringRadius - lineWidth / 2 - gap)) }
+    /// The artwork fills the whole spot now (Paul, 22 Nov 2026, G3: "more
+    /// like Apple Podcasts … dropping the ring from the artwork").
+    var artwork: CGFloat { max(10, side) }
+    /// Rounded-square corners, smaller in Read along's corner.
+    var corner: CGFloat { max(6, side * 0.055) }
 }
 
 /// Seeks after a scrub; a jump of 2 minutes or more offers Undo (shared
@@ -157,7 +161,7 @@ struct DeckPlayerDial: View {
         let geometry = DeckDialGeometry(side: min(rect.width, rect.height))
         return dial(geometry)
             .frame(width: geometry.side, height: geometry.side)
-            .contentShape(Circle())
+            .contentShape(RoundedRectangle(cornerRadius: geometry.corner, style: .continuous))
             .coordinateSpace(.named(Self.space))
             // Look, don't drag (Paul, 22 Nov 2026, option 2: dragging round
             // the ring was hard one-handed): scrubbing is the straight line
@@ -216,7 +220,6 @@ struct DeckPlayerDial: View {
 
     private func dial(_ geometry: DeckDialGeometry) -> some View {
         let shown: TimeInterval = scrub.time ?? player.currentTime
-        let duration: TimeInterval = max(player.duration, 1)
         let face: Bool = geometry.big && faceShown
         return ZStack {
             artwork(geometry)
@@ -224,7 +227,8 @@ struct DeckPlayerDial: View {
                 faceView(geometry, time: shown)
                     .transition(.opacity)
             }
-            DeckDialRing(side: geometry.side, spec: ringSpec(geometry, progress: shown / duration))
+            // No ring (G3): progress is the line above the keys and the
+            // colour creeping into the artwork.
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: face)
     }
@@ -244,12 +248,12 @@ struct DeckPlayerDial: View {
                         .grayscale(1)
                         .brightness(-0.04)
                     CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
-                        .mask(DeckSweepShape(progress: progress))
+                        .mask(DeckSoftWipe(progress: progress))
                 }
             }
-            .clipShape(Circle())
+            .clipShape(RoundedRectangle(cornerRadius: geometry.corner, style: .continuous))
             .background {
-                Circle()
+                RoundedRectangle(cornerRadius: geometry.corner, style: .continuous)
                     .fill(Color.black)
                     .shadow(color: Color.black.opacity(geometry.big ? 0.35 : 0), radius: 28, y: 20)
                     .opacity(geometry.big ? 1 : 0)
@@ -280,7 +284,7 @@ struct DeckPlayerDial: View {
     private func faceView(_ geometry: DeckDialGeometry, time: TimeInterval) -> some View {
         let diameter: CGFloat = geometry.artwork
         let lineSize: CGFloat = max(13, min(19, diameter * 0.068))
-        return Circle()
+        return RoundedRectangle(cornerRadius: geometry.corner, style: .continuous)
             .fill(DeckPlayerBackground.shade(colour).opacity(0.9))
             .frame(width: diameter, height: diameter)
             .overlay {

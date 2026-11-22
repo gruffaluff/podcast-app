@@ -102,7 +102,9 @@ struct DeckColourFill: View {
             if p > 0 {
                 CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
                     .mask {
-                        if round { DeckSweepShape(progress: p) } else { DeckWipeShape(progress: p) }
+                        // A soft creep, not a line (Paul, 22 Nov 2026, G3: "more
+                        // of a colour creep that's less defined").
+                        if round { DeckSoftSweep(progress: p) } else { DeckSoftWipe(progress: p) }
                     }
             }
         }
@@ -148,5 +150,58 @@ struct DeckSweepShape: Shape {
                     endAngle: .degrees(-90 + 360 * p), clockwise: false)
         path.closeSubpath()
         return path
+    }
+}
+
+
+// MARK: - Soft colour creep
+
+/// The colour's mask on square artwork: fully in up to a little before how
+/// far you've got, then fading out over a wide, slightly tilted edge, so
+/// there's no line (Paul, 22 Nov 2026, G3 on
+/// https://claude.ai/artifact/NN8buzwaa8vmcJAntVSsZq). Nothing at 0, all
+/// of it at 1.
+struct DeckSoftWipe: View {
+    var progress: Double
+    /// How wide the fade is, as a share of the width.
+    static let feather: Double = 0.38
+
+    var body: some View {
+        let p: Double = min(1, max(0, progress))
+        let f: Double = Self.feather
+        // The fade's leading edge runs from 0 to 1 + f, so it starts
+        // invisible and ends fully in.
+        let lead: Double = p * (1 + f)
+        return LinearGradient(stops: [.init(color: .white, location: 0),
+                                      .init(color: .white.opacity(0.75), location: 0.3),
+                                      .init(color: .white.opacity(0.3), location: 0.68),
+                                      .init(color: .white.opacity(0), location: 1)],
+                              startPoint: UnitPoint(x: lead - f, y: 0.38),
+                              endPoint: UnitPoint(x: lead, y: 0.62))
+    }
+}
+
+/// The same on round artwork: from twelve o'clock round as far as you've
+/// got, fading out over the last part of the turn.
+struct DeckSoftSweep: View {
+    var progress: Double
+    static let feather: Double = 0.16
+
+    var body: some View {
+        let p: Double = min(1, max(0, progress))
+        let f: Double = Self.feather
+        let lead: Double = p * (1 + f)
+        if lead - f >= 1 {
+            return AnyView(Color.white)
+        }
+        let full: Double = max(0.001, lead - f)
+        let end: Double = min(1, max(full + 0.001, lead))
+        let fadeAtEnd: Double = lead > 1 ? (lead - 1) / f : 0
+        return AnyView(AngularGradient(stops: [.init(color: .white.opacity(max(0.55, fadeAtEnd)), location: 0),
+                                               .init(color: .white, location: min(full, 0.04)),
+                                               .init(color: .white, location: full),
+                                               .init(color: .white.opacity(fadeAtEnd * 0.9), location: end),
+                                               .init(color: .white.opacity(fadeAtEnd * 0.9), location: 1)],
+                                       center: .center, startAngle: .degrees(-90), endAngle: .degrees(270)))
     }
 }

@@ -221,7 +221,7 @@ private struct DeckTabPlayerSection: View {
     /// times row is 26 pt with its bigger numbers).
     private var side: CGFloat {
         let fixed: CGFloat = 44 + 92 + DeckBigReadout.height + 12 + DeckPlayerScrub.height + 14 + 90 + 68 + (volume ? 34 : 0) + 40
-        return max(120, min(width - 72, height - fixed))
+        return max(120, min(width - 56, height - fixed))
     }
 
     /// Spare height goes above the dial; the title sits close over the
@@ -497,11 +497,16 @@ private struct DeckTabRestingDial: View {
 
     var body: some View {
         let geometry = DeckDialGeometry(side: side)
-        DeckRingArtwork(url: episode.artwork, showTitle: episode.showTitle, size: side,
-                        progress: DeckRing.progress(of: episode), lineWidth: geometry.lineWidth,
-                        gap: geometry.gap, colour: Color.white, track: Color.white.opacity(0.2))
-            .shadow(color: Color.black.opacity(0.3), radius: 24, y: 16)
-            .contentShape(Circle())
+        let shape = RoundedRectangle(cornerRadius: geometry.corner, style: .continuous)
+        // G3 (Paul, 22 Nov 2026): no ring; the saved place shows as the
+        // colour crept in so far.
+        DeckColourFill(url: episode.artwork, showTitle: episode.showTitle,
+                       progress: DeckRing.progress(of: episode))
+            .frame(width: side, height: side)
+            .clipShape(shape)
+            .background(shape.fill(Color.black).shadow(color: Color.black.opacity(0.35), radius: 28, y: 20))
+            .contentShape(shape)
+            .accessibilityHidden(true)
     }
 }
 

@@ -59,9 +59,9 @@ struct DeckTabsGrid: View {
 
     static let gap: CGFloat = 10
 
-    /// Three across under the hero card (Paul, 21 Nov 2026: U1 "now
-    /// playing hero" from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3).
-    static let columnCount: Int = 3
+    /// Two across again (Paul, 22 Nov 2026, after build 175: the cards as
+    /// before the big first card).
+    static let columnCount: Int = 2
 
     /// A row's height in the L2 list (two lines of title always kept).
     static let rowHeight: CGFloat = 92
@@ -83,7 +83,7 @@ struct DeckTabsGrid: View {
     static func cardHeight(forWidth width: CGFloat) -> CGFloat {
         let n: CGFloat = CGFloat(columnCount)
         let card: CGFloat = max(40, (width - gap * (n - 1)) / n)
-        return (card * 1.58).rounded()
+        return (card * 1.25).rounded()
     }
     private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
     private var playingID: String? { player.nowPlaying?.episodeID }
@@ -1036,13 +1036,13 @@ private struct DeckTabCard: View {
             HStack(spacing: 5) {
                 if fresh { newFlag }
                 Text(episode.showTitle.uppercased())
-                    .font(Theme.outfit(9, .bold))
+                    .font(Theme.outfit(10, .bold))
                     .tracking(0.6)
                     .foregroundStyle(Color.white.opacity(0.85))
                     .lineLimit(1)
             }
             Text(episode.title)
-                .font(Theme.outfit(13, .bold))
+                .font(Theme.outfit(14, .bold))
                 .foregroundStyle(Color.white)
                 .lineLimit(2, reservesSpace: true)
                 .multilineTextAlignment(.leading)
@@ -1050,17 +1050,17 @@ private struct DeckTabCard: View {
                 .padding(.top, 3)
         }
         .shadow(color: Color.black.opacity(0.28), radius: 2, y: 1)
-        .padding(.horizontal, 9)
-        .padding(.bottom, 9)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 10)
     }
 
     private var timeRow: some View {
         HStack(spacing: 6) {
             DeckRing(progress: DeckRing.progress(of: episode), lineWidth: 2.5,
                      colour: Color.white, track: Color.white.opacity(0.3))
-                .frame(width: 14, height: 14)
+                .frame(width: 16, height: 16)
             Text(detail)
-                .font(Theme.outfit(10.5, .semibold))
+                .font(Theme.outfit(11, .semibold))
                 .monospacedDigit()
                 .foregroundStyle(Color.white.opacity(0.9))
                 .lineLimit(1)

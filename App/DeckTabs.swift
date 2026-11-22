@@ -310,25 +310,14 @@ struct DeckTabsView: View {
                 DeckTabsHeader(settings: { showingSettings = true })
                 if shown.isEmpty {
                     empty
-                } else if let first = shown.first {
-                    // U1 (Paul, 21 Nov 2026: "Go with U1 and the island"):
-                    // the first tab (playing, else the top of Up next) as one
-                    // big hero card; then (L2, 22 Nov 2026) the rest as a running order.
-                    DeckTabsHeroCell(episode: first)
+                } else {
+                    // Back to the two-across cards (Paul, 22 Nov 2026, after
+                    // build 175: "I prefer the old look with the cards before
+                    // I added the big card"): no big first card, no running
+                    // order; the dashed Find something tile stays last.
+                    DeckTabsGrid(tabs: shown, findTile: true)
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
-                    let rest: [PodcastEpisode] = Array(shown.dropFirst())
-                    Text("THEN")
-                        .font(Theme.outfit(12, .bold))
-                        .tracking(0.8)
-                        .foregroundStyle(Theme.muted)
-                        .padding(.horizontal, 22)
-                        .padding(.top, 20)
-                        .padding(.bottom, 8)
-                        .accessibilityAddTraits(.isHeader)
-                    let heroPlays: Bool = first.episodeID == player.nowPlaying?.episodeID
-                    DeckTabsGrid(tabs: rest, placeOffset: heroPlays ? 0 : 1, findTile: true, rows: true)
-                        .padding(.horizontal, 16)
                 }
                 // Started but not in Up next (picked from Find, or a show
                 // on Nowhere): slim Carry on cards under the tabs.

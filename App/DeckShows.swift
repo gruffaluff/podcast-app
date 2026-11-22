@@ -242,7 +242,7 @@ struct DeckShowsView: View {
                 DeckShowsEmpty { selectTab(2) }
                     .padding(.top, 24)
             } else {
-                DeckAllShowsRow(entries: entries, generation: generation, labelled: false, list: true)
+                DeckAllShowsRow(entries: entries, generation: generation, labelled: false)
                     .equatable()
                     .padding(.top, 16)
             }
