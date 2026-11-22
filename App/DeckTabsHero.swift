@@ -13,47 +13,47 @@ struct DeckTabsHero: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     let episode: PodcastEpisode
-
-    static let height: CGFloat = 318
+    /// The same height as the tabs under it (Paul, 22 Nov 2026: "keep it
+    /// wide but make it the same height as the other cards").
+    let height: CGFloat
 
     private var isOn: Bool { player.nowPlaying?.episodeID == episode.episodeID }
-    private var playing: Bool { isOn && player.isPlaying }
     private var colour: Color { DeckRings.showColour(episode) }
-    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 22, style: .continuous) }
-    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 16, style: .continuous) }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            colour
-            artwork
-            fade
+        HStack(spacing: 0) {
             words
+            artwork
         }
         .frame(maxWidth: .infinity)
-        .frame(height: Self.height)
+        .frame(height: height)
+        .background(colour)
         .clipShape(shape)
-        .overlay(alignment: .topLeading) { label }
         .background {
             shape.fill(colour)
-                .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.18), radius: 14, y: 8)
+                .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 12, y: 7)
         }
         .contentShape(shape)
         .task(id: episode.showArtwork) { await ArtworkColors.shared.load(episode.showArtwork) }
     }
 
+    /// Square artwork on the right, fading into the show's colour on its
+    /// left edge; black and white until started, filling with colour.
     private var artwork: some View {
-        VStack(spacing: 0) {
-            Color.clear
-                .frame(maxWidth: .infinity)
-                .frame(height: Self.height * 0.73)
-                .overlay {
-                    DeckColourFill(url: episode.artwork, showTitle: episode.showTitle, progress: heard)
-                        .scaledToFill()
-                }
-                .clipped()
-            Spacer(minLength: 0)
-        }
-        .accessibilityHidden(true)
+        Color.clear
+            .frame(width: height, height: height)
+            .overlay {
+                DeckColourFill(url: episode.artwork, showTitle: episode.showTitle, progress: heard)
+                    .scaledToFill()
+            }
+            .clipped()
+            .overlay(alignment: .leading) {
+                LinearGradient(colors: [colour, colour.opacity(0)], startPoint: .leading, endPoint: .trailing)
+                    .frame(width: height * 0.4)
+                    .allowsHitTesting(false)
+            }
+            .accessibilityHidden(true)
     }
 
     /// How far through: live for the one playing, else its saved place.
@@ -62,65 +62,44 @@ struct DeckTabsHero: View {
         return DeckRing.progress(of: episode)
     }
 
-    private var fade: some View {
-        ZStack {
-            LinearGradient(stops: [
-                .init(color: colour.opacity(0), location: 0.32),
-                .init(color: colour.opacity(0.85), location: 0.6),
-                .init(color: colour, location: 0.74),
-            ], startPoint: .top, endPoint: .bottom)
-            LinearGradient(stops: [
-                .init(color: Color.black.opacity(0), location: 0.5),
-                .init(color: Color.black.opacity(0.2), location: 1),
-            ], startPoint: .top, endPoint: .bottom)
-        }
-        .allowsHitTesting(false)
-    }
-
     private var label: some View {
         Text(isOn ? (player.isPlaying ? "PLAYING NOW" : "PAUSED") : "UP FIRST")
-            .font(Theme.outfit(11, .heavy))
+            .font(Theme.outfit(9.5, .heavy))
             .tracking(0.8)
             .foregroundStyle(Color.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Capsule().fill(Color.black.opacity(0.35)))
-            .padding(14)
-            .allowsHitTesting(false)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(Color.black.opacity(0.28)))
     }
 
     private var words: some View {
-        HStack(alignment: .bottom, spacing: 14) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(episode.showTitle.uppercased())
-                    .font(Theme.outfit(10, .bold))
-                    .tracking(0.6)
-                    .foregroundStyle(Color.white.opacity(0.85))
-                    .lineLimit(1)
-                Text(episode.title)
-                    .font(Theme.outfit(22, .heavy))
-                    .tracking(-0.3)
-                    .foregroundStyle(Color.white)
-                    .lineLimit(2, reservesSpace: true)
-                    .multilineTextAlignment(.leading)
-                    .padding(.top, 4)
-                DeckTabsHeroProgress(episode: episode, isOn: isOn)
-                    .padding(.top, 12)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // The real key is laid over the card by its cell (outside the
-            // card's touch handler, so a tap on it is only ever play).
-            Color.clear
-                .frame(width: 58, height: 58)
-                .padding(.bottom, 22)
+        VStack(alignment: .leading, spacing: 0) {
+            label
+            Text(episode.showTitle.uppercased())
+                .font(Theme.outfit(9.5, .bold))
+                .tracking(0.6)
+                .foregroundStyle(Color.white.opacity(0.85))
+                .lineLimit(1)
+                .padding(.top, 8)
+            Text(episode.title)
+                .font(Theme.outfit(16, .heavy))
+                .tracking(-0.2)
+                .foregroundStyle(Color.white)
+                .lineLimit(2, reservesSpace: true)
+                .multilineTextAlignment(.leading)
+                .padding(.top, 3)
+            Spacer(minLength: 6)
+            DeckTabsHeroProgress(episode: episode, isOn: isOn)
         }
-        .shadow(color: Color.black.opacity(0.25), radius: 2, y: 1)
-        .padding(.horizontal, 18)
-        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.leading, 14)
+        .padding(.trailing, 4)
+        .padding(.vertical, 12)
+        .shadow(color: Color.black.opacity(0.2), radius: 2, y: 1)
     }
 
-    /// Where the play key sits on the card (bottom right).
-    static let playInset: EdgeInsets = EdgeInsets(top: 0, leading: 0, bottom: 38, trailing: 18)
+    /// Where the play key sits on the card (bottom right, over the artwork).
+    static let playInset: EdgeInsets = EdgeInsets(top: 0, leading: 0, bottom: 12, trailing: 12)
 }
 
 /// The hero's big white play / pause key.
@@ -145,10 +124,11 @@ struct DeckTabsHeroPlay: View {
             if isOn { player.togglePlayPause() } else { actions.playNow(episode) }
         } label: {
             Image(systemName: playing ? "pause.fill" : "play.fill")
-                .font(.system(size: 22))
+                .font(.system(size: 19))
                 .foregroundStyle(colour)
-                .frame(width: 58, height: 58)
+                .frame(width: 50, height: 50)
                 .background(Circle().fill(Color.white))
+                .shadow(color: Color.black.opacity(0.25), radius: 6, y: 3)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
@@ -190,7 +170,7 @@ private struct DeckTabsHeroProgress: View {
                 Spacer(minLength: 8)
                 Text(length > 0 ? DeckUpNextTime.length(max(0, length - at)) + " left" : "")
             }
-            .font(Theme.outfit(12, .semibold))
+            .font(Theme.outfit(11, .semibold))
             .monospacedDigit()
             .foregroundStyle(Color.white.opacity(0.9))
         }

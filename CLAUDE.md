@@ -3326,6 +3326,13 @@ Paul's notes after build 164:
   arrows and the small times row are gone while listening (chapters skip
   from the chapters sheet, headphones and the lock screen); Read along
   keeps its chapter row and small times under the line.
+- **Big Up next card the height of the others** (Paul, 22 Nov 2026:
+  "keep it wide but make it the same height as the other cards"): the
+  first card is still full width but as tall as a three-across tab
+  (`DeckTabsGrid.cardHeight(forWidth:)`): words on the left (PLAYING NOW /
+  PAUSED / UP FIRST, show, title on two lines, progress with time and
+  time left), square artwork on the right fading into the show's colour,
+  a 50 pt white play key over the artwork's corner. Same swipes and hold.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
