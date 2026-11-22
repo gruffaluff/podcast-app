@@ -3334,6 +3334,35 @@ Paul's notes after build 164:
   time left), square artwork on the right fading into the show's colour,
   a 50 pt white play key over the artwork's corner. Same swipes and hold.
 
+## On the branch for build 175 (22 Nov 2026; not built yet)
+
+- **After build 174** (Paul, 22 Nov 2026, screenshots of the 606 tab
+  page and the readout):
+  - No ring round the play key (`DeckPlayerTransport`).
+  - No knob on the dial's ring ("makes you think you can click it"); the
+    dial is only for looking (`DeckDialRing.draw`).
+  - A tab that isn't playing ("NEXT IN UP NEXT") was still the old
+    layout (small times row, round dim skips): now the same as the live
+    page: its saved place big and faded, one pill ("Not started · 1h
+    17m" or "54m left"), its progress as a still line, the square skip
+    keys dimmed and the white Play (`DeckTabRestingReadout`,
+    `DeckTabRestingLine`, `DeckTabRestingTransport`).
+- **Asked, mocked, waiting on Paul** (bottom of
+  https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3):
+  - No way to the player from the bar now (the disc only plays /
+    pauses, hold opens): G1 tap the disc opens, a small white play key
+    on its edge; G2 "Now" as the pill's first word; G3 swipe the disc up
+    (Apple Music style); G4 a slim title strip above the bar.
+  - Chapter on its own, full width; time left near the time: T1 small
+    "54m left" pill under the time, chapter bar with ‹ › full width; T2
+    "−54:12" pill beside the time; T3 time left as quiet words, chapter
+    bar without arrows.
+  - Up next ("have I ruined it with the bigger card?"): with cards K1
+    even three-across grid, Now outlined (no big card), K2 wide row cards
+    (playing one in its colour), K3 two across with Now spanning the row;
+    without cards L1 plain list with round artwork and hairlines, L2 big
+    numbers and show-colour dots, L3 artwork mosaic with words under.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
