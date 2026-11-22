@@ -3334,7 +3334,7 @@ Paul's notes after build 164:
   time left), square artwork on the right fading into the show's colour,
   a 50 pt white play key over the artwork's corner. Same swipes and hold.
 
-## On the branch for build 175 (22 Nov 2026; not built yet)
+## Done in build 175 (22 Nov 2026, PR #93; Paul: "Build")
 
 - **After build 174** (Paul, 22 Nov 2026, screenshots of the 606 tab
   page and the readout):
