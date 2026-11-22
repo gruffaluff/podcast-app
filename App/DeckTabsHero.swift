@@ -47,13 +47,19 @@ struct DeckTabsHero: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: Self.height * 0.73)
                 .overlay {
-                    CachedImage(url: episode.artwork) { Theme.placeholderColor(for: episode.showTitle) }
+                    DeckColourFill(url: episode.artwork, showTitle: episode.showTitle, progress: heard)
                         .scaledToFill()
                 }
                 .clipped()
             Spacer(minLength: 0)
         }
         .accessibilityHidden(true)
+    }
+
+    /// How far through: live for the one playing, else its saved place.
+    private var heard: Double {
+        if isOn, player.duration > 0 { return player.currentTime / player.duration }
+        return DeckRing.progress(of: episode)
     }
 
     private var fade: some View {

@@ -244,7 +244,7 @@ struct DeckPlayerDial: View {
                         .grayscale(1)
                         .brightness(-0.04)
                     CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
-                        .mask(DeckDialSweep(progress: progress))
+                        .mask(DeckSweepShape(progress: progress))
                 }
             }
             .clipShape(Circle())
@@ -799,31 +799,3 @@ struct DeckDialTimes: View {
     }
 }
 
-
-/// A pie from twelve o'clock round to `progress`: the part of the artwork
-/// shown in colour.
-private struct DeckDialSweep: Shape {
-    var progress: Double
-
-    var animatableData: Double {
-        get { progress }
-        set { progress = newValue }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let p: Double = min(1, max(0, progress))
-        guard p > 0 else { return path }
-        let centre = CGPoint(x: rect.midX, y: rect.midY)
-        let radius: CGFloat = max(rect.width, rect.height)
-        if p >= 1 {
-            path.addRect(rect)
-            return path
-        }
-        path.move(to: centre)
-        path.addArc(center: centre, radius: radius, startAngle: .degrees(-90),
-                    endAngle: .degrees(-90 + 360 * p), clockwise: false)
-        path.closeSubpath()
-        return path
-    }
-}

@@ -47,6 +47,8 @@ struct DeckRingArtwork: View {
     var gap: CGFloat = 4
     var colour: Color = Theme.ink
     var track: Color = Theme.ink.opacity(0.12)
+    /// The artwork's colour sweeps in with the ring (the island).
+    var sweep: Bool = false
 
     var body: some View {
         let inner: CGFloat = max(0, size - 2 * (lineWidth + gap))
@@ -55,7 +57,11 @@ struct DeckRingArtwork: View {
             Color.clear
                 .frame(width: inner, height: inner)
                 .overlay {
-                    CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
+                    if sweep {
+                        DeckColourFill(url: url, showTitle: showTitle, progress: progress, round: true)
+                    } else {
+                        CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
+                    }
                 }
                 .clipShape(Circle())
         }
@@ -71,5 +77,76 @@ extension DeckRingArtwork {
         self.init(url: episode.artwork, showTitle: episode.showTitle, size: size,
                   progress: DeckRing.progress(of: episode), lineWidth: lineWidth, gap: gap,
                   colour: colour, track: track)
+    }
+}
+
+
+// MARK: - Colour fills in as you listen
+
+/// Artwork in black and white with its colour filled in as far as you've
+/// listened (Paul, 22 Nov 2026, I1 from
+/// https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3): a wipe from the left
+/// on square artwork, a sweep from twelve o'clock on round artwork.
+struct DeckColourFill: View {
+    let url: URL?
+    let showTitle: String
+    let progress: Double
+    var round: Bool = false
+
+    var body: some View {
+        let p: Double = min(1, max(0, progress))
+        ZStack {
+            CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
+                .grayscale(1)
+                .brightness(-0.03)
+            if p > 0 {
+                CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
+                    .mask {
+                        if round { DeckSweepShape(progress: p) } else { DeckWipeShape(progress: p) }
+                    }
+            }
+        }
+    }
+}
+
+/// The left `progress` of the rectangle.
+struct DeckWipeShape: Shape {
+    var progress: Double
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let p: Double = min(1, max(0, progress))
+        return Path(CGRect(x: rect.minX, y: rect.minY, width: rect.width * CGFloat(p), height: rect.height))
+    }
+}
+
+/// A pie from twelve o'clock round to `progress`.
+struct DeckSweepShape: Shape {
+    var progress: Double
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let p: Double = min(1, max(0, progress))
+        guard p > 0 else { return path }
+        if p >= 1 {
+            path.addRect(rect)
+            return path
+        }
+        let centre = CGPoint(x: rect.midX, y: rect.midY)
+        let radius: CGFloat = max(rect.width, rect.height)
+        path.move(to: centre)
+        path.addArc(center: centre, radius: radius, startAngle: .degrees(-90),
+                    endAngle: .degrees(-90 + 360 * p), clockwise: false)
+        path.closeSubpath()
+        return path
     }
 }

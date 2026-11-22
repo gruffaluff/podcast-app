@@ -964,13 +964,21 @@ private struct DeckTabCard: View {
         .contentShape(Rectangle())
     }
 
+    /// How far through: live for the one playing, else its saved place.
+    private var heard: Double {
+        if isOn, player.duration > 0 { return player.currentTime / player.duration }
+        return DeckRing.progress(of: episode)
+    }
+
     private var artwork: some View {
         VStack(spacing: 0) {
             Color.clear
                 .aspectRatio(1, contentMode: .fit)
                 .frame(maxWidth: .infinity)
                 .overlay {
-                    CachedImage(url: episode.artwork) { Theme.placeholderColor(for: episode.showTitle) }
+                    // Black and white until started; the colour fills in as
+                    // you listen (Paul, 22 Nov 2026, I1).
+                    DeckColourFill(url: episode.artwork, showTitle: episode.showTitle, progress: heard)
                 }
                 .clipped()
             Spacer(minLength: 0)

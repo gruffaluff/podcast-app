@@ -3292,6 +3292,19 @@ Paul's notes after build 164:
     the circle as you listen, in step with the ring (`DeckDialSweep`).
   - Check on the phone: dial size on a small iPhone (it gives up the
     line's 30 pt), the sweep on dark artwork, pulling down from the dial.
+- **Colour fills in as you listen** (Paul, 22 Nov 2026: "1 and 3 is a
+  good call", from the identity mock-ups):
+  - I1: Up next tab cards and the big first card show their artwork in
+    black and white until the episode is started; the colour wipes in
+    from the left as far as you've listened (live for the one playing).
+    The island's round artwork sweeps in with its ring
+    (`DeckColourFill`, `DeckWipeShape`, `DeckSweepShape` in DeckRing.swift;
+    `DeckRingArtwork(sweep:)`; the player dial uses the same sweep).
+  - I3: Your shows tiles are in colour only when the show has something
+    new (with the coral "n NEW"); caught-up shows are black and white and
+    a little quieter (`DeckShowTile.art`).
+  - Check on the phone: a whole Up next of untouched episodes looks grey
+    (that's the idea, but say if it's too dull), the coral NEW still reads.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
@@ -3346,7 +3359,9 @@ Paul's notes after build 164:
   time readout, chapter-cut line with a ring knob, square deck keys and a
   ring round play; mini I3 Your shows in colour only when there's
   something new; major I4 Up next as records (big disc for what's on,
-  the queue as a shelf of discs that fill with colour). Waiting on Paul.
+  the queue as a shelf of discs that fill with colour). **Paul: I1 + I3**
+  (22 Nov 2026), in build 174; asked for more player display and menu
+  bar options.
 
 ## Queued for the next app build
 

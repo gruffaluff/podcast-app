@@ -253,7 +253,7 @@ private struct DeckTabsBarRing: View {
 
     var body: some View {
         DeckRingArtwork(url: item.artworkURL, showTitle: item.showTitle, size: 44,
-                        progress: progress, lineWidth: 3, gap: 2)
+                        progress: progress, lineWidth: 3, gap: 2, sweep: true)
     }
 
     private var progress: Double {
@@ -350,7 +350,7 @@ private struct DeckIslandNow: View {
                         DeckTabsBarRing(item: item)
                     } else if let first {
                         DeckRingArtwork(url: first.artwork, showTitle: first.showTitle, size: 44,
-                                        progress: DeckRing.progress(of: first), lineWidth: 3, gap: 2)
+                                        progress: DeckRing.progress(of: first), lineWidth: 3, gap: 2, sweep: true)
                     } else {
                         Circle().fill(Color.white.opacity(0.12)).frame(width: 44, height: 44)
                     }
