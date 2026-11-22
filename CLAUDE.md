@@ -3373,6 +3373,12 @@ Paul's notes after build 164:
     **Paul: G3, T1** (22 Nov 2026, built above); Up next: K1, K2 and L2
     the strongest; asked whether L2 works with Your shows as cards, and
     to see Your shows done in a similar (not identical) way.
+    Told him: L2 with today's artwork tiles for Your shows would feel
+    like two apps. Mocked, last row of the same page: L2 beside S-L2a
+    (Your shows as a running list: big numbers for Top shows, colour
+    dot, show name, "2 NEW" / Caught up, small artwork on the right) and
+    S-L2b (colour blocks two across, the show's colour and name, no
+    artwork, grey when caught up). Waiting on Paul.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
