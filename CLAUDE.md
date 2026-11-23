@@ -3460,6 +3460,14 @@ Paul's notes after build 164:
   and white when caught up (I3). `DeckSoftWipe` / `DeckSoftSweep` stay in
   the code, unused. The blurred backdrop behind the player stays.
 
+## On the branch for build 178 (23 Nov 2026; not built yet)
+
+- **No-chapters bar** (Paul, 23 Nov 2026, build 177 screenshot:
+  "Chapter pill looking odd": an outlined "No chapters · Make them ›"
+  pill sat inside the filled full-width chapter bar). With no chapters
+  the bar itself is the faint outline and the words sit in it, no second
+  pill (`DeckChapterRow.wideBackground`).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
