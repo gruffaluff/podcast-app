@@ -3448,6 +3448,18 @@ Paul's notes after build 164:
     a just-started episode (barely any colour yet), the artwork size on a
     small iPhone.
 
+## On the branch for build 177 (23 Nov 2026; not built yet)
+
+- **Artwork in full colour again** (Paul, 23 Nov 2026: "remove the
+  artwork colouring progress as I like seeing the artwork in its full
+  glory on the up next page. Keeping shows without episodes black and
+  white. Also the player colour fade goes too"): Up next tab cards, the
+  bar's disc, ringed artwork, a resting tab's page and the player's
+  artwork are always in full colour (`DeckColourFill` now just draws the
+  picture; the player dial's artwork too). Your shows tiles stay black
+  and white when caught up (I3). `DeckSoftWipe` / `DeckSoftSweep` stay in
+  the code, unused. The blurred backdrop behind the player stays.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
