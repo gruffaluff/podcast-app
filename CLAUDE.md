@@ -3448,7 +3448,7 @@ Paul's notes after build 164:
     a just-started episode (barely any colour yet), the artwork size on a
     small iPhone.
 
-## On the branch for build 177 (23 Nov 2026; not built yet)
+## Done in build 177 (23 Nov 2026, PR #95; Paul: "Build")
 
 - **Artwork in full colour again** (Paul, 23 Nov 2026: "remove the
   artwork colouring progress as I like seeing the artwork in its full
