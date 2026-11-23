@@ -94,20 +94,11 @@ struct DeckColourFill: View {
     var round: Bool = false
 
     var body: some View {
-        let p: Double = min(1, max(0, progress))
-        ZStack {
-            CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
-                .grayscale(1)
-                .brightness(-0.03)
-            if p > 0 {
-                CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
-                    .mask {
-                        // A soft creep, not a line (Paul, 22 Nov 2026, G3: "more
-                        // of a colour creep that's less defined").
-                        if round { DeckSoftSweep(progress: p) } else { DeckSoftWipe(progress: p) }
-                    }
-            }
-        }
+        // Full colour always (Paul, 23 Nov 2026: "remove the artwork
+        // colouring progress as I like seeing the artwork in its full
+        // glory"). `progress` / `round` are kept so callers don't change;
+        // the soft creep (`DeckSoftWipe` / `DeckSoftSweep`) is unused.
+        CachedImage(url: url) { Theme.placeholderColor(for: showTitle) }
     }
 }
 

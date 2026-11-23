@@ -233,23 +233,14 @@ struct DeckPlayerDial: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: face)
     }
 
-    /// The artwork starts black and white and its colour sweeps in round
-    /// the circle as you listen, in step with the ring (Paul, 22 Nov 2026,
-    /// option 2 from https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3).
+    /// The artwork in full colour (the colour sweep went, Paul, 23 Nov 2026).
     private func artwork(_ geometry: DeckDialGeometry) -> some View {
         let diameter: CGFloat = geometry.artwork
-        let shown: TimeInterval = scrub.time ?? player.currentTime
-        let progress: Double = min(1, max(0, shown / max(player.duration, 1)))
         return Color.clear
             .frame(width: diameter, height: diameter)
             .overlay {
-                ZStack {
-                    CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
-                        .grayscale(1)
-                        .brightness(-0.04)
-                    CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
-                        .mask(DeckSoftWipe(progress: progress))
-                }
+                // Full colour (Paul, 23 Nov 2026: the colour fade goes).
+                CachedImage(url: item.artworkURL) { Theme.placeholderColor(for: item.showTitle) }
             }
             .clipShape(RoundedRectangle(cornerRadius: geometry.corner, style: .continuous))
             .background {
