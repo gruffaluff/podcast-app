@@ -27,9 +27,20 @@ struct DeckChapterRow: View {
         } else if wide {
             row
                 .frame(height: 40)
-                .background(Capsule().fill(Color.white.opacity(0.14)))
+                .background { wideBackground }
         } else {
             row
+        }
+    }
+
+    /// Filled while there are chapters; with none, the bar itself is the
+    /// faint outline (Paul, 23 Nov 2026: an outlined pill inside the filled
+    /// bar looked odd).
+    @ViewBuilder private var wideBackground: some View {
+        if player.chapters.isEmpty && player.currentAd == nil && player.lastSkippedAd == nil {
+            Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1.5)
+        } else {
+            Capsule().fill(Color.white.opacity(0.14))
         }
     }
 
@@ -79,7 +90,7 @@ struct DeckChapterRow: View {
                     .opacity(0.75)
                     .padding(.horizontal, 12)
                     .frame(height: 30)
-                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 1.5))
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(wide ? 0 : 0.35), lineWidth: 1.5))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("No chapters")
