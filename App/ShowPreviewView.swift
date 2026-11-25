@@ -1,5 +1,6 @@
 import SwiftUI
 import PodcastCore
+import SwiftData
 
 /// A show's mini homepage from Find or the charts, before following it:
 /// artwork, description, Follow, and its latest episodes (tap one for its
