@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Deck type: Outfit (Open Font Licence, in App/Fonts). -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>Outfit-Medium.ttf</string>
+		<string>Outfit-SemiBold.ttf</string>
+		<string>Outfit-Bold.ttf</string>
+		<string>Outfit-ExtraBold.ttf</string>
+	</array>
 	<!-- The widgets extension (Home / Lock Screen widgets, Control Centre button). -->
 	<key>NSExtension</key>
 	<dict>

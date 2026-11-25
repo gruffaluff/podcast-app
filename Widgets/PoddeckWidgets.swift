@@ -15,21 +15,58 @@ struct PoddeckWidgets: WidgetBundle {
     }
 }
 
-// MARK: - Tape Deck colours (same values as App/Theme.swift)
+// MARK: - Deck colours and type (same values as App/Theme.swift)
 
-private enum Deck {
-    static let panel = Color(red: 0xE8 / 255, green: 0xE6 / 255, blue: 0xE1 / 255)
-    static let ink = Color(red: 0x1B / 255, green: 0x1B / 255, blue: 0x1A / 255)
-    static let muted = Color(red: 0x5F / 255, green: 0x5C / 255, blue: 0x55 / 255)
-    static let accent = Color(red: 0xF0 / 255, green: 0x5A / 255, blue: 0x1A / 255)
-    static let accentText = Color(red: 0xB0 / 255, green: 0x3A / 255, blue: 0x0A / 255)
-    static let display = Color(red: 0x22 / 255, green: 0x23 / 255, blue: 0x1F / 255)
-    static let displayText = Color(red: 0xE6 / 255, green: 0xED / 255, blue: 0xD7 / 255)
-    static let displayDim = Color(red: 0x9D / 255, green: 0xA6 / 255, blue: 0x90 / 255)
-    static let track = Color(red: 0x3A / 255, green: 0x3C / 255, blue: 0x35 / 255)
+/// The Deck look: warm page, white cards, ink text, coral as the one
+/// accent. `night` is Deck night, used when the iPhone is dark.
+private struct DeckPalette {
+    let page: Color
+    let card: Color
+    let ink: Color
+    let muted: Color
+    let hairline: Color
+    let track: Color
+    /// Text / glyph on an ink fill (the play key).
+    let onInk: Color
 
-    static func mono(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+    static let coral = Color(red: 0xEC / 255, green: 0x65 / 255, blue: 0x50 / 255)
+
+    static let day = DeckPalette(
+        page: DeckPalette.hex(0xEEEBE5), card: DeckPalette.hex(0xFFFFFF),
+        ink: DeckPalette.hex(0x1C1B1A), muted: DeckPalette.hex(0x6B6862),
+        hairline: DeckPalette.hex(0xE5E1D9), track: DeckPalette.hex(0xE5E1D9),
+        onInk: DeckPalette.hex(0xFFFFFF))
+
+    static let night = DeckPalette(
+        page: DeckPalette.hex(0x141312), card: DeckPalette.hex(0x211F1D),
+        ink: DeckPalette.hex(0xF2EFEA), muted: DeckPalette.hex(0xA29E96),
+        hairline: DeckPalette.hex(0x37342F), track: DeckPalette.hex(0x37342F),
+        onInk: DeckPalette.hex(0x141312))
+
+    static func of(_ scheme: ColorScheme) -> DeckPalette {
+        scheme == .dark ? DeckPalette.night : DeckPalette.day
+    }
+
+    static func hex(_ value: UInt32) -> Color {
+        let r: Double = Double((value >> 16) & 0xFF) / 255
+        let g: Double = Double((value >> 8) & 0xFF) / 255
+        let b: Double = Double(value & 0xFF) / 255
+        return Color(red: r, green: g, blue: b)
+    }
+}
+
+private enum DeckType {
+    /// Outfit (bundled with the widgets, listed in Widgets-Info.plist).
+    /// Font.custom falls back to SF if the font isn't there.
+    static func outfit(_ size: CGFloat, _ weight: Font.Weight = .semibold) -> Font {
+        let name: String
+        switch weight {
+        case .heavy, .black: name = "Outfit-ExtraBold"
+        case .bold: name = "Outfit-Bold"
+        case .medium, .regular, .light, .thin, .ultraLight: name = "Outfit-Medium"
+        default: name = "Outfit-SemiBold"
+        }
+        return Font.custom(name, fixedSize: size)
     }
 }
 
@@ -81,9 +118,11 @@ struct UpNextWidget: Widget {
 
 struct UpNextWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.colorScheme) private var colorScheme
     let entry: DeckEntry
 
     private var snapshot: WidgetSnapshot { entry.snapshot }
+    private var palette: DeckPalette { DeckPalette.of(colorScheme) }
     /// What the play key would play: what's playing, or the top of Up Next.
     private var lead: WidgetSnapshot.Item? { snapshot.nowPlaying ?? snapshot.upNext.first }
     private var rest: [WidgetSnapshot.Item] {
@@ -110,9 +149,9 @@ struct UpNextWidgetView: View {
         case .accessoryRectangular:
             HStack(spacing: 6) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(snapshot.isPlaying ? "PLAYING" : "UP NEXT").font(Deck.mono(10, .bold))
-                    Text(lead?.title ?? "Nothing queued").font(.system(size: 13, weight: .semibold)).lineLimit(2)
-                    if let lead { Text(lead.show).font(Deck.mono(10)).lineLimit(1).opacity(0.7) }
+                    Text(snapshot.isPlaying ? "PLAYING" : "UP NEXT").font(DeckType.outfit(10, .bold))
+                    Text(lead?.title ?? "Nothing queued").font(DeckType.outfit(14, .semibold)).lineLimit(2)
+                    if let lead { Text(lead.show).font(DeckType.outfit(11, .medium)).lineLimit(1).opacity(0.7) }
                 }
                 Spacer(minLength: 0)
                 if lead != nil {
@@ -124,7 +163,7 @@ struct UpNextWidgetView: View {
             }
             .containerBackground(.clear, for: .widget)
         default:
-            home.containerBackground(Deck.panel, for: .widget)
+            home.containerBackground(palette.page, for: .widget)
         }
     }
 
@@ -151,51 +190,86 @@ struct UpNextWidgetView: View {
             }
         } else {
             VStack(spacing: 6) {
-                Image(systemName: "list.bullet").font(.system(size: 22, weight: .semibold)).foregroundStyle(Deck.muted)
-                Text("UP NEXT IS EMPTY").font(Deck.mono(11, .bold)).foregroundStyle(Deck.ink)
-                Text("Open Poddeck to add episodes").font(.system(size: 11)).foregroundStyle(Deck.muted)
+                Image(systemName: "square.stack").font(.system(size: 22, weight: .semibold)).foregroundStyle(palette.muted)
+                Text("Up next is empty").font(DeckType.outfit(14, .bold)).foregroundStyle(palette.ink)
+                Text("Open Poddeck to add episodes").font(DeckType.outfit(11, .medium)).foregroundStyle(palette.muted)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
-    /// The dark display panel: artwork, title, show, time left and a
-    /// progress bar; on the small widget the play key sits inside it.
+    private var statusText: String {
+        if snapshot.isPlaying { return "PLAYING" }
+        return snapshot.nowPlaying == nil ? "UP NEXT" : "PAUSED"
+    }
+
+    private func statusLabel() -> some View {
+        HStack(spacing: 4) {
+            if snapshot.isPlaying {
+                Circle().fill(DeckPalette.coral).frame(width: 5, height: 5)
+            }
+            Text(statusText)
+                .font(DeckType.outfit(9, .bold))
+                .foregroundStyle(snapshot.isPlaying ? DeckPalette.coral : palette.muted)
+        }
+    }
+
+    /// What's playing (or the top of Up Next): artwork, status, show,
+    /// title, a thin progress line and time left. A white card on the
+    /// medium and large widgets; on the small one it sits on the page
+    /// with the play key inside.
+    @ViewBuilder
     private func display(_ item: WidgetSnapshot.Item) -> some View {
+        let small: Bool = family == .systemSmall
+        let content = displayContent(item, small: small)
+        if small {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        } else {
+            content
+                .padding(10)
+                .frame(maxWidth: .infinity, maxHeight: family == .systemLarge ? 128 : .infinity, alignment: .topLeading)
+                .background(palette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    private func displayContent(_ item: WidgetSnapshot.Item, small: Bool) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top, spacing: 8) {
-                artwork(item, size: family == .systemSmall ? 40 : 46)
+                artwork(item, size: small ? 44 : 46)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(snapshot.isPlaying ? "● PLAYING" : (snapshot.nowPlaying == nil ? "UP NEXT" : "PAUSED"))
-                        .font(Deck.mono(9, .bold))
-                        .foregroundStyle(snapshot.isPlaying ? Deck.accent : Deck.displayDim)
-                    Text(item.show.uppercased()).font(Deck.mono(9)).foregroundStyle(Deck.displayDim).lineLimit(1)
+                    statusLabel()
+                    Text(item.show.uppercased())
+                        .font(DeckType.outfit(9, .bold))
+                        .foregroundStyle(palette.muted)
+                        .lineLimit(1)
                 }
                 Spacer(minLength: 0)
             }
             Text(item.title)
-                .font(.system(size: family == .systemSmall ? 12 : 13, weight: .semibold))
-                .foregroundStyle(Deck.displayText)
+                .font(DeckType.outfit(small ? 13 : 14, .semibold))
+                .foregroundStyle(palette.ink)
                 .lineLimit(2)
             Spacer(minLength: 0)
             HStack(spacing: 6) {
-                progressBar(item.progress)
+                progressLine(item.progress)
                 if let remaining = item.remaining {
-                    Text(Self.left(remaining)).font(Deck.mono(9)).foregroundStyle(Deck.displayDim).fixedSize()
+                    Text(Self.left(remaining))
+                        .font(DeckType.outfit(10, .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(palette.muted)
+                        .fixedSize()
                 }
-                if family == .systemSmall {
-                    Button(intent: WidgetPlayPauseIntent()) { playKey(size: 26) }.buttonStyle(.plain)
+                if small {
+                    Button(intent: WidgetPlayPauseIntent()) { playKey(size: 30) }.buttonStyle(.plain)
                 }
             }
         }
-        .padding(8)
-        .frame(maxWidth: .infinity, maxHeight: family == .systemLarge ? 128 : .infinity, alignment: .topLeading)
-        .background(Deck.display, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var keys: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 22) {
             Button(intent: WidgetSkipBackIntent()) { key("gobackward") }.buttonStyle(.plain)
             Button(intent: WidgetPlayPauseIntent()) { playKey(size: 30) }.buttonStyle(.plain)
             Button(intent: WidgetSkipForwardIntent()) { key("goforward") }.buttonStyle(.plain)
@@ -207,61 +281,76 @@ struct UpNextWidgetView: View {
         HStack(spacing: 8) {
             artwork(item, size: 30)
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Deck.ink).lineLimit(1)
-                Text(item.show.uppercased()).font(Deck.mono(9)).foregroundStyle(Deck.muted).lineLimit(1)
+                Text(item.title)
+                    .font(DeckType.outfit(12, .semibold))
+                    .foregroundStyle(palette.ink)
+                    .lineLimit(1)
+                Text(item.show.uppercased())
+                    .font(DeckType.outfit(9, .bold))
+                    .foregroundStyle(palette.muted)
+                    .lineLimit(1)
             }
             Spacer(minLength: 0)
             if let remaining = item.remaining {
-                Text(Self.left(remaining)).font(Deck.mono(9)).foregroundStyle(Deck.muted).fixedSize()
+                Text(Self.left(remaining))
+                    .font(DeckType.outfit(10, .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(palette.muted)
+                    .fixedSize()
             }
         }
     }
 
+    /// Skip keys: plain ink symbols, no chrome.
     private func key(_ symbol: String) -> some View {
         Image(systemName: symbol)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(Deck.ink)
-            .frame(width: 44, height: 30)
-            .background(Color.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Deck.muted.opacity(0.35), lineWidth: 1))
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(palette.ink)
+            .frame(width: 40, height: 30)
+            .contentShape(Rectangle())
     }
 
+    /// Round ink play key (light glyph); in Deck night the ink is light,
+    /// so the glyph turns dark.
     private func playKey(size: CGFloat) -> some View {
         Image(systemName: snapshot.isPlaying ? "pause.fill" : "play.fill")
-            .font(.system(size: size * 0.42, weight: .bold))
-            .foregroundStyle(.white)
-            .frame(width: size * 1.6, height: size)
-            .background(Deck.accent, in: RoundedRectangle(cornerRadius: 7))
+            .font(.system(size: size * 0.4, weight: .bold))
+            .foregroundStyle(palette.onInk)
+            .frame(width: size, height: size)
+            .background(Circle().fill(palette.ink))
     }
 
-    private func progressBar(_ value: Double) -> some View {
-        GeometryReader { proxy in
+    /// Thin ink line on a faint track.
+    private func progressLine(_ value: Double) -> some View {
+        let clamped: Double = max(0, min(1, value))
+        return GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Capsule().fill(Deck.track)
-                Capsule().fill(Deck.accent).frame(width: max(0, min(1, value)) * proxy.size.width)
+                Capsule().fill(palette.track)
+                Capsule().fill(palette.ink).frame(width: CGFloat(clamped) * proxy.size.width)
             }
         }
-        .frame(height: 4)
+        .frame(height: 3)
     }
 
     private func artwork(_ item: WidgetSnapshot.Item, size: CGFloat) -> some View {
-        Group {
+        let corner: CGFloat = size * 0.22
+        return Group {
             if let url = WidgetSnapshot.artworkURL(item.artworkFile), let image = UIImage(contentsOfFile: url.path) {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                Deck.track.overlay(
+                palette.track.overlay(
                     Text(String(item.show.prefix(1)).uppercased())
-                        .font(Deck.mono(size * 0.4, .bold))
-                        .foregroundStyle(Deck.displayText))
+                        .font(DeckType.outfit(size * 0.42, .heavy))
+                        .foregroundStyle(palette.muted))
             }
         }
         .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
     }
 
     static func left(_ seconds: Double) -> String {
         let minutes = Int((seconds / 60).rounded(.up))
-        return minutes >= 60 ? "\(minutes / 60)H\(String(format: "%02d", minutes % 60))" : "\(minutes)M"
+        return minutes >= 60 ? "\(minutes / 60)h \(String(format: "%02d", minutes % 60))m" : "\(minutes)m"
     }
 }
 
