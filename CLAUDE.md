@@ -3548,6 +3548,20 @@ Paul's notes after build 164:
   Episodes and player layout option rounds, the Cloudflare alerts
   backup): all overtaken by the Deck look.
 
+- **"Anything missing?"** (Paul, 25 Nov 2026: "I think we're in a good
+  spot"). Told him the loose ends, waiting on his pick: 1 widgets and
+  Lock Screen widgets still in the old Tape Deck look (green display,
+  orange, mono type: `Widgets/PoddeckWidgets.swift`), not Deck; 2 the
+  player's search pill counts hits that no longer show anywhere (the
+  dots went with the ring in 176): mark them on the progress line or
+  drop the pill; 3 tidy-up build: delete the unused pieces (big card,
+  L2 rows, S-L2a list, soft creep, the ring drawing, ad-finding code,
+  maybe Card deck mode) so fewer places can break; 4 run the free
+  simulator screenshots job once while the repo is public (before
+  1 Dec); 5 1 Dec: repo back to private, and try one free GitHub Mac
+  build to see if paid Codemagic can stop; 6 checks only Paul can do:
+  CarPlay with the new player, a smaller iPhone, Deck night.
+
 - **Going live** (Paul, 12 Nov 2026: "hopefully we are sort of done
   developing mostly", asked next steps / timeline). Told him: three ways
   (stay personal on TestFlight, builds expire after 90 days; public
