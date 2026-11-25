@@ -3511,7 +3511,7 @@ this on dec 1?".
   DeckTabsBar.swift (`DeckIslandNow`, `DeckTabsBarNow`…, not
   `DeckTabGroupPill`, kept on purpose). Ads code untouched.
 
-## On the branch for build 180 (25 Nov 2026; not built yet)
+## Done in build 180 (25 Nov 2026, PR #98; Paul: "Build when ready")
 
 - **Swiping the playing tab away doesn't start the next one** (Paul,
   25 Nov 2026: swiped the episode playing away as played and the next
