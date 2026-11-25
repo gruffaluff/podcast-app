@@ -3532,6 +3532,11 @@ this on dec 1?".
   label (kept centred); `DeckTabMoreSheet` is gone. Play next / Remove
   from Up next stay on the tab's hold menu and the "This episode" card;
   the show name opens the show.
+- **Skip keys without boxes** (Paul, 25 Nov 2026: "remove the rounded
+  edge boxes on the skip back and forward buttons"): plain skip icons
+  either side of play, on the live player and a resting tab's page
+  (`DeckPlayerTransport`, `DeckTabRestingTransport`); same size and
+  touch area (58 pt).
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 

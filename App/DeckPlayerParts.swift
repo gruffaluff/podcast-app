@@ -444,8 +444,8 @@ struct DeckPlayerTransport: View {
     }
 
     private func skipKey(_ direction: SkipButton.Direction) -> some View {
+        // Plain icon, no box behind it (Paul, 25 Nov 2026).
         SkipButton(direction: direction, iconSize: 26, frame: 58)
-            .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(Color.white.opacity(0.12)))
     }
 
     private var playKey: some View {

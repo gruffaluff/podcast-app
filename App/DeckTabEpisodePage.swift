@@ -522,7 +522,6 @@ private struct DeckTabRestingTransport: View {
         Image(systemName: icon)
             .font(.system(size: 26))
             .frame(width: 58, height: 58)
-            .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(Color.white.opacity(0.12)))
             .opacity(0.35)
             .accessibilityHidden(true)
     }
