@@ -1,6 +1,5 @@
 import SwiftUI
 import PodcastCore
-import SwiftData
 
 /// A show's mini homepage from Find or the charts, before following it:
 /// artwork, description, Follow, and its latest episodes (tap one for its
@@ -32,7 +31,17 @@ struct ShowPreviewView: View {
                         colour: pageColour ?? Theme.ink, follow: followTapped)
             .task { await load() }
             .refreshable { await load() }
-            .sheet(item: $deckFollower.sheetShow) { DeckFollowSheet(show: $0) }
+            // Presented by a yes / no binding rather than `sheet(item:)`: the
+            // compiler stopped seeing `Podcast` as Identifiable in this file
+            // after the 25 Nov tidy-up.
+            .sheet(isPresented: followSheetShown) {
+                if let show = deckFollower.sheetShow { DeckFollowSheet(show: show) }
+            }
+    }
+
+    private var followSheetShown: Binding<Bool> {
+        Binding(get: { deckFollower.sheetShow != nil },
+                set: { (shown: Bool) in if !shown { deckFollower.sheetShow = nil } })
     }
 
     private func followTapped() {
