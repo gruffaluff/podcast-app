@@ -1,9 +1,9 @@
 import SwiftUI
 import PodcastCore
 
-// Deck (Paul, 15 Nov 2026: "add all 4" of the gaps): Carry on on the Shows
-// tab, above the show cards. Episodes started and not finished (not the one
-// playing, which is Up next's top card), up to three, each a slim white
+// Deck (Paul, 15 Nov 2026: "add all 4" of the gaps): Carry on, under the
+// Up next tabs (`outsideUpNext`). Episodes started and not finished (not
+// the one playing), up to three, each a slim white
 // card: artwork with a ring showing how far through, title, "show · 34m
 // left", and a play key. Tap the card for the episode page.
 

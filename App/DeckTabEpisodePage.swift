@@ -19,8 +19,8 @@ import PodcastCore
 // Scrolled down past the player, a slim bar at the top keeps play / pause
 // and the time. Pull down from the top of the page for the overview
 // (DeckPullDown); swipe sideways on the page for the next / previous tab
-// (DeckTabsPager, which no longer has Safari's bar). Card deck mode keeps
-// DeckPlayerView and DeckEpisodePage.
+// (DeckTabsPager, which no longer has Safari's bar). Episode notes from
+// elsewhere open DeckEpisodePage.
 
 struct DeckTabEpisodePage: View {
     let episode: PodcastEpisode
@@ -133,7 +133,7 @@ struct DeckTabEpisodePage: View {
     /// From the transcript row below: back up to the player, words showing.
     private func readAlong() {
         scrollToTop()
-        withAnimation(DeckPlayerView.morph) { reading = true }
+        withAnimation(DeckPlayerBackground.morph) { reading = true }
     }
 }
 
@@ -317,7 +317,7 @@ private struct DeckTabPlayerSection: View {
     }
 
     private func setReading(_ on: Bool) {
-        withAnimation(reduceMotion ? nil : DeckPlayerView.morph) { reading = on }
+        withAnimation(reduceMotion ? nil : DeckPlayerBackground.morph) { reading = on }
     }
 
     // MARK: Controls
@@ -498,52 +498,13 @@ private struct DeckTabRestingDial: View {
     var body: some View {
         let geometry = DeckDialGeometry(side: side)
         let shape = RoundedRectangle(cornerRadius: geometry.corner, style: .continuous)
-        // G3 (Paul, 22 Nov 2026): no ring; the saved place shows as the
-        // colour crept in so far.
-        DeckColourFill(url: episode.artwork, showTitle: episode.showTitle,
-                       progress: DeckRing.progress(of: episode))
+        // G3 (Paul, 22 Nov 2026): no ring; full colour (Paul, 23 Nov 2026).
+        CachedImage(url: episode.artwork) { Theme.placeholderColor(for: episode.showTitle) }
             .frame(width: side, height: side)
             .clipShape(shape)
             .background(shape.fill(Color.black).shadow(color: Color.black.opacity(0.35), radius: 28, y: 20))
             .contentShape(shape)
             .accessibilityHidden(true)
-    }
-}
-
-/// The saved place, "34m left" and the length, where the live times sit.
-private struct DeckTabRestingTimes: View {
-    let episode: PodcastEpisode
-
-    var body: some View {
-        let duration: TimeInterval = episode.duration ?? 0
-        let at: TimeInterval = episode.played ? 0 : min(episode.position, duration > 0 ? duration : episode.position)
-        let left: TimeInterval = max(0, duration - at)
-        return HStack(spacing: 4) {
-            Text(TimeFormat.clock(at))
-                .font(DeckDialTimes.clockFont)
-                .frame(minWidth: 72, alignment: .leading)
-            Spacer(minLength: 0)
-            Text(middle(at: at, left: left))
-                .font(DeckDialTimes.middleFont)
-                .lineLimit(1)
-                .opacity(0.75)
-            Spacer(minLength: 0)
-            Text(duration > 0 ? "−" + TimeFormat.clock(left) : "")
-                .font(DeckDialTimes.clockFont)
-                .frame(minWidth: 72, alignment: .trailing)
-        }
-        .monospacedDigit()
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-        .frame(height: DeckDialTimes.height)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(middle(at: at, left: left))
-    }
-
-    private func middle(at: TimeInterval, left: TimeInterval) -> String {
-        guard let duration = episode.duration, duration > 0 else { return "Not started" }
-        if at > 30 { return TimeFormat.length(left) + " left" }
-        return TimeFormat.length(duration)
     }
 }
 

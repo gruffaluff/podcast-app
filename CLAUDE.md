@@ -3468,6 +3468,49 @@ Paul's notes after build 164:
   the bar itself is the faint outline and the words sit in it, no second
   pill (`DeckChapterRow.wideBackground`).
 
+## On the branch for build 179 (25 Nov 2026; not built yet)
+
+Paul, 25 Nov 2026, on the loose-ends list: "1, ok update / 2, mark on
+the line / 3, tidy em up / 4, how do I run it / 5, and you'll remind of
+this on dec 1?".
+- **Widgets in the Deck look** (`Widgets/PoddeckWidgets.swift`,
+  `DeckPalette` day / night, `DeckType.outfit`): warm page, white card
+  on medium / large, artwork with rounded corners, coral "PLAYING", ink
+  round play key, thin ink progress line, Outfit type (the font files are
+  bundled into the widget too: project.yml PoddeckWidgets resources +
+  `UIAppFonts` in Config/Widgets-Info.plist; falls back to SF if not);
+  Deck night when the iPhone is dark. Same widgets, sizes and keys.
+- **Search hits on the progress line**: a phrase opened from Find's
+  "Said in your episodes" shows as small yellow dots just above the
+  player's line (`DeckPlayerLine.drawHits`, from `DeckDialSearch.lineHits`,
+  set by `DeckPlayerDial`); the pill with the count stays.
+- **Screenshots job** run by hand for the first time (25 Nov, on the
+  branch); Paul can run it from Actions → Screenshots → Run workflow.
+- **1 Dec reminder** set (scheduled task, 9am UK): repo back to private,
+  and ask Paul about one GitHub Mac build to see if Codemagic can stop.
+- Tidy-up, below.
+
+### Tidy-up: card deck mode gone
+
+- **Tabs only** (Paul chose to stay with Tabs): Settings → Look no longer
+  has "Up next as" or Layout; the "deckHome" / "deckLayout" settings are
+  no longer read (an old "deck" choice just opens Tabs). Deleted with it:
+  the card-deck Up next (`DeckUpNext*.swift`: top card, stack, fan),
+  `DeckLayout*.swift`, the card-deck player `DeckPlayer.swift`
+  (`DeckPlayerView`; its backdrop moved to `DeckPlayerBackground.swift`,
+  with `bottomColour` / `morph`), the Shows tab's show cards, catch-up and
+  New sheet (`DeckShowsNew.swift`, `DeckShowStack`…), `DeckTabPill` and
+  the card-deck mini player. Kept and moved to `DeckQueue.swift`:
+  `deckSelectTab`, `DeckMark`, `DeckQueuePlan`, `DeckQueueMoves`,
+  `DeckUpNextTime`. Anything that asked for the player still opens the
+  playing episode's tab. Demo mode / Screenshots lost the "carddeck" screen.
+- Unused code removed, no visible change: the big first Up next card
+  (`DeckTabsHero.swift`) and L2 rows, the S-L2a Your shows list, the colour
+  creep pieces (`DeckColourFill`, `DeckSoftWipe`…), the dial's ring drawing
+  and drag code (`DeckDialRing`), the old island / Safari bar pieces in
+  DeckTabsBar.swift (`DeckIslandNow`, `DeckTabsBarNow`…, not
+  `DeckTabGroupPill`, kept on purpose). Ads code untouched.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few

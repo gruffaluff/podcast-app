@@ -221,7 +221,7 @@ final class PlayerModel {
 
     /// Plays an episode from where Paul left off (or from the start if played).
     /// `autoplay: false` loads it ready to play without starting it (used
-    /// to open the Deck player on Up next's top card when nothing is loaded).
+    /// e.g. by Undo after a played swipe and in demo mode).
     func play(_ episode: PodcastEpisode, autoplay: Bool = true) {
         // Anything Paul (or the app) chooses wins over the remembered one.
         if !restoring {

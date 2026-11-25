@@ -14,7 +14,7 @@ import UIKit
 //   pull down moves the whole page with the finger instead of bouncing the
 //   scroll view, and an upward drag scrolls as usual;
 // - the finger is measured against the screen, not the moving page.
-// Both players use the same distances (`DeckPullToClose`).
+// The distances are in `DeckPullToClose`.
 // Read along (Paul, 16 Nov 2026: "I can't pull down to close when the
 // transcript is open"): the words filled most of the page and were kept
 // out, so there was nowhere to pull. Now a pull may also start on the words
@@ -47,7 +47,7 @@ enum DeckPullEvent {
     case ended(close: Bool)
 }
 
-/// The pan for the tab page (and the card-deck player's read-along words).
+/// The pan for the tab page.
 /// `keepOut` holds the places where a pull may not start (the dial, the
 /// scrub line, the volume), measured in `DeckPullDown.space`: a coordinate
 /// space on the page's scroll content, so they don't change as it scrolls

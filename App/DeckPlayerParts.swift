@@ -1,7 +1,8 @@
 import SwiftUI
 import PodcastCore
 
-// Pieces of Deck's player (DeckPlayer.swift), white on the show's colour.
+// Pieces of Deck's player (an open tab's page, DeckTabEpisodePage.swift),
+// white on the show's colour.
 
 // MARK: - Chapter row
 
