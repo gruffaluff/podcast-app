@@ -183,6 +183,9 @@ struct DeckPlayerDial: View {
             .allowsHitTesting(geometry.big)
             .position(x: rect.midX, y: rect.midY)
             .task(id: lineKey) { await load() }
+            .onChange(of: searchHits, initial: true) { _, hits in
+                if search.episodeID == item.episodeID, search.lineHits != hits { search.lineHits = hits }
+            }
     }
 
     private var faceShown: Bool { scrub.time != nil || showWords }
@@ -564,6 +567,10 @@ final class DeckDialSearch {
     nonisolated static let dotColour = Color(red: 1, green: 0.84, blue: 0.42)
     private(set) var term: String?
     private(set) var episodeID: String?
+    /// Times of the lines that say the phrase in that episode, set by the
+    /// player's artwork view once it has the transcript; the progress line
+    /// marks them (`DeckPlayerScrub.hitFractions`).
+    var lineHits: [TimeInterval] = []
 
     func set(_ term: String, episodeID: String) {
         let trimmed: String = term.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -574,6 +581,7 @@ final class DeckDialSearch {
     func clear() {
         term = nil
         episodeID = nil
+        lineHits = []
     }
 
     /// Worked out once per phrase and transcript, not on every redraw
