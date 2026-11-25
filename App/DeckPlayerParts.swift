@@ -1,7 +1,8 @@
 import SwiftUI
 import PodcastCore
 
-// Pieces of Deck's player (DeckPlayer.swift), white on the show's colour.
+// Pieces of Deck's player (an open tab's page, DeckTabEpisodePage.swift),
+// white on the show's colour.
 
 // MARK: - Chapter row
 
@@ -213,7 +214,7 @@ struct DeckPlayerScrub: View {
             let width: CGFloat = max(1, geometry.size.width)
             ZStack(alignment: .topLeading) {
                 DeckPlayerLine(progress: shown / duration, chapterStarts: chapterStarts, ads: adFractions,
-                               grow: scrubTime == nil ? 0 : 1)
+                               hits: hitFractions, grow: scrubTime == nil ? 0 : 1)
                     .frame(width: width, height: Self.height)
                     .animation(.easeOut(duration: 0.18), value: scrubTime == nil)
                 if scrubTime != nil {
@@ -264,6 +265,17 @@ struct DeckPlayerScrub: View {
             let end: Double = ad.end / player.duration
             return start <= end ? start...end : nil
         }
+    }
+
+    /// Where a phrase opened from Find's "Said in your episodes" is said
+    /// in this episode (Paul, 25 Nov 2026: "mark on the line"; the dots
+    /// used to sit on the ring, which went in build 176). The player's
+    /// artwork view works the times out from the transcript it loads.
+    private var hitFractions: [Double] {
+        let search: DeckDialSearch = DeckDialSearch.shared
+        guard player.duration > 0, search.term != nil,
+              search.episodeID == player.nowPlaying?.episodeID else { return [] }
+        return search.lineHits.map { $0 / player.duration }
     }
 
     private var chapterStarts: [Double] {
@@ -341,6 +353,7 @@ private struct DeckPlayerLine: View, Animatable {
     let progress: Double
     let chapterStarts: [Double]
     let ads: [ClosedRange<Double>]
+    var hits: [Double] = []
     var grow: Double
 
     var animatableData: Double {
@@ -349,9 +362,11 @@ private struct DeckPlayerLine: View, Animatable {
     }
 
     var body: some View {
-        Canvas { context, size in
+        let hits: [Double] = self.hits
+        return Canvas { context, size in
             Self.draw(in: context, size: size, progress: progress, chapterStarts: chapterStarts,
                       ads: ads, grow: CGFloat(grow))
+            Self.drawHits(in: context, size: size, hits: hits, grow: CGFloat(grow))
         }
         .accessibilityHidden(true)
     }
@@ -381,6 +396,22 @@ private struct DeckPlayerLine: View, Animatable {
         var shadowed = context
         shadowed.addFilter(.shadow(color: Color.black.opacity(0.3), radius: 3, y: 2))
         shadowed.fill(Path(ellipseIn: knobRect), with: .color(Color.white))
+    }
+
+    /// A small yellow dot just above the line at each search hit.
+    private static func drawHits(in context: GraphicsContext, size: CGSize, hits: [Double], grow: CGFloat) {
+        guard !hits.isEmpty else { return }
+        let knob: CGFloat = 16 + 6 * grow
+        let x0: CGFloat = knob / 2
+        let span: CGFloat = max(1, size.width - knob)
+        let thickness: CGFloat = 6 + 4 * grow
+        let y: CGFloat = (size.height - thickness) / 2 - 5
+        let dot: CGFloat = 6
+        for hit in hits where hit >= 0 && hit <= 1 {
+            let x: CGFloat = x0 + span * CGFloat(hit)
+            let rect = CGRect(x: x - dot / 2, y: y - dot / 2, width: dot, height: dot)
+            context.fill(Path(ellipseIn: rect), with: .color(DeckDialSearch.dotColour))
+        }
     }
 
     /// Cuts a 3 pt gap at each chapter start (clear, so the backdrop shows).

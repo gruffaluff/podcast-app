@@ -11,19 +11,8 @@ import PodcastCore
 // chips above the bar"; `DeckTabGroupPill`). Tapping a tab opens it
 // full screen, and you swipe between tabs there (`DeckTabsPager`). The
 // bottom bar is Safari's: what's on, swipe along it for the next tab, swipe
-// up (or tap the count) for the overview (`DeckTabsBar`). Settings → Look →
-// "Up next as" switches back to the card deck.
-
-/// "Up next as": Tabs (default) or Card deck, kept on this iPhone.
-enum DeckHome {
-    static let key = "deckHome"
-    static let tabs = "tabs"
-    static let deck = "deck"
-
-    static var isTabs: Bool {
-        (UserDefaults.standard.string(forKey: key) ?? tabs) != deck
-    }
-}
+// up (or tap the count) for the overview (`DeckTabsBar`). The card deck
+// that "Up next as" used to switch to went (Paul, 25 Nov 2026: tabs only).
 
 /// The tab groups: Up next and Started. New went (Paul, 16 Nov 2026:
 /// "everything new adds to up next in the relevant place … we drop the
@@ -155,7 +144,7 @@ enum DeckTabSource {
     }
 
     static func tabs(_ group: DeckTabGroup, store: LibraryStore, player: PlayerModel,
-                     unplayed: [PodcastEpisode], triaged: String, started: [PodcastEpisode]) -> [PodcastEpisode] {
+                     unplayed: [PodcastEpisode], started: [PodcastEpisode]) -> [PodcastEpisode] {
         switch group {
         case .upNext: return upNext(store: store, player: player)
         case .started: return Self.started(started, store: store, player: player)
@@ -296,7 +285,6 @@ struct DeckTabsView: View {
     @Environment(DeckTabsModel.self) private var model
     @Environment(\.deckSelectTab) private var selectTab
     @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
-    @AppStorage(DeckTriage.key) private var triaged: String = ""
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @State private var showingSettings = false
     @State private var suggestions: [PodcastEpisode] = []
@@ -304,7 +292,7 @@ struct DeckTabsView: View {
     var body: some View {
         // The groups are chips above the bottom bar now (`DeckTabGroupPill`).
         let shown: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
-                                                         unplayed: unplayed, triaged: triaged, started: started)
+                                                         unplayed: unplayed, started: started)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 DeckTabsHeader(settings: { showingSettings = true })

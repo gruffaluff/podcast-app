@@ -4,76 +4,27 @@ import SwiftData
 import Observation
 import PodcastCore
 
-// The dial (Paul, 15 Nov 2026: dial, from "Dials and tabs!",
-// https://claude.ai/artifact/26rUAiLq5wFzQRJzqUcEL7, "Player: the dial").
-// The player's artwork is round inside a white ring that shows how far
-// through the episode you are: chapter ticks, ad breaks in amber (paler
-// ahead), your clips as small white dots, a knob at the play point.
-// Drag round the ring to scrub like a jog dial; slide in towards the
-// middle for finer. While dragging, the middle shows the time and the
-// words said at that point. Tap the artwork to turn it over to the line
-// being said now; tap again for the artwork. In Read along the same
-// picture slides into the corner with a small ring round it.
+// The player's artwork (it began as a dial, Paul, 15 Nov 2026; G3, 22 Nov
+// 2026: a big rounded square, no ring, "more like Apple Podcasts"). Only
+// for looking: scrubbing is the straight line above the keys, and while
+// it's dragged the middle shows the time and the words said at that
+// point. Tap the artwork to turn it over to the line being said now; tap
+// again for the artwork. In Read along the same picture slides into the
+// corner.
 
-/// Where a drag round the dial has got to, shared by the dial and the
-/// times row under the title (only views that read it redraw).
+/// Where a drag of the progress line has got to, shared by the artwork's
+/// middle and the times row (only views that read it redraw).
 @Observable
 final class DeckDialScrub {
     var time: TimeInterval?
-    /// While the straight line in Read along is dragged: how fine ("Half
-    /// speed"), shown in the middle of the times row.
+    /// While the line is dragged: how fine ("Half speed"), shown in the
+    /// middle of the times row.
     var hint: String?
 }
 
-/// One drag round the dial.
-private struct DeckDialDrag {
-    var startTime: TimeInterval
-    /// The finger's last place round the dial, 0...1 from twelve o'clock.
-    var lastTurn: Double
-    var factor: Double
-    var chapter: Int?
-}
-
-/// Sums for the dial, kept apart (with explicit types) so the compiler
-/// checks them quickly.
+/// Sums for the artwork's middle, kept apart (with explicit types) so the
+/// compiler checks them quickly.
 enum DeckDialMath {
-    /// 0...1 round the dial from twelve o'clock, clockwise.
-    static func turn(dx: Double, dy: Double) -> Double {
-        let angle: Double = atan2(dy, dx) + Double.pi / 2
-        let full: Double = 2 * Double.pi
-        let wrapped: Double = (angle + full).truncatingRemainder(dividingBy: full)
-        return wrapped / full
-    }
-
-    /// A change in turn, wrapped so passing twelve o'clock never jumps.
-    static func wrapped(_ change: Double) -> Double {
-        if change > 0.5 { return change - 1 }
-        if change < -0.5 { return change + 1 }
-        return change
-    }
-
-    /// Full speed near the ring, half and a quarter further in
-    /// (`distance` is the finger's distance from the centre over the
-    /// dial's half width; the prototype's 95 / 65 of 124).
-    static func factor(_ distance: Double) -> Double {
-        if distance > 0.77 { return 1 }
-        if distance > 0.52 { return 0.5 }
-        return 0.25
-    }
-
-    static func hint(_ factor: Double) -> String {
-        if factor >= 1 { return "Drag in for finer" }
-        if factor >= 0.5 { return "Half speed" }
-        return "Quarter speed"
-    }
-
-    static func point(_ centre: CGPoint, _ radius: CGFloat, at fraction: Double) -> CGPoint {
-        let angle: Double = fraction * 2 * Double.pi - Double.pi / 2
-        let x: CGFloat = centre.x + radius * CGFloat(cos(angle))
-        let y: CGFloat = centre.y + radius * CGFloat(sin(angle))
-        return CGPoint(x: x, y: y)
-    }
-
     /// The line said at `time` (the last one started by then).
     static func line(at time: TimeInterval, in lines: [TranscriptLayout.Line]) -> TranscriptLayout.Line? {
         guard !lines.isEmpty else { return nil }
@@ -93,19 +44,12 @@ enum DeckDialMath {
     }
 }
 
-/// The ring's sizes for a dial `side` points across. Everything follows
-/// the size, so the ring shrinks smoothly into Read along's corner.
+/// The artwork's sizes for a spot `side` points across. Everything follows
+/// the size, so it shrinks smoothly into Read along's corner.
 struct DeckDialGeometry {
     let side: CGFloat
 
     var big: Bool { side > 90 }
-    var lineWidth: CGFloat { min(9, max(3, side * 0.032)) }
-    /// 0 in Read along's corner, 1 at full size: the knob, ticks and clip
-    /// dots grow in with it.
-    var presence: CGFloat { min(1, max(0, (side - 60) / 120)) }
-    var knob: CGFloat { lineWidth * 1.3 * presence }
-    var ringRadius: CGFloat { side / 2 - max(lineWidth / 2, knob) }
-    var gap: CGFloat { big ? 8 : 3 }
     /// The artwork fills the whole spot now (Paul, 22 Nov 2026, G3: "more
     /// like Apple Podcasts … dropping the ring from the artwork").
     var artwork: CGFloat { max(10, side) }
@@ -113,8 +57,7 @@ struct DeckDialGeometry {
     var corner: CGFloat { max(6, side * 0.055) }
 }
 
-/// Seeks after a scrub; a jump of 2 minutes or more offers Undo (shared
-/// by the progress line and the dial).
+/// Seeks after a scrub; a jump of 2 minutes or more offers Undo.
 enum DeckScrubJump {
     @MainActor
     static func commit(to target: TimeInterval, from start: TimeInterval, player: PlayerModel, store: LibraryStore) {
@@ -130,9 +73,9 @@ enum DeckScrubJump {
 
 // MARK: - The dial
 
-/// Drawn over the player at the artwork's spot (`DeckArtworkSpot`): the
-/// whole dial when big, round artwork with a small ring in Read along's
-/// corner (it only takes touches when big).
+/// Drawn over the player at the artwork's spot: the big rounded-square
+/// artwork, or the small one in Read along's corner (it only takes
+/// touches when big).
 struct DeckPlayerDial: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -151,30 +94,23 @@ struct DeckPlayerDial: View {
 
     @State private var lines: [TranscriptLayout.Line] = []
     @State private var linesFor: String = ""
-    @State private var clipTimes: [TimeInterval] = []
-    @State private var drag: DeckDialDrag?
-    @State private var dragEnded: Date = .distantPast
-
-    private static let space: String = "deckDial"
 
     var body: some View {
         let geometry = DeckDialGeometry(side: min(rect.width, rect.height))
         return dial(geometry)
             .frame(width: geometry.side, height: geometry.side)
             .contentShape(RoundedRectangle(cornerRadius: geometry.corner, style: .continuous))
-            .coordinateSpace(.named(Self.space))
-            // Look, don't drag (Paul, 22 Nov 2026, option 2: dragging round
-            // the ring was hard one-handed): scrubbing is the straight line
-            // in the thumb zone; the ring shows where you are, and while the
-            // line is dragged the middle shows the time and what's said.
-            .onTapGesture { tapped() }
+            // Look, don't drag (Paul, 22 Nov 2026, option 2): scrubbing is
+            // the straight line in the thumb zone; while it's dragged the
+            // middle shows the time and what's said.
+            .onTapGesture { toggleWords() }
             .modifier(DeckDialAccessibility(big: geometry.big, value: accessibilityValue,
                                             words: showWords, canTranscribe: canStartWords,
                                             toggle: toggleWords, transcribe: transcribe,
                                             forward: { player.skipForwardBy() },
                                             back: { player.skipBackward() }))
             // Search hits (Paul, 17 Nov 2026): a phrase found in Find's
-            // "Said in your episodes" shows as yellow dots on the ring
+            // "Said in your episodes" is marked on the progress line
             // wherever it's said in this episode; the pill names it and
             // clears it.
             .overlay(alignment: .topLeading) {
@@ -183,6 +119,9 @@ struct DeckPlayerDial: View {
             .allowsHitTesting(geometry.big)
             .position(x: rect.midX, y: rect.midY)
             .task(id: lineKey) { await load() }
+            .onChange(of: searchHits, initial: true) { _, hits in
+                if search.episodeID == item.episodeID, search.lineHits != hits { search.lineHits = hits }
+            }
     }
 
     private var faceShown: Bool { scrub.time != nil || showWords }
@@ -227,8 +166,7 @@ struct DeckPlayerDial: View {
                 faceView(geometry, time: shown)
                     .transition(.opacity)
             }
-            // No ring (G3): progress is the line above the keys and the
-            // colour creeping into the artwork.
+            // No ring (G3): progress is the line above the keys.
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: face)
     }
@@ -251,25 +189,6 @@ struct DeckPlayerDial: View {
             }
     }
 
-    private func ringSpec(_ geometry: DeckDialGeometry, progress: Double) -> DeckDialRingSpec {
-        let duration: TimeInterval = player.duration
-        var chapters: [Double] = []
-        var ads: [ClosedRange<Double>] = []
-        var clips: [Double] = []
-        if duration > 0 {
-            chapters = player.chapters.map { (chapter: Chapter) -> Double in chapter.start / duration }
-            ads = player.adBreaks.compactMap { (ad: AdBreak) -> ClosedRange<Double>? in
-                let start: Double = ad.start / duration
-                let end: Double = ad.end / duration
-                return start <= end ? start...end : nil
-            }
-            clips = clipTimes.map { (time: TimeInterval) -> Double in time / duration }
-        }
-        let hits: [Double] = duration > 0 ? searchHits.map { (time: TimeInterval) -> Double in time / duration } : []
-        return DeckDialRingSpec(progress: min(1, max(0, progress)), chapters: chapters, ads: ads,
-                                clips: clips, deep: DeckPlayerBackground.shade(colour), hits: hits)
-    }
-
     // MARK: Middle of the dial
 
     private func faceView(_ geometry: DeckDialGeometry, time: TimeInterval) -> some View {
@@ -285,11 +204,11 @@ struct DeckPlayerDial: View {
     }
 
     @ViewBuilder private func faceText(time: TimeInterval, lineSize: CGFloat) -> some View {
-        if drag != nil || scrub.time != nil {
+        if scrub.time != nil {
             // Scrubbing: the time, what's said there, how fine.
             DeckDialFaceText(time: TimeFormat.clock(time),
                              line: DeckDialMath.line(at: time + 0.2, in: lines)?.text,
-                             hint: drag.map { DeckDialMath.hint($0.factor) } ?? scrub.hint ?? "", lineSize: lineSize)
+                             hint: scrub.hint ?? "", lineSize: lineSize)
         } else if let line = DeckDialMath.line(at: player.currentTime + 0.2, in: lines) {
             DeckDialFaceText(time: nil, line: line.text, hint: "Tap for the artwork", lineSize: lineSize)
                 .id(line.start)
@@ -350,7 +269,7 @@ struct DeckPlayerDial: View {
         return transcripts.canTranscribeNow(episode)
     }
 
-    /// The same as the top card's Transcribe now.
+    /// Transcribe now.
     private func transcribe() {
         guard let episode else { return }
         transcripts.transcribeNow(episode)
@@ -358,76 +277,11 @@ struct DeckPlayerDial: View {
 
     // MARK: Touches
 
-    private func tapped() {
-        // A short drag can also end as a tap: ignore it.
-        guard drag == nil, Date().timeIntervalSince(dragEnded) > 0.35 else { return }
-        toggleWords()
-    }
-
     private func toggleWords() {
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { showWords.toggle() }
     }
 
-    private func dragGesture(side: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 6, coordinateSpace: .named(Self.space))
-            .onChanged { (value: DragGesture.Value) in
-                dragChanged(value, side: side)
-            }
-            .onEnded { (_: DragGesture.Value) in
-                dragFinished()
-            }
-    }
-
-    /// The playhead moves by how far the finger turns round the centre
-    /// (one full turn = the whole episode at full speed), measured in the
-    /// dial's own space, which never moves.
-    private func dragChanged(_ value: DragGesture.Value, side: CGFloat) {
-        let duration: TimeInterval = player.duration
-        guard duration > 1 else { return }
-        let half: Double = Double(side / 2)
-        let dx: Double = Double(value.location.x) - half
-        let dy: Double = Double(value.location.y) - half
-        let distance: Double = (dx * dx + dy * dy).squareRoot() / max(half, 1)
-        let turn: Double = DeckDialMath.turn(dx: dx, dy: dy)
-        var state: DeckDialDrag = drag ?? begin(value, half: half)
-        state.factor = DeckDialMath.factor(distance)
-        // Right in the middle the angle swings wildly: just follow it.
-        if distance > 0.12 {
-            let change: Double = DeckDialMath.wrapped(turn - state.lastTurn)
-            let current: TimeInterval = scrub.time ?? state.startTime
-            let next: TimeInterval = min(duration, max(0, current + change * duration * state.factor))
-            scrub.time = next
-            let chapter: Int? = Chapters.index(at: next, in: player.chapters)
-            if chapter != state.chapter {
-                UISelectionFeedbackGenerator().selectionChanged()
-                state.chapter = chapter
-            }
-        }
-        state.lastTurn = turn
-        drag = state
-    }
-
-    private func begin(_ value: DragGesture.Value, half: Double) -> DeckDialDrag {
-        let dx: Double = Double(value.startLocation.x) - half
-        let dy: Double = Double(value.startLocation.y) - half
-        let now: TimeInterval = player.currentTime
-        scrub.time = now
-        return DeckDialDrag(startTime: now, lastTurn: DeckDialMath.turn(dx: dx, dy: dy), factor: 1,
-                            chapter: Chapters.index(at: now, in: player.chapters))
-    }
-
-    private func dragFinished() {
-        if let target = scrub.time, let state = drag {
-            DeckScrubJump.commit(to: target, from: state.startTime, player: player, store: store)
-        }
-        dragEnded = Date()
-        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.22)) {
-            drag = nil
-            scrub.time = nil
-        }
-    }
-
-    // MARK: Words and clips
+    // MARK: Words
 
     private var lineKey: String {
         guard let episode else { return "" }
@@ -436,11 +290,10 @@ struct DeckPlayerDial: View {
     }
 
     /// The episode's lines, read once per episode (and when its transcript
-    /// changes) off the main thread; its clips from the saved bookmarks.
+    /// changes) off the main thread.
     private func load() async {
         guard let episode else {
             lines = []
-            clipTimes = []
             return
         }
         let id: String = episode.episodeID
@@ -448,7 +301,6 @@ struct DeckPlayerDial: View {
             lines = []
             linesFor = id
         }
-        clipTimes = clips(for: id)
         guard episode.transcriptState == .ready, let name = episode.transcriptFile else {
             lines = []
             return
@@ -461,12 +313,6 @@ struct DeckPlayerDial: View {
         }.value
         guard !Task.isCancelled, linesFor == id else { return }
         lines = loaded
-    }
-
-    private func clips(for id: String) -> [TimeInterval] {
-        let descriptor = FetchDescriptor<Bookmark>(predicate: #Predicate<Bookmark> { $0.episodeID == id })
-        let found: [Bookmark] = (try? store.context.fetch(descriptor)) ?? []
-        return found.map { (bookmark: Bookmark) -> TimeInterval in bookmark.time }
     }
 
     private var accessibilityValue: String {
@@ -493,7 +339,6 @@ private struct DeckDialAccessibility: ViewModifier {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Position")
             .accessibilityValue(value)
-            .accessibilityHint("Drag round the ring to move through the episode")
             .accessibilityAdjustableAction { (direction: AccessibilityAdjustmentDirection) in
                 switch direction {
                 case .increment: forward()
@@ -543,20 +388,10 @@ private struct DeckDialFaceText: View {
     }
 }
 
-// MARK: - The ring
-
-struct DeckDialRingSpec {
-    let progress: Double
-    let chapters: [Double]
-    let ads: [ClosedRange<Double>]
-    let clips: [Double]
-    let deep: Color
-    /// Where a searched phrase is said (0–1 round the ring).
-    var hits: [Double] = []
-}
+// MARK: - Search hits
 
 /// The phrase last opened from Find's "Said in your episodes", and which
-/// episode it was in: that episode's dial marks every line saying it.
+/// episode it was in: that episode's progress line marks every line saying it.
 @MainActor
 @Observable
 final class DeckDialSearch {
@@ -564,6 +399,10 @@ final class DeckDialSearch {
     nonisolated static let dotColour = Color(red: 1, green: 0.84, blue: 0.42)
     private(set) var term: String?
     private(set) var episodeID: String?
+    /// Times of the lines that say the phrase in that episode, set by the
+    /// player's artwork view once it has the transcript; the progress line
+    /// marks them (`DeckPlayerScrub.hitFractions`).
+    var lineHits: [TimeInterval] = []
 
     func set(_ term: String, episodeID: String) {
         let trimmed: String = term.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -574,6 +413,7 @@ final class DeckDialSearch {
     func clear() {
         term = nil
         episodeID = nil
+        lineHits = []
     }
 
     /// Worked out once per phrase and transcript, not on every redraw
@@ -601,139 +441,10 @@ final class DeckDialSearch {
     }
 }
 
-/// White on the player's colour: a faint track, the played part white,
-/// ad breaks amber (paler ahead), chapter ticks cut into the ring, clips
-/// as white dots and a knob at the play point (the last three fade out as
-/// it shrinks into Read along's corner). Animatable on its size, so the
-/// ring follows the picture smoothly between the two.
-private struct DeckDialRing: View, Animatable {
-    var side: CGFloat
-    let spec: DeckDialRingSpec
-
-    var animatableData: CGFloat {
-        get { side }
-        set { side = newValue }
-    }
-
-    var body: some View {
-        let geometry = DeckDialGeometry(side: side)
-        let spec: DeckDialRingSpec = self.spec
-        return Canvas { (context: inout GraphicsContext, size: CGSize) in
-            Self.draw(in: context, size: size, geometry: geometry, spec: spec)
-        }
-        .frame(width: side, height: side)
-        .compositingGroup()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    private static func arc(_ centre: CGPoint, _ radius: CGFloat, from start: Double, to end: Double) -> Path {
-        var path = Path()
-        path.addArc(center: centre, radius: radius, startAngle: .degrees(-90 + 360 * start),
-                    endAngle: .degrees(-90 + 360 * end), clockwise: false)
-        return path
-    }
-
-    private static func draw(in context: GraphicsContext, size: CGSize, geometry: DeckDialGeometry,
-                             spec: DeckDialRingSpec) {
-        let centre = CGPoint(x: size.width / 2, y: size.height / 2)
-        let radius: CGFloat = geometry.ringRadius
-        let width: CGFloat = geometry.lineWidth
-        let circle = Path(ellipseIn: CGRect(x: centre.x - radius, y: centre.y - radius,
-                                            width: radius * 2, height: radius * 2))
-        context.stroke(circle, with: .color(Color.white.opacity(0.2)), lineWidth: width)
-        let progress: Double = spec.progress
-        if progress > 0.001 {
-            context.stroke(arc(centre, radius, from: 0, to: progress), with: .color(Color.white),
-                           style: StrokeStyle(lineWidth: width, lineCap: .round))
-        }
-        drawAds(in: context, centre: centre, geometry: geometry, spec: spec)
-        guard geometry.presence > 0.01 else { return }
-        var marks = context
-        marks.opacity = Double(geometry.presence)
-        drawTicks(in: context, centre: centre, geometry: geometry, spec: spec)
-        drawClips(in: marks, centre: centre, geometry: geometry, spec: spec)
-        drawHits(in: marks, centre: centre, geometry: geometry, spec: spec)
-        // No knob (Paul, 22 Nov 2026: "makes you think you can click it"):
-        // the dial is only for looking now.
-    }
-
-    private static func drawAds(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,
-                                spec: DeckDialRingSpec) {
-        let radius: CGFloat = geometry.ringRadius
-        let style = StrokeStyle(lineWidth: geometry.lineWidth, lineCap: .butt)
-        for ad in spec.ads {
-            let played: Double = min(ad.upperBound, spec.progress)
-            if played > ad.lowerBound {
-                context.stroke(arc(centre, radius, from: ad.lowerBound, to: played),
-                               with: .color(Theme.deckAd), style: style)
-            }
-            let ahead: Double = max(ad.lowerBound, spec.progress)
-            if ad.upperBound > ahead {
-                context.stroke(arc(centre, radius, from: ahead, to: ad.upperBound),
-                               with: .color(Theme.deckAd.opacity(0.45)), style: style)
-            }
-        }
-    }
-
-    /// A small cut across the ring at each chapter start.
-    private static func drawTicks(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,
-                                  spec: DeckDialRingSpec) {
-        var cutter = context
-        cutter.blendMode = .clear
-        let radius: CGFloat = geometry.ringRadius
-        let half: CGFloat = geometry.lineWidth / 2
-        let inner: CGFloat = radius - half - 1
-        let outer: CGFloat = radius + half + 1
-        for start in spec.chapters where start > 0.002 && start < 0.998 {
-            var tick = Path()
-            tick.move(to: DeckDialMath.point(centre, inner, at: start))
-            tick.addLine(to: DeckDialMath.point(centre, outer, at: start))
-            cutter.stroke(tick, with: .color(Color.black), lineWidth: 2.5 * geometry.presence)
-        }
-    }
-
-    private static func drawClips(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,
-                                  spec: DeckDialRingSpec) {
-        let dot: CGFloat = max(2.5, geometry.lineWidth * 0.42)
-        for clip in spec.clips where clip >= 0 && clip <= 1 {
-            let point: CGPoint = DeckDialMath.point(centre, geometry.ringRadius, at: clip)
-            let rect = CGRect(x: point.x - dot, y: point.y - dot, width: dot * 2, height: dot * 2)
-            context.fill(Path(ellipseIn: rect), with: .color(Color.white))
-            context.stroke(Path(ellipseIn: rect), with: .color(spec.deep), lineWidth: 1.5)
-        }
-    }
-
-    /// Search hits: small yellow dots just inside the ring.
-    private static func drawHits(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,
-                                 spec: DeckDialRingSpec) {
-        let dot: CGFloat = max(2, geometry.lineWidth * 0.36)
-        let radius: CGFloat = geometry.ringRadius - geometry.lineWidth * 0.5 - dot - 2
-        for hit in spec.hits where hit >= 0 && hit <= 1 {
-            let point: CGPoint = DeckDialMath.point(centre, radius, at: hit)
-            let rect = CGRect(x: point.x - dot, y: point.y - dot, width: dot * 2, height: dot * 2)
-            context.fill(Path(ellipseIn: rect), with: .color(DeckDialSearch.dotColour))
-        }
-    }
-
-    private static func drawKnob(in context: GraphicsContext, centre: CGPoint, geometry: DeckDialGeometry,
-                                 spec: DeckDialRingSpec) {
-        let point: CGPoint = DeckDialMath.point(centre, geometry.ringRadius, at: spec.progress)
-        let size: CGFloat = geometry.knob
-        guard size > 3 else { return }
-        let rect = CGRect(x: point.x - size, y: point.y - size, width: size * 2, height: size * 2)
-        var shadowed = context
-        shadowed.addFilter(.shadow(color: Color.black.opacity(0.3), radius: 3, y: 2))
-        shadowed.fill(Path(ellipseIn: rect), with: .color(Color.white))
-        context.stroke(Path(ellipseIn: rect.insetBy(dx: 1.5, dy: 1.5)), with: .color(spec.deep), lineWidth: 3)
-    }
-}
-
 // MARK: - Times row
 
-/// Under the title with the dial: played · ends HH:MM · −left (at this
-/// speed). While dragging round the dial it follows the drag and the
-/// middle names the chapter there.
+/// Played · ends HH:MM · −left (at this speed). While the line is dragged
+/// it follows the drag and the middle names the chapter there.
 struct DeckDialTimes: View {
     @Environment(PlayerModel.self) private var player
     let scrub: DeckDialScrub

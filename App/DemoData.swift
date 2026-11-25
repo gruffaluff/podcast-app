@@ -34,8 +34,6 @@ enum DemoScreen: String {
     case find
     /// Settings.
     case settings
-    /// Up next as the card deck instead of tabs.
-    case carddeck
 }
 
 enum DemoMode {
@@ -70,7 +68,6 @@ enum DemoData {
         let defaults = UserDefaults.standard
         defaults.set(true, forKey: "welcomeSeen")  // WelcomeView.seenKey
         defaults.set(ColourScheme.auto, forKey: ColourScheme.key)
-        defaults.set(DemoMode.screen == .carddeck ? DeckHome.deck : DeckHome.tabs, forKey: DeckHome.key)
         defaults.set("", forKey: TriedShows.key)
         defaults.set(false, forKey: "deckDialWords")
         defaults.set(Date(), forKey: "lastChecked")

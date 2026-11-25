@@ -296,14 +296,7 @@ private struct DeckSettingsUpNext: View {
 
 private struct DeckSettingsLook: View {
     @AppStorage(ColourScheme.key) private var colourScheme = ColourScheme.auto
-    /// "Up next as" Tabs / Card deck (Paul, 15 Nov 2026: tabs).
-    @AppStorage(DeckHome.key) private var home: String = DeckHome.tabs
     @State private var refreshed = false
-
-    private static let homes: [(label: String, value: String)] = [
-        (label: "Tabs", value: DeckHome.tabs),
-        (label: "Card deck", value: DeckHome.deck),
-    ]
 
     /// Auto (follows the iPhone), Deck or Deck night.
     private var schemes: [(label: String, value: String)] {
@@ -312,13 +305,6 @@ private struct DeckSettingsLook: View {
 
     var body: some View {
         DeckSetGroup("Look", footer: "Auto uses Deck, or Deck night when your iPhone is in dark mode. Choosing colours redraws the app, so Settings closes.") {
-            NavigationLink { DeckLayoutView() } label: {
-                DeckSetRowLabel(icon: "slider.horizontal.3", title: "Layout")
-            }
-            .buttonStyle(.plain)
-            DeckSetLine()
-            DeckSetChoice(icon: "square.on.square", title: "Up next as", options: Self.homes, selection: $home)
-            DeckSetLine()
             DeckSetChoice(icon: "paintpalette", title: "Colours", options: schemes, selection: $colourScheme)
             DeckSetLine()
             Button(action: refreshArtwork) {

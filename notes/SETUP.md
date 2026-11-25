@@ -183,8 +183,8 @@ on one of GitHub's Macs, opens it with made-up shows (demo mode,
 `App/DemoData.swift`: six invented shows, Up next filled in, one episode
 part-played with chapters and a few lines of transcript, loaded paused in
 the player) and takes a picture of each main screen in light and dark:
-Tabs, the player, Read along, Your shows, a show page, Find, Settings and
-Up next as the card deck. Nothing is signed, uploaded or sent to Apple.
+Tabs, the player, Read along, Your shows, a show page, Find and Settings.
+Nothing is signed, uploaded or sent to Apple.
 
 To run it: GitHub → Actions → **Screenshots** → **Run workflow** (branch:
 the one to check; leave the machine as macos-15-intel). Or add the label

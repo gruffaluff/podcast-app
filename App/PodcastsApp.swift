@@ -108,45 +108,30 @@ struct RootView: View {
     @Environment(TranscriptService.self) private var transcripts
     @Environment(\.scenePhase) private var scenePhase
 
-    /// Deck: Undo / No internet sit just above the tab pill (Paul, 15 Nov
-    /// 2026: it floated up over the stacked cards), and above the mini
-    /// player on Shows and Find while something is on.
+    /// Deck: Undo / No internet sit just above the bottom bar, on every
+    /// page (Paul, 15 Nov 2026).
     private var deckToastLift: CGFloat {
-        // Tabs (Paul, 15 Nov 2026): just above Safari's bar, on every page;
-        // on the Tabs page above the Up next · New · Started pill too.
-        if deckHome != DeckHome.deck {
-            let groups: CGFloat = tab == 0 ? DeckTabsBar.pillRoom : 0
-            return DeckTabsBar.height + 8 + 10 + groups
-        }
-        let pill: CGFloat = 52 + 8 + 10
-        let mini: CGFloat = tab != 0 && player.nowPlaying != nil ? DeckRoot.miniRoom : 0
-        return pill + mini
+        let groups: CGFloat = tab == 0 ? DeckTabsBar.pillRoom : 0
+        return DeckTabsBar.height + 8 + 10 + groups
     }
     /// Kept by `SchemedRoot`, so a redraw for a colour change doesn't
     /// close the player or change tab.
     @Binding var showingPlayer: Bool
     @Binding var tab: Int
     @State private var quickActions = QuickActions.shared
-    @AppStorage(DeckHome.key) private var deckHome: String = DeckHome.tabs
     @State private var showingWelcome = false
 
-    /// Deck (Paul, 14 Nov 2026): Up next · Shows · Find, the player full
-    /// screen over everything.
+    /// Deck (Paul, 14 Nov 2026): Up next · Shows · Find; asking for the
+    /// player (`showingPlayer`) opens the playing episode's tab (DeckRoot).
     private var content: some View {
         DeckRoot(tab: $tab, showingPlayer: $showingPlayer)
             .onAppear { if tab > 2 { tab = 2 } }
     }
 
-    /// The full-screen player. Deck's tabs mode opens the playing episode's
-    /// tab (DeckRoot), so only card deck mode uses it.
-    private var playerCover: Binding<Bool> {
-        DeckHome.isTabs ? Binding.constant(false) : $showingPlayer
-    }
-
     var body: some View {
         content
-        // Undo and No internet float just above the pill (and the mini
-        // player) while they show.
+        // Undo and No internet float just above the bottom bar while they
+        // show.
         .overlay(alignment: .bottom) {
             VStack(spacing: 6) {
                 OfflineBar()
@@ -163,11 +148,6 @@ struct RootView: View {
             handleQuickAction(action)
         }
         .tint(Theme.ink)
-        // The player fills the whole screen (Paul: no page showing through
-        // at the top); swipe down to close it.
-        .fullScreenCover(isPresented: playerCover) {
-            DeckPlayerView()
-        }
         .sheet(item: Binding(get: { store.notesEpisode },
                              set: { store.notesEpisode = $0 })) { episode in
             EpisodeNotesView(episode: episode)

@@ -17,7 +17,6 @@ struct DeckTabsPager: View {
     @Environment(PlayerModel.self) private var player
     @Environment(DeckTabsModel.self) private var model
     @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
-    @AppStorage(DeckTriage.key) private var triaged: String = ""
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
 
     @State private var current: String?
@@ -26,7 +25,7 @@ struct DeckTabsPager: View {
 
     var body: some View {
         let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
-                                                        unplayed: unplayed, triaged: triaged, started: started)
+                                                        unplayed: unplayed, started: started)
         let ids: [String] = tabs.map(\.episodeID)
         GeometryReader { (geometry: GeometryProxy) in
             ZStack(alignment: .bottom) {
@@ -72,7 +71,7 @@ struct DeckTabsPager: View {
     /// settle on another tab.
     private func backdrop(_ tabs: [PodcastEpisode]) -> some View {
         let episode: PodcastEpisode? = tabs.first { $0.episodeID == current }
-        var colour: Color = DeckPlayerView.bottomColour
+        var colour: Color = DeckPlayerBackground.bottomColour
         if let episode {
             colour = ArtworkColors.shared.background(for: episode.artwork) ?? Theme.placeholderColor(for: episode.showTitle)
         }

@@ -51,6 +51,11 @@ targets:
     sources:
       - Widgets
       - Shared
+      # Deck type (Outfit, OFL): the same files the app bundles.
+      - path: App/Fonts
+        includes:
+          - "*.ttf"
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.gruffaluff.podcasts.widgets

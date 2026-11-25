@@ -35,7 +35,7 @@ jobs:
       BUNDLE_ID: com.gruffaluff.podcasts
       SHOTS: shots
       # The screens demo mode can open on (DemoScreen in App/DemoData.swift).
-      SCREENS: "tabs player readalong shows showpage find settings carddeck"
+      SCREENS: "tabs player readalong shows showpage find settings"
     steps:
       - uses: actions/checkout@v4
 
