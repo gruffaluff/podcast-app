@@ -43,12 +43,18 @@ final class PlayerModel {
 
     /// How far to go back after a pause of this long: none after a quick
     /// tap, more the longer you've been away.
+    /// The three amounts are set in Settings → Playback (Paul, 25 Nov
+    /// 2026: "let people set those like the skip buttons").
     static func rewind(afterPause seconds: TimeInterval) -> TimeInterval {
+        let defaults = UserDefaults.standard
+        func amount(_ key: String, _ fallback: Int) -> TimeInterval {
+            TimeInterval(defaults.object(forKey: key) as? Int ?? fallback)
+        }
         switch seconds {
         case ..<5: return 0
-        case ..<60: return 3
-        case ..<3600: return 10
-        default: return 20
+        case ..<60: return amount(RewindAmounts.shortKey, RewindAmounts.shortDefault)
+        case ..<3600: return amount(RewindAmounts.minuteKey, RewindAmounts.minuteDefault)
+        default: return amount(RewindAmounts.hourKey, RewindAmounts.hourDefault)
         }
     }
 
@@ -551,10 +557,13 @@ final class PlayerModel {
 
     /// "Mark as played" from the player: finish now, as if it had ended
     /// (marks played, deletes the download, moves on to Up Next).
+    /// Marked played by hand (a swipe on its tab): the next one carries
+    /// on if this one was playing, and loads paused if it was paused
+    /// (Paul, 25 Nov 2026).
     func finishEarly() {
         guard nowPlaying != nil, !finishingEarly else { return }
         finishingEarly = true
-        didFinish()
+        didFinish(autoplay: isPlaying)
     }
 
     /// Adds real listening time (not paused, not scrubbing) to the stats.
@@ -628,8 +637,9 @@ final class PlayerModel {
         store.savePosition(currentTime, for: id)
     }
 
-    /// Finished: mark played, remove from Up Next, play the next one.
-    private func didFinish() {
+    /// Finished: mark played, remove from Up Next, play the next one
+    /// (or just load it, when it was marked played by hand).
+    private func didFinish(autoplay: Bool = true) {
         guard let id = nowPlaying?.episodeID else { return }
         // Where it sat in Up Next, for "Next in the list".
         let position = store.queue.firstIndex { $0.episode.id == id }
@@ -655,7 +665,7 @@ final class PlayerModel {
         }
         if let next {
             nowPlaying = nil
-            play(next)
+            play(next, autoplay: autoplay)
         } else {
             stop()
         }
@@ -918,4 +928,18 @@ final class PlayerModel {
             }
         }
     }
+}
+
+/// How far "Rewind a little when you resume" goes back, after a short
+/// pause (5 s to a minute), a minute or more, and an hour or more.
+enum RewindAmounts {
+    static let shortKey = "rewindShort"
+    static let minuteKey = "rewindMinute"
+    static let hourKey = "rewindHour"
+    static let shortDefault = 3
+    static let minuteDefault = 10
+    static let hourDefault = 20
+    static let shortChoices = [2, 3, 5, 10]
+    static let minuteChoices = [5, 10, 15, 20, 30]
+    static let hourChoices = [10, 20, 30, 45, 60]
 }

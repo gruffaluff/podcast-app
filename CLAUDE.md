@@ -3511,6 +3511,33 @@ this on dec 1?".
   DeckTabsBar.swift (`DeckIslandNow`, `DeckTabsBarNow`…, not
   `DeckTabGroupPill`, kept on purpose). Ads code untouched.
 
+## Done in build 180 (25 Nov 2026, PR #98; Paul: "Build when ready")
+
+- **Swiping the playing tab away doesn't start the next one** (Paul,
+  25 Nov 2026: swiped the episode playing away as played and the next
+  in the queue played by itself; then: "If the current one was playing
+  when swiped away, then I'd like it to auto play"). Marking it played
+  by hand (`PlayerModel.finishEarly`): if it was playing, the next one
+  starts; if it was paused, the next one loads ready, paused. An episode
+  reaching its end (or the show's outro skip) carries on as before.
+- **Rewind amounts you can set** (Paul, 25 Nov 2026: "let people set
+  those like the skip back and forth buttons"): under "Rewind a little
+  when you resume" in Settings → Playback, three choices while it's on:
+  after a short pause 2 / 3 / 5 / 10 s (default 3), after a minute or
+  more 5 / 10 / 15 / 20 / 30 s (default 10), after an hour or more
+  10 / 20 / 30 / 45 / 60 s (default 20). Synced as "rewindShort",
+  "rewindMinute", "rewindHour" (`RewindAmounts` in PlayerModel.swift).
+- **No ⋯ on the player** (Paul, 25 Nov 2026: "it does the same thing
+  clicking on the show name does"): the open tab's top row is ⌄ and the
+  label (kept centred); `DeckTabMoreSheet` is gone. Play next / Remove
+  from Up next stay on the tab's hold menu and the "This episode" card;
+  the show name opens the show.
+- **Skip keys without boxes** (Paul, 25 Nov 2026: "remove the rounded
+  edge boxes on the skip back and forward buttons"): plain skip icons
+  either side of play, on the live player and a resting tab's page
+  (`DeckPlayerTransport`, `DeckTabRestingTransport`); same size and
+  touch area (58 pt).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
