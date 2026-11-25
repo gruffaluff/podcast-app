@@ -3527,6 +3527,11 @@ this on dec 1?".
   more 5 / 10 / 15 / 20 / 30 s (default 10), after an hour or more
   10 / 20 / 30 / 45 / 60 s (default 20). Synced as "rewindShort",
   "rewindMinute", "rewindHour" (`RewindAmounts` in PlayerModel.swift).
+- **No ⋯ on the player** (Paul, 25 Nov 2026: "it does the same thing
+  clicking on the show name does"): the open tab's top row is ⌄ and the
+  label (kept centred); `DeckTabMoreSheet` is gone. Play next / Remove
+  from Up next stay on the tab's hold menu and the "This episode" card;
+  the show name opens the show.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 

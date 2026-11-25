@@ -171,7 +171,6 @@ private struct DeckTabPlayerSection: View {
 
     @State private var showingOptions = false
     @State private var showingChapters = false
-    @State private var showingMore = false
     /// Where a drag round the dial has got to (the dial and the times row).
     @State private var dialScrub = DeckDialScrub()
 
@@ -188,7 +187,7 @@ private struct DeckTabPlayerSection: View {
         let now: PlayerModel.NowPlaying? = live
         VStack(spacing: 0) {
             DeckTabTopRow(episode: episode, index: index, count: count, live: now != nil,
-                          close: close, more: { showingMore = true })
+                          close: close)
             middle(now)
             controls(now)
         }
@@ -201,9 +200,6 @@ private struct DeckTabPlayerSection: View {
         }
         .sheet(isPresented: $showingChapters) {
             DeckPlayerChaptersSheet().normalColours()
-        }
-        .sheet(isPresented: $showingMore) {
-            DeckTabMoreSheet(episode: episode, live: now != nil)
         }
     }
 
@@ -410,7 +406,9 @@ private struct DeckTabPlayerSection: View {
 }
 
 /// ⌄ (back to the tabs), where this tab stands ("PLAYING NOW", "2ND IN UP
-/// NEXT", "TAB 3 OF 7") and ⋯ for a few more things to do.
+/// NEXT", "TAB 3 OF 7"). No ⋯ (Paul, 25 Nov 2026: it did what tapping
+/// the show name does; Play next / Remove live on the tab's hold menu and
+/// the "This episode" card).
 private struct DeckTabTopRow: View {
     @Environment(PlayerModel.self) private var player
     @Environment(LibraryStore.self) private var store
@@ -420,7 +418,6 @@ private struct DeckTabTopRow: View {
     let count: Int
     let live: Bool
     let close: () -> Void
-    let more: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
@@ -440,7 +437,8 @@ private struct DeckTabTopRow: View {
                 .lineLimit(1)
                 .opacity(0.75)
             Spacer(minLength: 4)
-            menu
+            // Keeps the label centred where the ⋯ was.
+            Color.clear.frame(width: 44, height: 44)
         }
         .padding(.horizontal, 14)
         .frame(height: 44)
@@ -457,19 +455,6 @@ private struct DeckTabTopRow: View {
         return "TAB \(index + 1) OF \(count)"
     }
 
-    /// ⋯ opens a short sheet in the app's own colours (Paul, 16 Nov 2026:
-    /// iOS's menu over the show's colour came out with "a kind of purple
-    /// tint which is off from the rest of the app").
-    private var menu: some View {
-        Button(action: more) {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 22, weight: .medium))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("More")
-    }
 }
 
 /// Where an episode stands in Up next, after the one playing (the tab
@@ -567,95 +552,6 @@ struct DeckTabRing: View {
 }
 
 // MARK: - ⋯ sheet
-
-/// The tab page's ⋯: a short sheet on the app's warm page with white card
-/// rows, ink words and icons (Paul, 16 Nov 2026: iOS's menu over the show's
-/// colour had "a kind of purple tint"). Sized to what's in it; Done or
-/// swipe down.
-private struct DeckTabMoreSheet: View {
-    @Environment(PlayerModel.self) private var player
-    @Environment(LibraryStore.self) private var store
-    @Environment(DeckTabsModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
-    let episode: PodcastEpisode
-    let live: Bool
-
-    @State private var height: CGFloat = 260
-
-    private var actions: DeckTabActions { DeckTabActions(store: store, player: player, group: model.group) }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
-            DeckSetCard { rows }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
-        .foregroundStyle(Theme.ink)
-        .tint(Theme.switchOn)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
-        .presentationDetents([.height(height)])
-        .presentationDragIndicator(.hidden)
-        .presentationBackground(Theme.background)
-    }
-
-    private var header: some View {
-        ZStack {
-            Text(episode.title)
-                .font(Theme.outfit(15, .bold))
-                .lineLimit(1)
-                .padding(.horizontal, 64)
-            HStack {
-                Spacer()
-                Button("Done") { dismiss() }
-                    .font(Theme.outfit(16, .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .buttonStyle(.plain)
-            }
-        }
-        .frame(height: 32)
-    }
-
-    @ViewBuilder private var rows: some View {
-        let queued: Bool = actions.isQueued(episode)
-        if !live {
-            row(icon: "text.line.first.and.arrowtriangle.forward", title: "Play next") {
-                actions.playNext(episode)
-            }
-            DeckSetLine()
-        }
-        if queued && !live {
-            row(icon: "minus.circle", title: "Remove from Up next") {
-                actions.removeFromUpNext(episode)
-            }
-            DeckSetLine()
-        }
-        row(icon: "square.stack", title: "Open show") { openShow() }
-            .disabled(episode.podcast == nil)
-    }
-
-    private func row(icon: String, title: String, action: @escaping () -> Void) -> some View {
-        Button {
-            dismiss()
-            action()
-        } label: {
-            DeckSetRowLabel(icon: icon, title: title, chevron: nil)
-        }
-        .buttonStyle(.plain)
-    }
-
-    /// The sheet goes first, then the tab page, then Shows opens the show.
-    private func openShow() {
-        guard let show = episode.podcast else { return }
-        // Read now: the sheet's environment is gone once it has closed.
-        let library: LibraryStore = store
-        let tabs: DeckTabsModel = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            DeckTabNavigation.openShow(show, store: library, model: tabs)
-        }
-    }
-}
 
 private extension View {
     /// Reports this view's place in the page under `name` while it's shown,
