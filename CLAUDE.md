@@ -3468,7 +3468,7 @@ Paul's notes after build 164:
   the bar itself is the faint outline and the words sit in it, no second
   pill (`DeckChapterRow.wideBackground`).
 
-## On the branch for build 179 (25 Nov 2026; not built yet)
+## Done in build 179 (25 Nov 2026, PR #97; Paul: "Yes")
 
 Paul, 25 Nov 2026, on the loose-ends list: "1, ok update / 2, mark on
 the line / 3, tidy em up / 4, how do I run it / 5, and you'll remind of
