@@ -3515,10 +3515,11 @@ this on dec 1?".
 
 - **Swiping the playing tab away doesn't start the next one** (Paul,
   25 Nov 2026: swiped the episode playing away as played and the next
-  in the queue played by itself). Marking it played by hand
-  (`PlayerModel.finishEarly`) now loads the next one ready, paused;
-  an episode reaching its end (or the show's outro skip) still carries
-  on into the next as before.
+  in the queue played by itself; then: "If the current one was playing
+  when swiped away, then I'd like it to auto play"). Marking it played
+  by hand (`PlayerModel.finishEarly`): if it was playing, the next one
+  starts; if it was paused, the next one loads ready, paused. An episode
+  reaching its end (or the show's outro skip) carries on as before.
 - **Rewind amounts you can set** (Paul, 25 Nov 2026: "let people set
   those like the skip back and forth buttons"): under "Rewind a little
   when you resume" in Settings → Playback, three choices while it's on:

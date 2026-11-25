@@ -557,13 +557,13 @@ final class PlayerModel {
 
     /// "Mark as played" from the player: finish now, as if it had ended
     /// (marks played, deletes the download, moves on to Up Next).
-    /// Marked played by hand (a swipe on its tab): the next one loads
-    /// ready but doesn't start (Paul, 25 Nov 2026: swiping the playing
-    /// episode away set the next one off by itself).
+    /// Marked played by hand (a swipe on its tab): the next one carries
+    /// on if this one was playing, and loads paused if it was paused
+    /// (Paul, 25 Nov 2026).
     func finishEarly() {
         guard nowPlaying != nil, !finishingEarly else { return }
         finishingEarly = true
-        didFinish(autoplay: false)
+        didFinish(autoplay: isPlaying)
     }
 
     /// Adds real listening time (not paused, not scrubbing) to the stats.
