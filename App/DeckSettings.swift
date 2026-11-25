@@ -328,11 +328,18 @@ private struct DeckSettingsLook: View {
 private struct DeckSettingsPlayback: View {
     @Environment(PlayerModel.self) private var player
     @AppStorage(PlayerModel.rewindKey) private var rewindOnResume = true
+    @AppStorage(RewindAmounts.shortKey) private var rewindShort = RewindAmounts.shortDefault
+    @AppStorage(RewindAmounts.minuteKey) private var rewindMinute = RewindAmounts.minuteDefault
+    @AppStorage(RewindAmounts.hourKey) private var rewindHour = RewindAmounts.hourDefault
     @AppStorage("bedtimeSleepTimer") private var bedtimeTimer = false  // PlayerModel.bedtimeKey
     @AppStorage("afterEpisode") private var afterEpisode = "top"  // PlayerModel.afterEpisodeKey
 
     private var skipOptions: [(label: String, value: Int)] {
         PlayerOptions.skipLengths.map { (label: "\($0)s", value: $0) }
+    }
+
+    private func seconds(_ values: [Int]) -> [(label: String, value: Int)] {
+        values.map { (label: "\($0)s", value: $0) }
     }
 
     private var skipBack: Binding<Int> {
@@ -352,8 +359,19 @@ private struct DeckSettingsPlayback: View {
                           selection: skipForward)
             DeckSetLine()
             DeckSetToggle(title: "Rewind a little when you resume",
-                          detail: "3 seconds after a short pause, 10 after a minute, 20 after an hour",
+                          detail: "Goes back further the longer you were away",
                           isOn: $rewindOnResume)
+            if rewindOnResume {
+                DeckSetLine()
+                DeckSetChoice(title: "After a short pause", options: seconds(RewindAmounts.shortChoices),
+                              selection: $rewindShort)
+                DeckSetLine()
+                DeckSetChoice(title: "After a minute or more", options: seconds(RewindAmounts.minuteChoices),
+                              selection: $rewindMinute)
+                DeckSetLine()
+                DeckSetChoice(title: "After an hour or more", options: seconds(RewindAmounts.hourChoices),
+                              selection: $rewindHour)
+            }
             DeckSetLine()
             DeckSetToggle(title: "Bedtime sleep timer",
                           detail: "Starting an episode between 10pm and 5am sets the sleep timer you last chose",

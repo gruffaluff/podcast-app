@@ -3511,6 +3511,22 @@ this on dec 1?".
   DeckTabsBar.swift (`DeckIslandNow`, `DeckTabsBarNow`…, not
   `DeckTabGroupPill`, kept on purpose). Ads code untouched.
 
+## On the branch for build 180 (25 Nov 2026; not built yet)
+
+- **Swiping the playing tab away doesn't start the next one** (Paul,
+  25 Nov 2026: swiped the episode playing away as played and the next
+  in the queue played by itself). Marking it played by hand
+  (`PlayerModel.finishEarly`) now loads the next one ready, paused;
+  an episode reaching its end (or the show's outro skip) still carries
+  on into the next as before.
+- **Rewind amounts you can set** (Paul, 25 Nov 2026: "let people set
+  those like the skip back and forth buttons"): under "Rewind a little
+  when you resume" in Settings → Playback, three choices while it's on:
+  after a short pause 2 / 3 / 5 / 10 s (default 3), after a minute or
+  more 5 / 10 / 15 / 20 / 30 s (default 10), after an hour or more
+  10 / 20 / 30 / 45 / 60 s (default 20). Synced as "rewindShort",
+  "rewindMinute", "rewindHour" (`RewindAmounts` in PlayerModel.swift).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
