@@ -3614,7 +3614,13 @@ this on dec 1?".
   this chapter + next two as rows), R4 Words under the art (the line
   being said under the title, tap for Read along), R5 Live chips and Up
   next (Options as chips showing what's on, the next episode at the
-  foot). Suggested R1 with R5's chips. Waiting on Paul.
+  foot). Suggested R1 with R5's chips. **Paul: "R2 probably best. Any
+  other suggestions"** (26 Nov 2026). Four R2 variations added to the
+  same page: R2a live chips (Read along · 1.2× / Trim / Sleep chips ·
+  AirPlay as the bottom row), R2b one faint line of the words under the
+  title (tap for Read along), R2c next episode at the foot instead of the
+  volume and arrow, R2d artwork edge to edge fading into the backdrop.
+  Suggested R2a with R2c's next-up card. Waiting on Paul.
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
