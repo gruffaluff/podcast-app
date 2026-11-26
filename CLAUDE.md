@@ -3604,6 +3604,18 @@ this on dec 1?".
 
 ## Queued for the next app build
 
+- **Player page rejig?** (Paul, 26 Nov 2026: "Mock ups to rejig the
+  player page?"). Six layouts drawn with #594 on
+  https://claude.ai/artifact/JMXV4axyWg2L9h8V8VDmL2: Now (build 180),
+  R1 Thumb deck (smaller artwork, no big time, times at the line's ends,
+  everything pressed in the lower half), R2 Plain and big (Apple-style
+  wide artwork, title left, chapter as quiet text under the line), R3
+  Counter and chapters (small artwork beside the title, big counter,
+  this chapter + next two as rows), R4 Words under the art (the line
+  being said under the title, tap for Read along), R5 Live chips and Up
+  next (Options as chips showing what's on, the next episode at the
+  foot). Suggested R1 with R5's chips. Waiting on Paul.
+
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
   minutes, so about 50p a build (estimate; Codemagic's pricing page has
