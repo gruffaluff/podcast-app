@@ -3634,6 +3634,20 @@ this on dec 1?".
     player (dots under it); in B–D dragging the mini player sideways also
     flips pages. **Paul: D** (27 Nov 2026), built above.
 
+## On the branch for build 185 (27 Nov 2026; not built yet)
+
+- **Pill back at the top, no search box** (Paul, 27 Nov 2026, on build
+  184: "I thought we were going to leave the pill at the top so you could
+  also switch between the two tabs like that, and also the search is
+  hidden until you pull down"). The Up next · n | Your shows · n pill is
+  back under the Poddeck mark on both pages (`DeckPageSwitch`, tap a
+  side or swipe along it; tapping the side showing goes back to its first
+  screen), as well as dragging the mini player sideways and its dots.
+  The "Search, or pull down" box is gone: the search opens only by
+  pulling a page down (or Your shows' +, and "Find something" / "Paste a
+  show's link"). Up next's line under the pill is "8 episodes · done by
+  23:10" (the separate "Up next" title went, the pill says it).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
