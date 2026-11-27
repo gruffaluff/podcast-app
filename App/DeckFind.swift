@@ -32,11 +32,7 @@ struct DeckFindView: View {
     @State private var directory: [DirectoryItem] = []
     @State private var searchingDirectory = false
     @State private var transcriptResults: [TranscriptIndex.Result] = []
-    @State private var genre: PodcastGenre?
-    @State private var chart: [DirectoryItem] = []
-    @State private var moves: [String: ChartHistory.Move] = [:]
-    @State private var chartFailed = false
-    @State private var suggestions: DeckSuggestions?
+    @Environment(\.deckCloseSearch) private var closeSearch
     @AppStorage("recentSearches") private var recentText = ""
 
     private var recents: [String] { recentText.split(separator: "\n").map(String.init) }
@@ -64,8 +60,7 @@ struct DeckFindView: View {
     private var page: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                title
-                searchField
+                searchRow
                 if let link = DeckFindLink.parse(query) {
                     DeckFeedLinkCard(url: link)
                         .id(link)
@@ -81,24 +76,37 @@ struct DeckFindView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
         .deckPage()
-        .refreshable { await loadChart() }
         .toolbar(.hidden, for: .navigationBar)
         .task(id: query) { await search() }
-        .task(id: genre) { await loadChart() }
-        .task { await loadSuggestions() }
     }
 
     // MARK: Top
 
-    private var title: some View {
-        Text("Find")
-            .font(Theme.outfit(34, .heavy))
-            .tracking(-1)
-            .foregroundStyle(Theme.ink)
-            .padding(.horizontal, 22)
-            .padding(.top, 12)
-            .accessibilityAddTraits(.isHeader)
-            .onTapGesture { fieldFocused = false }
+    /// Option C (27 Nov 2026): the search drops in over Up next or Your
+    /// shows; Cancel goes back there.
+    private var searchRow: some View {
+        HStack(spacing: 4) {
+            searchField
+            Button(action: cancel) {
+                Text("Cancel")
+                    .font(Theme.outfit(15, .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 8)
+                    .frame(height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 16)
+        .padding(.trailing, 8)
+        .padding(.top, 12)
+    }
+
+    private func cancel() {
+        fieldFocused = false
+        query = ""
+        path = NavigationPath()
+        closeSearch()
     }
 
     private var searchField: some View {
@@ -120,8 +128,6 @@ struct DeckFindView: View {
         .frame(height: 50)
         .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Theme.surface))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.cardEdge, lineWidth: 1))
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
     }
 
     private var clearButton: some View {
@@ -148,13 +154,97 @@ struct DeckFindView: View {
         if !recents.isEmpty {
             DeckRecentPills(recents: recents, pick: { query = $0 }, clear: { recentText = "" })
         }
-        if let suggestions, !suggestions.items.isEmpty {
-            DeckNewToYou(suggestions: suggestions)
-        }
-        DeckChartSection(genre: $genre, chart: chart, moves: moves, failed: chartFailed)
+        DeckDiscoverSection(paste: false)
     }
 
-    // MARK: Loading (as Haar's Find)
+    private func search() async {
+        let text = term
+        guard text.count >= 2, DeckFindLink.parse(text) == nil else {
+            directory = []
+            transcriptResults = []
+            return
+        }
+        // Wait for typing to pause.
+        try? await Task.sleep(for: .milliseconds(350))
+        guard !Task.isCancelled else { return }
+        searchingDirectory = true
+        defer { searchingDirectory = false }
+        let descriptor = FetchDescriptor<PodcastEpisode>(
+            predicate: #Predicate { $0.transcriptFile != nil },
+            sortBy: [SortDescriptor(\.published, order: .reverse)]
+        )
+        let files: [TranscriptIndex.File] = ((try? store.context.fetch(descriptor)) ?? []).compactMap { episode in
+            episode.transcriptFile.map { TranscriptIndex.File(episodeID: episode.episodeID, fileName: $0) }
+        }
+        let said = await TranscriptIndex.shared.search(text, in: files)
+        guard !Task.isCancelled else { return }
+        transcriptResults = said
+        if let found = try? await FeedClient.searchDirectory(text), !Task.isCancelled {
+            directory = found.map(DirectoryItem.init)
+        }
+    }
+}
+
+/// Browsing for new shows: "New to you", the chart with its categories
+/// and, at the foot of Your shows, "Paste a show's link" (option C, Paul,
+/// 27 Nov 2026). Also the search's first page with nothing typed.
+struct DeckDiscoverSection: View {
+    @Environment(LibraryStore.self) private var store
+    @Environment(\.deckOpenSearch) private var openSearch
+    @Query(sort: \Podcast.followedAt, order: .reverse) private var savedShows: [Podcast]
+    /// Followed shows only (not ones only being tried, TriedShows.swift).
+    private var followed: [Podcast] { savedShows.followedOnly }
+    /// Show "Paste a show's link" (Your shows; the search box takes links).
+    let paste: Bool
+    @State private var genre: PodcastGenre?
+    @State private var chart: [DirectoryItem] = []
+    @State private var moves: [String: ChartHistory.Move] = [:]
+    @State private var chartFailed = false
+    @State private var suggestions: DeckSuggestions?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let suggestions, !suggestions.items.isEmpty {
+                DeckNewToYou(suggestions: suggestions)
+            }
+            DeckChartSection(genre: $genre, chart: chart, moves: moves, failed: chartFailed)
+            if paste { pasteRow }
+        }
+        .task(id: genre) { await loadChart() }
+        .task { await loadSuggestions() }
+    }
+
+    /// Private Patreon / Supercast feeds and Apple Podcasts links go in the
+    /// search box, which follows them.
+    private var pasteRow: some View {
+        Button(action: openSearch) {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Theme.muted.opacity(0.6), style: StrokeStyle(lineWidth: 1.2, dash: [4, 3]))
+                    .frame(width: 44, height: 44)
+                    .overlay(Image(systemName: "link")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Theme.muted))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Paste a show's link")
+                        .font(Theme.outfit(15, .bold))
+                        .foregroundStyle(Theme.ink)
+                    Text("A feed, a private Patreon feed, or an Apple Podcasts link")
+                        .font(Theme.outfit(12, .medium))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .deckPlainCard(radius: 20)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.top, 20)
+    }
 
     private func loadChart() async {
         chartFailed = false
@@ -188,33 +278,6 @@ struct DeckFindView: View {
         let followedTitles = Set(followed.map { $0.title.lowercased() })
         let fresh: [DirectoryItem] = items.filter { !followedTitles.contains($0.title.lowercased()) }
         suggestions = DeckSuggestions(show: anchor.title, items: Array(fresh.prefix(10)))
-    }
-
-    private func search() async {
-        let text = term
-        guard text.count >= 2, DeckFindLink.parse(text) == nil else {
-            directory = []
-            transcriptResults = []
-            return
-        }
-        // Wait for typing to pause.
-        try? await Task.sleep(for: .milliseconds(350))
-        guard !Task.isCancelled else { return }
-        searchingDirectory = true
-        defer { searchingDirectory = false }
-        let descriptor = FetchDescriptor<PodcastEpisode>(
-            predicate: #Predicate { $0.transcriptFile != nil },
-            sortBy: [SortDescriptor(\.published, order: .reverse)]
-        )
-        let files: [TranscriptIndex.File] = ((try? store.context.fetch(descriptor)) ?? []).compactMap { episode in
-            episode.transcriptFile.map { TranscriptIndex.File(episodeID: episode.episodeID, fileName: $0) }
-        }
-        let said = await TranscriptIndex.shared.search(text, in: files)
-        guard !Task.isCancelled else { return }
-        transcriptResults = said
-        if let found = try? await FeedClient.searchDirectory(text), !Task.isCancelled {
-            directory = found.map(DirectoryItem.init)
-        }
     }
 }
 
@@ -635,7 +698,7 @@ private struct DeckChartSection: View {
 
     @ViewBuilder private var placeholder: some View {
         if failed {
-            Text("Couldn't load the chart. Pull down to try again.")
+            Text("Couldn't load the chart just now.")
                 .font(Theme.outfit(14, .medium))
                 .foregroundStyle(Theme.muted)
                 .frame(maxWidth: .infinity)

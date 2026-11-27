@@ -3591,6 +3591,36 @@ this on dec 1?".
   inset 16 pt from the sides, 4 pt up from the foot
   (`DeckMiniProgressLine`).
 
+## On the branch for build 184 (27 Nov 2026; not built yet)
+
+- **Option C: two pages, pull down to search** (Paul, 27 Nov 2026: "Yes
+  let's build it", from https://claude.ai/artifact/9pjRqhQGZ5Fd2BZf9CKfCW
+  C1–C4). The Tabs · Shows · Find strip at the bottom is gone; the bar is
+  just the B1 mini player (`DeckTabsBar`, height = the card).
+  - Both pages open with the same top (`DeckPageTop` in
+    `App/DeckPageTop.swift`): the Poddeck mark and Settings gear, the
+    switch "Up next · 8 | Your shows · 12" (tap a side, or swipe along it;
+    tapping the side already showing goes back to its first screen,
+    `DeckPageSwitch`), and a search box "Search, or pull down".
+  - Pull either page down past its top (90 pt, finger still on the page)
+    and the search drops in with the keyboard up (`deckPullToSearch`); the
+    pull also checks for new episodes, at most every 2 minutes, as pull to
+    refresh did (that's gone). The search is the Find page with Cancel
+    beside its box, going back to the page it came from
+    (`DeckRoot.openSearch` / `closeSearch`, `\.deckOpenSearch`). Results as
+    before: Your shows, Episodes, Said in your episodes, New shows; nothing
+    typed: recent searches, New to you, the chart.
+  - Up next: under the top, "8 episodes · done by 23:10", then the tabs.
+  - Your shows: "Your shows" heading with Discover ↓ (scrolls down), ⇅
+    and + (opens the search, which takes pasted links); the tiles; then
+    Discover underneath (`DeckDiscoverSection` in DeckFind.swift, shared
+    with the empty search): New to you, the UK chart with categories and
+    Follow, and "Paste a show's link". Show previews open on this page.
+  - Not done: swiping sideways across the whole page (the Up next cards'
+    own swipes, Played / Play next, would fight it), so it's the switch.
+    Check on the phone: the pull distance, pull vs scrolling back to the
+    top quickly, the keyboard coming up, Cancel, Discover on a long list.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
@@ -3723,7 +3753,8 @@ this on dec 1?".
   you, UK chart with categories, Paste a show's link; "Discover ↓" jumps
   there); a new show opens its page over the search (Follow, or Play
   next / Add to end to try it). Alternative offered: a third swipe page,
-  Discover. Waiting on Paul.
+  Discover. **Paul: "Yes let's build it"** (27 Nov 2026): on the branch
+  for build 184, see above.
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5

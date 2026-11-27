@@ -35,16 +35,13 @@ enum DeckBarSwipe {
 struct DeckTabsBar: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
-    @Environment(DeckTabsModel.self) private var model
     @Environment(\.deckOpenPlayer) private var openPlayer
-    @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
-    @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
-    @Binding var tab: Int
+    @Environment(\.deckOpenSearch) private var openSearch
 
-    /// The mini player card (58) over the icon strip (50), 6 apart.
+    /// Just the mini player card now (option C, 27 Nov 2026: no tab strip;
+    /// the pages switch at their top).
     static let cardHeight: CGFloat = 58
-    static let stripHeight: CGFloat = 50
-    static let height: CGFloat = cardHeight + 6 + stripHeight
+    static let height: CGFloat = cardHeight
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -57,65 +54,14 @@ struct DeckTabsBar: View {
     static let pillRoom: CGFloat = 0
 
     var body: some View {
-        let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
-                                                        unplayed: unplayed, started: started)
-        bar(count: tabs.count)
+        DeckMiniCard(first: firstTab, open: openPlayer, find: openSearch)
+            .frame(height: Self.height)
+            .padding(.horizontal, 12)
     }
 
-    private func bar(count: Int) -> some View {
-        VStack(spacing: 6) {
-            DeckMiniCard(first: firstTab, open: openPlayer, find: { select(2) })
-                .frame(height: Self.cardHeight)
-            DeckBarIcons(current: tab, count: sectionCount, select: select)
-                .frame(height: Self.stripHeight)
-                .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
-        }
-        .frame(height: Self.height)
-        .padding(.horizontal, 12)
-    }
-
-    /// The top of Up next, so the ring can start it when nothing's on.
+    /// The top of Up next, so the card can start it when nothing's on.
     private var firstTab: PodcastEpisode? {
         DeckTabSource.upNext(store: store, player: player).first
-    }
-
-    /// Up next's length, the same count the words row always showed.
-    private var sectionCount: Int {
-        let playing: String? = player.nowPlaying?.episodeID
-        let queued: Int = store.queue.filter { $0.episode.id != playing }.count
-        return queued + (playing == nil ? 0 : 1)
-    }
-
-    /// Moves to a section at once; Tabs also goes back to the overview.
-    private func select(_ index: Int) {
-        var instant = Transaction(animation: nil)
-        instant.disablesAnimations = true
-        // Tapped the page already showing: back to its first screen.
-        if tab == index && index != 0 && !model.pagerOpen {
-            NotificationCenter.default.post(name: .deckPageToStart, object: index)
-            return
-        }
-        withTransaction(instant) {
-            if index == 0 {
-                model.returnTab = 0
-                model.pagerOpen = false
-            }
-            tab = index
-        }
-    }
-
-    /// Swipe up for the tab overview; swipe along the bar for the section
-    /// before / after (Paul, 16 Nov 2026: option A).
-    private func swiped(_ value: DragGesture.Value) {
-        guard let swipe = DeckBarSwipe.resolve(value) else { return }
-        switch swipe {
-        case .up:
-            select(0)
-        case .next:
-            if tab < 2 { select(tab + 1) }
-        case .previous:
-            if tab > 0 { select(tab - 1) }
-        }
     }
 }
 
@@ -425,45 +371,5 @@ private struct DeckMiniProgressLine: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 4)
         .accessibilityHidden(true)
-    }
-}
-
-/// The strip under the card: Tabs · n, Shows, Find as icons with labels;
-/// the page showing in full ink, the others faded.
-private struct DeckBarIcons: View {
-    let current: Int
-    let count: Int
-    let select: (Int) -> Void
-
-    var body: some View {
-        HStack(spacing: 0) {
-            item("square.on.square", count > 0 ? "Tabs · \(count)" : "Tabs", index: 0)
-            item("square.grid.2x2", "Shows", index: 1)
-            item("magnifyingglass", "Find", index: 2)
-        }
-        .padding(.horizontal, 24)
-    }
-
-    private func item(_ icon: String, _ label: String, index: Int) -> some View {
-        let on: Bool = current == index
-        return Button { select(index) } label: {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: on ? .semibold : .regular))
-                    .frame(height: 24)
-                Text(label)
-                    .font(Theme.outfit(11, .semibold))
-                    .monospacedDigit()
-                    .lineLimit(1)
-            }
-            .foregroundStyle(on ? Theme.ink : Theme.muted.opacity(0.8))
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .contentShape(Rectangle())
-            .transaction { $0.animation = nil }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
