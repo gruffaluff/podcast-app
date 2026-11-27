@@ -3538,7 +3538,7 @@ this on dec 1?".
   (`DeckPlayerTransport`, `DeckTabRestingTransport`); same size and
   touch area (58 pt).
 
-## On the branch for build 181 (27 Nov 2026; not built yet)
+## Done in build 181 (27 Nov 2026, PR #99; Paul: "build")
 
 - **Player R2 "Plain and big"** (Paul, 27 Nov 2026: "Regular r2 still",
   from https://claude.ai/artifact/JMXV4axyWg2L9h8V8VDmL2). The tab page
