@@ -3577,6 +3577,20 @@ this on dec 1?".
   play / pause · skip forward, using your skip lengths; the skips are
   dimmed with nothing playing (`DeckMiniCard.keys`).
 
+## Done in build 183 (27 Nov 2026, PR #101; Paul: "Build")
+
+- **Mini player fixes** (Paul, 27 Nov 2026, build 182 screenshot of Your
+  shows; "menu see through and not going to bottom"): the Tabs · Shows ·
+  Find icons had only a see-through fade behind them, so the show tiles
+  scrolled through under them; now the page colour is solid from the
+  card's middle all the way down under the home indicator to the screen's
+  edge (28 pt fade above it) (`DeckRoot.bottomFade`). "Show · 1h 2m left" cut off as "Elis
+  James and John Robins · 1…": the show's name now gives way first, so the
+  time left always shows (`DeckMiniCardLeft`). The progress line's ends
+  were cut by the card's rounded corners: it's now a rounded 3 pt line
+  inset 16 pt from the sides, 4 pt up from the foot
+  (`DeckMiniProgressLine`).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few

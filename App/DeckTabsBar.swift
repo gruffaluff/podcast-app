@@ -381,12 +381,20 @@ private struct DeckMiniCardLeft: View {
 
     var body: some View {
         let left: TimeInterval = max(0, player.duration - player.currentTime) / max(player.speed, 0.5)
-        let text: String = player.duration > 0 ? "\(show) · \(TimeFormat.length(left)) left" : show
-        Text(text)
-            .font(Theme.outfit(12, .medium))
-            .monospacedDigit()
-            .foregroundStyle(Theme.muted)
-            .lineLimit(1)
+        // The show's name gives way first, so the time left always shows.
+        HStack(spacing: 0) {
+            Text(show)
+                .lineLimit(1)
+            if player.duration > 0 {
+                Text(" · \(TimeFormat.length(left)) left")
+                    .lineLimit(1)
+                    .fixedSize()
+                    .layoutPriority(1)
+            }
+        }
+        .font(Theme.outfit(12, .medium))
+        .monospacedDigit()
+        .foregroundStyle(Theme.muted)
     }
 }
 
@@ -405,14 +413,17 @@ private struct DeckMiniProgressLine: View {
     let progress: Double
 
     var body: some View {
+        // Inset from the card's rounded corners so its ends aren't cut.
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Rectangle().fill(Theme.ink.opacity(0.1))
-                Rectangle().fill(Theme.ink)
-                    .frame(width: geo.size.width * min(1, max(0, progress)))
+                Capsule().fill(Theme.ink.opacity(0.1))
+                Capsule().fill(Theme.ink)
+                    .frame(width: max(3, geo.size.width * min(1, max(0, progress))))
             }
         }
         .frame(height: 3)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 4)
         .accessibilityHidden(true)
     }
 }

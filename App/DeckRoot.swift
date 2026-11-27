@@ -151,14 +151,22 @@ struct DeckRoot: View {
         DeckTabsBar.room + (index == 0 ? DeckTabsBar.pillRoom : 0)
     }
 
-    /// A soft fade of the page colour behind the bar, so cards scrolling
-    /// under it fade away instead of meeting it edge to edge.
+    /// Behind the bar: the page colour, solid from the mini player's
+    /// middle down to the very bottom of the screen, with a short fade
+    /// above, so nothing scrolling underneath shows through the Tabs ·
+    /// Shows · Find icons (Paul, 27 Nov 2026: "menu see through and not
+    /// going to bottom").
     private var bottomFade: some View {
-        LinearGradient(colors: [Theme.background.opacity(0), Theme.background.opacity(0.92)],
-                       startPoint: .top, endPoint: .bottom)
-            .frame(height: DeckTabsBar.height + 46 + (tab == 0 ? DeckTabsBar.pillRoom : 0))
-            .ignoresSafeArea(edges: .bottom)
-            .allowsHitTesting(false)
+        VStack(spacing: 0) {
+            LinearGradient(colors: [Theme.background.opacity(0), Theme.background],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 28)
+            Theme.background
+                .frame(height: DeckTabsBar.height - DeckTabsBar.cardHeight / 2 + 8)
+                // Carries on under the home indicator to the screen's edge.
+                .background(Theme.background.ignoresSafeArea(edges: .bottom))
+        }
+        .allowsHitTesting(false)
     }
 
     private var bottom: some View {
