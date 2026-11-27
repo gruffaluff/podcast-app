@@ -213,11 +213,12 @@ private struct DeckTabPlayerSection: View {
         }
     }
 
-    /// Room left for the dial once everything else has its place (the
-    /// times row is 26 pt with its bigger numbers).
+    /// Room left for the artwork once everything else has its place. R2
+    /// (Paul, 27 Nov 2026): as wide as the page's text, so its edges line
+    /// up with the title and the line.
     private var side: CGFloat {
-        let fixed: CGFloat = 44 + 92 + DeckBigReadout.height + 12 + DeckPlayerScrub.height + 14 + 90 + 68 + (volume ? 34 : 0) + 40
-        return max(120, min(width - 56, height - fixed))
+        let fixed: CGFloat = 44 + 92 + DeckPlayerScrub.height + 4 + DeckDialTimes.height + 10 + 90 + 68 + (volume ? 34 : 0) + 40
+        return max(120, min(width - 48, height - fixed))
     }
 
     /// Spare height goes above the dial; the title sits close over the
@@ -335,38 +336,31 @@ private struct DeckTabPlayerSection: View {
         .padding(.horizontal, 24)
     }
 
+    /// R2 (Paul, 27 Nov 2026): no big time or chapter bar while listening;
+    /// the chapter is quiet words in the times row under the line. Read
+    /// along keeps its chapter row above the line.
     @ViewBuilder private func chapterRow(_ now: PlayerModel.NowPlaying?) -> some View {
-        if now != nil, !reading {
-            // Listening: the big time with the chapter and time-left pills
-            // (Paul, 22 Nov 2026, V1).
-            DeckBigReadout(scrub: dialScrub, openChapters: { showingChapters = true })
-                .padding(.bottom, 12)
-        } else if now != nil {
+        if now != nil, reading {
             DeckChapterRow(openChapters: { showingChapters = true })
                 .padding(.bottom, 6)
-        } else {
-            // A tab that isn't playing: the same big time (its saved place)
-            // and pills as the live page (Paul, 22 Nov 2026: "still the old
-            // screen").
-            DeckTabRestingReadout(episode: episode)
-                .padding(.bottom, 12)
         }
     }
 
     @ViewBuilder private func times(_ now: PlayerModel.NowPlaying?) -> some View {
         if now == nil {
-            DeckTabRestingLine(episode: episode)
+            VStack(spacing: 4) {
+                DeckTabRestingLine(episode: episode)
+                DeckTabRestingTimes(episode: episode)
+            }
         } else {
-            // One times row that shrinks under the line in Read along
-            // (smooth, like the chapter pill) rather than two rows swapped.
-            // The line is always here (Paul, 22 Nov 2026): scrub with your
-            // thumb; the ring above is for looking.
-            VStack(spacing: 2) {
+            // The line, then one times row under it: played, the chapter
+            // (tap for chapters) and time left. It shrinks in place for Read
+            // along (smooth, like the chapter pill).
+            VStack(spacing: reading ? 2 : 4) {
                 DeckPlayerScrub(shared: dialScrub)
                     .keepingOut("scrub", in: $keepOut)
-                if reading {
-                    DeckDialTimes(scrub: dialScrub, compact: true)
-                }
+                DeckDialTimes(scrub: dialScrub, compact: reading,
+                              openChapters: reading ? nil : { showingChapters = true })
             }
         }
     }
@@ -594,39 +588,34 @@ struct DeckTabMoreHint: View {
 }
 
 
-/// A tab that isn't playing: its saved place, big, and a pill with how
-/// long it is or how much is left, like the live readout.
-private struct DeckTabRestingReadout: View {
+/// A tab that isn't playing: the times row under its still line, like
+/// the live page (R2): its saved place, "Not started" / how much is left,
+/// and the time to go.
+private struct DeckTabRestingTimes: View {
     let episode: PodcastEpisode
 
     var body: some View {
         let duration: TimeInterval = episode.duration ?? 0
         let at: TimeInterval = episode.played ? 0 : min(episode.position, duration > 0 ? duration : episode.position)
-        VStack(spacing: 6) {
+        HStack(spacing: 4) {
             Text(TimeFormat.clock(at))
-                .font(Theme.outfit(60, .heavy))
-                .tracking(-2)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .frame(height: 62)
-                .opacity(0.55)
-            Text(words(at: at, duration: duration))
-                .font(Theme.outfit(12, .bold))
-                .monospacedDigit()
-                .lineLimit(1)
-                .padding(.horizontal, 10)
-                .frame(height: 24)
-                .background(Capsule().fill(Color.white.opacity(0.14)))
+                .font(DeckDialTimes.clockFont)
+                .frame(minWidth: 72, alignment: .leading)
+            Spacer(minLength: 0)
+            Text(at > 30 ? "Carry on" : "Not started")
+                .font(DeckDialTimes.middleFont)
+                .opacity(0.75)
+            Spacer(minLength: 0)
+            Text("−" + TimeFormat.clock(max(0, duration - at)))
+                .font(DeckDialTimes.clockFont)
+                .frame(minWidth: 72, alignment: .trailing)
         }
-        .frame(maxWidth: .infinity)
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .opacity(0.6)
+        .frame(height: DeckDialTimes.height)
         .accessibilityElement(children: .combine)
-    }
-
-    private func words(at: TimeInterval, duration: TimeInterval) -> String {
-        guard duration > 0 else { return "Not started" }
-        if at > 30 { return DeckUpNextTime.length(max(0, duration - at)) + " left" }
-        return "Not started · " + DeckUpNextTime.length(duration)
     }
 }
 

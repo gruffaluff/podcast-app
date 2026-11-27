@@ -3538,6 +3538,24 @@ this on dec 1?".
   (`DeckPlayerTransport`, `DeckTabRestingTransport`); same size and
   touch area (58 pt).
 
+## On the branch for build 181 (27 Nov 2026; not built yet)
+
+- **Player R2 "Plain and big"** (Paul, 27 Nov 2026: "Regular r2 still",
+  from https://claude.ai/artifact/JMXV4axyWg2L9h8V8VDmL2). The tab page
+  while listening: the artwork as wide as the text (page width less
+  48 pt, edges lined up with the title and line), show and title
+  left-aligned under it, the progress line, then one times row under the
+  line: played · the chapter now with › (tap for the chapters sheet;
+  "ends 21:42" when there are no chapters, still opening the sheet with
+  Make chapters) · −left at your speed; then skip / play / skip, volume
+  on tall screens, Options · Read along · AirPlay. The big time
+  (`DeckBigReadout`, deleted) and the full-width chapter bar are gone
+  while listening; Read along keeps its chapter row above the line and
+  the same times row, shrunk (`DeckDialTimes(openChapters:)`). A tab
+  that isn't playing has the same layout: its still line and a quiet
+  times row (saved place · Not started / Carry on · −left,
+  `DeckTabRestingTimes`, replacing `DeckTabRestingReadout`).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
@@ -3620,7 +3638,8 @@ this on dec 1?".
   AirPlay as the bottom row), R2b one faint line of the words under the
   title (tap for Read along), R2c next episode at the foot instead of the
   volume and arrow, R2d artwork edge to edge fading into the backdrop.
-  Suggested R2a with R2c's next-up card. Waiting on Paul.
+  Suggested R2a with R2c's next-up card. **Paul: "Regular r2 still"**
+  (27 Nov 2026): built, see build 181 below.
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
