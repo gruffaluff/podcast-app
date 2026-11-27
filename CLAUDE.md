@@ -3688,6 +3688,20 @@ this on dec 1?".
   full-width tab bar. Suggested B1 (matches the R2 player). **Paul: B1**
   (27 Nov 2026): built into build 181, see above.
 
+- **One page?** (Paul, 27 Nov 2026: "making the podcast app a bit of a
+  one-pager where everything bar the main player is on one page"). Four
+  ideas on https://claude.ai/artifact/RTki81tocYwdVrmetNYovt (each phone
+  scrolls; no Tabs · Shows · Find strip, B1 mini player kept, the R2
+  player stays its own screen): O1 Shelves (search at the top, then
+  sideways rows: Up next tab cards, New this week, Your shows tiles, UK
+  chart, Settings at the foot; suggested), O2 Up next first, the rest
+  folded (today's Up next grid, then Your shows / Find / Settings as
+  cards that open in place, jump chips stick to the top), O3 Search is
+  home (big search box answers with the page; playing card, Then list,
+  shows, chart), O4 Today like a newspaper (greeting, "3 new since this
+  morning", Carry on headline card, Up next row, shows grid, one chart
+  pick). Waiting on Paul.
+
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
   minutes, so about 50p a build (estimate; Codemagic's pricing page has
