@@ -37,11 +37,16 @@ struct DeckTabsBar: View {
     @Environment(PlayerModel.self) private var player
     @Environment(\.deckOpenPlayer) private var openPlayer
     @Environment(\.deckOpenSearch) private var openSearch
+    @Environment(\.deckSelectTab) private var selectTab
+    /// 0 Up next, 1 Your shows, 2 the search.
+    let tab: Int
 
-    /// Just the mini player card now (option C, 27 Nov 2026: no tab strip;
-    /// the pages switch at their top).
+    /// The mini player card over two small page dots (option C with D,
+    /// Paul, 27 Nov 2026: "swipe on mini player"): no tab strip; drag the
+    /// card sideways to flip between Up next and Your shows.
     static let cardHeight: CGFloat = 58
-    static let height: CGFloat = cardHeight
+    static let dotsHeight: CGFloat = 14
+    static let height: CGFloat = cardHeight + 4 + dotsHeight
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -54,9 +59,28 @@ struct DeckTabsBar: View {
     static let pillRoom: CGFloat = 0
 
     var body: some View {
-        DeckMiniCard(first: firstTab, open: openPlayer, find: openSearch)
-            .frame(height: Self.height)
-            .padding(.horizontal, 12)
+        VStack(spacing: 4) {
+            DeckMiniCard(first: firstTab, open: openPlayer, find: openSearch, flip: flip)
+                .frame(height: Self.cardHeight)
+            DeckPageDots(current: tab, select: go)
+                .frame(height: Self.dotsHeight)
+        }
+        .frame(height: Self.height)
+        .padding(.horizontal, 12)
+    }
+
+    /// Left (−1 from Up next) for Your shows, right for Up next. From the
+    /// search, a swipe goes to the page in that direction.
+    private func flip(_ towardsShows: Bool) {
+        go(towardsShows ? 1 : 0)
+    }
+
+    private func go(_ index: Int) {
+        guard index != tab else { return }
+        UISelectionFeedbackGenerator().selectionChanged()
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) { selectTab(index) }
     }
 
     /// The top of Up next, so the card can start it when nothing's on.
@@ -146,6 +170,10 @@ private struct DeckMiniCard: View {
     let first: PodcastEpisode?
     let open: () -> Void
     let find: () -> Void
+    /// A sideways drag: true towards Your shows (left), false Up next.
+    let flip: (Bool) -> Void
+    /// How far the card follows the finger while dragged sideways.
+    @GestureState private var slide: CGFloat = 0
 
     private static let radius: CGFloat = 18
 
@@ -168,15 +196,30 @@ private struct DeckMiniCard: View {
         .overlay(shape.strokeBorder(Theme.ink.opacity(0.08), lineWidth: 1))
         .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 11, y: 8)
         .contentShape(shape)
+        .offset(x: slide)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: slide)
         .onTapGesture { tapped() }
-        .gesture(DragGesture(minimumDistance: 12).onEnded { value in
-            guard value.translation.height < -30, abs(value.translation.width) < abs(value.translation.height),
-                  player.nowPlaying != nil else { return }
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            open()
-        })
+        .gesture(DragGesture(minimumDistance: 12)
+            .updating($slide) { value, state, _ in
+                let dx: CGFloat = value.translation.width
+                // Follows a sideways drag a little, so you can feel it.
+                state = abs(dx) > abs(value.translation.height) ? dx * 0.3 : 0
+            }
+            .onEnded { value in
+                let dx: CGFloat = value.translation.width
+                let dy: CGFloat = value.translation.height
+                if abs(dx) > abs(dy) * 1.2, abs(dx) > 40 || abs(value.predictedEndTranslation.width) > 160 {
+                    flip(dx < 0)
+                    return
+                }
+                guard dy < -30, abs(dx) < abs(dy), player.nowPlaying != nil else { return }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                open()
+            })
         .accessibilityElement(children: .contain)
         .accessibilityAction(named: "Open player") { if player.nowPlaying != nil { open() } }
+        .accessibilityAction(named: "Your shows") { flip(true) }
+        .accessibilityAction(named: "Up next") { flip(false) }
     }
 
     // MARK: Parts
@@ -371,5 +414,33 @@ private struct DeckMiniProgressLine: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 4)
         .accessibilityHidden(true)
+    }
+}
+
+/// Two small dots under the mini player: which page you're on (the
+/// current one a short ink bar). Tap one to go there.
+private struct DeckPageDots: View {
+    let current: Int
+    let select: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: 2) {
+            dot(0, label: "Up next")
+            dot(1, label: "Your shows")
+        }
+    }
+
+    private func dot(_ index: Int, label: String) -> some View {
+        let on: Bool = current == index
+        return Button { select(index) } label: {
+            Capsule()
+                .fill(on ? Theme.ink : Theme.muted.opacity(0.4))
+                .frame(width: on ? 16 : 6, height: 6)
+                .frame(width: 30, height: 14)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }

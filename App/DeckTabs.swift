@@ -383,18 +383,23 @@ private struct DeckTabsHeader: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
 
-    /// Under the switch: when Up next is done by, at your speed.
+    /// "Up next" and when it's done by, at your speed.
     var body: some View {
         let plan: DeckQueuePlan = DeckQueuePlan(store: store, player: player, playhead: nil)
-        HStack(spacing: 8) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("Up next")
+                .font(Theme.outfit(22, .heavy))
+                .tracking(-0.5)
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 8)
             if plan.count > 0 {
-                Text("\(plan.count) \(plan.count == 1 ? "episode" : "episodes") · done by " + UpNextTimes.clock(plan.end))
+                Text("\(plan.count) · done by " + UpNextTimes.clock(plan.end))
                     .font(Theme.outfit(13, .medium))
                     .monospacedDigit()
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
             }
-            Spacer(minLength: 0)
         }
         .padding(.horizontal, 22)
         .padding(.top, 14)

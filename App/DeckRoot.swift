@@ -196,7 +196,7 @@ struct DeckRoot: View {
     }
 
     private var bottom: some View {
-        DeckTabsBar()
+        DeckTabsBar(tab: tab)
             .padding(.bottom, 8)
     }
 }

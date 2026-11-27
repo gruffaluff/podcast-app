@@ -3598,10 +3598,14 @@ this on dec 1?".
   C1–C4). The Tabs · Shows · Find strip at the bottom is gone; the bar is
   just the B1 mini player (`DeckTabsBar`, height = the card).
   - Both pages open with the same top (`DeckPageTop` in
-    `App/DeckPageTop.swift`): the Poddeck mark and Settings gear, the
-    switch "Up next · 8 | Your shows · 12" (tap a side, or swipe along it;
-    tapping the side already showing goes back to its first screen,
-    `DeckPageSwitch`), and a search box "Search, or pull down".
+    `App/DeckPageTop.swift`): the Poddeck mark and Settings gear, and a
+    search box "Search, or pull down".
+  - Switching pages (Paul, 27 Nov 2026: "swipe on mini player", D):
+    drag the mini player sideways, left for Your shows, right for Up
+    next (it follows the finger a little; past 40 pt or a flick); two
+    small dots under it show the page and can be tapped (`DeckPageDots`,
+    `DeckMiniCard.flip`). Tap still opens the player, swipe up too. A
+    switch at the top was built first and dropped for reach.
   - Pull either page down past its top (90 pt, finger still on the page)
     and the search drops in with the keyboard up (`deckPullToSearch`); the
     pull also checks for new episodes, at most every 2 minutes, as pull to
@@ -3610,23 +3614,25 @@ this on dec 1?".
     (`DeckRoot.openSearch` / `closeSearch`, `\.deckOpenSearch`). Results as
     before: Your shows, Episodes, Said in your episodes, New shows; nothing
     typed: recent searches, New to you, the chart.
-  - Up next: under the top, "8 episodes · done by 23:10", then the tabs.
+  - Up next: under the top, "Up next" and "8 · done by 23:10", then the
+    tabs.
   - Your shows: "Your shows" heading with Discover ↓ (scrolls down), ⇅
     and + (opens the search, which takes pasted links); the tiles; then
     Discover underneath (`DeckDiscoverSection` in DeckFind.swift, shared
     with the empty search): New to you, the UK chart with categories and
     Follow, and "Paste a show's link". Show previews open on this page.
   - Not done: swiping sideways across the whole page (the Up next cards'
-    own swipes, Played / Play next, would fight it), so it's the switch.
+    own swipes, Played / Play next, would fight it).
     Check on the phone: the pull distance, pull vs scrolling back to the
-    top quickly, the keyboard coming up, Cancel, Discover on a long list.
+    top quickly, the keyboard coming up, Cancel, Discover on a long list,
+    the mini player's sideways drag vs its taps and swipe up.
   - **Switch out of reach at the top** (Paul, 27 Nov 2026: "how can we
     make it easier to switch … for reachability"). Mock-ups
     https://claude.ai/artifact/1dNa6zA1gtbdmsiUHHM4BE: A as built (top),
     B a floating Up next | Your shows pill just above the mini player
     (suggested), C two words under the mini player, D just swipe the mini
     player (dots under it); in B–D dragging the mini player sideways also
-    flips pages. Waiting on Paul.
+    flips pages. **Paul: D** (27 Nov 2026), built above.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
