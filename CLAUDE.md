@@ -3620,6 +3620,13 @@ this on dec 1?".
     own swipes, Played / Play next, would fight it), so it's the switch.
     Check on the phone: the pull distance, pull vs scrolling back to the
     top quickly, the keyboard coming up, Cancel, Discover on a long list.
+  - **Switch out of reach at the top** (Paul, 27 Nov 2026: "how can we
+    make it easier to switch … for reachability"). Mock-ups
+    https://claude.ai/artifact/1dNa6zA1gtbdmsiUHHM4BE: A as built (top),
+    B a floating Up next | Your shows pill just above the mini player
+    (suggested), C two words under the mini player, D just swipe the mini
+    player (dots under it); in B–D dragging the mini player sideways also
+    flips pages. Waiting on Paul.
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
