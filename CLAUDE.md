@@ -3591,7 +3591,7 @@ this on dec 1?".
   inset 16 pt from the sides, 4 pt up from the foot
   (`DeckMiniProgressLine`).
 
-## On the branch for build 184 (27 Nov 2026; not built yet)
+## Done in build 184 (27 Nov 2026, PR #102; Paul: "Build")
 
 - **Option C: two pages, pull down to search** (Paul, 27 Nov 2026: "Yes
   let's build it", from https://claude.ai/artifact/9pjRqhQGZ5Fd2BZf9CKfCW
