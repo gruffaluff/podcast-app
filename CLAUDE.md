@@ -3641,6 +3641,18 @@ this on dec 1?".
   Suggested R2a with R2c's next-up card. **Paul: "Regular r2 still"**
   (27 Nov 2026): built, see build 181 below.
 
+- **Mini player and bar rejig?** (Paul, 27 Nov 2026: "Let's look at
+  reworking the mini player and bar too"). Six options over his Up next
+  on https://claude.ai/artifact/94LKhvKijV5iefrskQ6zUV: Now (disc and
+  pill), B1 floating white player card (artwork, title, show · time
+  left, play, skip, progress along its foot) over a strip of three icon
+  tabs, B2 the same card with the player's blurred-artwork backdrop and
+  tabs as words, B3 one pill (round artwork with play, title + time
+  left, three icons), B4 no player bar (what's playing is the first tab
+  as round artwork with a ring), B5 slim one-line strip above a plain
+  full-width tab bar. Suggested B1 (matches the R2 player). Waiting on
+  Paul; build 181 (R2) is ready on PR #99, not merged.
+
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
   minutes, so about 50p a build (estimate; Codemagic's pricing page has
