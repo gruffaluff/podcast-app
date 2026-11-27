@@ -190,8 +190,8 @@ struct DeckTabGroupPill: View {
 }
 
 
-/// The mini player card (B1): artwork, title, show · time left, play /
-/// pause and skip forward, a thin progress line along its foot. Tap it (or
+/// The mini player card (B1): artwork, title, show · time left, skip
+/// back, play / pause and skip forward, a thin progress line along its foot. Tap it (or
 /// swipe it up) for the player. With nothing on it offers the top of Up
 /// next, ready to play; with Up next empty, Find something.
 private struct DeckMiniCard: View {
@@ -303,6 +303,20 @@ private struct DeckMiniCard: View {
     @ViewBuilder private var keys: some View {
         if player.nowPlaying != nil || first != nil {
             HStack(spacing: 0) {
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    player.skipBackward()
+                } label: {
+                    Image(systemName: "gobackward.\(player.skipBackSeconds)")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 40, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(player.nowPlaying == nil)
+                .opacity(player.nowPlaying == nil ? 0.3 : 1)
+                .accessibilityLabel("Skip back \(player.skipBackSeconds) seconds")
                 Button { playPause() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 22))
