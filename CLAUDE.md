@@ -3702,6 +3702,20 @@ this on dec 1?".
   morning", Carry on headline card, Up next row, shows grid, one chart
   pick). Waiting on Paul.
 
+- **Organising Up next and shows?** (Paul, 27 Nov 2026: loves the Up
+  next artwork cards and the Shows tiles going black and white; "a way
+  we haven't looked at yet … function and form", separate tabs fine).
+  Five on https://claude.ai/artifact/9pjRqhQGZ5Fd2BZf9CKfCW (same cards
+  and tiles in all): A The shelf (one tab: each show a tile with its
+  waiting episodes stacked behind it, corner number = when its next one
+  comes up, tap to spread into the episode cards; caught-up shows black
+  and white at the end; bar Shelf · Find; suggested), B Lanes (a
+  sideways row of cards per show, Top rank first), C Two pages you swipe
+  between (Up next · Your shows switch, pull down to search, no tab
+  strip), D Up next row on top with show tiles underneath as a filter,
+  E Today's two tabs plus filter chips (All · Started · New ·
+  Downloaded · Under 45m; runner-up). Waiting on Paul.
+
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
   minutes, so about 50p a build (estimate; Codemagic's pricing page has
