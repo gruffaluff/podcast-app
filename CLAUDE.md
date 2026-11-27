@@ -3570,7 +3570,7 @@ this on dec 1?".
   before / after (`DeckMiniCard`, `DeckBarIcons` in DeckTabsBar.swift;
   bar 114 pt, the lists' bottom room and the fade grow with it).
 
-## On the branch for build 182 (27 Nov 2026; not built yet)
+## Done in build 182 (27 Nov 2026, PR #100; Paul: "when the compile check finishes, build it")
 
 - **Skip back on the mini player** (Paul, 27 Nov 2026: "can we add a
   skip back to the mini player"): the B1 card's keys are skip back ·
