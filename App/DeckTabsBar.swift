@@ -2,9 +2,12 @@ import SwiftUI
 import SwiftData
 import PodcastCore
 
-// The bottom bar (Paul, 22 Nov 2026: "disc and pill"): a play disc for
-// what's on and a pill of words, Tabs · n / Shows / Find. Swipe up on the
-// pill for the tab overview, along it for the page before / after.
+// The bottom bar, B1 (Paul, 27 Nov 2026, from
+// https://claude.ai/artifact/94LKhvKijV5iefrskQ6zUV): a white mini player
+// card (the R2 player in small) floating over a strip of three icon tabs,
+// Tabs · n / Shows / Find. Swipe up on the strip for the tab overview,
+// along it for the page before / after; tap or swipe up the card for the
+// player.
 
 /// What a swipe on a Safari-style bar means.
 enum DeckBarSwipe {
@@ -38,13 +41,10 @@ struct DeckTabsBar: View {
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
     @Binding var tab: Int
 
-    /// A big play disc and a pill of words (Paul, 22 Nov 2026: "I quite
-    /// like disc and pill", M3 from
-    /// https://claude.ai/artifact/TSVxvEeZb6HWKVbH3xN4X3): the disc is
-    /// what's playing (its artwork filling with colour as you listen, a
-    /// ring round it); tap to play / pause, touch and hold to open it.
-    /// The pill is Tabs · n, Shows and Find.
-    static let height: CGFloat = 70
+    /// The mini player card (58) over the icon strip (50), 6 apart.
+    static let cardHeight: CGFloat = 58
+    static let stripHeight: CGFloat = 50
+    static let height: CGFloat = cardHeight + 6 + stripHeight
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -63,13 +63,15 @@ struct DeckTabsBar: View {
     }
 
     private func bar(count: Int) -> some View {
-        HStack(spacing: 12) {
-            DeckBarDisc(first: firstTab, open: openPlayer)
-            DeckBarWords(current: tab, count: sectionCount, select: select)
+        VStack(spacing: 6) {
+            DeckMiniCard(first: firstTab, open: openPlayer, find: { select(2) })
+                .frame(height: Self.cardHeight)
+            DeckBarIcons(current: tab, count: sectionCount, select: select)
+                .frame(height: Self.stripHeight)
                 .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
         }
         .frame(height: Self.height)
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
     }
 
     /// The top of Up next, so the ring can start it when nothing's on.
@@ -188,71 +190,163 @@ struct DeckTabGroupPill: View {
 }
 
 
-/// The bar's play disc: what's playing (or the top of Up next) as round
-/// artwork in a ring, the colour sweeping in as you listen, with play /
-/// pause on it. Tap plays or pauses; touch and hold opens its tab.
-private struct DeckBarDisc: View {
+/// The mini player card (B1): artwork, title, show · time left, play /
+/// pause and skip forward, a thin progress line along its foot. Tap it (or
+/// swipe it up) for the player. With nothing on it offers the top of Up
+/// next, ready to play; with Up next empty, Find something.
+private struct DeckMiniCard: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
     let first: PodcastEpisode?
     let open: () -> Void
+    let find: () -> Void
 
-    private static let size: CGFloat = 70
-    private static let ink: Color = Color(red: 28 / 255, green: 27 / 255, blue: 26 / 255)
+    private static let radius: CGFloat = 18
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(Self.ink)
-                .shadow(color: Color.black.opacity(0.28), radius: 12, y: 8)
-            art
-            Circle()
-                .fill(Color.black.opacity(0.32))
-                .frame(width: 40, height: 40)
-            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: 17))
-                .foregroundStyle(Color.white)
+        let shape = RoundedRectangle(cornerRadius: Self.radius, style: .continuous)
+        ZStack(alignment: .bottom) {
+            HStack(spacing: 10) {
+                artwork
+                words
+                Spacer(minLength: 0)
+                keys
+            }
+            .padding(.leading, 9)
+            .padding(.trailing, 6)
+            .frame(maxHeight: .infinity)
+            line
         }
-        .frame(width: Self.size, height: Self.size)
-        .contentShape(Circle())
-        .onTapGesture { playPause() }
-        // G3 (Paul, 22 Nov 2026): swipe the disc up for the player, like
-        // Apple Music; a small handle above it says so.
+        .background(shape.fill(Theme.surface))
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(Theme.ink.opacity(0.08), lineWidth: 1))
+        .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 11, y: 8)
+        .contentShape(shape)
+        .onTapGesture { tapped() }
         .gesture(DragGesture(minimumDistance: 12).onEnded { value in
             guard value.translation.height < -30, abs(value.translation.width) < abs(value.translation.height),
                   player.nowPlaying != nil else { return }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             open()
         })
-        .overlay(alignment: .top) {
-            Capsule()
-                .fill(Theme.ink.opacity(0.3))
-                .frame(width: 22, height: 4)
-                .offset(y: -12)
-                .opacity(player.nowPlaying == nil ? 0 : 1)
-                .allowsHitTesting(false)
-        }
-        .onLongPressGesture(minimumDuration: 0.35) {
-            guard player.nowPlaying != nil else { return }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            open()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(player.nowPlaying?.title ?? first?.title ?? "Nothing playing")
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { playPause() }
+        .accessibilityElement(children: .contain)
         .accessibilityAction(named: "Open player") { if player.nowPlaying != nil { open() } }
     }
 
-    @ViewBuilder private var art: some View {
-        if let item = player.nowPlaying {
-            DeckBarDiscLive(item: item, size: Self.size - 6)
-        } else if let first {
-            DeckRingArtwork(url: first.artwork, showTitle: first.showTitle, size: Self.size - 6,
-                            progress: DeckRing.progress(of: first), lineWidth: 3.5, gap: 3,
-                            colour: Color.white, track: Color.white.opacity(0.2))
+    // MARK: Parts
+
+    private var artURL: URL? { player.nowPlaying?.artworkURL ?? first?.artwork }
+    private var showName: String { player.nowPlaying?.showTitle ?? first?.showTitle ?? "" }
+
+    @ViewBuilder private var artwork: some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+        if player.nowPlaying != nil || first != nil {
+            CachedImage(url: artURL) {
+                shape.fill(Theme.placeholderColor(for: showName))
+                    .overlay(Text(Theme.initials(for: showName))
+                        .font(Theme.outfit(13, .bold))
+                        .foregroundStyle(Color.white))
+            }
+            .frame(width: 40, height: 40)
+            .clipShape(shape)
+            .accessibilityHidden(true)
         } else {
-            Circle().fill(Color.white.opacity(0.12)).frame(width: Self.size - 14, height: Self.size - 14)
+            shape.fill(Theme.ink.opacity(0.06))
+                .frame(width: 40, height: 40)
+                .overlay(Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Theme.muted))
+                .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder private var words: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if let item = player.nowPlaying {
+                title(item.title)
+                DeckMiniCardLeft(show: item.showTitle)
+            } else if let first {
+                title(first.title)
+                Text(restingLine(first))
+                    .font(Theme.outfit(12, .medium))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            } else {
+                title("Up next is empty")
+                Text("Find something to listen to ›")
+                    .font(Theme.outfit(12, .medium))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private func title(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.outfit(15, .bold))
+            .foregroundStyle(Theme.ink)
+            .lineLimit(1)
+    }
+
+    /// "Up next · Show · 26m", or "Carry on · Show · 12m left" once started.
+    private func restingLine(_ episode: PodcastEpisode) -> String {
+        let progress: Double = DeckRing.progress(of: episode)
+        if progress > 0, let left = episode.timeLeft {
+            return "Carry on · \(episode.showTitle) · \(TimeFormat.length(left)) left"
+        }
+        if let length = episode.duration {
+            return "Up next · \(episode.showTitle) · \(TimeFormat.length(length))"
+        }
+        return "Up next · \(episode.showTitle)"
+    }
+
+    @ViewBuilder private var keys: some View {
+        if player.nowPlaying != nil || first != nil {
+            HStack(spacing: 0) {
+                Button { playPause() } label: {
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    player.skipForwardBy()
+                } label: {
+                    Image(systemName: "goforward.\(player.skipForwardSeconds)")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 40, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(player.nowPlaying == nil)
+                .opacity(player.nowPlaying == nil ? 0.3 : 1)
+                .accessibilityLabel("Skip forward \(player.skipForwardSeconds) seconds")
+            }
+        }
+    }
+
+    @ViewBuilder private var line: some View {
+        if player.nowPlaying != nil {
+            DeckMiniCardLine()
+        } else if let first {
+            DeckMiniProgressLine(progress: DeckRing.progress(of: first))
+        }
+    }
+
+    // MARK: Actions
+
+    private func tapped() {
+        if player.nowPlaying != nil {
+            open()
+        } else if first != nil {
+            playPause()
+        } else {
+            find()
         }
     }
 
@@ -266,57 +360,85 @@ private struct DeckBarDisc: View {
     }
 }
 
-/// The disc's artwork and ring for the one playing; only this follows
-/// the clock.
-private struct DeckBarDiscLive: View {
+/// "Show · 54m left" at your speed; only this follows the clock.
+private struct DeckMiniCardLeft: View {
     @Environment(PlayerModel.self) private var player
-    let item: PlayerModel.NowPlaying
-    let size: CGFloat
+    let show: String
 
     var body: some View {
-        let progress: Double = player.duration > 0 ? player.currentTime / player.duration : 0
-        DeckRingArtwork(url: item.artworkURL, showTitle: item.showTitle, size: size,
-                        progress: progress, lineWidth: 3.5, gap: 3,
-                        colour: Color.white, track: Color.white.opacity(0.2))
+        let left: TimeInterval = max(0, player.duration - player.currentTime) / max(player.speed, 0.5)
+        let text: String = player.duration > 0 ? "\(show) · \(TimeFormat.length(left)) left" : show
+        Text(text)
+            .font(Theme.outfit(12, .medium))
+            .monospacedDigit()
+            .foregroundStyle(Theme.muted)
+            .lineLimit(1)
     }
 }
 
-/// The bar's pill: Tabs · n, Shows, Find; the page showing in ink.
-private struct DeckBarWords: View {
+/// The live progress line along the card's foot.
+private struct DeckMiniCardLine: View {
+    @Environment(PlayerModel.self) private var player
+
+    var body: some View {
+        let progress: Double = player.duration > 0 ? player.currentTime / player.duration : 0
+        DeckMiniProgressLine(progress: progress)
+    }
+}
+
+/// A 3 pt line, ink as far as you've got, faint ahead.
+private struct DeckMiniProgressLine: View {
+    let progress: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(Theme.ink.opacity(0.1))
+                Rectangle().fill(Theme.ink)
+                    .frame(width: geo.size.width * min(1, max(0, progress)))
+            }
+        }
+        .frame(height: 3)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The strip under the card: Tabs · n, Shows, Find as icons with labels;
+/// the page showing in full ink, the others faded.
+private struct DeckBarIcons: View {
     let current: Int
     let count: Int
     let select: (Int) -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
-            word(count > 0 ? "Tabs · \(count)" : "Tabs", index: 0)
-            word("Shows", index: 1)
-            word("Find", index: 2)
+        HStack(spacing: 0) {
+            item("square.on.square", count > 0 ? "Tabs · \(count)" : "Tabs", index: 0)
+            item("square.grid.2x2", "Shows", index: 1)
+            item("magnifyingglass", "Find", index: 2)
         }
-        .padding(5)
-        .frame(maxWidth: .infinity)
-        .frame(height: 58)
-        .background(Capsule().fill(Theme.surface))
-        .overlay(Capsule().strokeBorder(Theme.ink.opacity(0.08), lineWidth: 1))
-        .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 11, y: 8)
+        .padding(.horizontal, 24)
     }
 
-    private func word(_ text: String, index: Int) -> some View {
+    private func item(_ icon: String, _ label: String, index: Int) -> some View {
         let on: Bool = current == index
         return Button { select(index) } label: {
-            Text(text)
-                .font(Theme.outfit(15, .bold))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .foregroundStyle(on ? Theme.surface : Theme.muted)
-                .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(Capsule().fill(on ? Theme.ink : Color.clear))
-                .contentShape(Capsule())
-                .transaction { $0.animation = nil }
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: on ? .semibold : .regular))
+                    .frame(height: 24)
+                Text(label)
+                    .font(Theme.outfit(11, .semibold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+            }
+            .foregroundStyle(on ? Theme.ink : Theme.muted.opacity(0.8))
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .contentShape(Rectangle())
+            .transaction { $0.animation = nil }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 }

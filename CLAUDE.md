@@ -3538,6 +3538,38 @@ this on dec 1?".
   (`DeckPlayerTransport`, `DeckTabRestingTransport`); same size and
   touch area (58 pt).
 
+## Done in build 181 (27 Nov 2026, PR #99; Paul: "build")
+
+- **Player R2 "Plain and big"** (Paul, 27 Nov 2026: "Regular r2 still",
+  from https://claude.ai/artifact/JMXV4axyWg2L9h8V8VDmL2). The tab page
+  while listening: the artwork as wide as the text (page width less
+  48 pt, edges lined up with the title and line), show and title
+  left-aligned under it, the progress line, then one times row under the
+  line: played · the chapter now with › (tap for the chapters sheet;
+  "ends 21:42" when there are no chapters, still opening the sheet with
+  Make chapters) · −left at your speed; then skip / play / skip, volume
+  on tall screens, Options · Read along · AirPlay. The big time
+  (`DeckBigReadout`, deleted) and the full-width chapter bar are gone
+  while listening; Read along keeps its chapter row above the line and
+  the same times row, shrunk (`DeckDialTimes(openChapters:)`). A tab
+  that isn't playing has the same layout: its still line and a quiet
+  times row (saved place · Not started / Carry on · −left,
+  `DeckTabRestingTimes`, replacing `DeckTabRestingReadout`).
+- **Bar B1: mini player card over icon tabs** (Paul, 27 Nov 2026: "B1",
+  from https://claude.ai/artifact/94LKhvKijV5iefrskQ6zUV). The disc and
+  pill are gone. A white card (58 pt, radius 18, soft shadow) floats above
+  the tabs: 40 pt artwork, title, "Show · 54m left" at your speed, play /
+  pause and skip forward, a thin ink progress line along its foot. Tap
+  the card (or swipe it up) for the playing episode's tab. With nothing
+  on it shows the top of Up next ("Up next · Show · 26m", or "Carry on ·
+  12m left"; tap or play starts it); with Up next empty, "Up next is
+  empty · Find something ›" (tap goes to Find). Under it a strip of three
+  icons with labels, Tabs · n / Shows / Find, the page showing in ink;
+  tapping the page already showing still goes back to its first screen,
+  swipe up on the strip for the tab overview, along it for the page
+  before / after (`DeckMiniCard`, `DeckBarIcons` in DeckTabsBar.swift;
+  bar 114 pt, the lists' bottom room and the fade grow with it).
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
@@ -3603,6 +3635,37 @@ this on dec 1?".
   player, V1 with V2's pills (time left instead of ends): build 174.
 
 ## Queued for the next app build
+
+- **Player page rejig?** (Paul, 26 Nov 2026: "Mock ups to rejig the
+  player page?"). Six layouts drawn with #594 on
+  https://claude.ai/artifact/JMXV4axyWg2L9h8V8VDmL2: Now (build 180),
+  R1 Thumb deck (smaller artwork, no big time, times at the line's ends,
+  everything pressed in the lower half), R2 Plain and big (Apple-style
+  wide artwork, title left, chapter as quiet text under the line), R3
+  Counter and chapters (small artwork beside the title, big counter,
+  this chapter + next two as rows), R4 Words under the art (the line
+  being said under the title, tap for Read along), R5 Live chips and Up
+  next (Options as chips showing what's on, the next episode at the
+  foot). Suggested R1 with R5's chips. **Paul: "R2 probably best. Any
+  other suggestions"** (26 Nov 2026). Four R2 variations added to the
+  same page: R2a live chips (Read along · 1.2× / Trim / Sleep chips ·
+  AirPlay as the bottom row), R2b one faint line of the words under the
+  title (tap for Read along), R2c next episode at the foot instead of the
+  volume and arrow, R2d artwork edge to edge fading into the backdrop.
+  Suggested R2a with R2c's next-up card. **Paul: "Regular r2 still"**
+  (27 Nov 2026): built, see build 181 below.
+
+- **Mini player and bar rejig?** (Paul, 27 Nov 2026: "Let's look at
+  reworking the mini player and bar too"). Six options over his Up next
+  on https://claude.ai/artifact/94LKhvKijV5iefrskQ6zUV: Now (disc and
+  pill), B1 floating white player card (artwork, title, show · time
+  left, play, skip, progress along its foot) over a strip of three icon
+  tabs, B2 the same card with the player's blurred-artwork backdrop and
+  tabs as words, B3 one pill (round artwork with play, title + time
+  left, three icons), B4 no player bar (what's playing is the first tab
+  as round artwork with a ring), B5 slim one-line strip above a plain
+  full-width tab bar. Suggested B1 (matches the R2 player). **Paul: B1**
+  (27 Nov 2026): built into build 181, see above.
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5

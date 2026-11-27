@@ -454,6 +454,10 @@ struct DeckDialTimes: View {
     /// (Paul, 16 Nov 2026: "make the animation on the numbers getting
     /// smaller and moving smoother like the chapter pill moving").
     var compact: Bool = false
+    /// R2 (Paul, 27 Nov 2026): the middle names the chapter now ("Comfort
+    /// darts ›") and opens the chapters sheet; with no chapters it shows
+    /// when the episode ends and still opens the sheet (Make chapters).
+    var openChapters: (() -> Void)? = nil
 
     static let compactHeight: CGFloat = 16
     private var clockScale: CGFloat { compact ? 12.0 / 18.0 : 1 }
@@ -476,10 +480,7 @@ struct DeckDialTimes: View {
                 .frame(minWidth: 72, alignment: .leading)
                 .scaleEffect(clockScale, anchor: .leading)
             Spacer(minLength: 0)
-            Text(middle(shown, ends: ends))
-                .font(Self.middleFont)
-                .minimumScaleFactor(0.7)
-                .opacity(0.75)
+            middleText(shown, ends: ends)
                 .scaleEffect(middleScale)
             Spacer(minLength: 0)
             Text("−" + TimeFormat.clock(atSpeed))
@@ -496,11 +497,32 @@ struct DeckDialTimes: View {
         .accessibilityLabel("\(TimeFormat.clock(atSpeed)) left, ends at \(UpNextTimes.clock(ends))")
     }
 
+    @ViewBuilder private func middleText(_ time: TimeInterval, ends: Date) -> some View {
+        let words: Text = Text(middle(time, ends: ends))
+            .font(Self.middleFont)
+        if let openChapters, scrub.time == nil {
+            Button(action: openChapters) {
+                words
+                    .minimumScaleFactor(0.7)
+                    .opacity(0.85)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens the chapters")
+        } else {
+            words
+                .minimumScaleFactor(0.7)
+                .opacity(0.75)
+        }
+    }
+
     private func middle(_ time: TimeInterval, ends: Date) -> String {
         if let hint = scrub.hint { return hint }
-        if scrub.time != nil {
-            let chapters: [Chapter] = player.chapters
-            if let index = Chapters.index(at: time, in: chapters) { return chapters[index].title }
+        let chapters: [Chapter] = player.chapters
+        if scrub.time != nil || openChapters != nil,
+           let index = Chapters.index(at: time, in: chapters) {
+            return chapters[index].title + (scrub.time == nil ? " ›" : "")
         }
         return "ends " + UpNextTimes.clock(ends)
     }
