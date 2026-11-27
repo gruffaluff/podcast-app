@@ -4,8 +4,10 @@ import PodcastCore
 
 // Deck (Paul, 14 Nov 2026: "I love it"). Up next is a grid of episode
 // tabs (Paul, 15 Nov 2026: tabs; the card deck went, 25 Nov 2026), Your
-// shows is every show as tiles, Find is search + charts. The bottom bar
-// (DeckTabsBar.swift) switches between them and shows what's playing. An
+// shows is every show as tiles. Option C (27 Nov 2026): a switch at the
+// top of both moves between them (DeckPageTop.swift); Find is the search,
+// opened by pulling either page down or tapping its search box. The bottom
+// bar (DeckTabsBar.swift) is just the mini player. An
 // open tab is the player, the episode page and its show's settings in one
 // (`DeckTabsPager`); there's no separate full-screen player.
 
@@ -54,6 +56,8 @@ struct DeckRoot: View {
     @Binding var showingPlayer: Bool
     @State private var made: Set<Int> = [0]
     @State private var tabsModel = DeckTabsModel()
+    /// Up next or Your shows, whichever the search was opened from.
+    @State private var searchFrom: Int = 0
 
     var body: some View {
         ZStack {
@@ -64,7 +68,9 @@ struct DeckRoot: View {
         .overlay(alignment: .bottom) { bottomFade }
         .overlay(alignment: .bottom) { bottom }
         .environment(\.deckOpenPlayer, openPlayingTab)
-        .environment(\.deckOpenFind, { tab = 2 })
+        .environment(\.deckOpenFind, openSearch)
+        .environment(\.deckOpenSearch, openSearch)
+        .environment(\.deckCloseSearch, closeSearch)
         .environment(\.deckSelectTab, { tab = $0 })
         .environment(tabsModel)
         .onChange(of: tab, initial: true) { _, new in made.insert(new) }
@@ -115,6 +121,26 @@ struct DeckRoot: View {
         case .tabs, .settings:
             break
         }
+    }
+
+    /// Option C (Paul, 27 Nov 2026): the search (Find) drops in over the
+    /// page it was opened from, keyboard up; Cancel goes back there.
+    private func openSearch() {
+        if tab != 2 { searchFrom = tab }
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) { tab = 2 }
+        // A beat later, so a search page made just now is listening.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(80))
+            NotificationCenter.default.post(name: .deckFocusFind, object: nil)
+        }
+    }
+
+    private func closeSearch() {
+        var instant = Transaction(animation: nil)
+        instant.disablesAnimations = true
+        withTransaction(instant) { tab = searchFrom }
     }
 
     /// Up next and Started always have the episode playing as their first
@@ -170,7 +196,7 @@ struct DeckRoot: View {
     }
 
     private var bottom: some View {
-        DeckTabsBar(tab: $tab)
+        DeckTabsBar(tab: tab)
             .padding(.bottom, 8)
     }
 }

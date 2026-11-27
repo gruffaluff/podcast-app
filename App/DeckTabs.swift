@@ -286,7 +286,6 @@ struct DeckTabsView: View {
     @Environment(\.deckSelectTab) private var selectTab
     @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
     @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
-    @State private var showingSettings = false
     @State private var suggestions: [PodcastEpisode] = []
 
     var body: some View {
@@ -295,7 +294,9 @@ struct DeckTabsView: View {
                                                          unplayed: unplayed, started: started)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                DeckTabsHeader(settings: { showingSettings = true })
+                // Option C (27 Nov 2026): the switch and search at the top.
+                DeckPageTop(current: 0)
+                DeckTabsHeader()
                 if shown.isEmpty {
                     empty
                 } else {
@@ -316,14 +317,9 @@ struct DeckTabsView: View {
         .scrollIndicators(.hidden)
         .scrollDisabled(model.reordering)
         .deckPage()
-        .refreshable { await store.refreshAll() }
-        .sheet(isPresented: $showingSettings) { DeckSettingsView() }
-        // Demo mode only (Screenshots workflow): open on Settings.
-        .task {
-            guard DemoMode.screen == .settings else { return }
-            try? await Task.sleep(for: .milliseconds(600))
-            showingSettings = true
-        }
+        // Pull down for the search (option C); it checks for new
+        // episodes too, as pull to refresh did.
+        .deckPullToSearch()
         .onChange(of: suggestionKey, initial: true) { _, _ in reloadSuggestions() }
         // "In Up next · 2nd" on an episode page: show the Up next tabs.
         .onChange(of: store.revealInUpNext, initial: true) { _, id in
@@ -386,15 +382,14 @@ struct DeckTabsView: View {
 private struct DeckTabsHeader: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
-    let settings: () -> Void
 
+    /// "Up next" and when it's done by, at your speed.
     var body: some View {
         let plan: DeckQueuePlan = DeckQueuePlan(store: store, player: player, playhead: nil)
-        HStack(spacing: 8) {
-            DeckMark(size: 30)
-            Text("Poddeck")
-                .font(Theme.outfit(26, .heavy))
-                .tracking(-0.6)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("Up next")
+                .font(Theme.outfit(22, .heavy))
+                .tracking(-0.5)
                 .foregroundStyle(Theme.ink)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
@@ -405,19 +400,8 @@ private struct DeckTabsHeader: View {
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
             }
-            Button(action: settings) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Theme.ink)
-                    .frame(width: 40, height: 40)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Settings")
         }
-        .padding(.leading, 22)
-        .padding(.trailing, 10)
-        .padding(.top, 8)
-        .frame(height: 52)
+        .padding(.horizontal, 22)
+        .padding(.top, 14)
     }
 }

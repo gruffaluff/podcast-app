@@ -3591,6 +3591,49 @@ this on dec 1?".
   inset 16 pt from the sides, 4 pt up from the foot
   (`DeckMiniProgressLine`).
 
+## Done in build 184 (27 Nov 2026, PR #102; Paul: "Build")
+
+- **Option C: two pages, pull down to search** (Paul, 27 Nov 2026: "Yes
+  let's build it", from https://claude.ai/artifact/9pjRqhQGZ5Fd2BZf9CKfCW
+  C1–C4). The Tabs · Shows · Find strip at the bottom is gone; the bar is
+  just the B1 mini player (`DeckTabsBar`, height = the card).
+  - Both pages open with the same top (`DeckPageTop` in
+    `App/DeckPageTop.swift`): the Poddeck mark and Settings gear, and a
+    search box "Search, or pull down".
+  - Switching pages (Paul, 27 Nov 2026: "swipe on mini player", D):
+    drag the mini player sideways, left for Your shows, right for Up
+    next (it follows the finger a little; past 40 pt or a flick); two
+    small dots under it show the page and can be tapped (`DeckPageDots`,
+    `DeckMiniCard.flip`). Tap still opens the player, swipe up too. A
+    switch at the top was built first and dropped for reach.
+  - Pull either page down past its top (90 pt, finger still on the page)
+    and the search drops in with the keyboard up (`deckPullToSearch`); the
+    pull also checks for new episodes, at most every 2 minutes, as pull to
+    refresh did (that's gone). The search is the Find page with Cancel
+    beside its box, going back to the page it came from
+    (`DeckRoot.openSearch` / `closeSearch`, `\.deckOpenSearch`). Results as
+    before: Your shows, Episodes, Said in your episodes, New shows; nothing
+    typed: recent searches, New to you, the chart.
+  - Up next: under the top, "Up next" and "8 · done by 23:10", then the
+    tabs.
+  - Your shows: "Your shows" heading with Discover ↓ (scrolls down), ⇅
+    and + (opens the search, which takes pasted links); the tiles; then
+    Discover underneath (`DeckDiscoverSection` in DeckFind.swift, shared
+    with the empty search): New to you, the UK chart with categories and
+    Follow, and "Paste a show's link". Show previews open on this page.
+  - Not done: swiping sideways across the whole page (the Up next cards'
+    own swipes, Played / Play next, would fight it).
+    Check on the phone: the pull distance, pull vs scrolling back to the
+    top quickly, the keyboard coming up, Cancel, Discover on a long list,
+    the mini player's sideways drag vs its taps and swipe up.
+  - **Switch out of reach at the top** (Paul, 27 Nov 2026: "how can we
+    make it easier to switch … for reachability"). Mock-ups
+    https://claude.ai/artifact/1dNa6zA1gtbdmsiUHHM4BE: A as built (top),
+    B a floating Up next | Your shows pill just above the mini player
+    (suggested), C two words under the mini player, D just swipe the mini
+    player (dots under it); in B–D dragging the mini player sideways also
+    flips pages. **Paul: D** (27 Nov 2026), built above.
+
 ## Finishing touches: looks to choose from (21 Nov 2026)
 
 - Paul (21 Nov 2026): happy with how everything works; wants a few
@@ -3687,6 +3730,44 @@ this on dec 1?".
   as round artwork with a ring), B5 slim one-line strip above a plain
   full-width tab bar. Suggested B1 (matches the R2 player). **Paul: B1**
   (27 Nov 2026): built into build 181, see above.
+
+- **One page?** (Paul, 27 Nov 2026: "making the podcast app a bit of a
+  one-pager where everything bar the main player is on one page"). Four
+  ideas on https://claude.ai/artifact/RTki81tocYwdVrmetNYovt (each phone
+  scrolls; no Tabs · Shows · Find strip, B1 mini player kept, the R2
+  player stays its own screen): O1 Shelves (search at the top, then
+  sideways rows: Up next tab cards, New this week, Your shows tiles, UK
+  chart, Settings at the foot; suggested), O2 Up next first, the rest
+  folded (today's Up next grid, then Your shows / Find / Settings as
+  cards that open in place, jump chips stick to the top), O3 Search is
+  home (big search box answers with the page; playing card, Then list,
+  shows, chart), O4 Today like a newspaper (greeting, "3 new since this
+  morning", Carry on headline card, Up next row, shows grid, one chart
+  pick). Waiting on Paul.
+
+- **Organising Up next and shows?** (Paul, 27 Nov 2026: loves the Up
+  next artwork cards and the Shows tiles going black and white; "a way
+  we haven't looked at yet … function and form", separate tabs fine).
+  Five on https://claude.ai/artifact/9pjRqhQGZ5Fd2BZf9CKfCW (same cards
+  and tiles in all): A The shelf (one tab: each show a tile with its
+  waiting episodes stacked behind it, corner number = when its next one
+  comes up, tap to spread into the episode cards; caught-up shows black
+  and white at the end; bar Shelf · Find; suggested), B Lanes (a
+  sideways row of cards per show, Top rank first), C Two pages you swipe
+  between (Up next · Your shows switch, pull down to search, no tab
+  strip), D Up next row on top with show tiles underneath as a filter,
+  E Today's two tabs plus filter chips (All · Started · New ·
+  Downloaded · Under 45m; runner-up).
+  Paul: interested in C, asked how finding new shows works with it
+  (27 Nov 2026). Worked through on the same page (C1–C4): pull down on
+  either page = one search for everything (before typing: recent, New to
+  you, chart; typing: Your shows / Episodes / Said in your episodes / New
+  shows with Follow); browsing lives at the foot of Your shows (New to
+  you, UK chart with categories, Paste a show's link; "Discover ↓" jumps
+  there); a new show opens its page over the search (Follow, or Play
+  next / Add to end to try it). Alternative offered: a third swipe page,
+  Discover. **Paul: "Yes let's build it"** (27 Nov 2026): on the branch
+  for build 184, see above.
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5

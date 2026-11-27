@@ -35,16 +35,18 @@ enum DeckBarSwipe {
 struct DeckTabsBar: View {
     @Environment(LibraryStore.self) private var store
     @Environment(PlayerModel.self) private var player
-    @Environment(DeckTabsModel.self) private var model
     @Environment(\.deckOpenPlayer) private var openPlayer
-    @Query(NewEpisodes.queryForList) private var unplayed: [PodcastEpisode]
-    @Query(DeckTabSource.startedQuery) private var started: [PodcastEpisode]
-    @Binding var tab: Int
+    @Environment(\.deckOpenSearch) private var openSearch
+    @Environment(\.deckSelectTab) private var selectTab
+    /// 0 Up next, 1 Your shows, 2 the search.
+    let tab: Int
 
-    /// The mini player card (58) over the icon strip (50), 6 apart.
+    /// The mini player card over two small page dots (option C with D,
+    /// Paul, 27 Nov 2026: "swipe on mini player"): no tab strip; drag the
+    /// card sideways to flip between Up next and Your shows.
     static let cardHeight: CGFloat = 58
-    static let stripHeight: CGFloat = 50
-    static let height: CGFloat = cardHeight + 6 + stripHeight
+    static let dotsHeight: CGFloat = 14
+    static let height: CGFloat = cardHeight + 4 + dotsHeight
     /// Room under every list's last row: the bar, its gap below, the fade
     /// and 16 pt to spare.
     static let room: CGFloat = height + 8 + 16 + 20
@@ -57,65 +59,33 @@ struct DeckTabsBar: View {
     static let pillRoom: CGFloat = 0
 
     var body: some View {
-        let tabs: [PodcastEpisode] = DeckTabSource.tabs(model.group, store: store, player: player,
-                                                        unplayed: unplayed, started: started)
-        bar(count: tabs.count)
-    }
-
-    private func bar(count: Int) -> some View {
-        VStack(spacing: 6) {
-            DeckMiniCard(first: firstTab, open: openPlayer, find: { select(2) })
+        VStack(spacing: 4) {
+            DeckMiniCard(first: firstTab, open: openPlayer, find: openSearch, flip: flip)
                 .frame(height: Self.cardHeight)
-            DeckBarIcons(current: tab, count: sectionCount, select: select)
-                .frame(height: Self.stripHeight)
-                .simultaneousGesture(DeckBarSwipe.gesture.onEnded { value in swiped(value) })
+            DeckPageDots(current: tab, select: go)
+                .frame(height: Self.dotsHeight)
         }
         .frame(height: Self.height)
         .padding(.horizontal, 12)
     }
 
-    /// The top of Up next, so the ring can start it when nothing's on.
-    private var firstTab: PodcastEpisode? {
-        DeckTabSource.upNext(store: store, player: player).first
+    /// Left (−1 from Up next) for Your shows, right for Up next. From the
+    /// search, a swipe goes to the page in that direction.
+    private func flip(_ towardsShows: Bool) {
+        go(towardsShows ? 1 : 0)
     }
 
-    /// Up next's length, the same count the words row always showed.
-    private var sectionCount: Int {
-        let playing: String? = player.nowPlaying?.episodeID
-        let queued: Int = store.queue.filter { $0.episode.id != playing }.count
-        return queued + (playing == nil ? 0 : 1)
-    }
-
-    /// Moves to a section at once; Tabs also goes back to the overview.
-    private func select(_ index: Int) {
+    private func go(_ index: Int) {
+        guard index != tab else { return }
+        UISelectionFeedbackGenerator().selectionChanged()
         var instant = Transaction(animation: nil)
         instant.disablesAnimations = true
-        // Tapped the page already showing: back to its first screen.
-        if tab == index && index != 0 && !model.pagerOpen {
-            NotificationCenter.default.post(name: .deckPageToStart, object: index)
-            return
-        }
-        withTransaction(instant) {
-            if index == 0 {
-                model.returnTab = 0
-                model.pagerOpen = false
-            }
-            tab = index
-        }
+        withTransaction(instant) { selectTab(index) }
     }
 
-    /// Swipe up for the tab overview; swipe along the bar for the section
-    /// before / after (Paul, 16 Nov 2026: option A).
-    private func swiped(_ value: DragGesture.Value) {
-        guard let swipe = DeckBarSwipe.resolve(value) else { return }
-        switch swipe {
-        case .up:
-            select(0)
-        case .next:
-            if tab < 2 { select(tab + 1) }
-        case .previous:
-            if tab > 0 { select(tab - 1) }
-        }
+    /// The top of Up next, so the card can start it when nothing's on.
+    private var firstTab: PodcastEpisode? {
+        DeckTabSource.upNext(store: store, player: player).first
     }
 }
 
@@ -200,6 +170,10 @@ private struct DeckMiniCard: View {
     let first: PodcastEpisode?
     let open: () -> Void
     let find: () -> Void
+    /// A sideways drag: true towards Your shows (left), false Up next.
+    let flip: (Bool) -> Void
+    /// How far the card follows the finger while dragged sideways.
+    @GestureState private var slide: CGFloat = 0
 
     private static let radius: CGFloat = 18
 
@@ -222,15 +196,30 @@ private struct DeckMiniCard: View {
         .overlay(shape.strokeBorder(Theme.ink.opacity(0.08), lineWidth: 1))
         .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 11, y: 8)
         .contentShape(shape)
+        .offset(x: slide)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: slide)
         .onTapGesture { tapped() }
-        .gesture(DragGesture(minimumDistance: 12).onEnded { value in
-            guard value.translation.height < -30, abs(value.translation.width) < abs(value.translation.height),
-                  player.nowPlaying != nil else { return }
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            open()
-        })
+        .gesture(DragGesture(minimumDistance: 12)
+            .updating($slide) { value, state, _ in
+                let dx: CGFloat = value.translation.width
+                // Follows a sideways drag a little, so you can feel it.
+                state = abs(dx) > abs(value.translation.height) ? dx * 0.3 : 0
+            }
+            .onEnded { value in
+                let dx: CGFloat = value.translation.width
+                let dy: CGFloat = value.translation.height
+                if abs(dx) > abs(dy) * 1.2, abs(dx) > 40 || abs(value.predictedEndTranslation.width) > 160 {
+                    flip(dx < 0)
+                    return
+                }
+                guard dy < -30, abs(dx) < abs(dy), player.nowPlaying != nil else { return }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                open()
+            })
         .accessibilityElement(children: .contain)
         .accessibilityAction(named: "Open player") { if player.nowPlaying != nil { open() } }
+        .accessibilityAction(named: "Your shows") { flip(true) }
+        .accessibilityAction(named: "Up next") { flip(false) }
     }
 
     // MARK: Parts
@@ -428,39 +417,27 @@ private struct DeckMiniProgressLine: View {
     }
 }
 
-/// The strip under the card: Tabs · n, Shows, Find as icons with labels;
-/// the page showing in full ink, the others faded.
-private struct DeckBarIcons: View {
+/// Two small dots under the mini player: which page you're on (the
+/// current one a short ink bar). Tap one to go there.
+private struct DeckPageDots: View {
     let current: Int
-    let count: Int
     let select: (Int) -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            item("square.on.square", count > 0 ? "Tabs · \(count)" : "Tabs", index: 0)
-            item("square.grid.2x2", "Shows", index: 1)
-            item("magnifyingglass", "Find", index: 2)
+        HStack(spacing: 2) {
+            dot(0, label: "Up next")
+            dot(1, label: "Your shows")
         }
-        .padding(.horizontal, 24)
     }
 
-    private func item(_ icon: String, _ label: String, index: Int) -> some View {
+    private func dot(_ index: Int, label: String) -> some View {
         let on: Bool = current == index
         return Button { select(index) } label: {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: on ? .semibold : .regular))
-                    .frame(height: 24)
-                Text(label)
-                    .font(Theme.outfit(11, .semibold))
-                    .monospacedDigit()
-                    .lineLimit(1)
-            }
-            .foregroundStyle(on ? Theme.ink : Theme.muted.opacity(0.8))
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .contentShape(Rectangle())
-            .transaction { $0.animation = nil }
+            Capsule()
+                .fill(on ? Theme.ink : Theme.muted.opacity(0.4))
+                .frame(width: on ? 16 : 6, height: 6)
+                .frame(width: 30, height: 14)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
