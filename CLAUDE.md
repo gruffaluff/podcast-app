@@ -3647,6 +3647,11 @@ this on dec 1?".
   pulling a page down (or Your shows' +, and "Find something" / "Paste a
   show's link"). Up next's line under the pill is "8 episodes · done by
   23:10" (the separate "Up next" title went, the pill says it).
+- **Mini player swipe jittered going left** (Paul, 27 Nov 2026): the
+  drag was measured in the card's own space while the card moved with the
+  finger, so each movement counted twice (as the show page swipes once
+  did); now measured against the screen, and the card springs back only
+  when you let go (`DeckMiniCard`, `slide`).
 
 ## Finishing touches: looks to choose from (21 Nov 2026)
 

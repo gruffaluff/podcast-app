@@ -173,7 +173,7 @@ private struct DeckMiniCard: View {
     /// A sideways drag: true towards Your shows (left), false Up next.
     let flip: (Bool) -> Void
     /// How far the card follows the finger while dragged sideways.
-    @GestureState private var slide: CGFloat = 0
+    @GestureState(resetTransaction: Transaction(animation: .spring(response: 0.3, dampingFraction: 0.8))) private var slide: CGFloat = 0
 
     private static let radius: CGFloat = 18
 
@@ -197,9 +197,11 @@ private struct DeckMiniCard: View {
         .shadow(color: Color(red: 40 / 255, green: 30 / 255, blue: 10 / 255).opacity(0.16), radius: 11, y: 8)
         .contentShape(shape)
         .offset(x: slide)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: slide)
         .onTapGesture { tapped() }
-        .gesture(DragGesture(minimumDistance: 12)
+        // Measured against the screen, not the card: the card moves with
+        // the finger, so measuring in its own space counted each movement
+        // twice and it jittered (Paul, 27 Nov 2026: swiping left).
+        .gesture(DragGesture(minimumDistance: 12, coordinateSpace: .global)
             .updating($slide) { value, state, _ in
                 let dx: CGFloat = value.translation.width
                 // Follows a sideways drag a little, so you can feel it.
