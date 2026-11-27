@@ -72,22 +72,6 @@ struct DeckTabsBar: View {
         }
         .frame(height: Self.height)
         .padding(.horizontal, 12)
-        .background(alignment: .top) { stripBacking }
-    }
-
-    /// The page colour behind the icon strip, from the card's middle down
-    /// past the bottom edge, so lists scrolling under it don't show
-    /// through the icons (Paul, 27 Nov 2026, build 182 screenshot).
-    private var stripBacking: some View {
-        VStack(spacing: 0) {
-            LinearGradient(colors: [Theme.background.opacity(0), Theme.background],
-                           startPoint: .top, endPoint: .bottom)
-                .frame(height: 20)
-            Theme.background
-        }
-        .frame(height: 260)
-        .offset(y: Self.cardHeight / 2 - 20)
-        .ignoresSafeArea(edges: .bottom)
     }
 
     /// The top of Up next, so the ring can start it when nothing's on.
