@@ -3714,7 +3714,16 @@ this on dec 1?".
   between (Up next · Your shows switch, pull down to search, no tab
   strip), D Up next row on top with show tiles underneath as a filter,
   E Today's two tabs plus filter chips (All · Started · New ·
-  Downloaded · Under 45m; runner-up). Waiting on Paul.
+  Downloaded · Under 45m; runner-up).
+  Paul: interested in C, asked how finding new shows works with it
+  (27 Nov 2026). Worked through on the same page (C1–C4): pull down on
+  either page = one search for everything (before typing: recent, New to
+  you, chart; typing: Your shows / Episodes / Said in your episodes / New
+  shows with Follow); browsing lives at the foot of Your shows (New to
+  you, UK chart with categories, Paste a show's link; "Discover ↓" jumps
+  there); a new show opens its page over the search (Follow, or Play
+  next / Add to end to try it). Alternative offered: a third swipe page,
+  Discover. Waiting on Paul.
 
 - **Codemagic is pay as you go** (Paul, 19 Nov 2026: put a card on it so
   builds run again). Told him: roughly $0.095 a Mac minute, a build ~5
