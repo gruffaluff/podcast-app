@@ -3577,7 +3577,7 @@ this on dec 1?".
   play / pause · skip forward, using your skip lengths; the skips are
   dimmed with nothing playing (`DeckMiniCard.keys`).
 
-## On the branch for build 183 (27 Nov 2026; not built yet)
+## Done in build 183 (27 Nov 2026, PR #101; Paul: "Build")
 
 - **Mini player fixes** (Paul, 27 Nov 2026, build 182 screenshot of Your
   shows; "menu see through and not going to bottom"): the Tabs · Shows ·
